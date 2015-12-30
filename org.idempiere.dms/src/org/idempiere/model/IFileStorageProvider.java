@@ -12,10 +12,10 @@ import org.compiere.model.I_AD_StorageProvider;
  */
 public interface IFileStorageProvider {
 	public void init(I_AD_StorageProvider storageProvider);
-	public File[] getFiles(String parent, String pattern);
-	public File getFile(String path);
-	public String[] list(String parent) ;
+	public File[] getFiles(String parent, String pattern) throws IOException;
+	public File getFile(String path)throws IOException;
+	public String[] list(String parent) throws IOException;
 	public byte[] getBLOB(String path) throws IOException;
-	public boolean writeBLOB(String path, byte[] data);
+	public boolean writeBLOB(String path, byte[] data)throws IOException;
 	
 }
