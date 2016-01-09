@@ -13,10 +13,10 @@ import org.compiere.util.CCache;
  *
  */
 public class FileStorageUtil {
-	CCache<Integer, IFileStorageProvider> s_cache = new CCache<Integer, IFileStorageProvider>("FileStorageProvider", 2);
+	static CCache<Integer, IFileStorageProvider> s_cache = new CCache<Integer, IFileStorageProvider>("FileStorageProvider", 2);
 	
 	//TODO This util method should be added in MStorageProvider when it ended into iDempiere core
-	public IFileStorageProvider get(I_AD_StorageProvider storageProvider){
+	public static IFileStorageProvider get(I_AD_StorageProvider storageProvider){
 		IFileStorageProvider fileStorageProvider = s_cache.get(storageProvider.getAD_StorageProvider_ID());
 		if(fileStorageProvider!=null){
 			fileStorageProvider.init(storageProvider);

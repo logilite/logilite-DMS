@@ -64,6 +64,15 @@ public interface I_DMS_Content
 	  */
 	public int getAD_Org_ID();
 
+    /** Column name ContentBaseType */
+    public static final String COLUMNNAME_ContentBaseType = "ContentBaseType";
+
+	/** Set ContentBaseType	  */
+	public void setContentBaseType (String ContentBaseType);
+
+	/** Get ContentBaseType	  */
+	public String getContentBaseType();
+
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";
 
@@ -115,7 +124,7 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_ContentType_ID();
 
-	public I_DMS_ContentType getDMS_ContentType() throws RuntimeException;
+	public org.idempiere.model.I_DMS_ContentType getDMS_ContentType() throws RuntimeException;
 
     /** Column name DMS_MimeType_ID */
     public static final String COLUMNNAME_DMS_MimeType_ID = "DMS_MimeType_ID";
@@ -130,7 +139,7 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_MimeType_ID();
 
-	public I_DMS_MimeType getDMS_MimeType() throws RuntimeException;
+	public org.idempiere.model.I_DMS_MimeType getDMS_MimeType() throws RuntimeException;
 
     /** Column name DMS_Status_ID */
     public static final String COLUMNNAME_DMS_Status_ID = "DMS_Status_ID";
@@ -145,7 +154,7 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_Status_ID();
 
-	public I_DMS_Status getDMS_Status() throws RuntimeException;
+	public org.idempiere.model.I_DMS_Status getDMS_Status() throws RuntimeException;
 
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
@@ -200,6 +209,15 @@ public interface I_DMS_Content
 	  * Alphanumeric identifier of the entity
 	  */
 	public String getName();
+
+    /** Column name ParentURL */
+    public static final String COLUMNNAME_ParentURL = "ParentURL";
+
+	/** Set ParentURL	  */
+	public void setParentURL (String ParentURL);
+
+	/** Get ParentURL	  */
+	public String getParentURL();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";
