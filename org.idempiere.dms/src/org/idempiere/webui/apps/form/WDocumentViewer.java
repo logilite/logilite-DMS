@@ -1,9 +1,9 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Vector;
@@ -36,6 +36,7 @@ import org.adempiere.webui.panel.CustomForm;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
+import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
@@ -47,7 +48,10 @@ import org.idempiere.componenet.ImgTextComponent;
 import org.idempiere.dms.storage.DmsUtility;
 import org.idempiere.dms.storage.FileSystemStorageProvider;
 import org.idempiere.form.DocumentViewer;
+import org.idempiere.model.MDMS_Association;
+import org.idempiere.model.MDMS_Content;
 import org.zkoss.image.AImage;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -113,6 +117,10 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 	private Label				partnerTContent		= new Label(Msg.translate(Env.getCtx(), "C&W Construction"));
 	private WListbox			xMiniTable			= ListboxFactory.newDataTable();
 
+	// create Directory
+	private Button				createDirButton		= new Button();
+	public MDMS_Content			dms_content;
+
 	public WDocumentViewer()
 	{
 		m_WindowNo = form.getWindowNo();
@@ -163,7 +171,11 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		Row row = new Row();
 		rows.appendChild(row);
 		row.appendChild(gridViewButton);
+		createDirButton.setImage("/home/dhaval/Desktop/1.png");
+		createDirButton.setTooltiptext("Create Directory");
+		row.appendCellChild(createDirButton);
 		gridViewButton.addActionListener(this);
+		createDirButton.addEventListener(Events.ON_CLICK, this);
 
 		row = new Row();
 		vsearcBox.setWidth("100%");
@@ -292,6 +304,10 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		{
 			RenderViewer(isGridButton);
 		}
+		else if (event.getTarget().equals(createDirButton))
+		{
+			CreateDirectoryForm form = new CreateDirectoryForm(new MDMS_Content(Env.getCtx(), 0, null));
+		}
 	}
 
 	@Override
@@ -320,37 +336,30 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 
 		if (isGridformat)
 		{
-			MStorageProvider storageProvider = DmsUtility.getStorageProvider(Env.getAD_Client_ID(Env.getCtx()));
-			FileSystemStorageProvider s =new FileSystemStorageProvider();
-			File f =new File("/home/dhaval/WImageDialog.java");
-			Path filePath = Paths.get(f.getAbsolutePath());
-		//	s.writeBLOB(storageProvider.getURL()+File.separator+storageProvider.getFolder()+File.separator+f.getName(), Files.readAllBytes(filePath));
-			s.getBLOB("LogiliteDocs/WImageDialog.java");
 			isGridButton = false;
 			AImage image = null;
-			
+
 			String src = null;
-			
+
 			Row row = null;
 			Cell cell = null;
 
 			row = new Row();
 			src = "/home/dhaval/Desktop/1.png";
-			
+
 			image = new AImage(new File(src));
-			
 
 			ImgTextComponent cstmComponenet = new ImgTextComponent("1.png", "/home/dhaval/Desktop", image);
-			
+
 			cstmComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
 			grid.setSizedByContent(true);
 			cstmComponenet.setDheight(150);
 			cstmComponenet.setDwidth(150);
-			
+
 			Hbox hbox = new Hbox();
 			hbox.appendChild(cstmComponenet);
 			hbox.appendChild(new Space());
-			
+
 			cell = new Cell();
 			cell.appendChild(hbox);
 
