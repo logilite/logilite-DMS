@@ -128,6 +128,24 @@ public interface I_DMS_MimeType
 	/** Get Icon	  */
 	public int getIcon_ID();
 
+    /** Column name Icon300_ID */
+    public static final String COLUMNNAME_Icon300_ID = "Icon300_ID";
+
+	/** Set Icon 300px	  */
+	public void setIcon300_ID (int Icon300_ID);
+
+	/** Get Icon 300px	  */
+	public int getIcon300_ID();
+
+    /** Column name Icon500_ID */
+    public static final String COLUMNNAME_Icon500_ID = "Icon500_ID";
+
+	/** Set Icon 500px	  */
+	public void setIcon500_ID (int Icon500_ID);
+
+	/** Get Icon 500px	  */
+	public int getIcon500_ID();
+
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
 

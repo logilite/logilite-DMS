@@ -152,6 +152,46 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 		return ii.intValue();
 	}
 
+	/** Set Icon 300px.
+		@param Icon300_ID Icon 300px	  */
+	public void setIcon300_ID (int Icon300_ID)
+	{
+		if (Icon300_ID < 1) 
+			set_Value (COLUMNNAME_Icon300_ID, null);
+		else 
+			set_Value (COLUMNNAME_Icon300_ID, Integer.valueOf(Icon300_ID));
+	}
+
+	/** Get Icon 300px.
+		@return Icon 300px	  */
+	public int getIcon300_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_Icon300_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	/** Set Icon 500px.
+		@param Icon500_ID Icon 500px	  */
+	public void setIcon500_ID (int Icon500_ID)
+	{
+		if (Icon500_ID < 1) 
+			set_Value (COLUMNNAME_Icon500_ID, null);
+		else 
+			set_Value (COLUMNNAME_Icon500_ID, Integer.valueOf(Icon500_ID));
+	}
+
+	/** Get Icon 500px.
+		@return Icon 500px	  */
+	public int getIcon500_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_Icon500_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
 	/** Set Default.
 		@param IsDefault 
 		Default value
