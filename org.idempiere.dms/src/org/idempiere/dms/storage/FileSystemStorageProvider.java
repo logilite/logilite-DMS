@@ -39,7 +39,12 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	@Override
 	public File getFile(String path)
 	{
-		return new File(path);
+		File file = new File(path);
+
+		if (file.exists())
+			return file;
+		else
+			return null;
 	}
 
 	@Override

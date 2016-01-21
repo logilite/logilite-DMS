@@ -13,6 +13,7 @@ import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.idempiere.dms.storage.DmsUtility;
 import org.idempiere.model.MDMS_Association;
 import org.idempiere.model.MDMS_Content;
 import org.idempiere.model.X_DMS_Content;
@@ -140,10 +141,10 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists."));
 
 				MDMS_Content content = new MDMS_Content(Env.getCtx(), 0, null);
-				// content.setDMS_MimeType_ID(DmsUtility.getMimeTypeId(null));
+				content.setDMS_MimeType_ID(DmsUtility.getMimeTypeId(null));
 				content.setName(dirName);
-				// content.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
-				// content.setDMS_Status_ID(DmsUtility.getStatusID());
+				content.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
+				content.setDMS_Status_ID(DmsUtility.getStatusID());
 
 				if (mdms_content.getParentURL() == null)
 				{
@@ -159,11 +160,11 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				MDMS_Association dmsAssociation = new MDMS_Association(Env.getCtx(), 0, null);
 				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
 				dmsAssociation.setDMS_Content_Related_ID(mdms_content.getDMS_Content_ID());
-				// dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionID());
+				dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionID());
 				dmsAssociation.saveEx();
 				this.detach();
 
-				// wDocumentViewer.onOk(isGridButton, mdms_content);
+				wDocumentViewer.onOk(isGridButton, mdms_content);
 			}
 			catch (Exception e)
 			{

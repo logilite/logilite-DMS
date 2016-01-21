@@ -2,7 +2,11 @@ package org.idempiere.componenet;
 
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ZkCssHelper;
+import org.adempiere.webui.window.FDialog;
 import org.compiere.util.CLogger;
+import org.compiere.util.Env;
+import org.idempiere.model.MDMS_Content;
+import org.idempiere.webui.apps.form.WDocumentViewer;
 import org.zkoss.image.AImage;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -26,6 +30,7 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 	private Div					dImage				= new Div();
 	private int					dheight;
 	private int					dwidth;
+	private int					dms_content_id		= 0;
 
 	public int getDheight()
 	{
@@ -55,11 +60,11 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 	private Boolean	isSelected	= false;
 	private Vbox	vbox		= new Vbox();
 
-	public ImgTextComponent(String fName, String fpath, AImage image)
+	public ImgTextComponent(String fName, String fpath, AImage image, int dms_content_id)
 	{
 		this.fName = fName;
 		this.fPath = fpath;
-
+		this.dms_content_id = dms_content_id;
 		fLabel.appendChild(new Label(fName));
 
 		prevImg = new Image();
@@ -73,7 +78,7 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 
 		this.appendChild(vbox);
 		this.setStyle("background-color: #ffffff");
-		this.setStyle("border:1px solid black;");
+		// this.setStyle("border:1px solid black;");
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
 
@@ -90,7 +95,7 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 			isSelected = !isSelected;
 			if (isSelected)
 			{
-				ZkCssHelper.appendStyle(this, "background-color:#E68A00");
+				ZkCssHelper.appendStyle(this, "background-color:#99cbff");
 				ZkCssHelper.appendStyle(this, "box-shadow: 7px 7px 7px #888888");
 			}
 			else
@@ -98,6 +103,11 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 				ZkCssHelper.appendStyle(this, "background-color:#ffffff");
 				ZkCssHelper.appendStyle(this, "box-shadow: 7px 7px 7px #ffffff");
 			}
+		}
+		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()))
+		{
+			WDocumentViewer.previous_dmsContent = WDocumentViewer.mdms_content;
+			WDocumentViewer.mdms_content = new MDMS_Content(Env.getCtx(), dms_content_id, null);
 		}
 
 	}
