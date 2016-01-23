@@ -188,8 +188,9 @@ public class WUploadContent extends Window implements EventListener<Event>
 				uploadedDocument = new File(System.getProperty("user.dir") + File.separator + mdms_Content.getName()
 						+ File.separator + media.getName());
 			else
-				uploadedDocument = new File(System.getProperty("user.dir") + File.separator
-						+ mdms_Content.getParentURL() + File.separator + File.separator + media.getName());
+				uploadedDocument = new File(System.getProperty("user.dir") 
+							+ mdms_Content.getParentURL() + File.separator + mdms_Content.getName() + File.separator
+							+ media.getName());
 
 			while (uploadedDocument.exists() && !uploadedDocument.isDirectory())
 			{
@@ -217,10 +218,10 @@ public class WUploadContent extends Window implements EventListener<Event>
 				dmsContent.setDMS_Status_ID(DmsUtility.getStatusID());
 				dmsContent.setDMS_ContentType_ID((Integer) contentType.getValue());
 				dmsContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
-				if (dmsContent.getParentURL() == null)
+				if (mdms_Content.getParentURL() == null)
 					dmsContent.setParentURL(File.separator + mdms_Content.getName());
 				else
-					dmsContent.setParentURL(dmsContent.getParentURL());
+					dmsContent.setParentURL(mdms_Content.getParentURL() + File.separator + mdms_Content.getName());
 				dmsContent.saveEx();
 
 				ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator();

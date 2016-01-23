@@ -116,8 +116,6 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 	private Button				nextButton			= new Button();
 	private Label				positionInfo		= new Label();
 
-	// private Tab tabData = null;
-
 	public WDocumentViewer()
 	{
 		m_WindowNo = form.getWindowNo();
@@ -130,7 +128,6 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		bPartnerField = new WSearchEditor(lookup, Msg.translate(Env.getCtx(), "C_BPartner_ID"), "", true, false, true);
 		previous_dmsContent = null;
 		next_dmsContent = null;
-		checkNavigationButtonState();
 		dms_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE parentUrl IS NULL");
 
 		if (dms_Content_ID == -1)
@@ -405,7 +402,6 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 			if (mdms_content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
 				renderViewer(isGridButton, mdms_content);
-				checkNavigationButtonState();
 			}
 			else if (mdms_content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 			{
@@ -459,18 +455,32 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		else if (event.getTarget().equals(backButton))
 		{
 			next_dmsContent = mdms_content;
-			mdms_content = previous_dmsContent;
-			checkNavigationButtonState();
-			renderViewer(isGridButton, mdms_content);
+			int DMS_Content_ID = DB.getSQLValue(null,
+					"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
+					mdms_content.getDMS_Content_ID());
+
+			if (DMS_Content_ID == -1)
+				backButton.setEnabled(false);
+			else
+			{
+				mdms_content = new MDMS_Content(Env.getCtx(), DMS_Content_ID, null);
+				renderViewer(isGridButton, mdms_content);
+				nextButton.setEnabled(true);
+				if (mdms_content.getParentURL() == null)
+					backButton.setEnabled(false);
+			}
 		}
 		else if (event.getTarget().equals(nextButton))
 		{
-			previous_dmsContent = mdms_content;
-			mdms_content = next_dmsContent;
-			checkNavigationButtonState();
-			renderViewer(isGridButton, mdms_content);
+			if (next_dmsContent == null)
+				nextButton.setEnabled(false);
+			else
+			{
+				mdms_content = next_dmsContent;
+				renderViewer(isGridButton, mdms_content);
+				nextButton.setEnabled(false);
+			}
 		}
-
 	}
 
 	protected void onOk(boolean isGridButton, MDMS_Content mdms_Content) throws IOException, URISyntaxException
@@ -486,6 +496,8 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 			dynInit();
 			jbInit();
 			renderViewer(isGridButton, mdms_content);
+			backButton.setEnabled(false);
+			nextButton.setEnabled(false);
 		}
 		catch (Exception e)
 		{
@@ -506,11 +518,11 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 					.listFiles();
 		}
 		else
-			documents = new File(System.getProperty("user.dir") + File.separator + mdms_Content.getParentURL()
-					+ File.separator + mdms_Content.getName()).listFiles();
+			documents = new File(System.getProperty("user.dir") + mdms_Content.getParentURL() + File.separator
+					+ mdms_Content.getName()).listFiles();
 
 		Components.removeAllChildren(grid);
-		tabs.appendChild(tabView);
+		// tabs.appendChild(tabView);
 		Rows rows = new Rows();
 
 		if (documents.length > 0)
@@ -544,7 +556,16 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 					src = System.getProperty("user.dir") + File.separator + "DMS_Thumbnails" + File.separator
 							+ Env.getAD_Client_ID(Env.getCtx()) + File.separator + dmsContent.getDMS_Content_ID()
 							+ File.separator + dmsContent.getDMS_Content_ID() + "-150.jpg";
-
+					if (documents[i].isDirectory())
+					{
+						nextButton.setEnabled(true);
+						backButton.setEnabled(true);
+					}
+					else
+					{
+						nextButton.setEnabled(false);
+						backButton.setEnabled(true);
+					}
 					if (isGridformat)
 					{
 						isGridButton = true;
@@ -618,6 +639,11 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 					}
 				}
 			}
+		}
+		else
+		{
+			nextButton.setEnabled(false);
+			backButton.setEnabled(true);
 		}
 		positionInfo.setValue(mdms_content.getName());
 		grid.appendChild(rows);
@@ -730,17 +756,5 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		this.setHeight("100%");
 		this.setWidth("100%");
 		this.appendChild(tabbox);
-	}
-
-	private void checkNavigationButtonState()
-	{
-		if (previous_dmsContent == null)
-			backButton.setEnabled(false);
-		else
-			backButton.setEnabled(true);
-		if (next_dmsContent == null)
-			nextButton.setEnabled(false);
-		else
-			nextButton.setEnabled(true);
 	}
 }
