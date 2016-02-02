@@ -141,7 +141,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists."));
 
 				MDMS_Content content = new MDMS_Content(Env.getCtx(), 0, null);
-				content.setDMS_MimeType_ID(DmsUtility.getMimeTypeId(null));
+				content.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(null));
 				content.setName(dirName);
 				content.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
 				content.setDMS_Status_ID(DmsUtility.getStatusID());

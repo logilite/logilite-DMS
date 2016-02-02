@@ -1,7 +1,6 @@
 package org.idempiere.model;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.compiere.model.I_AD_StorageProvider;
 

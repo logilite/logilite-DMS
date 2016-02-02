@@ -17,9 +17,10 @@ import org.idempiere.model.IFileStorageProvider;
 
 public class FileSystemStorageProvider implements IFileStorageProvider
 {
+	public static CLogger	log	= CLogger.getCLogger(FileSystemStorageProvider.class);
+
 	I_AD_StorageProvider	provider;
 	String					baseDir;
-	public static CLogger	log	= CLogger.getCLogger(FileSystemStorageProvider.class);
 
 	@Override
 	public void init(I_AD_StorageProvider storageProvider)
@@ -52,10 +53,12 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	{
 		File[] files = new File(parent).listFiles();
 		String[] fileList = new String[files.length];
+		
 		for (int i = 0; i < files.length; i++)
 		{
 			fileList[i] = files[i].getName();
 		}
+		
 		return fileList;
 	}
 

@@ -15,6 +15,7 @@ import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WTableDirEditor;
+import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
@@ -51,24 +52,32 @@ public class WUploadContent extends Window implements EventListener<Event>
 	 */
 	private static final long	serialVersionUID	= -6554158380274124479L;
 	private static CLogger		log					= CLogger.getCLogger(WUploadContent.class);
-	private MDMS_Content		mdms_Content		= null;
+
 	private Borderlayout		mainLayout			= new Borderlayout();
 	private WTableDirEditor		contentType;
-	private Label				fileLabel			= new Label();
-	private Label				contentTypeLabel	= new Label();
-	private Label				descLabel			= new Label();
-	private Textbox				descText			= new Textbox();
-	private Button				fileButton			= new Button();
+
+	private Label				lblFile				= new Label();
+	private Label				lblContentType		= new Label();
+	private Label				lblDesc				= new Label();
+
+	private Textbox				txtDesc				= new Textbox();
+
+	private Button				fileUploadButton	= new Button();
+
 	private Panel				parameterPanel		= new Panel();
 	private Panel				dmsContentType		= new Panel();
+
 	private ConfirmPanel		confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
+
 	private AMedia				media				= null;
 	private WDocumentViewer		wDocumentViewer;
+
 	private boolean				isGridButton;
+	private MDMS_Content		mdmsContent			= null;
 
 	public WUploadContent(MDMS_Content mdms_Content, WDocumentViewer wDocumentViewer, boolean isGridButton)
 	{
-		this.mdms_Content = mdms_Content;
+		this.mdmsContent = mdms_Content;
 		this.wDocumentViewer = wDocumentViewer;
 		this.isGridButton = isGridButton;
 		init();
@@ -100,14 +109,14 @@ public class WUploadContent extends Window implements EventListener<Event>
 			throw new AdempiereException("Contenttype fetching failure :" + e.getLocalizedMessage());
 		}
 
-		fileLabel.setValue(Msg.getMsg(Env.getCtx(), "SelectFile") + ":* ");
-		contentTypeLabel.setValue("DMS Content Type ::*");
-		fileButton.setLabel("-");
-		descLabel.setValue("Description ::");
-		descText.setMultiline(true);
-		descText.setRows(2);
-		descText.setWidth("300px");
-		LayoutUtils.addSclass("txt-btn", fileButton);
+		lblFile.setValue(Msg.getMsg(Env.getCtx(), "SelectFile") + "* ");
+		lblContentType.setValue("DMS Content Type*");
+		fileUploadButton.setLabel("-");
+		lblDesc.setValue("Description");
+		txtDesc.setMultiline(true);
+		txtDesc.setRows(2);
+		txtDesc.setWidth("300px");
+		LayoutUtils.addSclass("txt-btn", fileUploadButton);
 
 		North north = new North();
 		north.setParent(mainLayout);
@@ -115,14 +124,14 @@ public class WUploadContent extends Window implements EventListener<Event>
 		north.appendChild(dmsContentType);
 
 		Center center = new Center();
-		center.setParent(mainLayout);
+		center.setParent(mainLayout); 
 		mainLayout.appendChild(center);
 		center.appendChild(parameterPanel);
 
 		Hbox hboxx = new Hbox();
 		hboxx.setAlign("center");
 		hboxx.setPack("start");
-		hboxx.appendChild(contentTypeLabel);
+		hboxx.appendChild(lblContentType);
 		hboxx.appendChild(contentType.getComponent());
 
 		Vbox vbox = new Vbox();
@@ -132,8 +141,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 		descBox.setAlign("center");
 		descBox.setPack("start");
 
-		descBox.appendChild(descLabel);
-		descBox.appendChild(descText);
+		descBox.appendChild(lblDesc);
+		descBox.appendChild(txtDesc);
 
 		dmsContentType.setStyle("padding: 10px");
 		dmsContentType.appendChild(hboxx);
@@ -141,8 +150,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 		Hbox hbox = new Hbox();
 		hbox.setAlign("center");
 		hbox.setPack("start");
-		hbox.appendChild(fileLabel);
-		hbox.appendChild(fileButton);
+		hbox.appendChild(lblFile);
+		hbox.appendChild(fileUploadButton);
 
 		parameterPanel.setStyle("padding: 10px");
 		parameterPanel.appendChild(hbox);
@@ -155,10 +164,10 @@ public class WUploadContent extends Window implements EventListener<Event>
 		mainLayout.appendChild(south);
 		south.appendChild(confirmPanel);
 
-		fileButton.setUpload(AdempiereWebUI.getUploadSetting());
-		fileButton.addEventListener(Events.ON_UPLOAD, this);
+		fileUploadButton.setUpload(AdempiereWebUI.getUploadSetting());
+		fileUploadButton.addEventListener(Events.ON_UPLOAD, this);
 		confirmPanel.addActionListener(Events.ON_CLICK, this);
-		fileButton.setLabel("-");
+		fileUploadButton.setLabel("-");
 		addEventListener(Events.ON_UPLOAD, this);
 		AEnv.showCenterScreen(this);
 	}
@@ -179,31 +188,19 @@ public class WUploadContent extends Window implements EventListener<Event>
 			if (contentType.getValue() == null || (Integer) contentType.getValue() == 0)
 				throw new WrongValueException(contentType.getComponent(), fillMandatory);
 
-			if (fileButton.getLabel().equalsIgnoreCase("-"))
-				throw new WrongValueException(fileButton, fillMandatory);
+			if (fileUploadButton.getLabel().equalsIgnoreCase("-"))
+				throw new WrongValueException(fileUploadButton, fillMandatory);
 
 			File uploadedDocument = null;
-			int fileNo = 0;
-			if (mdms_Content.getParentURL() == null)
-				uploadedDocument = new File(System.getProperty("user.dir") + File.separator + mdms_Content.getName()
+			if (mdmsContent.getParentURL() == null)
+				uploadedDocument = new File(System.getProperty("user.dir") + File.separator + mdmsContent.getName()
 						+ File.separator + media.getName());
 			else
-				uploadedDocument = new File(System.getProperty("user.dir") 
-							+ mdms_Content.getParentURL() + File.separator + mdms_Content.getName() + File.separator
-							+ media.getName());
+				uploadedDocument = new File(System.getProperty("user.dir") + mdmsContent.getParentURL()
+						+ File.separator + mdmsContent.getName() + File.separator + media.getName());
 
-			while (uploadedDocument.exists() && !uploadedDocument.isDirectory())
-			{
-				fileNo++;
-				String newName = uploadedDocument.getName().replace(".", "(" + fileNo + ").");
-
-				if (mdms_Content.getParentURL() == null)
-					uploadedDocument = new File(File.separator + mdms_Content.getName() + File.separator + newName);
-				else
-					uploadedDocument = new File(System.getProperty("user.dir") + File.separator
-							+ mdms_Content.getParentURL() + File.separator + newName);
-
-			}
+			if (uploadedDocument.exists())
+				uploadedDocument = new File(getUniqueFilename(uploadedDocument.getAbsolutePath()));
 
 			FileOutputStream fos = new FileOutputStream(uploadedDocument);
 			fos.write(media.getByteData());
@@ -213,15 +210,15 @@ public class WUploadContent extends Window implements EventListener<Event>
 			{
 				dmsContent = new MDMS_Content(Env.getCtx(), 0, null);
 				dmsContent.setName(uploadedDocument.getName());
-				dmsContent.setDescription(descText.getValue());
-				dmsContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeId(media));
+				dmsContent.setDescription(txtDesc.getValue());
+				dmsContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(media));
 				dmsContent.setDMS_Status_ID(DmsUtility.getStatusID());
 				dmsContent.setDMS_ContentType_ID((Integer) contentType.getValue());
 				dmsContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
-				if (mdms_Content.getParentURL() == null)
-					dmsContent.setParentURL(File.separator + mdms_Content.getName());
+				if (mdmsContent.getParentURL() == null)
+					dmsContent.setParentURL(File.separator + mdmsContent.getName());
 				else
-					dmsContent.setParentURL(mdms_Content.getParentURL() + File.separator + mdms_Content.getName());
+					dmsContent.setParentURL(mdmsContent.getParentURL() + File.separator + mdmsContent.getName());
 				dmsContent.saveEx();
 
 				ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator();
@@ -229,10 +226,9 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 				MDMS_Association dmsAssociation = new MDMS_Association(Env.getCtx(), 0, null);
 				dmsAssociation.setDMS_Content_ID(dmsContent.getDMS_Content_ID());
-				dmsAssociation.setDMS_Content_Related_ID(mdms_Content.getDMS_Content_ID());
+				dmsAssociation.setDMS_Content_Related_ID(mdmsContent.getDMS_Content_ID());
 				dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionID());
 				dmsAssociation.saveEx();
-
 			}
 			catch (Exception ex)
 			{
@@ -240,7 +236,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 				throw new AdempiereException("Upload Content Failure :" + ex.getLocalizedMessage());
 			}
 
-			wDocumentViewer.onOk(isGridButton, mdms_Content);
+			wDocumentViewer.onOk(isGridButton, mdmsContent);
 
 			this.detach();
 		}
@@ -255,13 +251,34 @@ public class WUploadContent extends Window implements EventListener<Event>
 		try
 		{
 			media = new AMedia(document.getName(), null, null, document.getByteData());
-			fileButton.setLabel(media.getName());
+			fileUploadButton.setLabel(media.getName());
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Upload Content Failure: " + e.getLocalizedMessage());
 			throw new AdempiereException("Upload Content Failure: " + e.getLocalizedMessage());
 		}
+	}
+
+	private String getUniqueFilename(String fullPath)
+	{
+		File document = new File(fullPath);
+
+		if (document.exists())
+		{
+			String filename = document.getName();
+			String path = fullPath.substring(0, fullPath.length() - filename.length());
+			String filenameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.lastIndexOf("."));
+			String ext = FilenameUtils.getExtension(document.getName());
+			int n = 1;
+			do
+			{
+				fullPath = path + filenameWOExt + "(" + n++ + ")." + ext;
+				document = new File(fullPath);
+			}
+			while (document.exists());
+		}
+		return fullPath;
 	}
 
 }

@@ -68,4 +68,20 @@ public class Utils
 		}
 		return contentManager;
 	}
+
+	public static IThumbnailProvider getThumbnailProvider(int Ad_Client_ID)
+	{
+		List<IThumbnailProviderFactory> factories = Service.locator().list(IThumbnailProviderFactory.class)
+				.getServices();
+		IThumbnailProvider thumbnailProvider = null;
+
+		for (IThumbnailProviderFactory factory : factories)
+		{
+			thumbnailProvider = factory.get(Ad_Client_ID);
+
+			if (thumbnailProvider != null)
+				break;
+		}
+		return thumbnailProvider;
+	}
 }

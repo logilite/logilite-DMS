@@ -8,7 +8,7 @@ public class RelationalContentManagerProvider implements IContentManagerProvider
 	@Override
 	public IContentManager get(String key)
 	{
-		if(key.equalsIgnoreCase(ContentManager.key))
+		if(key.equalsIgnoreCase(ContentManager.KEY))
 			return new ContentManager();
 		else
 			return null;

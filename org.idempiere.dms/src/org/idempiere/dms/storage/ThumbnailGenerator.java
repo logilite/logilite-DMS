@@ -30,11 +30,11 @@ import com.sun.pdfview.PDFPage;
 public class ThumbnailGenerator implements IThumbnailGenerator
 {
 
-	private static CLogger	log	= CLogger.getCLogger(ThumbnailGenerator.class);
+	private static CLogger	log				= CLogger.getCLogger(ThumbnailGenerator.class);
 
 	I_AD_StorageProvider	provider;
 	String					baseDir;
-	ArrayList<File> thumbnailsFiles = null;
+	ArrayList<File>			thumbnailsFiles	= null;
 
 	@Override
 	public void init(I_AD_StorageProvider storageProvider)
@@ -44,7 +44,7 @@ public class ThumbnailGenerator implements IThumbnailGenerator
 	}
 
 	@Override
-	public ArrayList<File> getThumbnails(File document,MDMS_Content content)
+	public ArrayList<File> getThumbnails(File document, MDMS_Content content)
 	{
 		if (DmsUtility.accept(document))
 		{
@@ -110,38 +110,12 @@ public class ThumbnailGenerator implements IThumbnailGenerator
 				{
 					Image image = ImageIO.read(document);
 
-					BufferedImage thumbnailImage150px = new BufferedImage(150, 150, BufferedImage.TYPE_INT_RGB);
-					BufferedImage thumbnailImage300px = new BufferedImage(300, 300, BufferedImage.TYPE_INT_RGB);
-					BufferedImage thumbnailImage500px = new BufferedImage(500, 500, BufferedImage.TYPE_INT_RGB);
-
-					Graphics2D graphics2D = thumbnailImage150px.createGraphics();
-					graphics2D.setBackground(Color.WHITE);
-					graphics2D.setPaint(Color.WHITE);
-					graphics2D.fillRect(0, 0, 150, 150);
-					graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-							RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-					graphics2D.drawImage(image, 0, 0, 150, 150, null);
+					BufferedImage thumbnailImage150px = DmsUtility.convThumbtoBufferedImage(document, "150");
+					BufferedImage thumbnailImage300px = DmsUtility.convThumbtoBufferedImage(document, "300");
+					BufferedImage thumbnailImage500px = DmsUtility.convThumbtoBufferedImage(document, "500");
 
 					ImageIO.write(thumbnailImage150px, "jpg", img150pxfile);
-
-					graphics2D = thumbnailImage300px.createGraphics();
-					graphics2D.setBackground(Color.WHITE);
-					graphics2D.setPaint(Color.WHITE);
-					graphics2D.fillRect(0, 0, 300, 300);
-					graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-							RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-					graphics2D.drawImage(image, 0, 0, 300, 300, null);
-
 					ImageIO.write(thumbnailImage300px, "jpg", img300pxfile);
-
-					graphics2D = thumbnailImage500px.createGraphics();
-					graphics2D.setBackground(Color.WHITE);
-					graphics2D.setPaint(Color.WHITE);
-					graphics2D.fillRect(0, 0, 500, 500);
-					graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-							RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-					graphics2D.drawImage(image, 0, 0, 500, 500, null);
-
 					ImageIO.write(thumbnailImage500px, "jpg", img500pxfile);
 
 					thumbnailsFiles.add(img150pxfile);

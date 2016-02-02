@@ -2,6 +2,7 @@ package org.idempiere.dms.factories;
 
 import java.io.File;
 
+import org.compiere.model.I_AD_StorageProvider;
 import org.idempiere.model.I_DMS_Content;
 
 /**
@@ -11,5 +12,5 @@ import org.idempiere.model.I_DMS_Content;
 public interface IContentEditor {
 	public void setFile(File file);
 	public void setContent(I_DMS_Content content);
-	public void init();
+	void init(I_AD_StorageProvider storageProvider);
 }

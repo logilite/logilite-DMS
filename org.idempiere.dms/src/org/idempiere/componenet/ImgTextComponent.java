@@ -1,6 +1,7 @@
 package org.idempiere.componenet;
 
 import org.adempiere.webui.component.Label;
+import org.adempiere.webui.component.Menupopup;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.window.FDialog;
 import org.compiere.util.CLogger;
@@ -8,11 +9,13 @@ import org.compiere.util.Env;
 import org.idempiere.model.MDMS_Content;
 import org.idempiere.webui.apps.form.WDocumentViewer;
 import org.zkoss.image.AImage;
+import org.zkoss.zk.ui.AbstractComponent;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Image;
+import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Vbox;
 
 public class ImgTextComponent extends Div implements EventListener<Event>
@@ -31,6 +34,7 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 	private int					dheight;
 	private int					dwidth;
 	private int					dms_content_id		= 0;
+	private Menuitem			menuitem			= null;
 
 	public int getDheight()
 	{
@@ -81,6 +85,7 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 		// this.setStyle("border:1px solid black;");
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
+		this.addEventListener(Events.ON_RIGHT_CLICK, this);
 
 		ZkCssHelper.appendStyle(this, "text-align: center");
 	}
@@ -106,8 +111,23 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 		}
 		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()))
 		{
-			WDocumentViewer.previous_dmsContent = WDocumentViewer.mdms_content;
-			WDocumentViewer.mdms_content = new MDMS_Content(Env.getCtx(), dms_content_id, null);
+			WDocumentViewer.previousDmsContent = WDocumentViewer.mainDmsContent;
+			WDocumentViewer.mainDmsContent = new MDMS_Content(Env.getCtx(), dms_content_id, null);
+		}
+		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
+				&& event.getTarget().getClass() == ImgTextComponent.class)
+		{
+			Menupopup popup = new Menupopup();
+			popup.setPage(this.getPage());
+
+			menuitem = new Menuitem("Link Content");
+			menuitem.addEventListener(Events.ON_CLICK, this);
+			popup.appendChild(menuitem);
+			this.setContext(popup);
+		}
+		else if (event.getTarget().equals(menuitem))
+		{
+			FDialog.warn(0, "hello");
 		}
 
 	}

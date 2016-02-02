@@ -1,7 +1,6 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
@@ -33,20 +32,22 @@ import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.WListbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.editor.WSearchEditor;
+import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.panel.CustomForm;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
+import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MStorageProvider;
+import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.idempiere.componenet.ImgTextComponent;
 import org.idempiere.dms.storage.DmsUtility;
-import org.idempiere.form.DocumentViewer;
 import org.idempiere.model.MDMS_Content;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
@@ -58,63 +59,74 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
-import org.zkoss.zul.Iframe;
-import org.zkoss.zul.Space;
 
-public class WDocumentViewer extends DocumentViewer implements EventListener<Event>
+public class WDocumentViewer extends ADForm implements EventListener<Event>
 {
 
 	private static final long	serialVersionUID	= -6813481516566180243L;
-	private CustomForm			form				= new CustomForm();
-	private Tabbox				tabbox				= new Tabbox();
-	private Tabs				tabs				= new Tabs();
-	private Tabpanels			tabpanels			= new Tabpanels();
-	private Grid				grid				= GridFactory.newGridLayout();
-	Tab							tabView				= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
-	Tabpanel					tabViewPanel		= new Tabpanel();
+	public static CLogger		log					= CLogger.getCLogger(WDocumentViewer.class);
 
-	private Cell				griddocumentCell	= new Cell();
+	private CustomForm			form				= new CustomForm();
+	public Tabbox				tabBox				= new Tabbox();
+	private Tabs				tabs				= new Tabs();
+	public Tab					tabView				= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
+	public Tabpanels			tabPanels			= new Tabpanels();
+	public Tabpanel				tabViewPanel		= new Tabpanel();
+	private Grid				grid				= GridFactory.newGridLayout();
 
 	// View Result Tab
-	private Searchbox			vsearcBox			= new Searchbox();
-	private Label				advanceSearchLabel	= new Label(Msg.translate(Env.getCtx(), "Advance Search"));
-	private Label				nameLabel			= new Label(Msg.translate(Env.getCtx(), "Name"));
-	private Textbox				nametextbox			= new Textbox();
-	private Label				categoryLabel		= new Label(Msg.translate(Env.getCtx(), "Category"));
-	private Listbox				categoryListbox		= new Listbox();
-	private Label				createdVLabel		= new Label(Msg.translate(Env.getCtx(), "Created:"));
-	private Datebox				createdVTo			= new Datebox();
-	private Datebox				createdVFrom		= new Datebox();
-	private Label				updatedvLabel		= new Label(Msg.translate(Env.getCtx(), "Updated:"));
-	private Datebox				updatedVTo			= new Datebox();
-	private Datebox				updatedVFrom		= new Datebox();
-	private Label				contentmetaLabel	= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
-	private Label				reportdateLabel		= new Label(Msg.translate(Env.getCtx(), "Report Date"));
-	private Datebox				reportVTo			= new Datebox();
-	private Datebox				reportVFrom			= new Datebox();
-	private Label				bPartnerLabel		= new Label(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
-	private WSearchEditor		bPartnerField		= null;
+	private Searchbox			vsearchBox			= new Searchbox();
+	private Label				lblAdvanceSearch	= new Label(Msg.translate(Env.getCtx(), "Advance Search"));
+	private Label				lblDocumentName		= new Label(Msg.translate(Env.getCtx(), "Name"));
+	private Label				lblCategory			= new Label(Msg.translate(Env.getCtx(), "Category"));
+	private Label				lblCreated			= new Label(Msg.translate(Env.getCtx(), "Created"));
+	private Label				lblUpdated			= new Label(Msg.translate(Env.getCtx(), "Updated"));
+	private Label				lblContentMeta		= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
+	private Label				lblReportDate		= new Label(Msg.translate(Env.getCtx(), "Report Date"));
+	private Label				lblBPartner			= new Label(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
+
+	private Datebox				dbCreatedTo			= new Datebox();
+	private Datebox				dbCreatedFrom		= new Datebox();
+	private Datebox				dbUpdated			= new Datebox();
+	private Datebox				dbUpdatedFrom		= new Datebox();
+	private Datebox				dbReportTo			= new Datebox();
+	private Datebox				dbReportFrom		= new Datebox();
+
 	private ConfirmPanel		confirmPanel		= new ConfirmPanel();
+
 	private Button				clearButton			= confirmPanel.createButton(ConfirmPanel.A_RESET);
 	private Button				searchButton		= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
 	private Button				closetabButton		= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 	private Button				gridViewButton		= confirmPanel.createButton(ConfirmPanel.A_CUSTOMIZE);
-	private boolean				isGridButton		= true;
+
+	private Textbox				txtDocumentName		= new Textbox();
+	private Listbox				lstboxCategory		= new Listbox();
+
+	public boolean				isGridButton		= true;
+	private WSearchEditor		seBPartnerField		= null;
 
 	// tabData
-
 	private WListbox			xMiniTable			= ListboxFactory.newDataTable();
 
 	// create Directory
 	private Button				createDirButton		= new Button();
 	private Button				uploadContentButton	= new Button();
-	public static MDMS_Content	mdms_content;
-	public static MDMS_Content	previous_dmsContent;
-	public static MDMS_Content	next_dmsContent;
-	private MStorageProvider	storageProvider;
 	private Button				backButton			= new Button();
 	private Button				nextButton			= new Button();
+
 	private Label				positionInfo		= new Label();
+
+
+	public static MDMS_Content	mainDmsContent;
+	public static MDMS_Content	previousDmsContent;
+	public static MDMS_Content	nextDmsContent;
+
+	public static final String	SQL_GET_IMAGE_ID	= "SELECT AD_Image_ID FROM AD_Image Where name ilike ? ";
+	public static final String	IMAGE_DOWNLOAD		= "Download";
+	public static final String	IMAGE_DIRECTORY		= "Directory";
+
+	private MStorageProvider	storageProvider;
+	private ImgTextComponent	cstmComponenet		= null;
 
 	public WDocumentViewer()
 	{
@@ -124,10 +136,8 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 	private void dynInit()
 	{
 		int dms_Content_ID;
-		MLookup lookup = MLookupFactory.get(Env.getCtx(), m_WindowNo, 0, 2762, DisplayType.Search);
-		bPartnerField = new WSearchEditor(lookup, Msg.translate(Env.getCtx(), "C_BPartner_ID"), "", true, false, true);
-		previous_dmsContent = null;
-		next_dmsContent = null;
+		previousDmsContent = null;
+		nextDmsContent = null;
 		dms_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE parentUrl IS NULL");
 
 		if (dms_Content_ID == -1)
@@ -135,19 +145,26 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 			try
 			{
 				storageProvider = DmsUtility.getStorageProvider(Env.getAD_Client_ID(Env.getCtx()));
+
+				if (storageProvider == null)
+				{
+					FDialog.warn(0, "DMS Storage Provider is not define on client Info");
+					throw new AdempiereException("Storage provider is not define");
+				}
 				File rootDir = new File(storageProvider.getFolder());
 
 				if (!rootDir.exists())
 					rootDir.mkdirs();
-				mdms_content = new MDMS_Content(Env.getCtx(), 0, null);
-				mdms_content.setName(storageProvider.getFolder());
-				mdms_content.setValue(rootDir.getName());
-				mdms_content.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
-				mdms_content.setDMS_MimeType_ID(DmsUtility.getMimeTypeId(null));
-				mdms_content.setDMS_Status_ID(DmsUtility.getStatusID());
+
+				mainDmsContent = new MDMS_Content(Env.getCtx(), 0, null);
+				mainDmsContent.setName(storageProvider.getFolder());
+				mainDmsContent.setValue(rootDir.getName());
+				mainDmsContent.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
+				mainDmsContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(null));
+				mainDmsContent.setDMS_Status_ID(DmsUtility.getStatusID());
 				// mdms_content.setM_AttributeSetInstance_ID(DmsUtility.getAttributeSet_ID());
-				mdms_content.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
-				mdms_content.saveEx();
+				mainDmsContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
+				mainDmsContent.saveEx();
 			}
 			catch (Exception e)
 			{
@@ -157,18 +174,18 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		}
 		else
 		{
-			mdms_content = new MDMS_Content(Env.getCtx(), dms_Content_ID, null);
+			mainDmsContent = new MDMS_Content(Env.getCtx(), dms_Content_ID, null);
 		}
 
 	}
 
 	private void jbInit() throws Exception
 	{
-		tabbox.setWidth("100%");
-		tabbox.setHeight("100%");
-		tabbox.appendChild(tabs);
-		tabbox.appendChild(tabpanels);
-		tabbox.addEventListener(Events.ON_SELECT, this);
+		tabBox.setWidth("100%");
+		tabBox.setHeight("100%");
+		tabBox.appendChild(tabs);
+		tabBox.appendChild(tabPanels);
+		tabBox.addEventListener(Events.ON_SELECT, this);
 
 		// View Result Tab
 
@@ -176,22 +193,22 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		gridView.setStyle("margin:0; padding:0; ");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
-
+		gridView.setZclass("none");
 		Columns columns = new Columns();
 		gridView.appendChild(columns);
 
 		Column column = new Column();
-		column.setHflex("min");
+		column.setWidth("100px");
 		column.setAlign("left");
 		columns.appendChild(column);
 
 		column = new Column();
-		column.setHflex("1");
+		column.setWidth("130px");
 		column.setAlign("center");
 		columns.appendChild(column);
 
 		column = new Column();
-		column.setHflex("min");
+		column.setWidth("120px");
 		column.setAlign("right");
 		columns.appendChild(column);
 
@@ -201,138 +218,109 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		Row row = new Row();
 		rows.appendChild(row);
 
-		// row.appendChild(backButton);
 		backButton.setImage(ThemeManager.getThemeResource("images/wfBack24.png"));
 		backButton.setTooltiptext("Previous Record");
 
-		// row.appendChild(positionInfo);
 		positionInfo.setHflex("1");
 		ZkCssHelper.appendStyle(positionInfo, "font-weight: bold;");
 		ZkCssHelper.appendStyle(positionInfo, "align: center;");
 
-		// row.appendChild(nextButton);
 		nextButton.setImage(ThemeManager.getThemeResource("images/wfNext24.png"));
 		nextButton.setTooltiptext("Next Record");
 		backButton.addEventListener(Events.ON_CLICK, this);
 		nextButton.addEventListener(Events.ON_CLICK, this);
 
-		Hbox navigationBox = new Hbox();
-		navigationBox.appendChild(backButton);
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(positionInfo);
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(new Space());
-		navigationBox.appendChild(nextButton);
+		row.appendChild(backButton);
+		row.appendChild(positionInfo);
+		row.appendChild(nextButton);
 
-		Cell navigationCell = new Cell();
-		navigationCell.setColspan(3);
-		navigationCell.setAlign("center");
-		navigationCell.appendChild(navigationBox);
-		row.appendChild(navigationCell);
+		row = new Row();
+		rows.appendChild(row);
 
-		Hbox btnhbox = new Hbox();
-		btnhbox.appendChild(createDirButton);
-		btnhbox.appendChild(uploadContentButton);
-		btnhbox.appendChild(gridViewButton);
+		row.appendChild(createDirButton);
+		row.appendChild(uploadContentButton);
+		row.appendChild(gridViewButton);
 
-		Cell btnCell = new Cell();
-		btnCell.setColspan(3);
-		btnCell.setRowspan(1);
-		btnCell.setAlign("center");
-		btnCell.appendChild(btnhbox);
-
-		createDirButton.setImage("/home/dhaval/Desktop/1.png");
+		createDirButton.setImage(ThemeManager.getThemeResource("images/Folder24.png"));
 		createDirButton.setTooltiptext("Create Directory");
 		createDirButton.addEventListener(Events.ON_CLICK, this);
 
-		uploadContentButton.setImage("/home/dhaval/Desktop/1.png");
+		uploadContentButton.setImage(ThemeManager.getThemeResource("images/Parent24.png"));
 		uploadContentButton.setTooltiptext("Upload Content");
 		gridViewButton.addActionListener(this);
 		uploadContentButton.addEventListener(Events.ON_CLICK, this);
 
 		row = new Row();
-		row.appendChild(btnCell);
-		rows.appendChild(row);
-
-		row = new Row();
 		Cell searchCell = new Cell();
 		searchCell.setRowspan(1);
 		searchCell.setColspan(3);
-		vsearcBox.setWidth("100%");
-		searchCell.appendChild(vsearcBox);
+		searchCell.appendChild(vsearchBox);
 		rows.appendChild(row);
 		row.appendChild(searchCell);
-		vsearcBox.setButtonImage(ThemeManager.getThemeResource("images/find16.png"));
+		vsearchBox.getButton().setImage(ThemeManager.getThemeResource("images/Find16.png"));
 
 		row = new Row();
 		rows.appendChild(row);
-		row.appendCellChild(advanceSearchLabel);
-		advanceSearchLabel.setHflex("1");
-		ZkCssHelper.appendStyle(advanceSearchLabel, "font-weight: bold;");
+		row.appendCellChild(lblAdvanceSearch);
+		lblAdvanceSearch.setHflex("1");
+		ZkCssHelper.appendStyle(lblAdvanceSearch, "font-weight: bold;");
 
 		row = new Row();
 		rows.appendChild(row);
-		ZkCssHelper.appendStyle(nameLabel, "font-weight: bold;");
+		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
 		Cell nameCell = new Cell();
 		nameCell.setColspan(2);
-		row.appendChild(nameLabel);
-		nameCell.appendChild(nametextbox);
+		row.appendChild(lblDocumentName);
+		nameCell.appendChild(txtDocumentName);
 		row.appendChild(nameCell);
-		nametextbox.setWidth("100%");
+		txtDocumentName.setWidth("100%");
 
 		row = new Row();
 		rows.appendChild(row);
 		row.setAlign("right");
-		row.appendChild(categoryLabel);
+		row.appendChild(lblCategory);
 		Cell categoryListCell = new Cell();
 		categoryListCell.setColspan(2);
-		categoryListbox.setMold("select");
-		categoryListCell.appendChild(categoryListbox);
-		categoryListbox.setWidth("100%");
+		lstboxCategory.setMold("select");
+		categoryListCell.appendChild(lstboxCategory);
+		lstboxCategory.setWidth("100%");
 		row.appendChild(categoryListCell);
 
 		row = new Row();
 		rows.appendChild(row);
-		row.appendChild(createdVLabel);
+		row.appendChild(lblCreated);
 		Hbox hbox = new Hbox();
-		hbox.appendChild(createdVTo);
-		hbox.appendChild(createdVFrom);
+		hbox.appendChild(dbCreatedFrom);
+		hbox.appendChild(dbCreatedTo);
 
 		Cell createdCell = new Cell();
 		createdCell.setColspan(2);
 		createdCell.appendChild(hbox);
-		row.appendCellChild(createdCell);
+		row.appendChild(createdCell);
 
 		row = new Row();
 		rows.appendChild(row);
-		row.appendChild(updatedvLabel);
+		row.appendChild(lblUpdated);
 		hbox = new Hbox();
-		hbox.appendChild(updatedVTo);
-		hbox.appendChild(updatedVFrom);
+		hbox.appendChild(dbUpdatedFrom);
+		hbox.appendChild(dbUpdated);
 
 		Cell updatedCell = new Cell();
 		updatedCell.setColspan(2);
 		updatedCell.appendChild(hbox);
-		row.appendCellChild(updatedCell);
+		row.appendChild(updatedCell);
 
 		row = new Row();
 		rows.appendChild(row);
-		row.appendChild(contentmetaLabel);
-		ZkCssHelper.appendStyle(contentmetaLabel, "font-weight: bold;");
+		row.appendChild(lblContentMeta);
+		ZkCssHelper.appendStyle(lblContentMeta, "font-weight: bold;");
 
 		row = new Row();
 		rows.appendChild(row);
-		row.appendCellChild(reportdateLabel);
+		row.appendChild(lblReportDate);
 		hbox = new Hbox();
-		hbox.appendChild(reportVTo);
-		hbox.appendChild(reportVFrom);
+		hbox.appendChild(dbReportFrom);
+		hbox.appendChild(dbReportTo);
 
 		Cell reportingCell = new Cell();
 		reportingCell.setColspan(2);
@@ -341,16 +329,20 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 
 		row = new Row();
 		rows.appendChild(row);
-		row.appendChild(bPartnerLabel);
+		row.appendChild(lblBPartner);
 
+		MLookup lookup = MLookupFactory.get(Env.getCtx(), m_WindowNo, 0, 2762, DisplayType.Search);
+		seBPartnerField = new WSearchEditor(lookup, Msg.translate(Env.getCtx(), "C_BPartner_ID"), "", true, false, true);
 		Cell bpartnercell = new Cell();
 		bpartnercell.setColspan(2);
-		bpartnercell.appendChild(bPartnerField.getComponent());
+		bpartnercell.appendChild(seBPartnerField.getComponent());
 		row.appendChild(bpartnercell);
 
 		row = new Row();
 		rows.appendChild(row);
 		hbox = new Hbox();
+
+		clearButton.addEventListener(Events.ON_CLICK, this);
 		hbox.appendChild(clearButton);
 		hbox.appendChild(searchButton);
 		hbox.appendChild(closetabButton);
@@ -365,27 +357,34 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 		row.appendChild(cell);
 
 		Tabpanel tabViewPanel = new Tabpanel();
+		tabViewPanel.setHeight("100%");
+		tabViewPanel.setWidth("100%");
 		Hbox boxViewSeparator = new Hbox();
 		boxViewSeparator.setWidth("100%");
 		boxViewSeparator.setHeight("100%");
 		cell = new Cell();
-		griddocumentCell.setWidth("70%");
-		griddocumentCell.appendChild(grid);
-		boxViewSeparator.appendChild(griddocumentCell);
+		cell.setWidth("60%");
+		cell.appendChild(grid);
+		boxViewSeparator.appendChild(cell);
+
 		cell = new Cell();
-		cell.setWidth("5%");
+		cell.setWidth("35%");
+		gridView.setWidth("100%");
 		cell.appendChild(gridView);
 		boxViewSeparator.appendChild(cell);
 		tabViewPanel.appendChild(boxViewSeparator);
 
-		grid.setHeight("100%");
-		grid.setWidth("100%");
+		grid.setHeight("680px");
+		grid.setWidth("950px");
 		grid.setAutopaging(true);
+		grid.setZclass("none");
+		gridView.setZclass("none");
+
 		tabs.appendChild(tabView);
-		tabpanels.appendChild(tabViewPanel);
+		tabPanels.appendChild(tabViewPanel);
 		this.setHeight("100%");
 		this.setWidth("100%");
-		this.appendChild(tabbox);
+		this.appendChild(tabBox);
 	}
 
 	@Override
@@ -393,43 +392,39 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 	{
 		log.info(event.getName());
 
-		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
+		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass() == ImgTextComponent.class)
 		{
-			SessionManager.getAppDesktop().closeActiveWindow();
-		}
-		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()))
-		{
-			if (mdms_content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+			if (mainDmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
-				renderViewer(isGridButton, mdms_content);
+				renderViewer(isGridButton, mainDmsContent);
 			}
-			else if (mdms_content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
+			else if (mainDmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 			{
-				File document_preview = null;
+				File documentToPreview = null;
 
-				if (mdms_content.getParentURL() != null)
+				if (mainDmsContent.getParentURL() != null)
 				{
-					document_preview = new File(System.getProperty("user.dir") + File.separator
-							+ mdms_content.getParentURL() + File.separator + mdms_content.getName());
+					documentToPreview = new File(System.getProperty("user.dir") + File.separator
+							+ mainDmsContent.getParentURL() + File.separator + mainDmsContent.getName());
 
-					if (DmsUtility.accept(document_preview))
+					if (DmsUtility.accept(documentToPreview))
 					{
-						if (document_preview.exists())
+						if (documentToPreview.exists())
 						{
-							Tab tabData = new Tab(mdms_content.getName());
+							Tab tabData = new Tab(mainDmsContent.getName());
 							tabData.setClosable(true);
 							tabs.appendChild(tabData);
-							tabbox.setSelectedTab(tabData);
-
+							tabBox.setSelectedTab(tabData);
 							Tabpanel tabDataPanel = new Tabpanel();
-							showDataTab(tabDataPanel, document_preview);
-							mdms_content = previous_dmsContent;
+							new WDocumentEditor(this, documentToPreview, tabDataPanel, mainDmsContent);
+							mainDmsContent = previousDmsContent;
 						}
 					}
 					else
 					{
-						AMedia media = new AMedia(document_preview, "application/octet-stream", null);
+						AMedia media = new AMedia(documentToPreview, "application/octet-stream", null);
 						Filedownload.save(media);
+						mainDmsContent = previousDmsContent;
 					}
 				}
 			}
@@ -441,45 +436,47 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 			else
 				isGridButton = true;
 
-			renderViewer(isGridButton, mdms_content);
+			renderViewer(isGridButton, mainDmsContent);
 
 		}
 		else if (event.getTarget().equals(createDirButton))
 		{
-			CreateDirectoryForm form = new CreateDirectoryForm(mdms_content, this, isGridButton);
+			new CreateDirectoryForm(mainDmsContent, this, isGridButton);
 		}
 		else if (event.getTarget().equals(uploadContentButton))
 		{
-			WUploadContent uploadContent = new WUploadContent(mdms_content, this, isGridButton);
+			new WUploadContent(mainDmsContent, this, isGridButton);
 		}
 		else if (event.getTarget().equals(backButton))
 		{
-			next_dmsContent = mdms_content;
+			nextDmsContent = mainDmsContent;
 			int DMS_Content_ID = DB.getSQLValue(null,
 					"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
-					mdms_content.getDMS_Content_ID());
+					mainDmsContent.getDMS_Content_ID());
 
 			if (DMS_Content_ID == -1)
 				backButton.setEnabled(false);
 			else
 			{
-				mdms_content = new MDMS_Content(Env.getCtx(), DMS_Content_ID, null);
-				renderViewer(isGridButton, mdms_content);
+				mainDmsContent = new MDMS_Content(Env.getCtx(), DMS_Content_ID, null);
+				renderViewer(isGridButton, mainDmsContent);
 				nextButton.setEnabled(true);
-				if (mdms_content.getParentURL() == null)
+				if (mainDmsContent.getParentURL() == null)
 					backButton.setEnabled(false);
 			}
 		}
 		else if (event.getTarget().equals(nextButton))
 		{
-			if (next_dmsContent == null)
-				nextButton.setEnabled(false);
-			else
+			if (nextDmsContent != null)
 			{
-				mdms_content = next_dmsContent;
-				renderViewer(isGridButton, mdms_content);
-				nextButton.setEnabled(false);
+				mainDmsContent = nextDmsContent;
+				renderViewer(isGridButton, mainDmsContent);
 			}
+			nextButton.setEnabled(false);
+		}
+		else if (event.getTarget().getId().equals(confirmPanel.A_RESET))
+		{
+			clearComponenets();
 		}
 	}
 
@@ -493,15 +490,22 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 	{
 		try
 		{
-			dynInit();
 			jbInit();
-			renderViewer(isGridButton, mdms_content);
+			dynInit();
+			renderViewer(isGridButton, mainDmsContent);
+
 			backButton.setEnabled(false);
 			nextButton.setEnabled(false);
+		}
+		catch (IllegalArgumentException e)
+		{
+			log.log(Level.SEVERE, "Thumbnai not found for directory or document.");
+			throw new AdempiereException("Thumbnai not found for directory or document: " + e.getLocalizedMessage());
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Render Componenet Problem");
+			throw new AdempiereException("Render Componenet Problem " + e.getLocalizedMessage());
 		}
 		SessionManager.getAppDesktop();
 		setMode(Mode.EMBEDDED);
@@ -527,19 +531,17 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 
 		if (documents.length > 0)
 		{
-			BigDecimal content_id;
+			BigDecimal Content_ID;
 			int i = 0;
 			MDMS_Content dmsContent = null;
 			File document_thumbFile = null;
 
-			List<List<Object>> dms_association_ids = DB.getSQLArrayObjectsEx(null,
+			List<List<Object>> DMS_Association_IDS = DB.getSQLArrayObjectsEx(null,
 					"SELECT DMS_Content_ID FROM DMS_Documents_V WHERE DMS_Content_Related_ID = ?",
 					mdms_Content.getDMS_Content_ID());
 
-			if (dms_association_ids.size() > 0)
+			if (DMS_Association_IDS.size() > 0)
 			{
-				i = 0;
-
 				AImage image = null;
 				String src = null;
 				Row row = null;
@@ -548,10 +550,10 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 				Vector<Vector<Object>> imageData = new Vector<Vector<Object>>();
 				Vector<Object> rowList = null;
 
-				for (List<Object> documentRow : dms_association_ids)
+				for (List<Object> documentRow : DMS_Association_IDS)
 				{
-					content_id = (BigDecimal) documentRow.get(0);
-					dmsContent = new MDMS_Content(Env.getCtx(), content_id.intValue(), null);
+					Content_ID = (BigDecimal) documentRow.get(0);
+					dmsContent = new MDMS_Content(Env.getCtx(), Content_ID.intValue(), null);
 
 					src = System.getProperty("user.dir") + File.separator + "DMS_Thumbnails" + File.separator
 							+ Env.getAD_Client_ID(Env.getCtx()) + File.separator + dmsContent.getDMS_Content_ID()
@@ -576,12 +578,11 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 							int AD_Image_ID = 0;
 							MImage mImage = null;
 							byte[] b = null;
-							if (dmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-								AD_Image_ID = DB.getSQLValue(null,
-										"SELECT AD_Image_ID FROM AD_Image Where name ilike 'Directory'");
-							else
-								AD_Image_ID = DB.getSQLValue(null,
-										"SELECT AD_Image_ID FROM AD_Image Where name ilike 'Download'");
+
+							AD_Image_ID = DB.getSQLValue(null, SQL_GET_IMAGE_ID, ((dmsContent.getContentBaseType()
+									.equals(X_DMS_Content.CONTENTBASETYPE_Directory)) ? IMAGE_DIRECTORY
+									: IMAGE_DOWNLOAD));
+
 							mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
 							b = mImage.getData();
 							image = new AImage("", b);
@@ -589,15 +590,19 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 						else
 							image = new AImage(document_thumbFile);
 
-						if (i % 5 == 0)
+						if (i % 6 == 0)
 						{
 							row = new Row();
 							row.setHeight("150px");
 							rows.appendChild(row);
 						}
-						ImgTextComponent cstmComponenet = new ImgTextComponent(dmsContent.getName(),
-								documents[i].getAbsolutePath(), image, dmsContent.getDMS_Content_ID());
+						cstmComponenet = new ImgTextComponent(dmsContent.getName(), documents[i].getAbsolutePath(),
+								image, dmsContent.getDMS_Content_ID());
+
 						cstmComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
+						cstmComponenet.addEventListener(Events.ON_CLICK, this);
+						cstmComponenet.addEventListener(Events.ON_RIGHT_CLICK, this);
+
 						grid.setSizedByContent(true);
 						cstmComponenet.setDheight(150);
 						cstmComponenet.setDwidth(150);
@@ -645,116 +650,23 @@ public class WDocumentViewer extends DocumentViewer implements EventListener<Eve
 			nextButton.setEnabled(false);
 			backButton.setEnabled(true);
 		}
-		positionInfo.setValue(mdms_content.getName());
+		positionInfo.setValue(mainDmsContent.getName());
 		grid.appendChild(rows);
-		tabbox.setSelectedIndex(0);
+		tabBox.setSelectedIndex(0);
 	}
 
-	public void showDataTab(Tabpanel tabDataPanel, File document_preview)
+	private void clearComponenets()
 	{
-		Cell preview_cell = new Cell();
-
-		Label nameTLabel = new Label("Name:");
-		Label nameTContent = new Label("so-123");
-		Label categoryTLabel = new Label("Category:");
-		Label categoryTContent = new Label("Sales Report");
-		Label statusTLabel = new Label("Status:");
-		Label statusTContent = new Label("Emailed");
-		Label metaTLabel = new Label("Meta");
-		Label reportDateTLabel = new Label("Report Date:");
-		Label reportDateTContent = new Label("10 Oct 2015 ");
-		Label partnerTLabel = new Label("Partner:");
-		Label partnerTContent = new Label("C&W Construction");
-
-		Grid gridData = GridFactory.newGridLayout();
-		gridData.setStyle("margin:0; padding:0;");
-		gridData.makeNoStrip();
-		gridData.setOddRowSclass("even");
-
-		Columns columns = new Columns();
-		gridData.appendChild(columns);
-
-		Column column = new Column();
-		column.setHflex("min");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setHflex("1");
-		column.setAlign("center");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setHflex("min");
-		column.setAlign("right");
-		columns.appendChild(column);
-
-		Rows rows = new Rows();
-		gridData.appendChild(rows);
-
-		Row row = new Row();
-		rows.appendChild(row);
-		row.appendChild(nameTLabel);
-		row.appendChild(nameTContent);
-
-		row = new Row();
-		rows.appendChild(row);
-		row.appendChild(categoryTLabel);
-		row.appendChild(categoryTContent);
-
-		row = new Row();
-		rows.appendChild(row);
-		row.appendChild(statusTLabel);
-		row.appendChild(statusTContent);
-
-		row = new Row();
-		rows.appendChild(row);
-		row.appendChild(metaTLabel);
-		ZkCssHelper.appendStyle(metaTLabel, "font-weight: bold;");
-		row.appendChild(new Space());
-
-		row = new Row();
-		rows.appendChild(row);
-		row.appendChild(reportDateTLabel);
-		row.appendChild(reportDateTContent);
-
-		row = new Row();
-		rows.appendChild(row);
-		row.appendChild(partnerTLabel);
-		row.appendChild(partnerTContent);
-
-		Hbox boxViewSeparator = new Hbox();
-		boxViewSeparator.setWidth("100%");
-		boxViewSeparator.setHeight("100%");
-		preview_cell.setWidth("70%");
-
-		Iframe preview_Content = new Iframe();
-
-		AMedia pdfmedia = null;
-		try
-		{
-			pdfmedia = new AMedia(document_preview, null, null);
-		}
-		catch (FileNotFoundException e)
-		{
-			log.log(Level.SEVERE, "Document cannot be displayed:" + e.getLocalizedMessage());
-			throw new AdempiereException("Document cannot be displayed:" + e.getLocalizedMessage());
-		}
-		preview_Content.setContent(null);
-		preview_Content.setContent(pdfmedia);
-		preview_Content.setWidth("100%");
-		preview_Content.setHeight("100%");
-		preview_cell.appendChild(preview_Content);
-		boxViewSeparator.appendChild(preview_cell);
-		Cell cell = new Cell();
-		cell.setWidth("30%");
-		cell.appendChild(gridData);
-		boxViewSeparator.appendChild(cell);
-		tabDataPanel.appendChild(boxViewSeparator);
-
-		tabpanels.appendChild(tabDataPanel);
-		this.setHeight("100%");
-		this.setWidth("100%");
-		this.appendChild(tabbox);
+		vsearchBox.setText(null);
+		txtDocumentName.setValue(null);
+		lstboxCategory.setValue(null);
+		dbCreatedFrom.setValue(null);
+		dbCreatedTo.setValue(null);
+		dbUpdatedFrom.setValue(null);
+		dbUpdated.setValue(null);
+		dbReportFrom.setValue(null);
+		dbReportTo.setValue(null);
+		seBPartnerField.setValue(null);
 	}
+
 }

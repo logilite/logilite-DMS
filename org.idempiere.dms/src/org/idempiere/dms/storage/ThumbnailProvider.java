@@ -17,7 +17,6 @@ import javax.imageio.ImageIO;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FilenameUtils;
-import org.compiere.model.MStorageProvider;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.idempiere.dms.factories.IThumbnailProvider;
@@ -29,16 +28,13 @@ import com.sun.pdfview.PDFPage;
 public class ThumbnailProvider implements IThumbnailProvider
 {
 
-	private static CLogger		log				= CLogger.getCLogger(ThumbnailProvider.class);
-	private MStorageProvider	storageProvider	= null;
+	private static CLogger	log	= CLogger.getCLogger(ThumbnailProvider.class);
 
 	@Override
 	public String getURL(I_DMS_Content content, String size)
 	{
-		storageProvider = DmsUtility.getStorageProvider(Env.getAD_Client_ID(Env.getCtx()));
-
-		File documentfile = new File(storageProvider.getURL() + File.separator + Env.getAD_Client_ID(Env.getCtx())
-				+ File.separator + content.getDMS_Content_ID());
+		File documentfile = new File(System.getProperty("user.dir") + File.separator + "DMS_Thumbnails"
+				+ File.separator + Env.getAD_Client_ID(Env.getCtx()) + File.separator + content.getDMS_Content_ID());
 
 		if (documentfile.exists() && documentfile.isDirectory())
 		{
@@ -58,10 +54,8 @@ public class ThumbnailProvider implements IThumbnailProvider
 	@Override
 	public File getFile(I_DMS_Content content, String size)
 	{
-		storageProvider = DmsUtility.getStorageProvider(Env.getAD_Client_ID(Env.getCtx()));
-
-		File documentfile = new File(storageProvider.getURL() + File.separator + Env.getAD_Client_ID(Env.getCtx())
-				+ File.separator + content.getDMS_Content_ID());
+		File documentfile = new File(System.getProperty("user.dir") + File.separator + "DMS_Thumbnails"
+				+ File.separator + Env.getAD_Client_ID(Env.getCtx()) + File.separator + content.getDMS_Content_ID());
 
 		if (documentfile.exists() && documentfile.isDirectory())
 		{
@@ -84,7 +78,7 @@ public class ThumbnailProvider implements IThumbnailProvider
 		if (DmsUtility.accept(file))
 		{
 			String rootfolder = System.getProperty("user.dir");
-			File rootFolder = new File(rootfolder + "/DMS_Thumbnails");
+			File rootFolder = new File(rootfolder + File.separator + "DMS_Thumbnails");
 			File clientFolder = new File(rootFolder.getAbsolutePath() + File.separator
 					+ Env.getAD_Client_ID(Env.getCtx()));
 			File contentFolder = new File(clientFolder.getAbsolutePath() + File.separator + content.getDMS_Content_ID());
@@ -127,16 +121,7 @@ public class ThumbnailProvider implements IThumbnailProvider
 			{
 				try
 				{
-					Image image = ImageIO.read(file);
-					BufferedImage thumbnailImage = new BufferedImage(Integer.parseInt(size), Integer.parseInt(size),
-							BufferedImage.TYPE_INT_RGB);
-					Graphics2D graphics2D = thumbnailImage.createGraphics();
-					graphics2D.setBackground(Color.WHITE);
-					graphics2D.setPaint(Color.WHITE);
-					graphics2D.fillRect(0, 0, Integer.parseInt(size), Integer.parseInt(size));
-					graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-							RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-					graphics2D.drawImage(image, 0, 0, Integer.parseInt(size), Integer.parseInt(size), null);
+					BufferedImage thumbnailImage = DmsUtility.convThumbtoBufferedImage(file, size);
 					ImageIO.write(thumbnailImage, "jpg", imgpxfile);
 				}
 				catch (IOException e)
