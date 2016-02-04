@@ -14,8 +14,9 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.idempiere.dms.storage.DmsUtility;
-import org.idempiere.model.MDMS_Association;
-import org.idempiere.model.MDMS_Content;
+import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSAssociationType;
+import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -42,9 +43,9 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private Label					lblDir				= new Label(Msg.translate(Env.getCtx(), "Enter Directory Name"));
 	private Textbox					txtboxDirectory		= new Textbox();
 	private File					file				= null;
-	private MDMS_Content			mdms_content		= null;
+	private MDMSContent			mdms_content		= null;
 
-	public CreateDirectoryForm(MDMS_Content dms_content)
+	public CreateDirectoryForm(MDMSContent dms_content)
 	{
 		try
 		{
@@ -136,7 +137,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				else
 					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists."));
 
-				MDMS_Content content = new MDMS_Content(Env.getCtx(), 0, null);
+				MDMSContent content = new MDMSContent(Env.getCtx(), 0, null);
 				content.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(null));
 				content.setName(dirName);
 				content.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
@@ -153,10 +154,10 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				content.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
 				content.saveEx();
 
-				MDMS_Association dmsAssociation = new MDMS_Association(Env.getCtx(), 0, null);
+				MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
 				dmsAssociation.setDMS_Content_Related_ID(mdms_content.getDMS_Content_ID());
-				dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionType());
+				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
 				dmsAssociation.saveEx();
 				this.detach();
 

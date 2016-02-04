@@ -22,7 +22,7 @@ import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.idempiere.dms.factories.IThumbnailGenerator;
-import org.idempiere.model.MDMS_Content;
+import org.idempiere.model.MDMSContent;
 
 import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
@@ -44,7 +44,7 @@ public class ThumbnailGenerator implements IThumbnailGenerator
 	}
 
 	@Override
-	public ArrayList<File> getThumbnails(File document, MDMS_Content content)
+	public ArrayList<File> getThumbnails(File document, MDMSContent content)
 	{
 		if (DmsUtility.accept(document))
 		{

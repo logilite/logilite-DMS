@@ -44,7 +44,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.idempiere.componenet.ImgTextComponent;
 import org.idempiere.dms.storage.DmsUtility;
-import org.idempiere.model.MDMS_Content;
+import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
@@ -108,9 +108,9 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 
 	private Label					positionInfo		= new Label();
 
-	public static MDMS_Content		currentDMSContent;
-	public static MDMS_Content		previousDmsContent;
-	public static MDMS_Content		nextDmsContent;
+	public static MDMSContent		currentDMSContent;
+	public static MDMSContent		previousDmsContent;
+	public static MDMSContent		nextDmsContent;
 
 	public static final String		SQL_GET_IMAGE_ID	= "SELECT AD_Image_ID FROM AD_Image Where name ilike ? ";
 	public static final String		IMAGE_DOWNLOAD		= "Download";
@@ -152,7 +152,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 				if (!rootDir.exists())
 					rootDir.mkdirs();
 
-				currentDMSContent = new MDMS_Content(Env.getCtx(), 0, null);
+				currentDMSContent = new MDMSContent(Env.getCtx(), 0, null);
 				currentDMSContent.setName(storageProvider.getFolder());
 				currentDMSContent.setValue(rootDir.getName());
 				currentDMSContent.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
@@ -170,7 +170,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 		}
 		else
 		{
-			currentDMSContent = new MDMS_Content(Env.getCtx(), dms_Content_ID, null);
+			currentDMSContent = new MDMSContent(Env.getCtx(), dms_Content_ID, null);
 		}
 
 	}
@@ -442,7 +442,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 				backButton.setEnabled(false);
 			else
 			{
-				currentDMSContent = new MDMS_Content(Env.getCtx(), DMS_Content_ID, null);
+				currentDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 				renderViewer();
 				nextButton.setEnabled(true);
 				if (currentDMSContent.getParentURL() == null)
@@ -512,7 +512,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 		{
 			BigDecimal Content_ID;
 			int i = 0;
-			MDMS_Content dmsContent = null;
+			MDMSContent dmsContent = null;
 			File document_thumbFile = null;
 
 			List<List<Object>> DMS_Association_IDS = DB.getSQLArrayObjectsEx(null,
@@ -529,7 +529,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 				for (List<Object> documentRow : DMS_Association_IDS)
 				{
 					Content_ID = (BigDecimal) documentRow.get(0);
-					dmsContent = new MDMS_Content(Env.getCtx(), Content_ID.intValue(), null);
+					dmsContent = new MDMSContent(Env.getCtx(), Content_ID.intValue(), null);
 
 					src = System.getProperty("user.dir") + File.separator + "DMS_Thumbnails" + File.separator
 							+ Env.getAD_Client_ID(Env.getCtx()) + File.separator + dmsContent.getDMS_Content_ID()

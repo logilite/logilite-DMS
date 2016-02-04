@@ -25,8 +25,9 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.idempiere.dms.storage.DmsUtility;
 import org.idempiere.dms.storage.ThumbnailGenerator;
-import org.idempiere.model.MDMS_Association;
-import org.idempiere.model.MDMS_Content;
+import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSAssociationType;
+import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
 import org.idempiere.model.X_DMS_ContentType;
 import org.zkoss.util.media.AMedia;
@@ -71,9 +72,9 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 	private AMedia				media				= null;
 
-	private MDMS_Content		mdmsContent			= null;
+	private MDMSContent		mdmsContent			= null;
 
-	public WUploadContent(MDMS_Content mdms_Content)
+	public WUploadContent(MDMSContent mdms_Content)
 	{
 		this.mdmsContent = mdms_Content;
 		init();
@@ -179,7 +180,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_OK))
 		{
 			String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
-			MDMS_Content dmsContent = null;
+			MDMSContent dmsContent = null;
 
 			if (contentType.getValue() == null || (Integer) contentType.getValue() == 0)
 				throw new WrongValueException(contentType.getComponent(), fillMandatory);
@@ -204,7 +205,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 			try
 			{
-				dmsContent = new MDMS_Content(Env.getCtx(), 0, null);
+				dmsContent = new MDMSContent(Env.getCtx(), 0, null);
 				dmsContent.setName(uploadedDocument.getName());
 				dmsContent.setDescription(txtDesc.getValue());
 				dmsContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(media));
@@ -220,10 +221,10 @@ public class WUploadContent extends Window implements EventListener<Event>
 				ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator();
 				thumbnailGenerator.getThumbnails(uploadedDocument, dmsContent);
 
-				MDMS_Association dmsAssociation = new MDMS_Association(Env.getCtx(), 0, null);
+				MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 				dmsAssociation.setDMS_Content_ID(dmsContent.getDMS_Content_ID());
 				dmsAssociation.setDMS_Content_Related_ID(mdmsContent.getDMS_Content_ID());
-				dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionType());
+				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
 				dmsAssociation.saveEx();
 			}
 			catch (Exception ex)

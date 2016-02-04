@@ -32,9 +32,9 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.idempiere.model.MDMS_Content;
-import org.idempiere.model.MDMS_ContentType;
-import org.idempiere.model.MDMS_Status;
+import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSContentType;
+import org.idempiere.model.MDMSStatus;
 import org.idempiere.model.X_DMS_ContentType;
 import org.idempiere.model.X_DMS_Status;
 import org.zkoss.util.media.AMedia;
@@ -82,10 +82,10 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 	private ConfirmPanel		confirmPanel			= null;
 	private WDocumentViewer		viewer					= null;
 	private Tabpanel			tabDataPanel			= null;
-	private MDMS_Content		mDMSContent				= null;
+	private MDMSContent		mDMSContent				= null;
 
 	public WDocumentEditor(WDocumentViewer viewer, File document_preview, Tabpanel tabDataPanel,
-			MDMS_Content mdms_content)
+			MDMSContent mdms_content)
 	{
 		this.viewer = viewer;
 		this.tabDataPanel = tabDataPanel;
@@ -327,7 +327,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		disableShowData(false);
 	}
 
-	public void showMetaData(MDMS_Content mdms_content)
+	public void showMetaData(MDMSContent mdms_content)
 	{
 		File document = new File(System.getProperty("user.dir") + mdms_content.getParentURL() + File.separator
 				+ mdms_content.getName());
@@ -338,11 +338,11 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 					+ mdms_content.getUpdated());
 			txtDocName.setValue(mdms_content.getName());
 
-			MDMS_ContentType content_type = new MDMS_ContentType(Env.getCtx(), mdms_content.getDMS_ContentType_ID(),
+			MDMSContentType content_type = new MDMSContentType(Env.getCtx(), mdms_content.getDMS_ContentType_ID(),
 					null);
 			lstboxContentCategory.getComponent().setValue(content_type.getName());
 
-			MDMS_Status dms_status = new MDMS_Status(Env.getCtx(), mdms_content.getDMS_Status_ID(), null);
+			MDMSStatus dms_status = new MDMSStatus(Env.getCtx(), mdms_content.getDMS_Status_ID(), null);
 			lstboxDocStatus.getComponent().setValue(dms_status.getValue());
 			dbContentReported.setValue(mdms_content.getCreated());
 		}
@@ -379,7 +379,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 
 			if (contentId != -1)
 			{
-				MDMS_Content dmsContent = new MDMS_Content(Env.getCtx(), contentId, null);
+				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), contentId, null);
 
 				File document = new File(System.getProperty("user.dir") + File.separator + dmsContent.getParentURL()
 						+ File.separator + dmsContent.getName());
