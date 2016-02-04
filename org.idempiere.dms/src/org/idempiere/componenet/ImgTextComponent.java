@@ -111,8 +111,8 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 		}
 		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()))
 		{
-			WDocumentViewer.previousDmsContent = WDocumentViewer.mainDmsContent;
-			WDocumentViewer.mainDmsContent = new MDMS_Content(Env.getCtx(), dms_content_id, null);
+			WDocumentViewer.previousDmsContent = WDocumentViewer.currentDMSContent;
+			WDocumentViewer.currentDMSContent = new MDMS_Content(Env.getCtx(), dms_content_id, null);
 		}
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
 				&& event.getTarget().getClass() == ImgTextComponent.class)

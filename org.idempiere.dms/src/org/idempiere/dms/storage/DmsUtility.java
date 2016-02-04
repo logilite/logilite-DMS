@@ -13,6 +13,7 @@ import javax.imageio.ImageIO;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FilenameUtils;
+import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MStorageProvider;
 import org.compiere.util.CLogger;
@@ -42,7 +43,7 @@ public class DmsUtility
 		return dest;
 	} // BufferedImage
 
-	public static MStorageProvider getStorageProvider(int AD_Client_ID)
+	public static I_AD_StorageProvider getStorageProvider(int AD_Client_ID)
 	{
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID);
 
@@ -163,7 +164,7 @@ public class DmsUtility
 	 * }
 	 */
 
-	public static int getVersionID()
+	public static int getVersionType()
 	{
 		int versionID = DB.getSQLValue(null,
 				"SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike 'version'");

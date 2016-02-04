@@ -3,8 +3,6 @@ package org.idempiere.dms.factories;
 import java.util.List;
 
 import org.adempiere.base.Service;
-import org.idempiere.model.IFileStorageProvider;
-import org.idempiere.model.IFileStorageProviderFactory;
 
 /**
  * @author deepak@logilite.com
@@ -39,20 +37,6 @@ public class Utils
 		return tGenerator;
 	}
 
-	public static IFileStorageProvider getFileStorageProvider(String key)
-	{
-		List<IFileStorageProviderFactory> factories = Service.locator().list(IFileStorageProviderFactory.class)
-				.getServices();
-		IFileStorageProvider fileStorageProvider = null;
-
-		for (IFileStorageProviderFactory factory : factories)
-		{
-			fileStorageProvider = factory.get(key);
-			if (fileStorageProvider != null)
-				break;
-		}
-		return fileStorageProvider;
-	}
 
 	public static IContentManager getContentManager(String key)
 	{

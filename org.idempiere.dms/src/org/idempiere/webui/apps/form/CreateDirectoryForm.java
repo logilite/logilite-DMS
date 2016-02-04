@@ -43,16 +43,12 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private Textbox					txtboxDirectory		= new Textbox();
 	private File					file				= null;
 	private MDMS_Content			mdms_content		= null;
-	private WDocumentViewer			wDocumentViewer;
-	private boolean					isGridButton;
 
-	public CreateDirectoryForm(MDMS_Content dms_content, WDocumentViewer wDocumentViewer, boolean isGridButton)
+	public CreateDirectoryForm(MDMS_Content dms_content)
 	{
 		try
 		{
 			this.mdms_content = dms_content;
-			this.wDocumentViewer = wDocumentViewer;
-			this.isGridButton = isGridButton;
 			init();
 		}
 		catch (Exception e)
@@ -160,11 +156,10 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				MDMS_Association dmsAssociation = new MDMS_Association(Env.getCtx(), 0, null);
 				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
 				dmsAssociation.setDMS_Content_Related_ID(mdms_content.getDMS_Content_ID());
-				dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionID());
+				dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionType());
 				dmsAssociation.saveEx();
 				this.detach();
 
-				wDocumentViewer.onOk(isGridButton, mdms_content);
 			}
 			catch (Exception e)
 			{

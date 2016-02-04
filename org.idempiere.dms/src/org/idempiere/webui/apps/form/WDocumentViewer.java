@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Vector;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -17,9 +16,7 @@ import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
-import org.adempiere.webui.component.ListModelTable;
 import org.adempiere.webui.component.Listbox;
-import org.adempiere.webui.component.ListboxFactory;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Searchbox;
@@ -29,7 +26,6 @@ import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
-import org.adempiere.webui.component.WListbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.panel.ADForm;
@@ -37,10 +33,10 @@ import org.adempiere.webui.panel.CustomForm;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
+import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
-import org.compiere.model.MStorageProvider;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -63,70 +59,65 @@ import org.zkoss.zul.Hbox;
 public class WDocumentViewer extends ADForm implements EventListener<Event>
 {
 
-	private static final long	serialVersionUID	= -6813481516566180243L;
-	public static CLogger		log					= CLogger.getCLogger(WDocumentViewer.class);
+	private static final long		serialVersionUID	= -6813481516566180243L;
+	public static CLogger			log					= CLogger.getCLogger(WDocumentViewer.class);
 
-	private CustomForm			form				= new CustomForm();
-	public Tabbox				tabBox				= new Tabbox();
-	private Tabs				tabs				= new Tabs();
-	public Tab					tabView				= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
-	public Tabpanels			tabPanels			= new Tabpanels();
-	public Tabpanel				tabViewPanel		= new Tabpanel();
-	private Grid				grid				= GridFactory.newGridLayout();
+	private CustomForm				form				= new CustomForm();
+	public Tabbox					tabBox				= new Tabbox();
+	private Tabs					tabs				= new Tabs();
+	public Tab						tabView				= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
+	public Tabpanels				tabPanels			= new Tabpanels();
+	public Tabpanel					tabViewPanel		= new Tabpanel();
+	private Grid					grid				= GridFactory.newGridLayout();
 
 	// View Result Tab
-	private Searchbox			vsearchBox			= new Searchbox();
-	private Label				lblAdvanceSearch	= new Label(Msg.translate(Env.getCtx(), "Advance Search"));
-	private Label				lblDocumentName		= new Label(Msg.translate(Env.getCtx(), "Name"));
-	private Label				lblCategory			= new Label(Msg.translate(Env.getCtx(), "Category"));
-	private Label				lblCreated			= new Label(Msg.translate(Env.getCtx(), "Created"));
-	private Label				lblUpdated			= new Label(Msg.translate(Env.getCtx(), "Updated"));
-	private Label				lblContentMeta		= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
-	private Label				lblReportDate		= new Label(Msg.translate(Env.getCtx(), "Report Date"));
-	private Label				lblBPartner			= new Label(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
+	private Searchbox				vsearchBox			= new Searchbox();
+	private Label					lblAdvanceSearch	= new Label(Msg.translate(Env.getCtx(), "Advance Search"));
+	private Label					lblDocumentName		= new Label(Msg.translate(Env.getCtx(), "Name"));
+	private Label					lblCategory			= new Label(Msg.translate(Env.getCtx(), "Category"));
+	private Label					lblCreated			= new Label(Msg.translate(Env.getCtx(), "Created"));
+	private Label					lblUpdated			= new Label(Msg.translate(Env.getCtx(), "Updated"));
+	private Label					lblContentMeta		= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
+	private Label					lblReportDate		= new Label(Msg.translate(Env.getCtx(), "Report Date"));
+	private Label					lblBPartner			= new Label(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
 
-	private Datebox				dbCreatedTo			= new Datebox();
-	private Datebox				dbCreatedFrom		= new Datebox();
-	private Datebox				dbUpdated			= new Datebox();
-	private Datebox				dbUpdatedFrom		= new Datebox();
-	private Datebox				dbReportTo			= new Datebox();
-	private Datebox				dbReportFrom		= new Datebox();
+	private Datebox					dbCreatedTo			= new Datebox();
+	private Datebox					dbCreatedFrom		= new Datebox();
+	private Datebox					dbUpdated			= new Datebox();
+	private Datebox					dbUpdatedFrom		= new Datebox();
+	private Datebox					dbReportTo			= new Datebox();
+	private Datebox					dbReportFrom		= new Datebox();
 
-	private ConfirmPanel		confirmPanel		= new ConfirmPanel();
+	private ConfirmPanel			confirmPanel		= new ConfirmPanel();
 
-	private Button				clearButton			= confirmPanel.createButton(ConfirmPanel.A_RESET);
-	private Button				searchButton		= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
-	private Button				closetabButton		= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
-	private Button				gridViewButton		= confirmPanel.createButton(ConfirmPanel.A_CUSTOMIZE);
+	private Button					clearButton			= confirmPanel.createButton(ConfirmPanel.A_RESET);
+	private Button					searchButton		= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
+	private Button					closetabButton		= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 
-	private Textbox				txtDocumentName		= new Textbox();
-	private Listbox				lstboxCategory		= new Listbox();
+	private Textbox					txtDocumentName		= new Textbox();
+	private Listbox					lstboxCategory		= new Listbox();
 
-	public boolean				isGridButton		= true;
-	private WSearchEditor		seBPartnerField		= null;
+	private WSearchEditor			seBPartnerField		= null;
 
-	// tabData
-	private WListbox			xMiniTable			= ListboxFactory.newDataTable();
 
 	// create Directory
-	private Button				createDirButton		= new Button();
-	private Button				uploadContentButton	= new Button();
-	private Button				backButton			= new Button();
-	private Button				nextButton			= new Button();
+	private Button					createDirButton		= new Button();
+	private Button					uploadContentButton	= new Button();
+	private Button					backButton			= new Button();
+	private Button					nextButton			= new Button();
 
-	private Label				positionInfo		= new Label();
+	private Label					positionInfo		= new Label();
 
+	public static MDMS_Content		currentDMSContent;
+	public static MDMS_Content		previousDmsContent;
+	public static MDMS_Content		nextDmsContent;
 
-	public static MDMS_Content	mainDmsContent;
-	public static MDMS_Content	previousDmsContent;
-	public static MDMS_Content	nextDmsContent;
+	public static final String		SQL_GET_IMAGE_ID	= "SELECT AD_Image_ID FROM AD_Image Where name ilike ? ";
+	public static final String		IMAGE_DOWNLOAD		= "Download";
+	public static final String		IMAGE_DIRECTORY		= "Directory";
 
-	public static final String	SQL_GET_IMAGE_ID	= "SELECT AD_Image_ID FROM AD_Image Where name ilike ? ";
-	public static final String	IMAGE_DOWNLOAD		= "Download";
-	public static final String	IMAGE_DIRECTORY		= "Directory";
-
-	private MStorageProvider	storageProvider;
-	private ImgTextComponent	cstmComponenet		= null;
+	private I_AD_StorageProvider	storageProvider;
+	private ImgTextComponent		cstmComponenet		= null;
 
 	public WDocumentViewer()
 	{
@@ -138,6 +129,11 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 		int dms_Content_ID;
 		previousDmsContent = null;
 		nextDmsContent = null;
+
+		// storageProvider =
+
+		// IFileStorageProvider provider= FileStorageUtil.get("FileSystem");
+
 		dms_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE parentUrl IS NULL");
 
 		if (dms_Content_ID == -1)
@@ -156,15 +152,15 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 				if (!rootDir.exists())
 					rootDir.mkdirs();
 
-				mainDmsContent = new MDMS_Content(Env.getCtx(), 0, null);
-				mainDmsContent.setName(storageProvider.getFolder());
-				mainDmsContent.setValue(rootDir.getName());
-				mainDmsContent.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
-				mainDmsContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(null));
-				mainDmsContent.setDMS_Status_ID(DmsUtility.getStatusID());
+				currentDMSContent = new MDMS_Content(Env.getCtx(), 0, null);
+				currentDMSContent.setName(storageProvider.getFolder());
+				currentDMSContent.setValue(rootDir.getName());
+				currentDMSContent.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
+				currentDMSContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(null));
+				currentDMSContent.setDMS_Status_ID(DmsUtility.getStatusID());
 				// mdms_content.setM_AttributeSetInstance_ID(DmsUtility.getAttributeSet_ID());
-				mainDmsContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
-				mainDmsContent.saveEx();
+				currentDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
+				currentDMSContent.saveEx();
 			}
 			catch (Exception e)
 			{
@@ -174,7 +170,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 		}
 		else
 		{
-			mainDmsContent = new MDMS_Content(Env.getCtx(), dms_Content_ID, null);
+			currentDMSContent = new MDMS_Content(Env.getCtx(), dms_Content_ID, null);
 		}
 
 	}
@@ -239,7 +235,6 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 
 		row.appendChild(createDirButton);
 		row.appendChild(uploadContentButton);
-		row.appendChild(gridViewButton);
 
 		createDirButton.setImage(ThemeManager.getThemeResource("images/Folder24.png"));
 		createDirButton.setTooltiptext("Create Directory");
@@ -247,7 +242,6 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 
 		uploadContentButton.setImage(ThemeManager.getThemeResource("images/Parent24.png"));
 		uploadContentButton.setTooltiptext("Upload Content");
-		gridViewButton.addActionListener(this);
 		uploadContentButton.addEventListener(Events.ON_CLICK, this);
 
 		row = new Row();
@@ -394,74 +388,64 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass() == ImgTextComponent.class)
 		{
-			if (mainDmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+			if (currentDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
-				renderViewer(isGridButton, mainDmsContent);
+				renderViewer();
 			}
-			else if (mainDmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
+			else if (currentDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 			{
 				File documentToPreview = null;
 
-				if (mainDmsContent.getParentURL() != null)
+				if (currentDMSContent.getParentURL() != null)
 				{
 					documentToPreview = new File(System.getProperty("user.dir") + File.separator
-							+ mainDmsContent.getParentURL() + File.separator + mainDmsContent.getName());
+							+ currentDMSContent.getParentURL() + File.separator + currentDMSContent.getName());
 
 					if (DmsUtility.accept(documentToPreview))
 					{
 						if (documentToPreview.exists())
 						{
-							Tab tabData = new Tab(mainDmsContent.getName());
+							Tab tabData = new Tab(currentDMSContent.getName());
 							tabData.setClosable(true);
 							tabs.appendChild(tabData);
 							tabBox.setSelectedTab(tabData);
 							Tabpanel tabDataPanel = new Tabpanel();
-							new WDocumentEditor(this, documentToPreview, tabDataPanel, mainDmsContent);
-							mainDmsContent = previousDmsContent;
+							new WDocumentEditor(this, documentToPreview, tabDataPanel, currentDMSContent);
+							currentDMSContent = previousDmsContent;
 						}
 					}
 					else
 					{
 						AMedia media = new AMedia(documentToPreview, "application/octet-stream", null);
 						Filedownload.save(media);
-						mainDmsContent = previousDmsContent;
+						currentDMSContent = previousDmsContent;
 					}
 				}
 			}
 		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_CUSTOMIZE))
-		{
-			if (isGridButton)
-				isGridButton = false;
-			else
-				isGridButton = true;
-
-			renderViewer(isGridButton, mainDmsContent);
-
-		}
 		else if (event.getTarget().equals(createDirButton))
 		{
-			new CreateDirectoryForm(mainDmsContent, this, isGridButton);
+			new CreateDirectoryForm(currentDMSContent);
 		}
 		else if (event.getTarget().equals(uploadContentButton))
 		{
-			new WUploadContent(mainDmsContent, this, isGridButton);
+			new WUploadContent(currentDMSContent);
 		}
 		else if (event.getTarget().equals(backButton))
 		{
-			nextDmsContent = mainDmsContent;
+			nextDmsContent = currentDMSContent;
 			int DMS_Content_ID = DB.getSQLValue(null,
 					"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
-					mainDmsContent.getDMS_Content_ID());
+					currentDMSContent.getDMS_Content_ID());
 
 			if (DMS_Content_ID == -1)
 				backButton.setEnabled(false);
 			else
 			{
-				mainDmsContent = new MDMS_Content(Env.getCtx(), DMS_Content_ID, null);
-				renderViewer(isGridButton, mainDmsContent);
+				currentDMSContent = new MDMS_Content(Env.getCtx(), DMS_Content_ID, null);
+				renderViewer();
 				nextButton.setEnabled(true);
-				if (mainDmsContent.getParentURL() == null)
+				if (currentDMSContent.getParentURL() == null)
 					backButton.setEnabled(false);
 			}
 		}
@@ -469,8 +453,8 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 		{
 			if (nextDmsContent != null)
 			{
-				mainDmsContent = nextDmsContent;
-				renderViewer(isGridButton, mainDmsContent);
+				currentDMSContent = nextDmsContent;
+				renderViewer();
 			}
 			nextButton.setEnabled(false);
 		}
@@ -480,11 +464,6 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 		}
 	}
 
-	protected void onOk(boolean isGridButton, MDMS_Content mdms_Content) throws IOException, URISyntaxException
-	{
-		renderViewer(isGridButton, mdms_Content);
-	}
-
 	@Override
 	protected void initForm()
 	{
@@ -492,7 +471,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 		{
 			jbInit();
 			dynInit();
-			renderViewer(isGridButton, mainDmsContent);
+			renderViewer();
 
 			backButton.setEnabled(false);
 			nextButton.setEnabled(false);
@@ -512,18 +491,18 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 		m_WindowNo = form.getWindowNo();
 	}
 
-	public void renderViewer(boolean isGridformat, MDMS_Content mdms_Content) throws IOException, URISyntaxException
+	public void renderViewer() throws IOException, URISyntaxException
 	{
 		File documents[] = null;
-		if (mdms_Content.getParentURL() == null)
+		if (currentDMSContent.getParentURL() == null)
 		{
-			MStorageProvider storageProvider = DmsUtility.getStorageProvider(Env.getAD_Client_ID(Env.getCtx()));
+			I_AD_StorageProvider storageProvider = DmsUtility.getStorageProvider(Env.getAD_Client_ID(Env.getCtx()));
 			documents = new File(System.getProperty("user.dir") + File.separator + storageProvider.getFolder())
 					.listFiles();
 		}
 		else
-			documents = new File(System.getProperty("user.dir") + mdms_Content.getParentURL() + File.separator
-					+ mdms_Content.getName()).listFiles();
+			documents = new File(System.getProperty("user.dir") + currentDMSContent.getParentURL() + File.separator
+					+ currentDMSContent.getName()).listFiles();
 
 		Components.removeAllChildren(grid);
 		// tabs.appendChild(tabView);
@@ -538,7 +517,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 
 			List<List<Object>> DMS_Association_IDS = DB.getSQLArrayObjectsEx(null,
 					"SELECT DMS_Content_ID FROM DMS_Documents_V WHERE DMS_Content_Related_ID = ?",
-					mdms_Content.getDMS_Content_ID());
+					currentDMSContent.getDMS_Content_ID());
 
 			if (DMS_Association_IDS.size() > 0)
 			{
@@ -546,9 +525,6 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 				String src = null;
 				Row row = null;
 				Cell cell = null;
-
-				Vector<Vector<Object>> imageData = new Vector<Vector<Object>>();
-				Vector<Object> rowList = null;
 
 				for (List<Object> documentRow : DMS_Association_IDS)
 				{
@@ -568,80 +544,46 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 						nextButton.setEnabled(false);
 						backButton.setEnabled(true);
 					}
-					if (isGridformat)
+					document_thumbFile = new File(src);
+
+					if (!document_thumbFile.exists())
 					{
-						isGridButton = true;
-						document_thumbFile = new File(src);
+						int AD_Image_ID = 0;
+						MImage mImage = null;
+						byte[] b = null;
 
-						if (!document_thumbFile.exists())
-						{
-							int AD_Image_ID = 0;
-							MImage mImage = null;
-							byte[] b = null;
+						AD_Image_ID = DB.getSQLValue(null, SQL_GET_IMAGE_ID, ((dmsContent.getContentBaseType()
+								.equals(X_DMS_Content.CONTENTBASETYPE_Directory)) ? IMAGE_DIRECTORY : IMAGE_DOWNLOAD));
 
-							AD_Image_ID = DB.getSQLValue(null, SQL_GET_IMAGE_ID, ((dmsContent.getContentBaseType()
-									.equals(X_DMS_Content.CONTENTBASETYPE_Directory)) ? IMAGE_DIRECTORY
-									: IMAGE_DOWNLOAD));
-
-							mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
-							b = mImage.getData();
-							image = new AImage("", b);
-						}
-						else
-							image = new AImage(document_thumbFile);
-
-						if (i % 6 == 0)
-						{
-							row = new Row();
-							row.setHeight("150px");
-							rows.appendChild(row);
-						}
-						cstmComponenet = new ImgTextComponent(dmsContent.getName(), documents[i].getAbsolutePath(),
-								image, dmsContent.getDMS_Content_ID());
-
-						cstmComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
-						cstmComponenet.addEventListener(Events.ON_CLICK, this);
-						cstmComponenet.addEventListener(Events.ON_RIGHT_CLICK, this);
-
-						grid.setSizedByContent(true);
-						cstmComponenet.setDheight(150);
-						cstmComponenet.setDwidth(150);
-						cell = new Cell();
-
-						cell.setWidth(row.getWidth());
-						cell.appendChild(cstmComponenet);
-						row.appendChild(cell);
-						i++;
+						mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
+						b = mImage.getData();
+						image = new AImage("", b);
 					}
 					else
+						image = new AImage(document_thumbFile);
+
+					if (i % 6 == 0)
 					{
-						isGridButton = false;
-						cell = new Cell();
 						row = new Row();
-						row.setHeight("100%");
-						cell.setParent(row);
-						row.setParent(rows);
-						rowList = new Vector<Object>();
-						rowList.add("file://" + src);
-						rowList.add(dmsContent.getName());
-						rowList.add(dmsContent.getContentBaseType());
-						imageData.add(rowList);
-						Vector<String> columnNames = null;
-						xMiniTable.clear();
-
-						columnNames = new Vector<String>();
-						columnNames.add("Image");
-						columnNames.add("Document Name");
-						columnNames.add("Document Type");
-
-						ListModelTable model = new ListModelTable(imageData);
-						xMiniTable.setData(model, columnNames);
-						xMiniTable.setColumnClass(0, MImage.class, true);
-						xMiniTable.setColumnClass(1, String.class, true);
-						xMiniTable.setColumnClass(2, String.class, true);
-						xMiniTable.setMultiSelection(false);
-						cell.appendChild(xMiniTable);
+						row.setHeight("150px");
+						rows.appendChild(row);
 					}
+					cstmComponenet = new ImgTextComponent(dmsContent.getName(), documents[i].getAbsolutePath(), image,
+							dmsContent.getDMS_Content_ID());
+
+					cstmComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
+					cstmComponenet.addEventListener(Events.ON_CLICK, this);
+					cstmComponenet.addEventListener(Events.ON_RIGHT_CLICK, this);
+
+					grid.setSizedByContent(true);
+					cstmComponenet.setDheight(150);
+					cstmComponenet.setDwidth(150);
+					cell = new Cell();
+
+					cell.setWidth(row.getWidth());
+					cell.appendChild(cstmComponenet);
+					row.appendChild(cell);
+					i++;
 				}
 			}
 		}
@@ -650,7 +592,7 @@ public class WDocumentViewer extends ADForm implements EventListener<Event>
 			nextButton.setEnabled(false);
 			backButton.setEnabled(true);
 		}
-		positionInfo.setValue(mainDmsContent.getName());
+		positionInfo.setValue(currentDMSContent.getName());
 		grid.appendChild(rows);
 		tabBox.setSelectedIndex(0);
 	}

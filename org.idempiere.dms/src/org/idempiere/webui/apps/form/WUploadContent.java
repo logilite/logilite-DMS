@@ -70,16 +70,12 @@ public class WUploadContent extends Window implements EventListener<Event>
 	private ConfirmPanel		confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
 
 	private AMedia				media				= null;
-	private WDocumentViewer		wDocumentViewer;
 
-	private boolean				isGridButton;
 	private MDMS_Content		mdmsContent			= null;
 
-	public WUploadContent(MDMS_Content mdms_Content, WDocumentViewer wDocumentViewer, boolean isGridButton)
+	public WUploadContent(MDMS_Content mdms_Content)
 	{
 		this.mdmsContent = mdms_Content;
-		this.wDocumentViewer = wDocumentViewer;
-		this.isGridButton = isGridButton;
 		init();
 	}
 
@@ -227,7 +223,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 				MDMS_Association dmsAssociation = new MDMS_Association(Env.getCtx(), 0, null);
 				dmsAssociation.setDMS_Content_ID(dmsContent.getDMS_Content_ID());
 				dmsAssociation.setDMS_Content_Related_ID(mdmsContent.getDMS_Content_ID());
-				dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionID());
+				dmsAssociation.setDMS_AssociationType_ID(DmsUtility.getVersionType());
 				dmsAssociation.saveEx();
 			}
 			catch (Exception ex)
@@ -235,8 +231,6 @@ public class WUploadContent extends Window implements EventListener<Event>
 				log.log(Level.SEVERE, "Upload Content Failure :" + ex.getLocalizedMessage());
 				throw new AdempiereException("Upload Content Failure :" + ex.getLocalizedMessage());
 			}
-
-			wDocumentViewer.onOk(isGridButton, mdmsContent);
 
 			this.detach();
 		}

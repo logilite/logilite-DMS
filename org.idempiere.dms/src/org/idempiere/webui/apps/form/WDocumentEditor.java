@@ -410,7 +410,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 					null);
 			DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", mDMSContent.getDMS_Content_ID(), null);
 			viewer.tabBox.getSelectedTab().close();
-			viewer.renderViewer(viewer.isGridButton, WDocumentViewer.previousDmsContent);
+			viewer.renderViewer();
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_REFRESH))
 		{

@@ -17,4 +17,4 @@ Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/pdf-renderer.jar,
  lib/imgscalr-lib-4.2.jar
-Service-Component: OSGI-INF/mimeType.xml
+Service-Component: OSGI-INF/*.xml
