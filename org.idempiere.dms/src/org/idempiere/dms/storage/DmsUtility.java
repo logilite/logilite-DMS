@@ -19,7 +19,6 @@ import org.compiere.model.MStorageProvider;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.MDMSStatus;
@@ -164,9 +163,7 @@ public class DmsUtility
 	 * }
 	 */
 
-	
-
-	public static BufferedImage convThumbtoBufferedImage(File file, String size)
+	public static BufferedImage getImageThumbnail(File file, String size)
 	{
 		BufferedImage thumbnailImage = null;
 		try

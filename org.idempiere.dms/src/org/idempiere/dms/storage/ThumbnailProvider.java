@@ -7,12 +7,15 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 
 import javax.imageio.ImageIO;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FilenameUtils;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.idempiere.dms.factories.IThumbnailProvider;
@@ -24,48 +27,50 @@ import com.sun.pdfview.PDFPage;
 public class ThumbnailProvider implements IThumbnailProvider
 {
 
-	private static CLogger	log	= CLogger.getCLogger(ThumbnailProvider.class);
+	private static CLogger		log						= CLogger.getCLogger(ThumbnailProvider.class);
+
+	private String				thumbnailBasePath		= null;
+	private String				thumbnailSizes			= null;
+
+	public static final String	DMS_THUMBNAIL_BASEPATH	= "DMS_THUMBNAIL_PATH";
+	public static final String	DMS_THUMBNAILS_SIZES	= "DMS_THUMBNAILS_SIZES";
+	private static final String	MIME_EXTENTION_PDF		= "pdf";
+
+	private List<String>		thumbSizesList			= null;
+
+	@Override
+	public void init()
+	{
+		thumbnailBasePath = MSysConfig.getValue(DMS_THUMBNAIL_BASEPATH, "/opt/DMD_Thumbnails");
+		thumbnailSizes = MSysConfig.getValue(DMS_THUMBNAILS_SIZES, "150,300,500");
+
+		thumbSizesList = Arrays.asList(thumbnailSizes.split(", "));
+	}
 
 	@Override
 	public String getURL(I_DMS_Content content, String size)
 	{
-		File documentfile = new File(System.getProperty("user.dir") + File.separator + "DMS_Thumbnails"
-				+ File.separator + Env.getAD_Client_ID(Env.getCtx()) + File.separator + content.getDMS_Content_ID());
+		File documentfile = new File(thumbnailBasePath + File.separator + Env.getAD_Client_ID(Env.getCtx())
+				+ File.separator + content.getDMS_Content_ID() + File.separator + content.getDMS_Content_ID() + "-"
+				+ size + ".jpg");
 
-		if (documentfile.exists() && documentfile.isDirectory())
-		{
-			File[] fileList = documentfile.listFiles();
-
-			for (int i = 0; i < fileList.length; i++)
-			{
-				if (fileList[i].getName().equalsIgnoreCase(content.getName()) && fileList[i].getName().contains(size))
-				{
-					return documentfile.getAbsolutePath() + File.separator + fileList[i].getName();
-				}
-			}
-		}
-		return null;
+		if (documentfile.exists())
+			return documentfile.getAbsolutePath();
+		else
+			return null;
 	}
 
 	@Override
 	public File getFile(I_DMS_Content content, String size)
 	{
-		File documentfile = new File(System.getProperty("user.dir") + File.separator + "DMS_Thumbnails"
-				+ File.separator + Env.getAD_Client_ID(Env.getCtx()) + File.separator + content.getDMS_Content_ID());
+		File documentfile = new File(thumbnailBasePath + File.separator + Env.getAD_Client_ID(Env.getCtx())
+				+ File.separator + content.getDMS_Content_ID() + File.separator + content.getDMS_Content_ID() + "-"
+				+ size + ".jpg");
 
-		if (documentfile.exists() && documentfile.isDirectory())
-		{
-			File[] fileList = documentfile.listFiles();
-
-			for (int i = 0; i < fileList.length; i++)
-			{
-				if (fileList[i].getName().contains(size))
-				{
-					return fileList[i];
-				}
-			}
-		}
-		return null;
+		if (documentfile.exists())
+			return documentfile;
+		else
+			return null;
 	}
 
 	@Override
@@ -73,23 +78,15 @@ public class ThumbnailProvider implements IThumbnailProvider
 	{
 		if (DmsUtility.accept(file))
 		{
-			String rootfolder = System.getProperty("user.dir");
-			File rootFolder = new File(rootfolder + File.separator + "DMS_Thumbnails");
-			File clientFolder = new File(rootFolder.getAbsolutePath() + File.separator
-					+ Env.getAD_Client_ID(Env.getCtx()));
-			File contentFolder = new File(clientFolder.getAbsolutePath() + File.separator + content.getDMS_Content_ID());
+			File thumbnailFile = null;
 
-			if (!rootFolder.exists())
-				rootFolder.mkdir();
-			if (!clientFolder.exists())
-				clientFolder.mkdirs();
-			if (!contentFolder.exists())
-				contentFolder.mkdirs();
+			File thumbnailContentFolder = new File(thumbnailBasePath + File.separator
+					+ Env.getAD_Client_ID(Env.getCtx()) + File.separator + content.getDMS_Content_ID());
 
-			File imgpxfile = new File(contentFolder.getAbsolutePath() + File.separator + content.getDMS_Content_ID()
-					+ "-" + size + ".jpg");
+			if (!thumbnailContentFolder.exists())
+				thumbnailContentFolder.mkdirs();
 
-			if (FilenameUtils.getExtension(file.getName()).equals("pdf"))
+			if (FilenameUtils.getExtension(file.getName()).equalsIgnoreCase(MIME_EXTENTION_PDF))
 			{
 				try
 				{
@@ -102,23 +99,61 @@ public class ThumbnailProvider implements IThumbnailProvider
 					Rectangle rect = new Rectangle(0, 0, (int) page.getBBox().getWidth(), (int) page.getBBox()
 							.getHeight());
 
-					BufferedImage imagepx = DmsUtility.toBufferedImage(page.getImage(Integer.parseInt(size),
-							Integer.parseInt(size), rect, null, true, true));
+					BufferedImage imagepx = null;
 
-					ImageIO.write(imagepx, "jpg", imgpxfile);
+					if (size == null)
+					{
+						for (int i = 0; i < thumbSizesList.size(); i++)
+						{
+							thumbnailFile = new File(thumbnailContentFolder.getAbsolutePath() + File.separator
+									+ content.getDMS_Content_ID() + "-" + thumbSizesList.get(i) + ".jpg");
+
+							imagepx = DmsUtility.toBufferedImage(page.getImage(Integer.parseInt(thumbSizesList.get(i)),
+									Integer.parseInt(thumbSizesList.get(i)), rect, null, true, true));
+
+							ImageIO.write(imagepx, "jpg", thumbnailFile);
+						}
+					}
+					else
+					{
+						thumbnailFile = new File(thumbnailContentFolder.getAbsolutePath() + File.separator
+								+ content.getDMS_Content_ID() + "-" + size + ".jpg");
+
+						imagepx = DmsUtility.toBufferedImage(page.getImage(Integer.parseInt(size),
+								Integer.parseInt(size), rect, null, true, true));
+
+						ImageIO.write(imagepx, "jpg", thumbnailFile);
+					}
+
 				}
-				catch (Exception ex)
+				catch (Exception e)
 				{
-					log.log(Level.SEVERE, "Thumbnail Creation Failure:" + ex.getLocalizedMessage());
-					throw new AdempiereException("Thumbnail Creation Failure:" + ex.getLocalizedMessage());
+					log.log(Level.SEVERE, "PDF thumbnail creation failure:" + e.getLocalizedMessage());
+					throw new AdempiereException("PDF thumbnail creation failure:" + e.getLocalizedMessage());
 				}
 			}
 			else
 			{
 				try
 				{
-					BufferedImage thumbnailImage = DmsUtility.convThumbtoBufferedImage(file, size);
-					ImageIO.write(thumbnailImage, "jpg", imgpxfile);
+					BufferedImage thumbnailImage = null;
+
+					if (size == null)
+					{
+						for (int i = 0; i < thumbSizesList.size(); i++)
+						{
+							thumbnailFile = new File(thumbnailContentFolder.getAbsolutePath() + File.separator
+									+ content.getDMS_Content_ID() + "-" + thumbSizesList.get(i) + ".jpg");
+
+							thumbnailImage = DmsUtility.getImageThumbnail(file, thumbSizesList.get(i));
+							ImageIO.write(thumbnailImage, "jpg", thumbnailFile);
+						}
+					}
+					else
+					{
+						thumbnailImage = DmsUtility.getImageThumbnail(file, size);
+						ImageIO.write(thumbnailImage, "jpg", thumbnailFile);
+					}
 				}
 				catch (IOException e)
 				{

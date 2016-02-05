@@ -29,7 +29,7 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 	{
 		Integer versionTypeID = s_cache.get(Env.getAD_Client_ID(Env.getCtx()));
 
-		if (versionTypeID > 0)
+		if (versionTypeID != null)
 			return versionTypeID;
 
 		versionTypeID = DB.getSQLValue(null,

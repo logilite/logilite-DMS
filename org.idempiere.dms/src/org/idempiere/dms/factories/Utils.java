@@ -27,16 +27,18 @@ public class Utils
 	{
 		List<IThumbnailGeneratorFactory> factories = Service.locator().list(IThumbnailGeneratorFactory.class)
 				.getServices();
-		IThumbnailGenerator tGenerator = null;
+		IThumbnailGenerator thumbnailGenerator = null;
 		for (IThumbnailGeneratorFactory factory : factories)
 		{
-			tGenerator = factory.get(mimeType);
-			if (tGenerator != null)
+			thumbnailGenerator = factory.get(mimeType);
+			if (thumbnailGenerator != null)
+			{
+				thumbnailGenerator.init();
 				break;
+			}
 		}
-		return tGenerator;
+		return thumbnailGenerator;
 	}
-
 
 	public static IContentManager getContentManager(String key)
 	{
@@ -64,7 +66,10 @@ public class Utils
 			thumbnailProvider = factory.get(Ad_Client_ID);
 
 			if (thumbnailProvider != null)
+			{
+				thumbnailProvider.init();
 				break;
+			}
 		}
 		return thumbnailProvider;
 	}
