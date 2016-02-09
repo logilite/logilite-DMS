@@ -83,7 +83,7 @@ public class DmsUtility
 
 		if (media != null)
 			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE mimetype ilike '"
-					+ media.getFormat() + "'");
+					+ media.getContentType() + "'");
 
 		if (dmsMimeType_ID != -1)
 			return dmsMimeType_ID;
@@ -185,6 +185,27 @@ public class DmsUtility
 		}
 
 		return thumbnailImage;
+	}
+
+	public static String getUniqueFilename(String fullPath)
+	{
+		File document = new File(fullPath);
+
+		if (document.exists())
+		{
+			String fileName = document.getName();
+			String path = fullPath.substring(0, fullPath.length() - fileName.length());
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.lastIndexOf("."));
+			String ext = FilenameUtils.getExtension(document.getName());
+			int n = 1;
+			do
+			{
+				fullPath = path + fileNameWOExt + "(" + n++ + ")." + ext;
+				document = new File(fullPath);
+			}
+			while (document.exists());
+		}
+		return fullPath;
 	}
 
 }

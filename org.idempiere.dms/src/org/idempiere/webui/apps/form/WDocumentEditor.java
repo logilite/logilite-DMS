@@ -32,6 +32,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSStatus;
@@ -82,7 +83,9 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 	private ConfirmPanel		confirmPanel			= null;
 	private WDocumentViewer		viewer					= null;
 	private Tabpanel			tabDataPanel			= null;
-	private MDMSContent		mDMSContent				= null;
+	private MDMSContent			mDMSContent				= null;
+
+	private String				fileSeparator			= null;
 
 	public WDocumentEditor(WDocumentViewer viewer, File document_preview, Tabpanel tabDataPanel,
 			MDMSContent mdms_content)
@@ -90,6 +93,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		this.viewer = viewer;
 		this.tabDataPanel = tabDataPanel;
 		this.mDMSContent = mdms_content;
+		fileSeparator = Utils.getStorageProviderFileSeparator();
 		intiform(document_preview);
 
 	}
@@ -329,7 +333,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 
 	public void showMetaData(MDMSContent mdms_content)
 	{
-		File document = new File(System.getProperty("user.dir") + mdms_content.getParentURL() + File.separator
+		File document = new File(System.getProperty("user.dir") + mdms_content.getParentURL() + fileSeparator
 				+ mdms_content.getName());
 
 		if (document.exists())
@@ -338,8 +342,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 					+ mdms_content.getUpdated());
 			txtDocName.setValue(mdms_content.getName());
 
-			MDMSContentType content_type = new MDMSContentType(Env.getCtx(), mdms_content.getDMS_ContentType_ID(),
-					null);
+			MDMSContentType content_type = new MDMSContentType(Env.getCtx(), mdms_content.getDMS_ContentType_ID(), null);
 			lstboxContentCategory.getComponent().setValue(content_type.getName());
 
 			MDMSStatus dms_status = new MDMSStatus(Env.getCtx(), mdms_content.getDMS_Status_ID(), null);
@@ -381,8 +384,8 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 			{
 				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), contentId, null);
 
-				File document = new File(System.getProperty("user.dir") + File.separator + dmsContent.getParentURL()
-						+ File.separator + dmsContent.getName());
+				File document = new File(System.getProperty("user.dir") + fileSeparator + dmsContent.getParentURL()
+						+ fileSeparator + dmsContent.getName());
 				if (document.exists())
 				{
 					AMedia media = new AMedia(document, "application/octet-stream", null);
@@ -392,16 +395,16 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_DELETE))
 		{
-			File document = new File(System.getProperty("user.dir") + File.separator + mDMSContent.getParentURL()
-					+ File.separator + mDMSContent.getName());
+			File document = new File(System.getProperty("user.dir") + fileSeparator + mDMSContent.getParentURL()
+					+ fileSeparator + mDMSContent.getName());
 
 			if (document.exists())
 			{
 				document.delete();
 			}
 
-			File thumbnails = new File(System.getProperty("user.dir") + File.separator + "DMS_Thumbnails"
-					+ File.separator + Env.getAD_Client_ID(Env.getCtx()) + mDMSContent.getDMS_Content_ID());
+			File thumbnails = new File(System.getProperty("user.dir") + fileSeparator + "DMS_Thumbnails"
+					+ fileSeparator + Env.getAD_Client_ID(Env.getCtx()) + mDMSContent.getDMS_Content_ID());
 
 			if (thumbnails.exists())
 				FileUtils.deleteDirectory(thumbnails);

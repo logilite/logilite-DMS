@@ -9,13 +9,9 @@ public class DefaultContentManagerFactory implements IContentManagerProvider
 	@Override
 	public IContentManager get(String key)
 	{
-		if (key.equalsIgnoreCase("application/pdf"))
+		if (key.equalsIgnoreCase(RelationalContentManager.KEY))
 		{
-			return new ContentManager();
-		}
-		else if (key.startsWith("imeges/"))
-		{
-			return new ContentManager();
+			return new RelationalContentManager();
 		}
 		return null;
 	}

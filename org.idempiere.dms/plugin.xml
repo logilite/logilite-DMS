@@ -2,11 +2,11 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         id="org.idempiere.webui.apps.form.WDocumentViewer"
-         name="org.idempiere.webui.apps.form.WDocumentViewer"
+         id="org.idempiere.webui.apps.form.WDocumentExplorer"
+         name="org.idempiere.webui.apps.form.WDocumentExplorer"
          point="org.adempiere.webui.Form">
       <form
-            class="org.idempiere.webui.apps.form.WDocumentViewer">
+            class="org.idempiere.webui.apps.form.WDocumentExplorer">
       </form>
    </extension>
 </plugin>

@@ -3,7 +3,6 @@ package org.idempiere.dms.storage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -11,6 +10,7 @@ import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.idempiere.dms.factories.IThumbnailGenerator;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
 
 public class ThumbnailGenerator implements IThumbnailGenerator
@@ -20,13 +20,15 @@ public class ThumbnailGenerator implements IThumbnailGenerator
 
 	private String			thumbnailBasePath	= null;
 	private String			thumbnailSizes		= null;
+	private String			fileSeparator		= null;
 
 	private int				AD_Client_ID		= 0;
 
 	private Properties		ctx					= null;
 
 	private ArrayList<File>	thumbnailsFiles		= null;
-	private List<String>	thumbSizesList		= null;
+
+	private ArrayList		thumbSizesList		= null;
 
 	@Override
 	public void init()
@@ -35,9 +37,12 @@ public class ThumbnailGenerator implements IThumbnailGenerator
 		AD_Client_ID = Env.getAD_Client_ID(ctx);
 
 		thumbnailBasePath = MSysConfig.getValue(ThumbnailProvider.DMS_THUMBNAIL_BASEPATH, "/opt/DMS_Thumbnails");
+
 		thumbnailSizes = MSysConfig.getValue(ThumbnailProvider.DMS_THUMBNAILS_SIZES, "150,300,500");
 
-		thumbSizesList = Arrays.asList(thumbnailSizes.split(","));
+		fileSeparator = Utils.getStorageProviderFileSeparator();
+
+		thumbSizesList = new ArrayList(Arrays.asList(thumbnailSizes.split(",")));
 	}
 
 	@Override
@@ -50,7 +55,7 @@ public class ThumbnailGenerator implements IThumbnailGenerator
 
 			for (int i = 0; i < thumbSizesList.size(); i++)
 			{
-				imgpxfile = new File(thumbnailBasePath + File.separator + AD_Client_ID + File.separator
+				imgpxfile = new File(thumbnailBasePath + fileSeparator + AD_Client_ID + fileSeparator
 						+ content.getDMS_Content_ID() + "-" + thumbSizesList.get(i) + ".jpg");
 
 				if (imgpxfile.exists())

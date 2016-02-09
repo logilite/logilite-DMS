@@ -6,10 +6,10 @@ import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.window.FDialog;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.webui.apps.form.WDocumentViewer;
 import org.zkoss.image.AImage;
-import org.zkoss.zk.ui.AbstractComponent;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -27,13 +27,15 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 	public static CLogger		log					= CLogger.getCLogger(ImgTextComponent.class);
 
 	private String				fName				= null;
-	private String				fPath				= null;
+
 	private Image				prevImg;
 	private Div					fLabel				= new Div();
 	private Div					dImage				= new Div();
+
 	private int					dheight;
 	private int					dwidth;
 	private int					dms_content_id		= 0;
+
 	private Menuitem			menuitem			= null;
 
 	public int getDheight()
@@ -64,11 +66,10 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 	private Boolean	isSelected	= false;
 	private Vbox	vbox		= new Vbox();
 
-	public ImgTextComponent(String fName, String fpath, AImage image, int dms_content_id)
+	public ImgTextComponent(I_DMS_Content content, AImage image)
 	{
-		this.fName = fName;
-		this.fPath = fpath;
-		this.dms_content_id = dms_content_id;
+		this.fName = content.getName();
+		this.dms_content_id = content.getDMS_Content_ID();
 		fLabel.appendChild(new Label(fName));
 
 		prevImg = new Image();

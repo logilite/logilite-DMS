@@ -13,6 +13,7 @@ import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.dms.storage.DmsUtility;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
@@ -43,13 +44,16 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private Label					lblDir				= new Label(Msg.translate(Env.getCtx(), "Enter Directory Name"));
 	private Textbox					txtboxDirectory		= new Textbox();
 	private File					file				= null;
-	private MDMSContent			mdms_content		= null;
+	private MDMSContent				mdms_content		= null;
+
+	private String					fileSeprator		= null;
 
 	public CreateDirectoryForm(MDMSContent dms_content)
 	{
 		try
 		{
 			this.mdms_content = dms_content;
+			fileSeprator = Utils.getStorageProviderFileSeparator();
 			init();
 		}
 		catch (Exception e)
@@ -123,15 +127,15 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 			{
 				File rootFolder = null;
 				if (mdms_content.getParentURL() == null)
-					rootFolder = new File(System.getProperty("user.dir") + File.separator + mdms_content.getName());
+					rootFolder = new File(System.getProperty("user.dir") + fileSeprator + mdms_content.getName());
 				else
-					rootFolder = new File(System.getProperty("user.dir") + File.separator + mdms_content.getParentURL()
-							+ File.separator + mdms_content.getName());
+					rootFolder = new File(System.getProperty("user.dir") + fileSeprator + mdms_content.getParentURL()
+							+ fileSeprator + mdms_content.getName());
 
 				if (!rootFolder.exists())
 					rootFolder.mkdirs();
 
-				file = new File(rootFolder + File.separator + dirName);
+				file = new File(rootFolder + fileSeprator + dirName);
 				if (!file.exists())
 					file.mkdir();
 				else
@@ -145,10 +149,10 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 
 				if (mdms_content.getParentURL() == null)
 				{
-					content.setParentURL(File.separator + mdms_content.getName());
+					content.setParentURL(fileSeprator + mdms_content.getName());
 				}
 				else
-					content.setParentURL(mdms_content.getParentURL() + File.separator + mdms_content.getName());
+					content.setParentURL(mdms_content.getParentURL() + fileSeprator + mdms_content.getName());
 
 				content.setValue(dirName);
 				content.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);

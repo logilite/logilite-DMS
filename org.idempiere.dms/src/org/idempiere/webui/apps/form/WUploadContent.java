@@ -1,7 +1,5 @@
 package org.idempiere.webui.apps.form;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -9,9 +7,14 @@ import org.adempiere.webui.AdempiereWebUI;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Column;
+import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
+import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
-import org.adempiere.webui.component.Panel;
+import org.adempiere.webui.component.Row;
+import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WTableDirEditor;
@@ -23,8 +26,13 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.idempiere.dms.factories.IContentManager;
+import org.idempiere.dms.factories.IThumbnailProvider;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.dms.storage.DmsUtility;
-import org.idempiere.dms.storage.ThumbnailGenerator;
+import org.idempiere.dms.storage.RelationalContentManager;
+import org.idempiere.model.FileStorageUtil;
+import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
@@ -37,13 +45,6 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.event.UploadEvent;
-import org.zkoss.zul.Borderlayout;
-import org.zkoss.zul.Center;
-import org.zkoss.zul.Hbox;
-import org.zkoss.zul.North;
-import org.zkoss.zul.South;
-import org.zkoss.zul.Space;
-import org.zkoss.zul.Vbox;
 
 public class WUploadContent extends Window implements EventListener<Event>
 {
@@ -51,44 +52,68 @@ public class WUploadContent extends Window implements EventListener<Event>
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID	= -6554158380274124479L;
-	private static CLogger		log					= CLogger.getCLogger(WUploadContent.class);
+	private static final long		serialVersionUID	= -6554158380274124479L;
+	private static CLogger			log					= CLogger.getCLogger(WUploadContent.class);
 
-	private Borderlayout		mainLayout			= new Borderlayout();
-	private WTableDirEditor		contentType;
+	private WTableDirEditor			contentType;
 
-	private Label				lblFile				= new Label();
-	private Label				lblContentType		= new Label();
-	private Label				lblDesc				= new Label();
+	private Label					lblFile				= new Label();
+	private Label					lblContentType		= new Label();
+	private Label					lblDesc				= new Label();
+	private Label					lblName				= new Label();
 
-	private Textbox				txtDesc				= new Textbox();
+	private Textbox					txtDesc				= new Textbox();
+	private Textbox					txtName				= new Textbox();
 
-	private Button				fileUploadButton	= new Button();
+	private Button					fileUploadButton	= new Button();
 
-	private Panel				parameterPanel		= new Panel();
-	private Panel				dmsContentType		= new Panel();
+	private Grid					gridView			= GridFactory.newGridLayout();
 
-	private ConfirmPanel		confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
+	private ConfirmPanel			confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
 
-	private AMedia				media				= null;
+	private AMedia					uploadedMedia		= null;
 
-	private MDMSContent		mdmsContent			= null;
+	private IFileStorageProvider	fileStorgProvider	= null;
+	private IThumbnailProvider		thumbnailProvider	= null;
+	private IContentManager			contentManager		= null;
 
-	public WUploadContent(MDMSContent mdms_Content)
+	private String					fileSeparator		= null;
+
+	private CharSequence[]			specialCh			= { "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "+" };
+
+	public WUploadContent()
 	{
-		this.mdmsContent = mdms_Content;
+		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
+
+		if (fileStorgProvider == null)
+			throw new AdempiereException("Storage provider is not define on clientInfo.");
+
+		thumbnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
+
+		if (thumbnailProvider == null)
+			throw new AdempiereException("Thumbnail provider is not found.");
+
+		contentManager = Utils.getContentManager(RelationalContentManager.KEY);
+
+		if (contentManager == null)
+			throw new AdempiereException("Content manager is not found.");
+
+		fileSeparator = Utils.getStorageProviderFileSeparator();
+
 		init();
 	}
 
 	public void init()
 	{
-		this.setHeight("230px");
-		this.setWidth("500px");
+		this.setHeight("33%");
+		this.setWidth("35%");
 		this.setTitle("Upload Content");
 		this.setClosable(true);
-		mainLayout.setParent(this);
-		mainLayout.setHflex("1");
-		mainLayout.setVflex("1");
+		this.appendChild(gridView);
+		gridView.setStyle("margin:0; padding:0; ");
+		gridView.makeNoStrip();
+		gridView.setOddRowSclass("even");
+		gridView.setZclass("none");
 
 		int Column_ID = MColumn.getColumn_ID(X_DMS_ContentType.Table_Name,
 				X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID);
@@ -109,57 +134,53 @@ public class WUploadContent extends Window implements EventListener<Event>
 		lblFile.setValue(Msg.getMsg(Env.getCtx(), "SelectFile") + "* ");
 		lblContentType.setValue("DMS Content Type*");
 		fileUploadButton.setLabel("-");
+		fileUploadButton.setWidth("100%");
 		lblDesc.setValue("Description");
 		txtDesc.setMultiline(true);
 		txtDesc.setRows(2);
-		txtDesc.setWidth("300px");
+		txtDesc.setWidth("100%");
+		txtName.setWidth("100%");
+		txtName.addEventListener(Events.ON_CHANGE, this);
 		LayoutUtils.addSclass("txt-btn", fileUploadButton);
 
-		North north = new North();
-		north.setParent(mainLayout);
-		mainLayout.appendChild(north);
-		north.appendChild(dmsContentType);
+		Columns columns = new Columns();
+		gridView.appendChild(columns);
 
-		Center center = new Center();
-		center.setParent(mainLayout); 
-		mainLayout.appendChild(center);
-		center.appendChild(parameterPanel);
+		Column column = new Column();
+		column.setWidth("20%");
+		column.setAlign("left");
+		columns.appendChild(column);
 
-		Hbox hboxx = new Hbox();
-		hboxx.setAlign("center");
-		hboxx.setPack("start");
-		hboxx.appendChild(lblContentType);
-		hboxx.appendChild(contentType.getComponent());
+		column = new Column();
+		column.setWidth("60%");
+		column.setAlign("left");
+		columns.appendChild(column);
 
-		Vbox vbox = new Vbox();
-		vbox.appendChild(new Space());
+		Rows rows = new Rows();
+		gridView.appendChild(rows);
 
-		Hbox descBox = new Hbox();
-		descBox.setAlign("center");
-		descBox.setPack("start");
+		Row row = new Row();
+		row.appendChild(lblFile);
+		row.appendChild(fileUploadButton);
+		rows.appendChild(row);
 
-		descBox.appendChild(lblDesc);
-		descBox.appendChild(txtDesc);
+		row = new Row();
+		lblName.setValue("Name");
+		row.appendChild(lblName);
+		row.appendChild(txtName);
+		rows.appendChild(row);
 
-		dmsContentType.setStyle("padding: 10px");
-		dmsContentType.appendChild(hboxx);
+		row = new Row();
+		row.appendChild(lblContentType);
+		row.appendChild(contentType.getComponent());
+		rows.appendChild(row);
 
-		Hbox hbox = new Hbox();
-		hbox.setAlign("center");
-		hbox.setPack("start");
-		hbox.appendChild(lblFile);
-		hbox.appendChild(fileUploadButton);
+		row = new Row();
+		row.appendChild(lblDesc);
+		row.appendChild(txtDesc);
+		rows.appendChild(row);
 
-		parameterPanel.setStyle("padding: 10px");
-		parameterPanel.appendChild(hbox);
-		parameterPanel.appendChild(vbox);
-		parameterPanel.appendChild(descBox);
-
-		South south = new South();
-		south.setSclass("dialog-footer");
-		south.setParent(mainLayout);
-		mainLayout.appendChild(south);
-		south.appendChild(confirmPanel);
+		this.appendChild(confirmPanel);
 
 		fileUploadButton.setUpload(AdempiereWebUI.getUploadSetting());
 		fileUploadButton.addEventListener(Events.ON_UPLOAD, this);
@@ -179,74 +200,95 @@ public class WUploadContent extends Window implements EventListener<Event>
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_OK))
 		{
-			String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
-			MDMSContent dmsContent = null;
-
-			if (contentType.getValue() == null || (Integer) contentType.getValue() == 0)
-				throw new WrongValueException(contentType.getComponent(), fillMandatory);
-
-			if (fileUploadButton.getLabel().equalsIgnoreCase("-"))
-				throw new WrongValueException(fileUploadButton, fillMandatory);
-
-			File uploadedDocument = null;
-			if (mdmsContent.getParentURL() == null)
-				uploadedDocument = new File(System.getProperty("user.dir") + File.separator + mdmsContent.getName()
-						+ File.separator + media.getName());
-			else
-				uploadedDocument = new File(System.getProperty("user.dir") + mdmsContent.getParentURL()
-						+ File.separator + mdmsContent.getName() + File.separator + media.getName());
-
-			if (uploadedDocument.exists())
-				uploadedDocument = new File(getUniqueFilename(uploadedDocument.getAbsolutePath()));
-
-			FileOutputStream fos = new FileOutputStream(uploadedDocument);
-			fos.write(media.getByteData());
-			fos.close();
-
-			try
-			{
-				dmsContent = new MDMSContent(Env.getCtx(), 0, null);
-				dmsContent.setName(uploadedDocument.getName());
-				dmsContent.setDescription(txtDesc.getValue());
-				dmsContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(media));
-				dmsContent.setDMS_Status_ID(DmsUtility.getStatusID());
-				dmsContent.setDMS_ContentType_ID((Integer) contentType.getValue());
-				dmsContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
-				if (mdmsContent.getParentURL() == null)
-					dmsContent.setParentURL(File.separator + mdmsContent.getName());
-				else
-					dmsContent.setParentURL(mdmsContent.getParentURL() + File.separator + mdmsContent.getName());
-				dmsContent.saveEx();
-
-				ThumbnailGenerator thumbnailGenerator = new ThumbnailGenerator();
-				thumbnailGenerator.getThumbnails(uploadedDocument, dmsContent);
-
-				MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
-				dmsAssociation.setDMS_Content_ID(dmsContent.getDMS_Content_ID());
-				dmsAssociation.setDMS_Content_Related_ID(mdmsContent.getDMS_Content_ID());
-				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
-				dmsAssociation.saveEx();
-			}
-			catch (Exception ex)
-			{
-				log.log(Level.SEVERE, "Upload Content Failure :" + ex.getLocalizedMessage());
-				throw new AdempiereException("Upload Content Failure :" + ex.getLocalizedMessage());
-			}
-
-			this.detach();
+			saveUploadedDcoument();
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 			this.detach();
 	}
 
-	private void processUploadMedia(Media document)
+	private void saveUploadedDcoument()
 	{
-		if (document == null)
+		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
+		MDMSContent uploadedDMSContent = null;
+
+		if (fileUploadButton.getLabel().equalsIgnoreCase("-"))
+			throw new WrongValueException(fileUploadButton, fillMandatory);
+
+		if (txtName.getValue().equals("") || txtName.getValue().equals(null))
+			throw new WrongValueException(txtName, fillMandatory);
+
+		String newFilename = txtName.getValue();
+
+		for (int i = 0; i < specialCh.length; i++)
+		{
+			if (newFilename.contains(specialCh[i]))
+				throw new WrongValueException(txtName, "Invalid File Name.");
+
+		}
+		if (newFilename.contains("."))
+			if (!newFilename.substring(newFilename.lastIndexOf('.') + 1, newFilename.length()).equals(
+					uploadedMedia.getFormat()))
+				throw new WrongValueException(txtName, "Invalid File Extension.");
+
+		if (contentType.getValue() == null || (Integer) contentType.getValue() == 0)
+			throw new WrongValueException(contentType.getComponent(), fillMandatory);
+
+		try
+		{
+			uploadedDMSContent = new MDMSContent(Env.getCtx(), 0, null);
+
+			if (!txtName.getValue().contains(uploadedMedia.getFormat()))
+				uploadedDMSContent.setName(txtName.getValue() + "." + uploadedMedia.getFormat());
+			else
+				uploadedDMSContent.setName(txtName.getValue());
+
+			uploadedDMSContent.setDescription(txtDesc.getValue());
+			uploadedDMSContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(uploadedMedia));
+			uploadedDMSContent.setDMS_Status_ID(DmsUtility.getStatusID());
+			uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
+			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
+			uploadedDMSContent.setParentURL(contentManager.getPath(WDocumentViewer.currentDMSContent));
+			/*
+			 * if (WDocumentViewer.currentDMSContent == null)
+			 * uploadedDMSContent.setParentURL(""); else
+			 * uploadedDMSContent.setParentURL(WDocumentViewer.currentDMSContent
+			 * + File.separator + WDocumentViewer.currentDMSContent.getName());
+			 */
+			uploadedDMSContent.saveEx();
+
+			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
+			dmsAssociation.setDMS_Content_ID(uploadedDMSContent.getDMS_Content_ID());
+
+			if (WDocumentViewer.currentDMSContent != null)
+				dmsAssociation.setDMS_Content_Related_ID(WDocumentViewer.currentDMSContent.getDMS_Content_ID());
+			dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
+			dmsAssociation.saveEx();
+
+			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData());
+
+			if (uploadedDMSContent.getParentURL() == null)
+				thumbnailProvider.addThumbnail(uploadedDMSContent,
+						fileStorgProvider.getFile(fileSeparator + uploadedDMSContent.getName()), null);
+
+		}
+		catch (Exception ex)
+		{
+			log.log(Level.SEVERE, "Upload Content Failure :" + ex.getLocalizedMessage());
+			throw new AdempiereException("Upload Content Failure :" + ex.getLocalizedMessage());
+		}
+
+		this.detach();
+	}
+
+	private void processUploadMedia(Media media)
+	{
+		if (media == null)
 			return;
 		try
 		{
-			media = new AMedia(document.getName(), null, null, document.getByteData());
+			uploadedMedia = new AMedia(media.getName(), null, null, media.getByteData());
 			fileUploadButton.setLabel(media.getName());
+			txtName.setValue(FilenameUtils.getBaseName(media.getName()));
 		}
 		catch (Exception e)
 		{
@@ -254,26 +296,4 @@ public class WUploadContent extends Window implements EventListener<Event>
 			throw new AdempiereException("Upload Content Failure: " + e.getLocalizedMessage());
 		}
 	}
-
-	private String getUniqueFilename(String fullPath)
-	{
-		File document = new File(fullPath);
-
-		if (document.exists())
-		{
-			String filename = document.getName();
-			String path = fullPath.substring(0, fullPath.length() - filename.length());
-			String filenameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.lastIndexOf("."));
-			String ext = FilenameUtils.getExtension(document.getName());
-			int n = 1;
-			do
-			{
-				fullPath = path + filenameWOExt + "(" + n++ + ")." + ext;
-				document = new File(fullPath);
-			}
-			while (document.exists());
-		}
-		return fullPath;
-	}
-
 }

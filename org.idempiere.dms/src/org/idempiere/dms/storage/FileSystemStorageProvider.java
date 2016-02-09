@@ -13,34 +13,44 @@ import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CLogger;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.IFileStorageProvider;
 
 public class FileSystemStorageProvider implements IFileStorageProvider
 {
-	public static CLogger		log	= CLogger.getCLogger(FileSystemStorageProvider.class);
+	public static CLogger		log				= CLogger.getCLogger(FileSystemStorageProvider.class);
 
-	public I_AD_StorageProvider	provider;
+	public I_AD_StorageProvider	provider		= null;
+
 	public String				baseDir;
+	private String				fileSeparator	= null;
 
 	@Override
 	public void init(I_AD_StorageProvider storageProvider)
 	{
 		provider = storageProvider;
 		baseDir = storageProvider.getFolder();
+		fileSeparator = Utils.getStorageProviderFileSeparator();
 	}
 
 	@Override
 	public File[] getFiles(String parent, String pattern)
 	{
-		File directory = new File(parent);
-		FileFilter filter = new RegexFileFilter(pattern);
-		return directory.listFiles(filter);
+		File directory = new File(baseDir + fileSeparator + parent);
+
+		if (directory.exists())
+		{
+			FileFilter filter = new RegexFileFilter(pattern);
+			return directory.listFiles(filter);
+		}
+		else
+			return null;
 	}
 
 	@Override
 	public File getFile(String path)
 	{
-		File file = new File(path);
+		File file = new File(baseDir + fileSeparator + path);
 
 		if (file.exists())
 			return file;
@@ -51,7 +61,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	@Override
 	public String[] list(String parent)
 	{
-		File[] files = new File(parent).listFiles();
+		File[] files = new File(baseDir + fileSeparator + parent).listFiles();
 		String[] fileList = new String[files.length];
 
 		for (int i = 0; i < files.length; i++)
@@ -67,10 +77,10 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	{
 		try
 		{
-			File file = new File(path);
+			File file = new File(baseDir + fileSeparator + path);
 			if (file.exists())
 			{
-				Path filePath = Paths.get(path);
+				Path filePath = Paths.get(file.getAbsolutePath());
 				return Files.readAllBytes(filePath);
 			}
 			else
@@ -86,18 +96,30 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	@Override
 	public boolean writeBLOB(String path, byte[] data)
 	{
+		File file = null;
 		try
 		{
-			File file = new File(path);
+			file = new File(baseDir + fileSeparator + path);
+
+			String absolutePath = file.getAbsolutePath();
+			String folderpath = absolutePath.substring(0, absolutePath.lastIndexOf(fileSeparator));
+
+			new File(folderpath).mkdirs();
+
+			if (file.exists())
+			{
+				file = new File(DmsUtility.getUniqueFilename(file.getAbsolutePath()));
+			}
+
 			FileOutputStream fos = new FileOutputStream(file, true);
 			fos.write(data);
 			fos.close();
+			return true;
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Blob Writting Failure " + e.getLocalizedMessage());
 			throw new AdempiereException("Blob Writting Failure: " + e.getLocalizedMessage());
 		}
-		return true;
 	}
 }
