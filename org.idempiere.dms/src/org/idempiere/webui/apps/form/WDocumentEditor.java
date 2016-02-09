@@ -32,7 +32,12 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.idempiere.dms.factories.IContentManager;
+import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.storage.RelationalContentManager;
+import org.idempiere.model.FileStorageUtil;
+import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSStatus;
@@ -54,38 +59,42 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID		= 7234966943628502177L;
-	public static CLogger		log						= CLogger.getCLogger(WDocumentEditor.class);
+	private static final long		serialVersionUID		= 7234966943628502177L;
+	public static CLogger			log						= CLogger.getCLogger(WDocumentEditor.class);
 
-	private Label				lblStatus				= null;
-	private Label				lblDocName				= null;
-	private Label				lblContentCategory		= null;
-	private Label				lblDocStatus			= null;
-	private Label				lblMetaData				= null;
-	private Label				lblDocReported			= null;
-	private Label				lblBPartner				= null;
+	private Label					lblStatus				= null;
+	private Label					lblDocName				= null;
+	private Label					lblContentCategory		= null;
+	private Label					lblDocStatus			= null;
+	private Label					lblMetaData				= null;
+	private Label					lblDocReported			= null;
+	private Label					lblBPartner				= null;
 
-	private Textbox				txtDocName				= null;
+	private Textbox					txtDocName				= null;
 
-	private WTableDirEditor		lstboxContentCategory	= null;
-	private WTableDirEditor		lstboxDocStatus			= null;
+	private WTableDirEditor			lstboxContentCategory	= null;
+	private WTableDirEditor			lstboxDocStatus			= null;
 
-	private Button				btnDelete				= null;
-	private Button				btnRequery				= null;
-	private Button				btnClose				= null;
-	private Button				btnDownload				= null;
-	private Button				btnEdit					= null;
-	private Button				btnSave					= null;
+	private Button					btnDelete				= null;
+	private Button					btnRequery				= null;
+	private Button					btnClose				= null;
+	private Button					btnDownload				= null;
+	private Button					btnEdit					= null;
+	private Button					btnSave					= null;
 
-	private Datebox				dbContentReported		= null;
+	private Datebox					dbContentReported		= null;
 
-	private WSearchEditor		seBPartner				= null;
-	private ConfirmPanel		confirmPanel			= null;
-	private WDocumentViewer		viewer					= null;
-	private Tabpanel			tabDataPanel			= null;
-	private MDMSContent			mDMSContent				= null;
+	private WSearchEditor			seBPartner				= null;
+	private ConfirmPanel			confirmPanel			= null;
+	private WDocumentViewer			viewer					= null;
+	private Tabpanel				tabDataPanel			= null;
+	private MDMSContent				mDMSContent				= null;
 
-	private String				fileSeparator			= null;
+	private IFileStorageProvider	fileStorageProvider		= null;
+	private IContentManager			contentManager			= null;
+	private IThumbnailProvider		thumbnailProvider		= null;
+
+	private String					fileSeparator			= null;
 
 	public WDocumentEditor(WDocumentViewer viewer, File document_preview, Tabpanel tabDataPanel,
 			MDMSContent mdms_content)
@@ -93,9 +102,24 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		this.viewer = viewer;
 		this.tabDataPanel = tabDataPanel;
 		this.mDMSContent = mdms_content;
+
+		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
+
+		if (fileStorageProvider == null)
+			throw new AdempiereException("Storage provider is not found");
+
+		contentManager = Utils.getContentManager(RelationalContentManager.KEY);
+
+		if (contentManager == null)
+			throw new AdempiereException("Content manager is not found");
+
+		thumbnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
+
+		if (thumbnailProvider == null)
+			throw new AdempiereException("thumbnailProvider is not found");
+
 		fileSeparator = Utils.getStorageProviderFileSeparator();
 		intiform(document_preview);
-
 	}
 
 	private void intiform(File document_preview)
@@ -333,8 +357,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 
 	public void showMetaData(MDMSContent mdms_content)
 	{
-		File document = new File(System.getProperty("user.dir") + mdms_content.getParentURL() + fileSeparator
-				+ mdms_content.getName());
+		File document = fileStorageProvider.getFile(contentManager.getPath(mdms_content));
 
 		if (document.exists())
 		{
@@ -384,8 +407,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 			{
 				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), contentId, null);
 
-				File document = new File(System.getProperty("user.dir") + fileSeparator + dmsContent.getParentURL()
-						+ fileSeparator + dmsContent.getName());
+				File document = fileStorageProvider.getFile(contentManager.getPath(dmsContent));
 				if (document.exists())
 				{
 					AMedia media = new AMedia(document, "application/octet-stream", null);
@@ -395,16 +417,14 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_DELETE))
 		{
-			File document = new File(System.getProperty("user.dir") + fileSeparator + mDMSContent.getParentURL()
-					+ fileSeparator + mDMSContent.getName());
+			File document = fileStorageProvider.getFile(contentManager.getPath(mDMSContent));
 
 			if (document.exists())
 			{
 				document.delete();
 			}
 
-			File thumbnails = new File(System.getProperty("user.dir") + fileSeparator + "DMS_Thumbnails"
-					+ fileSeparator + Env.getAD_Client_ID(Env.getCtx()) + mDMSContent.getDMS_Content_ID());
+			File thumbnails = new File(thumbnailProvider.getURL(mDMSContent, null));
 
 			if (thumbnails.exists())
 				FileUtils.deleteDirectory(thumbnails);

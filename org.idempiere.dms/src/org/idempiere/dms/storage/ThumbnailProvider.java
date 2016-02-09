@@ -56,9 +56,19 @@ public class ThumbnailProvider implements IThumbnailProvider
 	@Override
 	public String getURL(I_DMS_Content content, String size)
 	{
-		File documentfile = new File(thumbnailBasePath + fileSeparator + Env.getAD_Client_ID(Env.getCtx())
-				+ fileSeparator + content.getDMS_Content_ID() + fileSeparator + content.getDMS_Content_ID() + "-"
-				+ size + ".jpg");
+		File documentfile = null;
+
+		if (size != null)
+		{
+			documentfile = new File(thumbnailBasePath + fileSeparator + Env.getAD_Client_ID(Env.getCtx())
+					+ fileSeparator + content.getDMS_Content_ID() + fileSeparator + content.getDMS_Content_ID() + "-"
+					+ size + ".jpg");
+		}
+		else
+		{
+			documentfile = new File(thumbnailBasePath + fileSeparator + Env.getAD_Client_ID(Env.getCtx())
+					+ fileSeparator + content.getDMS_Content_ID());
+		}
 
 		if (documentfile.exists())
 			return documentfile.getAbsolutePath();
