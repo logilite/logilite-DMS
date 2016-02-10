@@ -13,8 +13,12 @@ import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
+import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.storage.DmsUtility;
+import org.idempiere.dms.storage.RelationalContentManager;
+import org.idempiere.model.FileStorageUtil;
+import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
@@ -41,18 +45,32 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private Borderlayout			mainLayout			= new Borderlayout();
 	private Panel					parameterPanel		= new Panel();
 	private ConfirmPanel			confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
-	private Label					lblDir				= new Label(Msg.translate(Env.getCtx(), "Enter Directory Name"));
+	private Label					lblDir				= new Label(Msg.translate(Env.getCtx(), "Directory Name"));
 	private Textbox					txtboxDirectory		= new Textbox();
 	private File					file				= null;
 	private MDMSContent				mdms_content		= null;
 
 	private String					fileSeprator		= null;
 
-	public CreateDirectoryForm(MDMSContent dms_content)
+	private IFileStorageProvider	fileStorageProvider	= null;
+	private IContentManager			contentManager		= null;
+
+	public CreateDirectoryForm()
 	{
 		try
 		{
-			this.mdms_content = dms_content;
+			this.mdms_content = WDocumentViewer.currentDMSContent;
+
+			fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
+
+			if (fileStorageProvider == null)
+				throw new AdempiereException("Storage provider is not found");
+
+			contentManager = Utils.getContentManager(RelationalContentManager.KEY);
+
+			if (contentManager == null)
+				throw new AdempiereException("Content manager is not found");
+
 			fileSeprator = Utils.getStorageProviderFileSeparator();
 			init();
 		}
@@ -119,18 +137,13 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		{
 			String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
 			String dirName = txtboxDirectory.getValue();
-			if (dirName == null || dirName.equals(""))
-			{
+
+			if (Util.isEmpty(dirName) || dirName.equals(""))
 				throw new WrongValueException(txtboxDirectory, fillMandatory);
-			}
+
 			try
 			{
-				File rootFolder = null;
-				if (mdms_content.getParentURL() == null)
-					rootFolder = new File(System.getProperty("user.dir") + fileSeprator + mdms_content.getName());
-				else
-					rootFolder = new File(System.getProperty("user.dir") + fileSeprator + mdms_content.getParentURL()
-							+ fileSeprator + mdms_content.getName());
+				File rootFolder = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(mdms_content)));
 
 				if (!rootFolder.exists())
 					rootFolder.mkdirs();
@@ -142,17 +155,12 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists."));
 
 				MDMSContent content = new MDMSContent(Env.getCtx(), 0, null);
-				content.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(null));
+				content.setDMS_MimeType_ID(Utils.getMimeTypeID(null));
 				content.setName(dirName);
-				content.setDMS_ContentType_ID(DmsUtility.getContentTypeID());
-				content.setDMS_Status_ID(DmsUtility.getStatusID());
+				content.setDMS_ContentType_ID(Utils.getContentTypeID());
+				content.setDMS_Status_ID(Utils.getStatusID());
 
-				if (mdms_content.getParentURL() == null)
-				{
-					content.setParentURL(fileSeprator + mdms_content.getName());
-				}
-				else
-					content.setParentURL(mdms_content.getParentURL() + fileSeprator + mdms_content.getName());
+				content.setParentURL(contentManager.getPath(mdms_content));
 
 				content.setValue(dirName);
 				content.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
@@ -160,16 +168,24 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 
 				MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
-				dmsAssociation.setDMS_Content_Related_ID(mdms_content.getDMS_Content_ID());
+				if (mdms_content != null)
+					dmsAssociation.setDMS_Content_Related_ID(mdms_content.getDMS_Content_ID());
 				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
 				dmsAssociation.saveEx();
 				this.detach();
 
 			}
+			catch (AdempiereException e)
+			{
+				log.log(Level.SEVERE, "Directory is allready created");
+				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is allready created"));
+			}
 			catch (Exception e)
 			{
+
 				log.log(Level.SEVERE, "Directory is not created");
 				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is not created"));
+
 			}
 		}
 	}

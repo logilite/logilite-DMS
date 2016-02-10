@@ -48,7 +48,7 @@ public class ThumbnailGenerator implements IThumbnailGenerator
 	@Override
 	public ArrayList<File> getThumbnails(File document, I_DMS_Content content)
 	{
-		if (DmsUtility.accept(document))
+		if (Utils.accept(document))
 		{
 			File imgpxfile = null;
 			thumbnailsFiles = new ArrayList<File>();

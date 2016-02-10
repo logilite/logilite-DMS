@@ -91,7 +91,7 @@ public class ThumbnailProvider implements IThumbnailProvider
 	@Override
 	public void addThumbnail(I_DMS_Content content, File file, String size)
 	{
-		if (DmsUtility.accept(file))
+		if (Utils.accept(file))
 		{
 			File thumbnailFile = null;
 
@@ -123,7 +123,7 @@ public class ThumbnailProvider implements IThumbnailProvider
 							thumbnailFile = new File(thumbnailContentFolder.getAbsolutePath() + fileSeparator
 									+ content.getDMS_Content_ID() + "-" + thumbSizesList.get(i) + ".jpg");
 
-							imagepx = DmsUtility.toBufferedImage(page.getImage(
+							imagepx = Utils.toBufferedImage(page.getImage(
 									Integer.parseInt(thumbSizesList.get(i).toString()),
 									Integer.parseInt(thumbSizesList.get(i).toString()), rect, null, true, true));
 
@@ -135,8 +135,8 @@ public class ThumbnailProvider implements IThumbnailProvider
 						thumbnailFile = new File(thumbnailContentFolder.getAbsolutePath() + fileSeparator
 								+ content.getDMS_Content_ID() + "-" + size + ".jpg");
 
-						imagepx = DmsUtility.toBufferedImage(page.getImage(Integer.parseInt(size),
-								Integer.parseInt(size), rect, null, true, true));
+						imagepx = Utils.toBufferedImage(page.getImage(Integer.parseInt(size), Integer.parseInt(size),
+								rect, null, true, true));
 
 						ImageIO.write(imagepx, "jpg", thumbnailFile);
 					}
@@ -161,13 +161,13 @@ public class ThumbnailProvider implements IThumbnailProvider
 							thumbnailFile = new File(thumbnailContentFolder.getAbsolutePath() + fileSeparator
 									+ content.getDMS_Content_ID() + "-" + thumbSizesList.get(i) + ".jpg");
 
-							thumbnailImage = DmsUtility.getImageThumbnail(file, thumbSizesList.get(i).toString());
+							thumbnailImage = Utils.getImageThumbnail(file, thumbSizesList.get(i).toString());
 							ImageIO.write(thumbnailImage, "jpg", thumbnailFile);
 						}
 					}
 					else
 					{
-						thumbnailImage = DmsUtility.getImageThumbnail(file, size);
+						thumbnailImage = Utils.getImageThumbnail(file, size);
 						ImageIO.write(thumbnailImage, "jpg", thumbnailFile);
 					}
 				}

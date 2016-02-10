@@ -45,7 +45,6 @@ import org.idempiere.componenet.ImgTextComponent;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.storage.DmsUtility;
 import org.idempiere.dms.storage.RelationalContentManager;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
@@ -128,6 +127,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 	public IContentManager		contentManager		= null;
 
 	private WUploadContent		uploadContent		= null;
+	private CreateDirectoryForm	createDirectoryForm	= null;
 
 	private I_DMS_Content[]		dmsContent			= null;
 
@@ -447,7 +447,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 
 				if (documentToPreview != null)
 				{
-					if (DmsUtility.accept(documentToPreview))
+					if (Utils.accept(documentToPreview))
 					{
 						Tab tabData = new Tab(currentDMSContent.getName());
 						tabData.setClosable(true);
@@ -473,11 +473,21 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(createDirButton))
 		{
-			new CreateDirectoryForm(currentDMSContent);
+			createDirectoryForm = new CreateDirectoryForm();
+
+			createDirectoryForm.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+
+				@Override
+				public void onEvent(Event event) throws Exception
+				{
+
+				}
+			});
 		}
 		else if (event.getTarget().equals(uploadContentButton))
 		{
 			uploadContent = new WUploadContent();
+
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override

@@ -22,7 +22,7 @@ public class RelationalContentManager implements IContentManager
 				return Utils.getStorageProviderFileSeparator() + content.getName();
 		}
 		else
-			return null;
+			return "";
 	}
 
 }

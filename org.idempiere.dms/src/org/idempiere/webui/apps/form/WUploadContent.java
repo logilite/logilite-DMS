@@ -29,7 +29,6 @@ import org.compiere.util.Msg;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.storage.DmsUtility;
 import org.idempiere.dms.storage.RelationalContentManager;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
@@ -243,8 +242,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 				uploadedDMSContent.setName(txtName.getValue());
 
 			uploadedDMSContent.setDescription(txtDesc.getValue());
-			uploadedDMSContent.setDMS_MimeType_ID(DmsUtility.getMimeTypeID(uploadedMedia));
-			uploadedDMSContent.setDMS_Status_ID(DmsUtility.getStatusID());
+			uploadedDMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(uploadedMedia));
+			uploadedDMSContent.setDMS_Status_ID(Utils.getStatusID());
 			uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
 			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
 			uploadedDMSContent.setParentURL(contentManager.getPath(WDocumentViewer.currentDMSContent));

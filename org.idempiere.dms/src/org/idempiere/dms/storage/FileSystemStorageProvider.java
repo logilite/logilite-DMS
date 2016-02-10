@@ -108,7 +108,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 
 			if (file.exists())
 			{
-				file = new File(DmsUtility.getUniqueFilename(file.getAbsolutePath()));
+				file = new File(Utils.getUniqueFilename(file.getAbsolutePath()));
 			}
 
 			FileOutputStream fos = new FileOutputStream(file, true);
@@ -121,5 +121,11 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 			log.log(Level.SEVERE, "Blob Writting Failure " + e.getLocalizedMessage());
 			throw new AdempiereException("Blob Writting Failure: " + e.getLocalizedMessage());
 		}
+	}
+
+	@Override
+	public String getBaseDirectory(String path)
+	{
+		return baseDir + fileSeparator + path;
 	}
 }

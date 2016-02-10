@@ -21,4 +21,5 @@ public interface IFileStorageProvider
 
 	public boolean writeBLOB(String path, byte[] data);
 
+	public String getBaseDirectory(String path);
 }
