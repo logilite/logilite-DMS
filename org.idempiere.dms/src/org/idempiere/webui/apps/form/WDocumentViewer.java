@@ -34,6 +34,7 @@ import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
+import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.util.CLogger;
@@ -60,6 +61,8 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
+
+import bsh.util.Util;
 
 public class WDocumentViewer extends Panel implements EventListener<Event>
 {
@@ -229,19 +232,20 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		tabBox.appendChild(tabs);
 		tabBox.appendChild(tabPanels);
 		tabBox.addEventListener(Events.ON_SELECT, this);
-
+		grid.setStyle("width: 69%; height:100%; position:relative; overflow: auto;");
 		// View Result Tab
 
 		Grid gridView = GridFactory.newGridLayout();
-		gridView.setStyle("margin:0; padding:0; ");
+		gridView.setStyle("position:relative; float: right; overflow: auto;");
+		gridView.setWidth("30%");
+		gridView.setHeight("100%");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
 		gridView.setZclass("none");
 		Columns columns = new Columns();
-		gridView.appendChild(columns);
 
 		Column column = new Column();
-		column.setWidth("100px");
+		column.setWidth("90px");
 		column.setAlign("left");
 		columns.appendChild(column);
 
@@ -272,6 +276,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		nextButton.setTooltiptext("Next Record");
 		backButton.addEventListener(Events.ON_CLICK, this);
 		nextButton.addEventListener(Events.ON_CLICK, this);
+		nextButton.setStyle("float:right;");
 
 		row.appendChild(backButton);
 		row.appendChild(positionInfo);
@@ -320,6 +325,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		rows.appendChild(row);
 		row.setAlign("right");
 		row.appendChild(lblCategory);
+		lblCategory.setStyle("float: left;");
 		Cell categoryListCell = new Cell();
 		categoryListCell.setColspan(2);
 		lstboxCategory.setMold("select");
@@ -331,6 +337,8 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		rows.appendChild(row);
 		row.appendChild(lblCreated);
 		Hbox hbox = new Hbox();
+		dbCreatedFrom.setStyle("width: 100%; display:flex; flex-direction: row; flex-wrap: wrap;");
+		dbCreatedTo.setStyle("width: 100%; display:flex; flex-direction: row; flex-wrap: wrap;");
 		hbox.appendChild(dbCreatedFrom);
 		hbox.appendChild(dbCreatedTo);
 
@@ -343,6 +351,8 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		rows.appendChild(row);
 		row.appendChild(lblUpdated);
 		hbox = new Hbox();
+		dbUpdatedFrom.setStyle("width: 100%; display:flex; flex-direction: row; flex-wrap: wrap;");
+		dbUpdated.setStyle("width: 100%; display:flex; flex-direction: row; flex-wrap: wrap;");
 		hbox.appendChild(dbUpdatedFrom);
 		hbox.appendChild(dbUpdated);
 
@@ -360,6 +370,8 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		rows.appendChild(row);
 		row.appendChild(lblReportDate);
 		hbox = new Hbox();
+		dbReportFrom.setStyle("width: 100%; display:flex; flex-direction: row; flex-wrap: wrap;");
+		dbReportTo.setStyle("width: 100%; display:flex; flex-direction: row; flex-wrap: wrap;");
 		hbox.appendChild(dbReportFrom);
 		hbox.appendChild(dbReportTo);
 
@@ -389,8 +401,6 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		hbox.appendChild(closetabButton);
 
 		Cell cell = new Cell();
-		cell = new Cell();
-
 		cell.setColspan(3);
 		cell.setRowspan(1);
 		cell.setAlign("right");
@@ -403,21 +413,20 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		Hbox boxViewSeparator = new Hbox();
 		boxViewSeparator.setWidth("100%");
 		boxViewSeparator.setHeight("100%");
+
 		cell = new Cell();
-		cell.setWidth("60%");
+		cell.setWidth("100%");
+		cell.setStyle("position: absolute;");
 		cell.appendChild(grid);
 		boxViewSeparator.appendChild(cell);
 
 		cell = new Cell();
-		cell.setWidth("35%");
-		gridView.setWidth("100%");
+		cell.setWidth("100%");
 		cell.appendChild(gridView);
 		boxViewSeparator.appendChild(cell);
 		tabViewPanel.appendChild(boxViewSeparator);
+		gridView.appendChild(rows);
 
-		grid.setHeight("680px");
-		grid.setWidth("950px");
-		grid.setAutopaging(true);
 		grid.setZclass("none");
 		gridView.setZclass("none");
 
@@ -533,27 +542,58 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 
 	public void renderViewer() throws IOException, URISyntaxException
 	{
+		byte[] imgByteData = null;
+		File thumbFile = null;
+
 		Components.removeAllChildren(grid);
 		// tabs.appendChild(tabView);
 		Rows rows = new Rows();
-		Row row = null;
+		Row row = new Row();
+		Cell cell = null;
+		MImage mImage = null;
+		AImage image = null;
 
 		for (int i = 0; i < dmsContent.length; i++)
 		{
-			if (i % 6 == 0)
+			thumbFile = thubnailProvider.getFile(dmsContent[i], "150");
+			if (thumbFile == null)
 			{
-				row = new Row();
-				rows.appendChild(row);
+				if (dmsContent[i].getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+				{
+					mImage = Utils.getDirThumbnail();
+				}
+				else
+				{
+					mImage = Utils.getMimetypeThumbnail(dmsContent[i].getDMS_MimeType_ID());
+				}
+				imgByteData = mImage.getData();
+				if (imgByteData != null)
+					image = new AImage(dmsContent[i].getName(), imgByteData);
+			}
+			else
+			{
+				image = new AImage(thumbFile);
 			}
 
-			File thumbfile = thubnailProvider.getFile(dmsContent[i], "150");
-
-			cstmComponenet = new ImgTextComponent(dmsContent[i], new AImage(thumbfile));
-
-			row.appendChild(cstmComponenet);
-
-			cstmComponenet.addEventListener(Events.ON_CLICK, this);
+			cstmComponenet = new ImgTextComponent(dmsContent[i], image);
 			cstmComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
+			cstmComponenet.addEventListener(Events.ON_CLICK, this);
+			cstmComponenet.addEventListener(Events.ON_RIGHT_CLICK, this);
+
+			grid.setSizedByContent(true);
+			cstmComponenet.setDheight(130);
+			cstmComponenet.setDwidth(130);
+
+			cell = new Cell();
+			cell.setWidth(row.getWidth());
+			cell.appendChild(cstmComponenet);
+			cell.setStyle("flex-shrink:50");
+			// flex: 1 0 150px;
+			// justify-content:space-around;
+			row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap;");
+			row.appendCellChild(cell);
+			rows.appendChild(row);
+			row.appendChild(cstmComponenet);
 
 		}
 

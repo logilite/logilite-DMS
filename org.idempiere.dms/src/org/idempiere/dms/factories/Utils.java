@@ -17,6 +17,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.model.MClientInfo;
+import org.compiere.model.MImage;
 import org.compiere.model.MStorageProvider;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CCache;
@@ -38,6 +39,11 @@ public class Utils
 
 	public static final String					STORAGE_PROVIDER_FILE_SEPARATOR	= "STORAGE_PROVIDER_FILE_SEPARATOR";
 
+	public static final String					DIRECTORY						= "Directory";
+	public static final String					DEFAULT							= "Default";
+	public static final String					DOWNLOAD						= "Download";
+	public static final String					DRAFT							= "Draft";
+
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider			= new CCache<Integer, IThumbnailProvider>(
 																						"ThumbnailProvider", 2);
 	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator		= new CCache<String, IThumbnailGenerator>(
@@ -46,6 +52,10 @@ public class Utils
 																						"ContentManager", 2);
 	static CCache<String, String>				cache_fileseparator				= new CCache<String, String>(
 																						"FileSeparator", 2);
+	static CCache<String, MImage>				cache_dirThumbnail				= new CCache<String, MImage>(
+																						"DirThumbnail", 2);
+	static CCache<Integer, MImage>				cache_mimetypeThumbnail			= new CCache<Integer, MImage>(
+																						"MimetypeThumbnail", 2);
 
 	public static IContentEditor getContentEditor(String mimeType)
 	{
@@ -207,8 +217,8 @@ public class Utils
 			return dmsMimeType_ID;
 		else
 		{
-			dmsMimeType_ID = DB
-					.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE name ilike 'Default'");
+			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE name ilike ?",
+					DEFAULT);
 			if (dmsMimeType_ID == -1)
 			{
 				MDMSMimeType dmsMimeType = new MDMSMimeType(Env.getCtx(), 0, null);
@@ -231,7 +241,7 @@ public class Utils
 
 	public static int getStatusID()
 	{
-		int dms_statusID = DB.getSQLValue(null, "SELECT dms_Status_ID FROM DMS_Status WHERE name ilike 'draft'");
+		int dms_statusID = DB.getSQLValue(null, "SELECT dms_Status_ID FROM DMS_Status WHERE name ilike ?", DRAFT);
 
 		if (dms_statusID != -1)
 			return dms_statusID;
@@ -252,7 +262,7 @@ public class Utils
 	public static int getContentTypeID()
 	{
 		int dms_ContentType_ID = DB.getSQLValue(null,
-				"SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE name ilike 'directory'");
+				"SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE name ilike ?", DIRECTORY);
 		if (dms_ContentType_ID != -1)
 			return dms_ContentType_ID;
 		else
@@ -313,5 +323,45 @@ public class Utils
 			while (document.exists());
 		}
 		return fullPath;
+	}
+
+	public static MImage getDirThumbnail()
+	{
+		MImage mImage = cache_dirThumbnail.get(DIRECTORY);
+		if (mImage != null)
+		{
+			return mImage;
+		}
+
+		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE name ilike ?", DIRECTORY);
+		mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
+		cache_dirThumbnail.put(DIRECTORY, mImage);
+		return mImage;
+	}
+
+	public static MImage getMimetypeThumbnail(int DMS_MimeType_ID)
+	{
+		MImage mImage = cache_mimetypeThumbnail.get(DMS_MimeType_ID);
+
+		if (mImage != null)
+		{
+			return mImage;
+		}
+
+		int Icon_ID = DB.getSQLValue(null, "SELECT Icon_ID FROM DMS_MimeType WHERE DMS_MimeType_ID=?", DMS_MimeType_ID);
+
+		if (Icon_ID <= 0)
+		{
+			Icon_ID = DB.getSQLValue(null, "SELECT Icon_ID FROM DMS_MimeType WHERE Name ilike ?", DEFAULT);
+			if (Icon_ID <= 0)
+			{
+				Icon_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE name ilike ?", DOWNLOAD);
+			}
+		}
+
+		mImage = new MImage(Env.getCtx(), Icon_ID, null);
+		cache_mimetypeThumbnail.put(DMS_MimeType_ID, mImage);
+		return mImage;
+
 	}
 }

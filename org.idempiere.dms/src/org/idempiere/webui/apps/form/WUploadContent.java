@@ -44,6 +44,8 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.event.UploadEvent;
+import org.zkoss.zul.Cell;
+import org.zkoss.zul.Space;
 
 public class WUploadContent extends Window implements EventListener<Event>
 {
@@ -64,11 +66,12 @@ public class WUploadContent extends Window implements EventListener<Event>
 	private Textbox					txtDesc				= new Textbox();
 	private Textbox					txtName				= new Textbox();
 
-	private Button					fileUploadButton	= new Button();
-
 	private Grid					gridView			= GridFactory.newGridLayout();
 
-	private ConfirmPanel			confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
+	private Button					fileUploadButton	= new Button();
+	private Button					btnClose			= null;
+	private Button					btnOk				= null;
+	private ConfirmPanel			confirmPanel		= null;
 
 	private AMedia					uploadedMedia		= null;
 
@@ -105,14 +108,16 @@ public class WUploadContent extends Window implements EventListener<Event>
 	public void init()
 	{
 		this.setHeight("33%");
-		this.setWidth("35%");
+		this.setWidth("38%");
 		this.setTitle("Upload Content");
 		this.setClosable(true);
 		this.appendChild(gridView);
-		gridView.setStyle("margin:0; padding:0; ");
+		gridView.setStyle("overflow: auto; position:relative;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
 		gridView.setZclass("none");
+		gridView.setWidth("100%");
+		gridView.setHeight("100%");
 
 		int Column_ID = MColumn.getColumn_ID(X_DMS_ContentType.Table_Name,
 				X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID);
@@ -146,12 +151,12 @@ public class WUploadContent extends Window implements EventListener<Event>
 		gridView.appendChild(columns);
 
 		Column column = new Column();
-		column.setWidth("20%");
+		column.setWidth("15%");
 		column.setAlign("left");
 		columns.appendChild(column);
 
 		column = new Column();
-		column.setWidth("60%");
+		column.setWidth("40%");
 		column.setAlign("left");
 		columns.appendChild(column);
 
@@ -179,12 +184,25 @@ public class WUploadContent extends Window implements EventListener<Event>
 		row.appendChild(txtDesc);
 		rows.appendChild(row);
 
-		this.appendChild(confirmPanel);
+		confirmPanel = new ConfirmPanel();
+		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
+		btnOk = confirmPanel.createButton(ConfirmPanel.A_OK);
+
+		row = new Row();
+		rows.appendChild(row);
+
+		Cell confirmPanelCell = new Cell();
+		confirmPanelCell.setAlign("right");
+		confirmPanelCell.setColspan(2);
+		confirmPanelCell.appendChild(btnOk);
+		confirmPanelCell.appendChild(new Space());
+		confirmPanelCell.appendChild(btnClose);
+		row.appendChild(confirmPanelCell);
 
 		fileUploadButton.setUpload(AdempiereWebUI.getUploadSetting());
 		fileUploadButton.addEventListener(Events.ON_UPLOAD, this);
-		confirmPanel.addActionListener(Events.ON_CLICK, this);
-		fileUploadButton.setLabel("-");
+		btnClose.addEventListener(Events.ON_CLICK, this);
+		btnOk.addEventListener(Events.ON_CLICK, this);
 		addEventListener(Events.ON_UPLOAD, this);
 		AEnv.showCenterScreen(this);
 	}

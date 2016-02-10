@@ -6,7 +6,6 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
@@ -203,29 +202,19 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		btnEdit.addEventListener(Events.ON_CLICK, this);
 
 		Grid gridData = GridFactory.newGridLayout();
-		gridData.setStyle("margin:0; padding:0;");
 		gridData.makeNoStrip();
 		gridData.setOddRowSclass("even");
-
-		Columns columns = new Columns();
-		gridData.appendChild(columns);
-
-		Column column = new Column();
-		column.setHflex("min");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setHflex("1");
-		column.setAlign("left");
-		columns.appendChild(column);
+		gridData.setZclass("none");
+		gridData.setStyle("overflow: auto; position:relative; float: right;");
+		gridData.setWidth("100%");
+		gridData.setHeight("100%");
 
 		Rows rows = new Rows();
 		gridData.appendChild(rows);
 
 		Row row = new Row();
 		Cell cell = new Cell();
-		cell.setColspan(2);
+		cell.setColspan(3);
 		cell.appendChild(lblStatus);
 		ZkCssHelper.appendStyle(lblStatus, "font-weight: bold;");
 		ZkCssHelper.appendStyle(lblStatus, "align: center;");
@@ -287,6 +276,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		row = new Row();
 		cell = new Cell();
 		row.setStyle("text-align:right");
+		cell.setColspan(2);
 		cell.appendChild(btnEdit);
 		cell.appendChild(btnSave);
 		cell.setAlign("right");
@@ -302,7 +292,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 
 		cell = new Cell();
 
-		cell.setColspan(1);
+		cell.setColspan(2);
 		box.appendChild(btnDelete);
 		box.appendChild(btnRequery);
 		box.appendChild(btnDownload);
@@ -336,15 +326,18 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		iframeContentPriview.setContent(media);
 		iframeContentPriview.setWidth("100%");
 		iframeContentPriview.setHeight("100%");
+		iframeContentPriview.setStyle("overflow: auto;");
 
 		preview_cell.appendChild(iframeContentPriview);
 		boxViewSeparator.appendChild(preview_cell);
 
 		cell = new Cell();
-		cell.setWidth("30%");
+		cell.setWidth("100%");
 		cell.appendChild(gridData);
 		cell.setStyle("trackMouseOver: false");
 		boxViewSeparator.appendChild(cell);
+
+		viewer.setStyle("width: 100%; height:100%; overflow: auto;");
 
 		tabDataPanel.appendChild(boxViewSeparator);
 		viewer.tabPanels.appendChild(tabDataPanel);
