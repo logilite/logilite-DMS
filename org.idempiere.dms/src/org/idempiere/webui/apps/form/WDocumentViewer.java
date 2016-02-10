@@ -427,9 +427,6 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		tabViewPanel.appendChild(boxViewSeparator);
 		gridView.appendChild(rows);
 
-		grid.setZclass("none");
-		gridView.setZclass("none");
-
 		tabs.appendChild(tabView);
 		tabPanels.appendChild(tabViewPanel);
 		this.setHeight("100%");
@@ -581,16 +578,17 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			cstmComponenet.addEventListener(Events.ON_RIGHT_CLICK, this);
 
 			grid.setSizedByContent(true);
+			grid.setZclass("none");
 			cstmComponenet.setDheight(130);
 			cstmComponenet.setDwidth(130);
 
 			cell = new Cell();
 			cell.setWidth(row.getWidth());
 			cell.appendChild(cstmComponenet);
-			cell.setStyle("flex-shrink:50");
 			// flex: 1 0 150px;
 			// justify-content:space-around;
 			row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap;");
+			row.setZclass("none");
 			row.appendCellChild(cell);
 			rows.appendChild(row);
 			row.appendChild(cstmComponenet);
