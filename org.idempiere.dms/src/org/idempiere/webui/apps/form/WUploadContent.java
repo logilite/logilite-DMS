@@ -107,8 +107,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 	public void init()
 	{
-		this.setHeight("33%");
-		this.setWidth("38%");
+		this.setHeight("36%");
+		this.setWidth("42%");
 		this.setTitle("Upload Content");
 		this.setClosable(true);
 		this.appendChild(gridView);
@@ -264,7 +264,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 			uploadedDMSContent.setDMS_Status_ID(Utils.getStatusID());
 			uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
 			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
-			uploadedDMSContent.setParentURL(contentManager.getPath(WDocumentViewer.currentDMSContent));
+			uploadedDMSContent.setParentURL(contentManager.getPath(WDocumentViewer.currDMSContent));
 			/*
 			 * if (WDocumentViewer.currentDMSContent == null)
 			 * uploadedDMSContent.setParentURL(""); else
@@ -276,8 +276,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 			dmsAssociation.setDMS_Content_ID(uploadedDMSContent.getDMS_Content_ID());
 
-			if (WDocumentViewer.currentDMSContent != null)
-				dmsAssociation.setDMS_Content_Related_ID(WDocumentViewer.currentDMSContent.getDMS_Content_ID());
+			if (WDocumentViewer.currDMSContent != null)
+				dmsAssociation.setDMS_Content_Related_ID(WDocumentViewer.currDMSContent.getDMS_Content_ID());
 			dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
 			dmsAssociation.saveEx();
 

@@ -113,13 +113,9 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 
 	private Label				positionInfo		= new Label();
 
-	public static MDMSContent	currentDMSContent;
-	public static MDMSContent	previousDmsContent;
-	public static MDMSContent	nextDmsContent;
-
-	public static final String	SQL_GET_IMAGE_ID	= "SELECT AD_Image_ID FROM AD_Image Where name ilike ? ";
-	public static final String	IMAGE_DOWNLOAD		= "Download";
-	public static final String	IMAGE_DIRECTORY		= "Directory";
+	public static MDMSContent	currDMSContent;
+	public static MDMSContent	prevDMSContent;
+	public static MDMSContent	nextDMSContent;
 
 	private ImgTextComponent	cstmComponenet		= null;
 
@@ -134,10 +130,6 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 
 	public WDocumentViewer()
 	{
-		currentDMSContent = null;
-		previousDmsContent = null;
-		nextDmsContent = null;
-
 		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
 
 		if (fileStorageProvider == null)
@@ -153,7 +145,21 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
-		initForm();
+		try
+		{
+			initForm();
+
+			currDMSContent = null;
+			prevDMSContent = null;
+			nextDMSContent = null;
+
+			renderViewer(currDMSContent);
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Render Component Problem.");
+			throw new AdempiereException("Render Component Problem: " + e.getLocalizedMessage());
+		}
 	}
 
 	protected void initForm()
@@ -161,29 +167,18 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		try
 		{
 			jbInit();
-			dynInit();
-			renderViewer(currentDMSContent);
-
-			backButton.setEnabled(false);
-			nextButton.setEnabled(false);
 		}
 		catch (IllegalArgumentException e)
 		{
-			log.log(Level.SEVERE, "Thumbnai not found for directory or document.");
-			throw new AdempiereException("Thumbnai not found for directory or document: " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Thumbnail not found for directory or document.");
+			throw new AdempiereException("Thumbnail not found for directory or document: " + e.getLocalizedMessage());
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Render Componenet Problem");
-			throw new AdempiereException("Render Componenet Problem " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Render Component Problem");
+			throw new AdempiereException("Render Component Problem " + e.getLocalizedMessage());
 		}
 		SessionManager.getAppDesktop();
-		// setMode(Mode.EMBEDDED);
-	}
-
-	private void dynInit()
-	{
-
 	}
 
 	private void jbInit() throws Exception
@@ -231,13 +226,16 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 
 		positionInfo.setHflex("1");
 		ZkCssHelper.appendStyle(positionInfo, "font-weight: bold;");
-		ZkCssHelper.appendStyle(positionInfo, "align: center;");
+		ZkCssHelper.appendStyle(positionInfo, "text-align: center;");
 
 		nextButton.setImage(ThemeManager.getThemeResource("images/wfNext24.png"));
 		nextButton.setTooltiptext("Next Record");
 		backButton.addEventListener(Events.ON_CLICK, this);
 		nextButton.addEventListener(Events.ON_CLICK, this);
 		nextButton.setStyle("float:right;");
+
+		backButton.setEnabled(false);
+		nextButton.setEnabled(false);
 
 		row.appendChild(backButton);
 		row.appendChild(positionInfo);
@@ -402,39 +400,40 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass() == ImgTextComponent.class)
 		{
-			if (currentDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+			if (currDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
-				renderViewer(currentDMSContent);
+				renderViewer(currDMSContent);
+				nextButton.setEnabled(false);
 			}
-			else if (currentDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
+			else if (currDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 			{
 				File documentToPreview = null;
 
-				documentToPreview = fileStorageProvider.getFile(contentManager.getPath(currentDMSContent));
+				documentToPreview = fileStorageProvider.getFile(contentManager.getPath(currDMSContent));
 
 				if (documentToPreview != null)
 				{
 					if (Utils.accept(documentToPreview))
 					{
-						Tab tabData = new Tab(currentDMSContent.getName());
+						Tab tabData = new Tab(currDMSContent.getName());
 						tabData.setClosable(true);
 						tabs.appendChild(tabData);
 						tabBox.setSelectedTab(tabData);
 						Tabpanel tabDataPanel = new Tabpanel();
-						new WDocumentEditor(this, documentToPreview, tabDataPanel, currentDMSContent);
-						currentDMSContent = previousDmsContent;
+						new WDocumentEditor(this, documentToPreview, tabDataPanel, currDMSContent);
+						currDMSContent = prevDMSContent;
 					}
 					else
 					{
 						AMedia media = new AMedia(documentToPreview, "application/octet-stream", null);
 						Filedownload.save(media);
-						currentDMSContent = previousDmsContent;
+						currDMSContent = prevDMSContent;
 					}
 				}
 				else
 				{
-					FDialog.error(0, currentDMSContent.getName() + " Document not found");
-					log.log(Level.SEVERE, currentDMSContent.getName() + " Document not found");
+					FDialog.error(0, currDMSContent.getName() + " Document not found");
+					log.log(Level.SEVERE, currDMSContent.getName() + " Document not found");
 				}
 			}
 		}
@@ -447,7 +446,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event event) throws Exception
 				{
-					renderViewer(currentDMSContent);
+					renderViewer(currDMSContent);
 				}
 			});
 		}
@@ -460,35 +459,39 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event event) throws Exception
 				{
-					renderViewer(currentDMSContent);
+					renderViewer(currDMSContent);
 				}
 			});
 			uploadContent.addEventListener(Events.ON_CLOSE, this);
 		}
 		else if (event.getTarget().equals(backButton))
 		{
-			nextDmsContent = currentDMSContent;
+			nextDMSContent = currDMSContent;
 			int DMS_Content_ID = DB.getSQLValue(null,
 					"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
-					currentDMSContent.getDMS_Content_ID());
+					currDMSContent.getDMS_Content_ID());
 
-			if (DMS_Content_ID == -1)
+			if (DMS_Content_ID <= 0)
+			{
+				renderViewer(null);
 				backButton.setEnabled(false);
+				nextButton.setEnabled(true);
+			}
 			else
 			{
-				currentDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-				renderViewer(currentDMSContent);
+				currDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+				renderViewer(currDMSContent);
 				nextButton.setEnabled(true);
-				if (currentDMSContent.getParentURL() == null)
-					backButton.setEnabled(false);
+				if (currDMSContent.getParentURL() == null)
+					backButton.setEnabled(true);
 			}
 		}
 		else if (event.getTarget().equals(nextButton))
 		{
-			if (nextDmsContent != null)
+			if (nextDMSContent != null)
 			{
-				currentDMSContent = nextDmsContent;
-				renderViewer(currentDMSContent);
+				currDMSContent = nextDMSContent;
+				renderViewer(currDMSContent);
 			}
 			nextButton.setEnabled(false);
 		}
@@ -599,6 +602,15 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			rows.appendChild(row);
 			row.appendChild(cstmComponenet);
 
+		}
+
+		if (DMS_Content != null)
+		{
+			if (DMS_Content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+			{
+				nextButton.setEnabled(true);
+				backButton.setEnabled(true);
+			}
 		}
 
 		grid.appendChild(rows);

@@ -3,7 +3,6 @@ package org.idempiere.componenet;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Menupopup;
 import org.adempiere.webui.component.ZkCssHelper;
-import org.adempiere.webui.window.FDialog;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.idempiere.model.I_DMS_Content;
@@ -118,8 +117,8 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 		}
 		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()))
 		{
-			WDocumentViewer.previousDmsContent = WDocumentViewer.currentDMSContent;
-			WDocumentViewer.currentDMSContent = new MDMSContent(Env.getCtx(), dms_content_id, null);
+			WDocumentViewer.prevDMSContent = WDocumentViewer.currDMSContent;
+			WDocumentViewer.currDMSContent = new MDMSContent(Env.getCtx(), dms_content_id, null);
 		}
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
 				&& event.getTarget().getClass() == ImgTextComponent.class)
@@ -132,10 +131,5 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 			popup.appendChild(menuitem);
 			this.setContext(popup);
 		}
-		else if (event.getTarget().equals(menuitem))
-		{
-			FDialog.warn(0, "hello");
-		}
-
 	}
 }
