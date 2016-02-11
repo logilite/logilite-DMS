@@ -6,7 +6,6 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.Grid;
@@ -21,6 +20,7 @@ import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.theme.ThemeManager;
+import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
@@ -93,8 +93,6 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 	private IContentManager			contentManager			= null;
 	private IThumbnailProvider		thumbnailProvider		= null;
 
-	private String					fileSeparator			= null;
-
 	public WDocumentEditor(WDocumentViewer viewer, File document_preview, Tabpanel tabDataPanel,
 			MDMSContent mdms_content)
 	{
@@ -117,7 +115,6 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		if (thumbnailProvider == null)
 			throw new AdempiereException("thumbnailProvider is not found");
 
-		fileSeparator = Utils.getStorageProviderFileSeparator();
 		intiform(document_preview);
 	}
 
@@ -393,20 +390,14 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnDownload))
 		{
-			int contentId = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name ilike '"
-					+ viewer.tabBox.getSelectedTab().getLabel() + "'");
-
-			if (contentId != -1)
+			File document = fileStorageProvider.getFile(contentManager.getPath(mDMSContent));
+			if (document.exists())
 			{
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), contentId, null);
-
-				File document = fileStorageProvider.getFile(contentManager.getPath(dmsContent));
-				if (document.exists())
-				{
-					AMedia media = new AMedia(document, "application/octet-stream", null);
-					Filedownload.save(media);
-				}
+				AMedia media = new AMedia(document, "application/octet-stream", null);
+				Filedownload.save(media);
 			}
+			else
+				FDialog.warn(0, "Docuement is not available to download.");
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_DELETE))
 		{
@@ -426,7 +417,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 					null);
 			DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", mDMSContent.getDMS_Content_ID(), null);
 			viewer.tabBox.getSelectedTab().close();
-			viewer.renderViewer();
+			viewer.renderViewer(viewer.currentDMSContent);
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_REFRESH))
 		{

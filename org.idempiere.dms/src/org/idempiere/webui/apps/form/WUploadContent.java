@@ -283,9 +283,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData());
 
-			if (uploadedDMSContent.getParentURL() == null)
-				thumbnailProvider.addThumbnail(uploadedDMSContent,
-						fileStorgProvider.getFile(fileSeparator + uploadedDMSContent.getName()), null);
+			thumbnailProvider.addThumbnail(uploadedDMSContent,
+					fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
 
 		}
 		catch (Exception ex)

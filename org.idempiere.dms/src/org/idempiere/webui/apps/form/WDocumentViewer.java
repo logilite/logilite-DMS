@@ -62,8 +62,6 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
 
-import bsh.util.Util;
-
 public class WDocumentViewer extends Panel implements EventListener<Event>
 {
 
@@ -164,7 +162,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		{
 			jbInit();
 			dynInit();
-			renderViewer();
+			renderViewer(currentDMSContent);
 
 			backButton.setEnabled(false);
 			nextButton.setEnabled(false);
@@ -185,43 +183,6 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 
 	private void dynInit()
 	{
-		int i = 0;
-		int size = 0;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		String sqlFetchRootContent = "SELECT * FROM DMS_Content WHERE parentUrl IS NULL";
-		try
-		{
-			pstmt = DB.prepareStatement(sqlFetchRootContent, ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_UPDATABLE, null);
-			rs = pstmt.executeQuery();
-
-			if (rs != null)
-			{
-				rs.beforeFirst();
-				rs.last();
-				size = rs.getRow();
-				rs.beforeFirst();
-			}
-
-			dmsContent = new I_DMS_Content[size];
-
-			while (rs.next())
-			{
-				dmsContent[i++] = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Root content fetching failure: ", e.getLocalizedMessage());
-			throw new AdempiereException("Root content fetching failure: " + e.getLocalizedMessage());
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
 
 	}
 
@@ -443,7 +404,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		{
 			if (currentDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
-				renderViewer();
+				renderViewer(currentDMSContent);
 			}
 			else if (currentDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 			{
@@ -486,7 +447,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event event) throws Exception
 				{
-
+					renderViewer(currentDMSContent);
 				}
 			});
 		}
@@ -499,7 +460,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event event) throws Exception
 				{
-
+					renderViewer(currentDMSContent);
 				}
 			});
 			uploadContent.addEventListener(Events.ON_CLOSE, this);
@@ -516,7 +477,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			else
 			{
 				currentDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-				renderViewer();
+				renderViewer(currentDMSContent);
 				nextButton.setEnabled(true);
 				if (currentDMSContent.getParentURL() == null)
 					backButton.setEnabled(false);
@@ -527,7 +488,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			if (nextDmsContent != null)
 			{
 				currentDMSContent = nextDmsContent;
-				renderViewer();
+				renderViewer(currentDMSContent);
 			}
 			nextButton.setEnabled(false);
 		}
@@ -537,7 +498,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		}
 	}
 
-	public void renderViewer() throws IOException, URISyntaxException
+	public void renderViewer(I_DMS_Content DMS_Content) throws IOException, URISyntaxException
 	{
 		byte[] imgByteData = null;
 		File thumbFile = null;
@@ -550,7 +511,52 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		MImage mImage = null;
 		AImage image = null;
 
-		for (int i = 0; i < dmsContent.length; i++)
+		int i = 0;
+		int size = 0;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		String sqlFetchRootContent = null;
+
+		if (DMS_Content == null)
+			sqlFetchRootContent = "SELECT * FROM DMS_Content WHERE parentUrl IS NULL";
+		else
+			sqlFetchRootContent = "SELECT * FROM DMS_Association WHERE DMS_Content_Related_ID = "
+					+ DMS_Content.getDMS_Content_ID();
+
+		try
+		{
+			pstmt = DB.prepareStatement(sqlFetchRootContent, ResultSet.TYPE_SCROLL_INSENSITIVE,
+					ResultSet.CONCUR_UPDATABLE, null);
+			rs = pstmt.executeQuery();
+
+			if (rs != null)
+			{
+				rs.beforeFirst();
+				rs.last();
+				size = rs.getRow();
+				rs.beforeFirst();
+			}
+
+			dmsContent = new I_DMS_Content[size];
+
+			while (rs.next())
+			{
+				dmsContent[i++] = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, "Root content fetching failure: ", e.getLocalizedMessage());
+			throw new AdempiereException("Root content fetching failure: " + e.getLocalizedMessage());
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+
+		for (i = 0; i < dmsContent.length; i++)
 		{
 			thumbFile = thubnailProvider.getFile(dmsContent[i], "150");
 			if (thumbFile == null)
