@@ -65,68 +65,70 @@ import org.zkoss.zul.Hbox;
 public class WDocumentViewer extends Panel implements EventListener<Event>
 {
 
-	private static final long	serialVersionUID	= -6813481516566180243L;
-	public static CLogger		log					= CLogger.getCLogger(WDocumentViewer.class);
+	private static final long			serialVersionUID	= -6813481516566180243L;
+	public static CLogger				log					= CLogger.getCLogger(WDocumentViewer.class);
 
 	// private CustomForm form = new CustomForm();
-	public Tabbox				tabBox				= new Tabbox();
-	private Tabs				tabs				= new Tabs();
-	public Tab					tabView				= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
-	public Tabpanels			tabPanels			= new Tabpanels();
-	public Tabpanel				tabViewPanel		= new Tabpanel();
-	private Grid				grid				= GridFactory.newGridLayout();
+	public Tabbox						tabBox				= new Tabbox();
+	private Tabs						tabs				= new Tabs();
+	public Tab							tabView				= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
+	public Tabpanels					tabPanels			= new Tabpanels();
+	public Tabpanel						tabViewPanel		= new Tabpanel();
+	private Grid						grid				= GridFactory.newGridLayout();
 
 	// View Result Tab
-	private Searchbox			vsearchBox			= new Searchbox();
-	private Label				lblAdvanceSearch	= new Label(Msg.translate(Env.getCtx(), "Advance Search"));
-	private Label				lblDocumentName		= new Label(Msg.translate(Env.getCtx(), "Name"));
-	private Label				lblCategory			= new Label(Msg.translate(Env.getCtx(), "Category"));
-	private Label				lblCreated			= new Label(Msg.translate(Env.getCtx(), "Created"));
-	private Label				lblUpdated			= new Label(Msg.translate(Env.getCtx(), "Updated"));
-	private Label				lblContentMeta		= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
-	private Label				lblReportDate		= new Label(Msg.translate(Env.getCtx(), "Report Date"));
-	private Label				lblBPartner			= new Label(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
+	private Searchbox					vsearchBox			= new Searchbox();
+	private Label						lblAdvanceSearch	= new Label(Msg.translate(Env.getCtx(), "Advance Search"));
+	private Label						lblDocumentName		= new Label(Msg.translate(Env.getCtx(), "Name"));
+	private Label						lblCategory			= new Label(Msg.translate(Env.getCtx(), "Category"));
+	private Label						lblCreated			= new Label(Msg.translate(Env.getCtx(), "Created"));
+	private Label						lblUpdated			= new Label(Msg.translate(Env.getCtx(), "Updated"));
+	private Label						lblContentMeta		= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
+	private Label						lblReportDate		= new Label(Msg.translate(Env.getCtx(), "Report Date"));
+	private Label						lblBPartner			= new Label(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
 
-	private Datebox				dbCreatedTo			= new Datebox();
-	private Datebox				dbCreatedFrom		= new Datebox();
-	private Datebox				dbUpdated			= new Datebox();
-	private Datebox				dbUpdatedFrom		= new Datebox();
-	private Datebox				dbReportTo			= new Datebox();
-	private Datebox				dbReportFrom		= new Datebox();
+	private Datebox						dbCreatedTo			= new Datebox();
+	private Datebox						dbCreatedFrom		= new Datebox();
+	private Datebox						dbUpdated			= new Datebox();
+	private Datebox						dbUpdatedFrom		= new Datebox();
+	private Datebox						dbReportTo			= new Datebox();
+	private Datebox						dbReportFrom		= new Datebox();
 
-	private ConfirmPanel		confirmPanel		= new ConfirmPanel();
+	private ConfirmPanel				confirmPanel		= new ConfirmPanel();
 
-	private Button				clearButton			= confirmPanel.createButton(ConfirmPanel.A_RESET);
-	private Button				searchButton		= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
-	private Button				closetabButton		= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
+	private Button						clearButton			= confirmPanel.createButton(ConfirmPanel.A_RESET);
+	private Button						searchButton		= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
+	private Button						closetabButton		= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 
-	private Textbox				txtDocumentName		= new Textbox();
-	private Listbox				lstboxCategory		= new Listbox();
+	private Textbox						txtDocumentName		= new Textbox();
+	private Listbox						lstboxCategory		= new Listbox();
 
-	private WSearchEditor		seBPartnerField		= null;
+	private WSearchEditor				seBPartnerField		= null;
 
 	// create Directory
-	private Button				createDirButton		= new Button();
-	private Button				uploadContentButton	= new Button();
-	private Button				backButton			= new Button();
-	private Button				nextButton			= new Button();
+	private Button						createDirButton		= new Button();
+	private Button						uploadContentButton	= new Button();
+	private Button						backButton			= new Button();
+	private Button						nextButton			= new Button();
 
-	private Label				positionInfo		= new Label();
+	private Label						positionInfo		= new Label();
 
-	public static MDMSContent	currDMSContent;
-	public static MDMSContent	prevDMSContent;
-	public static MDMSContent	nextDMSContent;
+	public static MDMSContent			currDMSContent;
+	public static MDMSContent			prevDMSContent;
+	public static MDMSContent			nextDMSContent;
 
-	private ImgTextComponent	cstmComponenet		= null;
+	public static ImgTextComponent[]	cstmComponent		= null;
 
-	public IFileStorageProvider	fileStorageProvider	= null;
-	public IThumbnailProvider	thubnailProvider	= null;
-	public IContentManager		contentManager		= null;
+	public IFileStorageProvider			fileStorageProvider	= null;
+	public IThumbnailProvider			thumbnailProvider	= null;
+	public IContentManager				contentManager		= null;
 
-	private WUploadContent		uploadContent		= null;
-	private CreateDirectoryForm	createDirectoryForm	= null;
+	private WUploadContent				uploadContent		= null;
+	private CreateDirectoryForm			createDirectoryForm	= null;
 
-	private I_DMS_Content[]		dmsContent			= null;
+	private I_DMS_Content[]				dmsContent			= null;
+
+	public static boolean				isSelected[];
 
 	public WDocumentViewer()
 	{
@@ -135,9 +137,9 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		if (fileStorageProvider == null)
 			throw new AdempiereException("Storage provider is not found.");
 
-		thubnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
+		thumbnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
 
-		if (thubnailProvider == null)
+		if (thumbnailProvider == null)
 			throw new AdempiereException("Thumbnail provider is not found.");
 
 		contentManager = Utils.getContentManager(RelationalContentManager.KEY);
@@ -558,10 +560,12 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			rs = null;
 			pstmt = null;
 		}
+		isSelected = new boolean[dmsContent.length];
+		cstmComponent = new ImgTextComponent[dmsContent.length];
 
 		for (i = 0; i < dmsContent.length; i++)
 		{
-			thumbFile = thubnailProvider.getFile(dmsContent[i], "150");
+			thumbFile = thumbnailProvider.getFile(dmsContent[i], "150");
 			if (thumbFile == null)
 			{
 				if (dmsContent[i].getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
@@ -580,28 +584,27 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			{
 				image = new AImage(thumbFile);
 			}
+			cstmComponent[i] = new ImgTextComponent(dmsContent[i], image, i);
 
-			cstmComponenet = new ImgTextComponent(dmsContent[i], image);
-			cstmComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
-			cstmComponenet.addEventListener(Events.ON_CLICK, this);
-			cstmComponenet.addEventListener(Events.ON_RIGHT_CLICK, this);
+			cstmComponent[i].addEventListener(Events.ON_DOUBLE_CLICK, this);
+			cstmComponent[i].addEventListener(Events.ON_CLICK, this);
+			cstmComponent[i].addEventListener(Events.ON_RIGHT_CLICK, this);
 
 			grid.setSizedByContent(true);
 			grid.setZclass("none");
-			cstmComponenet.setDheight(130);
-			cstmComponenet.setDwidth(130);
+			cstmComponent[i].setDheight(130);
+			cstmComponent[i].setDwidth(130);
 
 			cell = new Cell();
 			cell.setWidth(row.getWidth());
-			cell.appendChild(cstmComponenet);
+			cell.appendChild(cstmComponent[i]);
 			// flex: 1 0 150px;
 			// justify-content:space-around;
 			row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap;");
 			row.setZclass("none");
 			row.appendCellChild(cell);
 			rows.appendChild(row);
-			row.appendChild(cstmComponenet);
-
+			row.appendChild(cstmComponent[i]);
 		}
 
 		if (DMS_Content != null)

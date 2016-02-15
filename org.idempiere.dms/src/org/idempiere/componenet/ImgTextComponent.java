@@ -32,44 +32,49 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 	private Div					fLabel				= new Div();
 	private Div					dImage				= new Div();
 
-	private int					dheight;
-	private int					dwidth;
-	private int					dms_content_id		= 0;
+	private int					dHeight;
+	private int					dWidth;
+	private int					contentID			= 0;
 
-	private Menuitem			menuitem			= null;
+	private Menuitem			menuItem			= null;
+	private int					componentNo			= 0;
+	private String				contentBaseType		= null;
+
+	private static int			prevCompNo			= 0;
 
 	public int getDheight()
 	{
-		return dheight;
+		return dHeight;
 	}
 
 	public void setDheight(int dheight)
 	{
-		this.dheight = dheight;
+		this.dHeight = dheight;
 		this.setHeight(dheight + "px");
 		prevImg.setHeight(dheight - 40 + "px");
 	}
 
 	public int getDwidth()
 	{
-		return dwidth;
+		return dWidth;
 	}
 
 	public void setDwidth(int dwidth)
 	{
-		this.dwidth = dwidth;
+		this.dWidth = dwidth;
 		this.setWidth(dwidth + "px");
 		fLabel.setWidth(dwidth - 10 + "px");
 		prevImg.setWidth(dwidth + "px");
 	}
 
-	private Boolean	isSelected	= false;
-	private Vbox	vbox		= new Vbox();
+	private Vbox	vbox	= new Vbox();
 
-	public ImgTextComponent(I_DMS_Content content, AImage image)
+	public ImgTextComponent(I_DMS_Content content, AImage image, int compNo)
 	{
+		this.contentBaseType = content.getContentBaseType();
 		this.fName = content.getName();
-		this.dms_content_id = content.getDMS_Content_ID();
+		this.contentID = content.getDMS_Content_ID();
+		this.componentNo = compNo;
 
 		fLabel.appendChild(new Label(fName));
 		fLabel.setTooltiptext(content.getName());
@@ -103,22 +108,22 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 
 		if (Events.ON_CLICK.equals(event.getName()))
 		{
-			isSelected = !isSelected;
-			if (isSelected)
-			{
-				ZkCssHelper.appendStyle(this.fLabel, "background-color:#99cbff");
-				ZkCssHelper.appendStyle(this.fLabel, "box-shadow: 7px 7px 7px #888888");
-			}
-			else
-			{
-				ZkCssHelper.appendStyle(this.fLabel, "background-color:#ffffff");
-				ZkCssHelper.appendStyle(this.fLabel, "box-shadow: 7px 7px 7px #ffffff");
-			}
+			WDocumentViewer.isSelected[componentNo] = !WDocumentViewer.isSelected[componentNo];
+
+			ZkCssHelper.appendStyle(WDocumentViewer.cstmComponent[prevCompNo].fLabel,
+					"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+
+			ZkCssHelper.appendStyle(WDocumentViewer.cstmComponent[componentNo].fLabel,
+					"background-color:#99cbff; box-shadow: 7px 7px 7px #888888");
+
+			prevCompNo = componentNo;
 		}
 		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()))
 		{
+			if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(contentBaseType))
+				prevCompNo = 0;
 			WDocumentViewer.prevDMSContent = WDocumentViewer.currDMSContent;
-			WDocumentViewer.currDMSContent = new MDMSContent(Env.getCtx(), dms_content_id, null);
+			WDocumentViewer.currDMSContent = new MDMSContent(Env.getCtx(), contentID, null);
 		}
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
 				&& event.getTarget().getClass() == ImgTextComponent.class)
@@ -126,9 +131,9 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 			Menupopup popup = new Menupopup();
 			popup.setPage(this.getPage());
 
-			menuitem = new Menuitem("Link Content");
-			menuitem.addEventListener(Events.ON_CLICK, this);
-			popup.appendChild(menuitem);
+			menuItem = new Menuitem("Link Content");
+			menuItem.addEventListener(Events.ON_CLICK, this);
+			popup.appendChild(menuItem);
 			this.setContext(popup);
 		}
 	}
