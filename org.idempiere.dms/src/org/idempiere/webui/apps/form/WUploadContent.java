@@ -23,6 +23,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -53,35 +54,37 @@ public class WUploadContent extends Window implements EventListener<Event>
 	/**
 	 * 
 	 */
-	private static final long		serialVersionUID	= -6554158380274124479L;
-	private static CLogger			log					= CLogger.getCLogger(WUploadContent.class);
+	private static final long		serialVersionUID		= -6554158380274124479L;
+	private static CLogger			log						= CLogger.getCLogger(WUploadContent.class);
 
 	private WTableDirEditor			contentType;
 
-	private Label					lblFile				= new Label();
-	private Label					lblContentType		= new Label();
-	private Label					lblDesc				= new Label();
-	private Label					lblName				= new Label();
+	private Label					lblFile					= new Label();
+	private Label					lblContentType			= new Label();
+	private Label					lblDesc					= new Label();
+	private Label					lblName					= new Label();
 
-	private Textbox					txtDesc				= new Textbox();
-	private Textbox					txtName				= new Textbox();
+	private Textbox					txtDesc					= new Textbox();
+	private Textbox					txtName					= new Textbox();
 
-	private Grid					gridView			= GridFactory.newGridLayout();
+	private Grid					gridView				= GridFactory.newGridLayout();
 
-	private Button					fileUploadButton	= new Button();
-	private Button					btnClose			= null;
-	private Button					btnOk				= null;
-	private ConfirmPanel			confirmPanel		= null;
+	private Button					fileUploadButton		= new Button();
+	private Button					btnClose				= null;
+	private Button					btnOk					= null;
+	private ConfirmPanel			confirmPanel			= null;
 
-	private AMedia					uploadedMedia		= null;
+	private AMedia					uploadedMedia			= null;
 
-	private IFileStorageProvider	fileStorgProvider	= null;
-	private IThumbnailProvider		thumbnailProvider	= null;
-	private IContentManager			contentManager		= null;
+	private IFileStorageProvider	fileStorgProvider		= null;
+	private IThumbnailProvider		thumbnailProvider		= null;
+	private IContentManager			contentManager			= null;
 
-	private String					fileSeparator		= null;
+	private int						DMS_Content_Related_ID	= 0;
 
-	private CharSequence[]			specialCh			= { "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "+" };
+	private MDMSContent				versionDMSContent		= null;
+
+	private CharSequence[]			specialCh				= { "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "+" };
 
 	public WUploadContent()
 	{
@@ -100,15 +103,20 @@ public class WUploadContent extends Window implements EventListener<Event>
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
-		fileSeparator = Utils.getStorageProviderFileSeparator();
-
 		init();
+	}
+
+	public WUploadContent(MDMSContent mDMSContent)
+	{
+		this();
+		this.versionDMSContent = mDMSContent;
+		DMS_Content_Related_ID = Utils.getDMS_Content_Related_ID(mDMSContent);
 	}
 
 	public void init()
 	{
-		this.setHeight("36%");
-		this.setWidth("42%");
+		this.setHeight("38%");
+		this.setWidth("44%");
 		this.setTitle("Upload Content");
 		this.setClosable(true);
 		this.appendChild(gridView);
@@ -242,6 +250,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 				throw new WrongValueException(txtName, "Invalid File Name.");
 
 		}
+
 		if (newFilename.contains("."))
 			if (!newFilename.substring(newFilename.lastIndexOf('.') + 1, newFilename.length()).equals(
 					uploadedMedia.getFormat()))
@@ -249,6 +258,13 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 		if (contentType.getValue() == null || (Integer) contentType.getValue() == 0)
 			throw new WrongValueException(contentType.getComponent(), fillMandatory);
+
+		if (DMS_Content_Related_ID > 0)
+		{
+			if (Utils.getMimeTypeID(uploadedMedia) != versionDMSContent.getDMS_MimeType_ID())
+				throw new WrongValueException(fileUploadButton,
+						"Mime type not matched, please upload same mime type version document.");
+		}
 
 		try
 		{
@@ -276,12 +292,28 @@ public class WUploadContent extends Window implements EventListener<Event>
 			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 			dmsAssociation.setDMS_Content_ID(uploadedDMSContent.getDMS_Content_ID());
 
-			if (WDocumentViewer.currDMSContent != null)
-				dmsAssociation.setDMS_Content_Related_ID(WDocumentViewer.currDMSContent.getDMS_Content_ID());
-			dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
+			if (DMS_Content_Related_ID != 0)
+			{
+				dmsAssociation.setDMS_Content_Related_ID(DMS_Content_Related_ID);
+				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(false));
+
+				int seqNo = DB.getSQLValue(null,
+						"SELECT MAX(seqNo) FROM DMS_Association WHERE DMS_Content_Related_ID = ?",
+						DMS_Content_Related_ID);
+				dmsAssociation.setSeqNo(seqNo + 1);
+			}
+			else
+			{
+				if (WDocumentViewer.currDMSContent != null)
+					dmsAssociation.setDMS_Content_Related_ID(WDocumentViewer.currDMSContent.getDMS_Content_ID());
+
+				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
+			}
+
 			dmsAssociation.saveEx();
 
-			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData());
+			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData(),
+					uploadedDMSContent);
 
 			thumbnailProvider.addThumbnail(uploadedDMSContent,
 					fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);

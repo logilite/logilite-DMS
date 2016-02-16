@@ -15,6 +15,8 @@ import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CLogger;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.IFileStorageProvider;
+import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSContent;
 
 public class FileSystemStorageProvider implements IFileStorageProvider
 {
@@ -94,7 +96,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	}
 
 	@Override
-	public boolean writeBLOB(String path, byte[] data)
+	public boolean writeBLOB(String path, byte[] data, I_DMS_Content DMS_Content)
 	{
 		File file = null;
 		try
@@ -109,6 +111,9 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 			if (file.exists())
 			{
 				file = new File(Utils.getUniqueFilename(file.getAbsolutePath()));
+				MDMSContent revisedDMSContent = (MDMSContent) DMS_Content;
+				revisedDMSContent.setName(file.getName());
+				revisedDMSContent.saveEx();
 			}
 
 			FileOutputStream fos = new FileOutputStream(file, true);

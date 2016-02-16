@@ -170,7 +170,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
 				if (mDMSContent != null)
 					dmsAssociation.setDMS_Content_Related_ID(mDMSContent.getDMS_Content_ID());
-				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
+				//dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
 				dmsAssociation.saveEx();
 				this.detach();
 

@@ -2,7 +2,6 @@ package org.idempiere.model;
 
 import java.sql.ResultSet;
 import java.util.Properties;
-import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
@@ -28,7 +27,7 @@ public class MDMSMimeType extends X_DMS_MimeType
 	{
 		int count = DB.getSQLValue(null, "SELECT count(*) FROM DMS_MimeType WHERE MimeType ilike '" + getMimeType()
 				+ "' OR FileExtension ilike '" + getFileExtension() + "'");
-		if (count != 0)
+		if (count != 0 && getDMS_MimeType_ID() == 0)
 		{
 			throw new AdempiereException("MimeType and File Extension must be unique.");
 		}

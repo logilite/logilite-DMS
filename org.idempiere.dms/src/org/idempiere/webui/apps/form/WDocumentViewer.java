@@ -68,6 +68,9 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 	private static final long			serialVersionUID	= -6813481516566180243L;
 	public static CLogger				log					= CLogger.getCLogger(WDocumentViewer.class);
 
+	private static final String	SQL_FETCH_DMS_CONTENTS	= "SELECT * FROM DMS_Document_Explorer_V "
+																+ "WHERE COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) "
+																+ "ORDER BY DMS_Content_ID";
 	// private CustomForm form = new CustomForm();
 	public Tabbox						tabBox				= new Tabbox();
 	private Tabs						tabs				= new Tabs();
@@ -405,6 +408,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			if (currDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
 				renderViewer(currDMSContent);
+				backButton.setEnabled(true);
 				nextButton.setEnabled(false);
 			}
 			else if (currDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
@@ -496,6 +500,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 				renderViewer(currDMSContent);
 			}
 			nextButton.setEnabled(false);
+			backButton.setEnabled(true);
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_RESET))
 		{
@@ -520,18 +525,17 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		int size = 0;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		String sqlFetchRootContent = null;
-
-		if (DMS_Content == null)
-			sqlFetchRootContent = "SELECT * FROM DMS_Content WHERE parentUrl IS NULL";
-		else
-			sqlFetchRootContent = "SELECT * FROM DMS_Association WHERE DMS_Content_Related_ID = "
-					+ DMS_Content.getDMS_Content_ID();
 
 		try
 		{
-			pstmt = DB.prepareStatement(sqlFetchRootContent, ResultSet.TYPE_SCROLL_INSENSITIVE,
+			pstmt = DB.prepareStatement(SQL_FETCH_DMS_CONTENTS, ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_UPDATABLE, null);
+
+			if (DMS_Content == null)
+				pstmt.setInt(1, 0);
+			else
+				pstmt.setInt(1, DMS_Content.getDMS_Content_ID());
+
 			rs = pstmt.executeQuery();
 
 			if (rs != null)
@@ -605,15 +609,6 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			row.appendCellChild(cell);
 			rows.appendChild(row);
 			row.appendChild(cstmComponent[i]);
-		}
-
-		if (DMS_Content != null)
-		{
-			if (DMS_Content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-			{
-				nextButton.setEnabled(true);
-				backButton.setEnabled(true);
-			}
 		}
 
 		grid.appendChild(rows);

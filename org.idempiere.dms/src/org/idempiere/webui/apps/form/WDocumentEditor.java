@@ -19,6 +19,7 @@ import org.adempiere.webui.component.Window;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
+import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +52,7 @@ import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Iframe;
 import org.zkoss.zul.Space;
+import org.zkoss.zul.Tab;
 
 public class WDocumentEditor extends Window implements EventListener<Event>
 {
@@ -80,6 +82,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 	private Button					btnDownload				= null;
 	private Button					btnEdit					= null;
 	private Button					btnSave					= null;
+	private Button					btnVersionUpload		= null;
 
 	private Datebox					dbContentReported		= null;
 
@@ -178,6 +181,10 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		btnDownload.setTooltiptext("Download");
 		btnDownload.setImage(ThemeManager.getThemeResource("images/Export24.png"));
 
+		btnVersionUpload = new Button();
+		btnVersionUpload.setTooltiptext("Upload Version");
+		btnVersionUpload.setImage(ThemeManager.getThemeResource("images/Assignment24.png"));
+
 		btnRequery = confirmPanel.createButton(ConfirmPanel.A_REFRESH);
 
 		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
@@ -197,6 +204,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		btnRequery.addEventListener(Events.ON_CLICK, this);
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnEdit.addEventListener(Events.ON_CLICK, this);
+		btnVersionUpload.addEventListener(Events.ON_CLICK, this);
 
 		Grid gridData = GridFactory.newGridLayout();
 		gridData.makeNoStrip();
@@ -293,6 +301,7 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 		box.appendChild(btnDelete);
 		box.appendChild(btnRequery);
 		box.appendChild(btnDownload);
+		box.appendChild(btnVersionUpload);
 		cell.appendChild(box);
 		row.appendChild(cell);
 
@@ -418,6 +427,20 @@ public class WDocumentEditor extends Window implements EventListener<Event>
 			DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", mDMSContent.getDMS_Content_ID(), null);
 			viewer.tabBox.getSelectedTab().close();
 			viewer.renderViewer(viewer.currDMSContent);
+		}
+		else if (event.getTarget().equals(btnVersionUpload))
+		{
+			final Tab tab = viewer.tabBox.getSelectedTab();
+
+			WUploadContent uploadContent = new WUploadContent(mDMSContent);
+			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+
+				@Override
+				public void onEvent(Event arg0) throws Exception
+				{
+					viewer.tabBox.setSelectedTab(tab);
+				}
+			});
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_REFRESH))
 		{

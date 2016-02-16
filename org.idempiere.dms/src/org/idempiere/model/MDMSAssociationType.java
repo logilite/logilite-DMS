@@ -3,17 +3,18 @@ package org.idempiere.model;
 import java.sql.ResultSet;
 import java.util.Properties;
 
-import org.compiere.util.CCache;
 import org.compiere.util.DB;
-import org.compiere.util.Env;
 
 public class MDMSAssociationType extends X_DMS_AssociationType
 {
 	/**
 	 * 
 	 */
-	private static final long				serialVersionUID	= 1L;
-	private static CCache<Integer, Integer>	s_cache				= new CCache<Integer, Integer>("DMSVersionType", 2);
+	private static final long	serialVersionUID		= 1L;
+
+	private static final String	ASSOCIATIONTYPE_VERSION	= "Version";
+	private static final String	ASSOCIATIONTYPE_PARENT	= "Parent";
+	private static final String	SQL_GETASSOCIATIONTYPE	= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
 
 	public MDMSAssociationType(Properties ctx, int DMS_AssociationType_ID, String trxName)
 	{
@@ -25,17 +26,14 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 		super(ctx, rs, trxName);
 	}
 
-	public static int getVersionType()
+	public static int getVersionType(boolean isParent)
 	{
-		Integer versionTypeID = s_cache.get(Env.getAD_Client_ID(Env.getCtx()));
+		int versionTypeID = 0;
 
-		if (versionTypeID != null)
-			return versionTypeID;
-
-		versionTypeID = DB.getSQLValue(null,
-				"SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike 'Version'");
-
-		s_cache.put(Env.getAD_Client_ID(Env.getCtx()), versionTypeID);
+		if (isParent)
+			versionTypeID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, ASSOCIATIONTYPE_PARENT);
+		else
+			versionTypeID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, ASSOCIATIONTYPE_VERSION);
 
 		return versionTypeID;
 	}

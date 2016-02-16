@@ -25,9 +25,13 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.MDMSStatus;
+import org.idempiere.model.X_DMS_Content;
 import org.zkoss.util.media.AMedia;
 
 /**
@@ -363,5 +367,29 @@ public class Utils
 		cache_mimetypeThumbnail.put(DMS_MimeType_ID, mImage);
 		return mImage;
 
+	}
+
+	public static int getDMS_Content_Related_ID(I_DMS_Content DMS_Content)
+	{
+		if (DMS_Content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+			return DMS_Content.getDMS_Content_ID();
+		else
+		{
+			int DMS_Association_ID = DB.getSQLValue(null,
+					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? ",
+					DMS_Content.getDMS_Content_ID());
+			MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+
+			if (DMSAssociation.getDMS_Content_Related_ID() > 0)
+			{
+				DMS_Content = new MDMSContent(Env.getCtx(), DMSAssociation.getDMS_Content_Related_ID(), null);
+				if (DMS_Content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+					return DMSAssociation.getDMS_Content_ID();
+				else
+					return DMSAssociation.getDMS_Content_Related_ID();
+			}
+			else
+				return DMSAssociation.getDMS_Content_ID();
+		}
 	}
 }
