@@ -4,7 +4,7 @@ INSERT INTO AD_Element (AD_Element_ID,AD_Client_ID,AD_Org_ID,IsActive,Created,Cr
 ;
 
 -- Dec 2, 2015 11:53:49 AM IST
-INSERT INTO AD_Column (AD_Column_ID,Version,Name,AD_Table_ID,ColumnName,FieldLength,IsKey,IsParent,IsMandatory,IsTranslated,IsIdentifier,SeqNo,IsEncrypted,AD_Reference_ID,AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,AD_Element_ID,IsUpdateable,IsSelectionColumn,EntityType,IsSyncDatabase,IsAlwaysUpdateable,IsAutocomplete,IsAllowLogging,AD_Column_UU,IsAllowCopy,SeqNoSelection,IsToolbarButton,IsSecure) VALUES (212554,0,'AttributeSet Type',560,'M_AttributeSet_Type',3,'N','N','Y','N','N',0,'N',17,0,0,'Y',TO_TIMESTAMP('2015-12-02 11:53:44','YYYY-MM-DD HH24:MI:SS'),100,TO_TIMESTAMP('2015-12-02 11:53:44','YYYY-MM-DD HH24:MI:SS'),100,202952,'Y','N','D','N','N','N','Y','b0f70177-747f-4e25-9d88-df4111f43712','Y',0,'N','N')
+INSERT INTO AD_Column (AD_Column_ID,Version,Name,AD_Table_ID,ColumnName,FieldLength,IsKey,IsParent,IsMandatory,IsTranslated,IsIdentifier,SeqNo,IsEncrypted,AD_Reference_ID,AD_Client_ID,AD_Org_ID,IsActive,Created,CreatedBy,Updated,UpdatedBy,AD_Element_ID,IsUpdateable,IsSelectionColumn,EntityType,IsSyncDatabase,IsAlwaysUpdateable,IsAutocomplete,IsAllowLogging,AD_Column_UU,IsAllowCopy,SeqNoSelection,IsToolbarButton,IsSecure,DefaultValue) VALUES (212554,0,'AttributeSet Type',560,'M_AttributeSet_Type',3,'N','N','Y','N','N',0,'N',17,0,0,'Y',TO_TIMESTAMP('2015-12-02 11:53:44','YYYY-MM-DD HH24:MI:SS'),100,TO_TIMESTAMP('2015-12-02 11:53:44','YYYY-MM-DD HH24:MI:SS'),100,202952,'Y','N','D','N','N','N','Y','b0f70177-747f-4e25-9d88-df4111f43712','Y',0,'N','N','MMS')
 ;
 
 -- Dec 2, 2015 11:54:23 AM IST
