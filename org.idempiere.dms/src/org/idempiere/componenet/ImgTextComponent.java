@@ -110,6 +110,9 @@ public class ImgTextComponent extends Div implements EventListener<Event>
 		{
 			WDocumentViewer.isSelected[componentNo] = !WDocumentViewer.isSelected[componentNo];
 
+			if (WDocumentViewer.isSelected.length == 1)
+				prevCompNo = 0;
+
 			ZkCssHelper.appendStyle(WDocumentViewer.cstmComponent[prevCompNo].fLabel,
 					"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
 

@@ -68,6 +68,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 	private Textbox					txtName					= new Textbox();
 
 	private Grid					gridView				= GridFactory.newGridLayout();
+	private Row						contentTypeRow			= new Row();
 
 	private Button					fileUploadButton		= new Button();
 	private Button					btnClose				= null;
@@ -81,6 +82,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 	private IContentManager			contentManager			= null;
 
 	private int						DMS_Content_Related_ID	= 0;
+	private boolean					isVersion				= false;
 
 	private MDMSContent				versionDMSContent		= null;
 
@@ -109,6 +111,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 	public WUploadContent(MDMSContent mDMSContent)
 	{
 		this();
+		contentTypeRow.setVisible(false);
 		this.versionDMSContent = mDMSContent;
 		DMS_Content_Related_ID = Utils.getDMS_Content_Related_ID(mDMSContent);
 	}
@@ -182,10 +185,9 @@ public class WUploadContent extends Window implements EventListener<Event>
 		row.appendChild(txtName);
 		rows.appendChild(row);
 
-		row = new Row();
-		row.appendChild(lblContentType);
-		row.appendChild(contentType.getComponent());
-		rows.appendChild(row);
+		contentTypeRow.appendChild(lblContentType);
+		contentTypeRow.appendChild(contentType.getComponent());
+		rows.appendChild(contentTypeRow);
 
 		row = new Row();
 		row.appendChild(lblDesc);
@@ -278,7 +280,12 @@ public class WUploadContent extends Window implements EventListener<Event>
 			uploadedDMSContent.setDescription(txtDesc.getValue());
 			uploadedDMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(uploadedMedia));
 			uploadedDMSContent.setDMS_Status_ID(Utils.getStatusID());
-			uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
+
+			if (DMS_Content_Related_ID != 0)
+				uploadedDMSContent.setDMS_ContentType_ID(versionDMSContent.getDMS_ContentType_ID());
+			else
+				uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
+
 			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
 			uploadedDMSContent.setParentURL(contentManager.getPath(WDocumentViewer.currDMSContent));
 			/*

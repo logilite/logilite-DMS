@@ -65,71 +65,73 @@ import org.zkoss.zul.Hbox;
 public class WDocumentViewer extends Panel implements EventListener<Event>
 {
 
-	private static final long			serialVersionUID	= -6813481516566180243L;
-	public static CLogger				log					= CLogger.getCLogger(WDocumentViewer.class);
+	private static final long			serialVersionUID		= -6813481516566180243L;
+	public static CLogger				log						= CLogger.getCLogger(WDocumentViewer.class);
 
-	private static final String	SQL_FETCH_DMS_CONTENTS	= "SELECT * FROM DMS_Document_Explorer_V "
-																+ "WHERE COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) "
-																+ "ORDER BY DMS_Content_ID";
+	private static final String			SQL_FETCH_DMS_CONTENTS	= "SELECT * FROM DMS_Document_Explorer_V "
+																		+ "WHERE COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) "
+																		+ "ORDER BY DMS_Content_ID";
 	// private CustomForm form = new CustomForm();
-	public Tabbox						tabBox				= new Tabbox();
-	private Tabs						tabs				= new Tabs();
-	public Tab							tabView				= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
-	public Tabpanels					tabPanels			= new Tabpanels();
-	public Tabpanel						tabViewPanel		= new Tabpanel();
-	private Grid						grid				= GridFactory.newGridLayout();
+	public Tabbox						tabBox					= new Tabbox();
+	private Tabs						tabs					= new Tabs();
+	public Tab							tabView					= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
+	public Tabpanels					tabPanels				= new Tabpanels();
+	public Tabpanel						tabViewPanel			= new Tabpanel();
+	private Grid						grid					= GridFactory.newGridLayout();
 
 	// View Result Tab
-	private Searchbox					vsearchBox			= new Searchbox();
-	private Label						lblAdvanceSearch	= new Label(Msg.translate(Env.getCtx(), "Advance Search"));
-	private Label						lblDocumentName		= new Label(Msg.translate(Env.getCtx(), "Name"));
-	private Label						lblCategory			= new Label(Msg.translate(Env.getCtx(), "Category"));
-	private Label						lblCreated			= new Label(Msg.translate(Env.getCtx(), "Created"));
-	private Label						lblUpdated			= new Label(Msg.translate(Env.getCtx(), "Updated"));
-	private Label						lblContentMeta		= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
-	private Label						lblReportDate		= new Label(Msg.translate(Env.getCtx(), "Report Date"));
-	private Label						lblBPartner			= new Label(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
+	private Searchbox					vsearchBox				= new Searchbox();
+	private Label						lblAdvanceSearch		= new Label(Msg.translate(Env.getCtx(),
+																		"Advance Search"));
+	private Label						lblDocumentName			= new Label(Msg.translate(Env.getCtx(), "Name"));
+	private Label						lblCategory				= new Label(Msg.translate(Env.getCtx(), "Category"));
+	private Label						lblCreated				= new Label(Msg.translate(Env.getCtx(), "Created"));
+	private Label						lblUpdated				= new Label(Msg.translate(Env.getCtx(), "Updated"));
+	private Label						lblContentMeta			= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
+	private Label						lblReportDate			= new Label(Msg.translate(Env.getCtx(), "Report Date"));
+	private Label						lblBPartner				= new Label(
+																		Msg.translate(Env.getCtx(), "C_BPartner_ID"));
 
-	private Datebox						dbCreatedTo			= new Datebox();
-	private Datebox						dbCreatedFrom		= new Datebox();
-	private Datebox						dbUpdated			= new Datebox();
-	private Datebox						dbUpdatedFrom		= new Datebox();
-	private Datebox						dbReportTo			= new Datebox();
-	private Datebox						dbReportFrom		= new Datebox();
+	private Datebox						dbCreatedTo				= new Datebox();
+	private Datebox						dbCreatedFrom			= new Datebox();
+	private Datebox						dbUpdated				= new Datebox();
+	private Datebox						dbUpdatedFrom			= new Datebox();
+	private Datebox						dbReportTo				= new Datebox();
+	private Datebox						dbReportFrom			= new Datebox();
 
-	private ConfirmPanel				confirmPanel		= new ConfirmPanel();
+	private ConfirmPanel				confirmPanel			= new ConfirmPanel();
 
-	private Button						clearButton			= confirmPanel.createButton(ConfirmPanel.A_RESET);
-	private Button						searchButton		= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
-	private Button						closetabButton		= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
+	private Button						clearButton				= confirmPanel.createButton(ConfirmPanel.A_RESET);
+	private Button						searchButton			= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
+	private Button						closetabButton			= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 
-	private Textbox						txtDocumentName		= new Textbox();
-	private Listbox						lstboxCategory		= new Listbox();
+	private Textbox						txtDocumentName			= new Textbox();
+	private Listbox						lstboxCategory			= new Listbox();
 
-	private WSearchEditor				seBPartnerField		= null;
+	private WSearchEditor				seBPartnerField			= null;
 
 	// create Directory
-	private Button						createDirButton		= new Button();
-	private Button						uploadContentButton	= new Button();
-	private Button						backButton			= new Button();
-	private Button						nextButton			= new Button();
+	private Button						createDirButton			= new Button();
+	private Button						uploadContentButton		= new Button();
+	private Button						backButton				= new Button();
+	private Button						nextButton				= new Button();
 
-	private Label						positionInfo		= new Label();
+	private Label						positionInfo			= new Label();
 
 	public static MDMSContent			currDMSContent;
 	public static MDMSContent			prevDMSContent;
 	public static MDMSContent			nextDMSContent;
 
-	public static ImgTextComponent[]	cstmComponent		= null;
+	public static ImgTextComponent[]	cstmComponent			= null;
 
-	public IFileStorageProvider			fileStorageProvider	= null;
-	public IThumbnailProvider			thumbnailProvider	= null;
-	public IContentManager				contentManager		= null;
+	public IFileStorageProvider			fileStorageProvider		= null;
+	public IThumbnailProvider			thumbnailProvider		= null;
+	public IContentManager				contentManager			= null;
 
-	private WUploadContent				uploadContent		= null;
-	private CreateDirectoryForm			createDirectoryForm	= null;
+	private WUploadContent				uploadContent			= null;
+	private CreateDirectoryForm			createDirectoryForm		= null;
 
-	private I_DMS_Content[]				dmsContent			= null;
+	private I_DMS_Content[]				dmsContent				= null;
 
 	public static boolean				isSelected[];
 
@@ -481,6 +483,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			{
 				renderViewer(null);
 				backButton.setEnabled(false);
+				currDMSContent = null;
 				nextButton.setEnabled(true);
 			}
 			else
