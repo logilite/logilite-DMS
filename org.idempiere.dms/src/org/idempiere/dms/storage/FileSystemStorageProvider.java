@@ -96,7 +96,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	}
 
 	@Override
-	public boolean writeBLOB(String path, byte[] data, I_DMS_Content DMS_Content)
+	public boolean writeBLOB(String path, byte[] data)
 	{
 		File file = null;
 		try
@@ -111,9 +111,6 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 			if (file.exists())
 			{
 				file = new File(Utils.getUniqueFilename(file.getAbsolutePath()));
-				MDMSContent revisedDMSContent = (MDMSContent) DMS_Content;
-				revisedDMSContent.setName(file.getName());
-				revisedDMSContent.saveEx();
 			}
 
 			FileOutputStream fos = new FileOutputStream(file, true);

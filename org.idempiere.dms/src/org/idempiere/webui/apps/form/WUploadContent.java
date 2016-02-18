@@ -69,6 +69,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 	private Grid					gridView				= GridFactory.newGridLayout();
 	private Row						contentTypeRow			= new Row();
+	private Row						nameRow					= new Row();
 
 	private Button					fileUploadButton		= new Button();
 	private Button					btnClose				= null;
@@ -82,7 +83,6 @@ public class WUploadContent extends Window implements EventListener<Event>
 	private IContentManager			contentManager			= null;
 
 	private int						DMS_Content_Related_ID	= 0;
-	private boolean					isVersion				= false;
 
 	private MDMSContent				versionDMSContent		= null;
 
@@ -112,6 +112,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 	{
 		this();
 		contentTypeRow.setVisible(false);
+		nameRow.setVisible(false);
 		this.versionDMSContent = mDMSContent;
 		DMS_Content_Related_ID = Utils.getDMS_Content_Related_ID(mDMSContent);
 	}
@@ -179,11 +180,10 @@ public class WUploadContent extends Window implements EventListener<Event>
 		row.appendChild(fileUploadButton);
 		rows.appendChild(row);
 
-		row = new Row();
 		lblName.setValue("Name");
-		row.appendChild(lblName);
-		row.appendChild(txtName);
-		rows.appendChild(row);
+		nameRow.appendChild(lblName);
+		nameRow.appendChild(txtName);
+		rows.appendChild(nameRow);
 
 		contentTypeRow.appendChild(lblContentType);
 		contentTypeRow.appendChild(contentType.getComponent());
@@ -241,25 +241,29 @@ public class WUploadContent extends Window implements EventListener<Event>
 		if (fileUploadButton.getLabel().equalsIgnoreCase("-"))
 			throw new WrongValueException(fileUploadButton, fillMandatory);
 
-		if (txtName.getValue().equals("") || txtName.getValue().equals(null))
-			throw new WrongValueException(txtName, fillMandatory);
-
-		String newFilename = txtName.getValue();
-
-		for (int i = 0; i < specialCh.length; i++)
+		if (nameRow.isVisible())
 		{
-			if (newFilename.contains(specialCh[i]))
-				throw new WrongValueException(txtName, "Invalid File Name.");
+			if (txtName.getValue().equals("") || txtName.getValue().equals(null))
+				throw new WrongValueException(txtName, fillMandatory);
 
+			String newFilename = txtName.getValue();
+
+			for (int i = 0; i < specialCh.length; i++)
+			{
+				if (newFilename.contains(specialCh[i]))
+					throw new WrongValueException(txtName, "Invalid File Name.");
+
+			}
+
+			if (newFilename.contains("."))
+				if (!newFilename.substring(newFilename.lastIndexOf('.') + 1, newFilename.length()).equals(
+						uploadedMedia.getFormat()))
+					throw new WrongValueException(txtName, "Invalid File Extension.");
 		}
 
-		if (newFilename.contains("."))
-			if (!newFilename.substring(newFilename.lastIndexOf('.') + 1, newFilename.length()).equals(
-					uploadedMedia.getFormat()))
-				throw new WrongValueException(txtName, "Invalid File Extension.");
-
-		if (contentType.getValue() == null || (Integer) contentType.getValue() == 0)
-			throw new WrongValueException(contentType.getComponent(), fillMandatory);
+		if (contentTypeRow.isVisible())
+			if (contentType.getValue() == null || (Integer) contentType.getValue() == 0)
+				throw new WrongValueException(contentType.getComponent(), fillMandatory);
 
 		if (DMS_Content_Related_ID > 0)
 		{
@@ -272,10 +276,15 @@ public class WUploadContent extends Window implements EventListener<Event>
 		{
 			uploadedDMSContent = new MDMSContent(Env.getCtx(), 0, null);
 
-			if (!txtName.getValue().contains(uploadedMedia.getFormat()))
-				uploadedDMSContent.setName(txtName.getValue() + "." + uploadedMedia.getFormat());
+			if (DMS_Content_Related_ID == 0)
+			{
+				if (!txtName.getValue().contains(uploadedMedia.getFormat()))
+					uploadedDMSContent.setName(txtName.getValue() + "." + uploadedMedia.getFormat());
+				else
+					uploadedDMSContent.setName(txtName.getValue());
+			}
 			else
-				uploadedDMSContent.setName(txtName.getValue());
+				uploadedDMSContent.setName(versionDMSContent.getName());
 
 			uploadedDMSContent.setDescription(txtDesc.getValue());
 			uploadedDMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(uploadedMedia));
@@ -319,8 +328,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 			dmsAssociation.saveEx();
 
-			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData(),
-					uploadedDMSContent);
+			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData());
 
 			thumbnailProvider.addThumbnail(uploadedDMSContent,
 					fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
