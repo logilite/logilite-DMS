@@ -42,7 +42,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.idempiere.componenet.ImgTextComponent;
+import org.idempiere.componenet.DMSContentViewer;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
@@ -122,7 +122,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 	public static MDMSContent			prevDMSContent;
 	public static MDMSContent			nextDMSContent;
 
-	public static ImgTextComponent[]	cstmComponent			= null;
+	public static DMSContentViewer[]	cstmComponent			= null;
 
 	public IFileStorageProvider			fileStorageProvider		= null;
 	public IThumbnailProvider			thumbnailProvider		= null;
@@ -398,6 +398,9 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		this.setHeight("100%");
 		this.setWidth("100%");
 		this.appendChild(tabBox);
+
+		this.addEventListener(Events.ON_CLICK, this);
+		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
 	}
 
 	@Override
@@ -405,7 +408,8 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 	{
 		log.info(event.getName());
 
-		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass() == ImgTextComponent.class)
+		if (Events.ON_DOUBLE_CLICK.equals(event.getName())
+				&& event.getTarget().getClass().equals(DMSContentViewer.class))
 		{
 			if (currDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
@@ -568,7 +572,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			pstmt = null;
 		}
 		isSelected = new boolean[dmsContent.length];
-		cstmComponent = new ImgTextComponent[dmsContent.length];
+		cstmComponent = new DMSContentViewer[dmsContent.length];
 
 		for (i = 0; i < dmsContent.length; i++)
 		{
@@ -591,7 +595,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 			{
 				image = new AImage(thumbFile);
 			}
-			cstmComponent[i] = new ImgTextComponent(dmsContent[i], image, i);
+			cstmComponent[i] = new DMSContentViewer(dmsContent[i], image, i);
 
 			cstmComponent[i].addEventListener(Events.ON_DOUBLE_CLICK, this);
 			cstmComponent[i].addEventListener(Events.ON_CLICK, this);
