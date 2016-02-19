@@ -297,12 +297,6 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
 			uploadedDMSContent.setParentURL(contentManager.getPath(WDocumentViewer.currDMSContent));
-			/*
-			 * if (WDocumentViewer.currentDMSContent == null)
-			 * uploadedDMSContent.setParentURL(""); else
-			 * uploadedDMSContent.setParentURL(WDocumentViewer.currentDMSContent
-			 * + File.separator + WDocumentViewer.currentDMSContent.getName());
-			 */
 			uploadedDMSContent.saveEx();
 
 			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
@@ -328,7 +322,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 			dmsAssociation.saveEx();
 
-			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData());
+			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData(),
+					uploadedDMSContent);
 
 			thumbnailProvider.addThumbnail(uploadedDMSContent,
 					fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);

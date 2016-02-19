@@ -13,6 +13,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CLogger;
+import org.compiere.util.Util;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
@@ -32,6 +33,10 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	{
 		provider = storageProvider;
 		baseDir = storageProvider.getFolder();
+
+		if (Util.isEmpty(baseDir))
+			baseDir = "/opt/DMS_Content";
+
 		fileSeparator = Utils.getStorageProviderFileSeparator();
 	}
 
@@ -96,7 +101,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	}
 
 	@Override
-	public boolean writeBLOB(String path, byte[] data)
+	public boolean writeBLOB(String path, byte[] data, I_DMS_Content DMS_Content)
 	{
 		File file = null;
 		try
@@ -111,6 +116,9 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 			if (file.exists())
 			{
 				file = new File(Utils.getUniqueFilename(file.getAbsolutePath()));
+				MDMSContent revisedDMSContent = (MDMSContent) DMS_Content;
+				revisedDMSContent.setName(file.getName());
+				revisedDMSContent.saveEx();
 			}
 
 			FileOutputStream fos = new FileOutputStream(file, true);
