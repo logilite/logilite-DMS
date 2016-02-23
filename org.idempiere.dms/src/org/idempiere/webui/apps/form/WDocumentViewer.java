@@ -74,7 +74,7 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 	// private CustomForm form = new CustomForm();
 	public Tabbox						tabBox					= new Tabbox();
 	private Tabs						tabs					= new Tabs();
-	public Tab							tabView					= new Tab(Msg.getMsg(Env.getCtx(), "ViewerResult"));
+	public Tab							tabView					= new Tab(Msg.getMsg(Env.getCtx(), "Explorer"));
 	public Tabpanels					tabPanels				= new Tabpanels();
 	public Tabpanel						tabViewPanel			= new Tabpanel();
 	private Grid						grid					= GridFactory.newGridLayout();
@@ -362,6 +362,8 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		hbox = new Hbox();
 
 		clearButton.addEventListener(Events.ON_CLICK, this);
+		searchButton.addEventListener(Events.ON_CLICK, this);
+
 		hbox.appendChild(clearButton);
 		hbox.appendChild(searchButton);
 		hbox.appendChild(closetabButton);
@@ -513,6 +515,11 @@ public class WDocumentViewer extends Panel implements EventListener<Event>
 		{
 			clearComponenets();
 		}
+		else if (event.getTarget().getId().equals(confirmPanel.A_REFRESH))
+		{
+			renderViewer(currDMSContent);
+		}
+
 	}
 
 	public void renderViewer(I_DMS_Content DMS_Content) throws IOException, URISyntaxException

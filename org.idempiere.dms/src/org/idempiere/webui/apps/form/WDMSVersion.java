@@ -48,7 +48,7 @@ public class WDMSVersion extends Window
 	private static final String			SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
 																		+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "
 																		+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
-																		+ " order by DMS_Content_ID";
+																		+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID";
 
 	public WDMSVersion(MDMSContent mDMSContent)
 	{
