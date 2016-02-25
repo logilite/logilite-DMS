@@ -16,7 +16,7 @@ public class WDocumentExplorer extends ADForm
 		this.setHeight("100%");
 		this.setWidth("100%");
 
-		WDocumentViewer docviewer = new WDocumentViewer();
+		WDMSPanel docviewer = new WDMSPanel();
 		this.appendChild(docviewer);
 	}
 

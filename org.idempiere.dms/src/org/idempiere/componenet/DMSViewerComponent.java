@@ -4,6 +4,7 @@ import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.compiere.util.CLogger;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.zul.Div;
@@ -21,19 +22,51 @@ public class DMSViewerComponent extends Div
 	public static CLogger		log					= CLogger.getCLogger(DMSViewerComponent.class);
 
 	protected String			fName				= null;
+	private String				contentBaseType		= null;
 
 	protected Image				prevImg;
-	protected Div				fLabel				= new Div();
+	
+	private Div					fLabel				= new Div();
 	protected Div				dImage				= new Div();
 
 	protected int				dHeight;
 	protected int				dWidth;
-	protected int				contentID			= 0;
+	
+	private MDMSContent			DMSContent			= null;
 
 	protected Menuitem			menuItem			= null;
-	protected String			contentBaseType		= null;
 
 	protected Vbox				vbox				= new Vbox();
+	
+	public MDMSContent getDMSContent()
+	{
+		return DMSContent;
+	}
+	
+	public void setDMSContent(MDMSContent dMSContent)
+	{
+		DMSContent = dMSContent;
+	}
+
+	public Div getfLabel()
+	{
+		return fLabel;
+	}
+
+	public void setfLabel(Div fLabel)
+	{
+		this.fLabel = fLabel;
+	}
+
+	public String getContentBaseType()
+	{
+		return contentBaseType;
+	}
+
+	public void setContentBaseType(String contentBaseType)
+	{
+		this.contentBaseType = contentBaseType;
+	}
 
 	public int getDheight()
 	{
@@ -60,11 +93,11 @@ public class DMSViewerComponent extends Div
 		prevImg.setWidth(dwidth + "px");
 	}
 
-	public DMSViewerComponent(I_DMS_Content content, AImage image, int compNo)
+	public DMSViewerComponent(I_DMS_Content content, AImage image)
 	{
 		this.contentBaseType = content.getContentBaseType();
 		this.fName = content.getName();
-		this.contentID = content.getDMS_Content_ID();
+		this.DMSContent= (MDMSContent) content;
 
 		fLabel.appendChild(new Label(fName));
 		fLabel.setTooltiptext(content.getName());

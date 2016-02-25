@@ -19,8 +19,8 @@ import org.idempiere.dms.factories.Utils;
 import org.idempiere.dms.storage.RelationalContentManager;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
+import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.zk.ui.WrongValueException;
@@ -55,11 +55,11 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private IFileStorageProvider	fileStorageProvider	= null;
 	private IContentManager			contentManager		= null;
 
-	public CreateDirectoryForm()
+	public CreateDirectoryForm(I_DMS_Content DMSContent)
 	{
 		try
 		{
-			this.mDMSContent = WDocumentViewer.currDMSContent;
+			this.mDMSContent = (MDMSContent) DMSContent;
 
 			fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
 
@@ -77,7 +77,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Render Component Problem");
-			throw new AdempiereException("Render Component Problem : " + e.getLocalizedMessage());
+			throw new AdempiereException("Render Component Problem : " + e);
 		}
 	}
 

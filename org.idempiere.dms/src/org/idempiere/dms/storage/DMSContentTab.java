@@ -8,10 +8,7 @@ import org.adempiere.webui.adwindow.IADTabpanel;
 import org.adempiere.webui.component.Panel;
 import org.compiere.model.GridTab;
 import org.compiere.model.GridWindow;
-import org.idempiere.webui.apps.form.WDocumentViewer;
-import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.event.Event;
-import org.zkoss.zk.ui.event.Events;
+import org.idempiere.webui.apps.form.WDMSPanel;
 
 public class DMSContentTab extends Panel implements IADTabpanel
 {
@@ -24,7 +21,7 @@ public class DMSContentTab extends Panel implements IADTabpanel
 	private GridTab					gridTab				= null;
 	private int						windowNumber		= 0;
 	private GridWindow				gridWindow			= null;
-	private WDocumentViewer			documentViewerPanel	= null;
+	private WDMSPanel				documentViewerPanel	= null;
 	private boolean					activated			= false;
 	private GridView				listPanel			= new GridView();
 	private boolean					detailPaneMode		= false;
@@ -88,8 +85,8 @@ public class DMSContentTab extends Panel implements IADTabpanel
 	@Override
 	public void createUI()
 	{
-		documentViewerPanel = new WDocumentViewer();
-		//listPanel.appendChild(comp);
+		documentViewerPanel = new WDMSPanel();
+		// listPanel.appendChild(comp);
 		this.appendChild(documentViewerPanel);
 	}
 
@@ -102,38 +99,36 @@ public class DMSContentTab extends Panel implements IADTabpanel
 	@Override
 	public void activate(boolean b)
 	{
-		/*activated = true;
-		Event event = new Event(ON_ACTIVATE_EVENT, this, activated);
-		Events.postEvent(event);*/
+		/*
+		 * activated = true; Event event = new Event(ON_ACTIVATE_EVENT, this,
+		 * activated); Events.postEvent(event);
+		 */
 	}
 
 	@Override
 	public void query()
 	{
-		/*boolean open = gridTab.isOpen();
-		gridTab.query(false);
-		if (!open)
-		{
-			gridTab.getTableModel().fireTableDataChanged();
-		}*/
+		/*
+		 * boolean open = gridTab.isOpen(); gridTab.query(false); if (!open) {
+		 * gridTab.getTableModel().fireTableDataChanged(); }
+		 */
 	}
 
 	@Override
 	public void refresh()
 	{
-	//	gridTab.dataRefresh();
+		// gridTab.dataRefresh();
 		createUI();
 	}
 
 	@Override
 	public void query(boolean currentRows, int currentDays, int maxRows)
 	{
-		/*boolean open = gridTab.isOpen();
-		gridTab.query(currentRows, currentDays, maxRows);
-		if (!open)
-		{
-			gridTab.getTableModel().fireTableDataChanged();
-		}*/
+		/*
+		 * boolean open = gridTab.isOpen(); gridTab.query(currentRows,
+		 * currentDays, maxRows); if (!open) {
+		 * gridTab.getTableModel().fireTableDataChanged(); }
+		 */
 	}
 
 	@Override

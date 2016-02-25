@@ -71,7 +71,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 	private Row						contentTypeRow			= new Row();
 	private Row						nameRow					= new Row();
 
-	private Button					fileUploadButton		= new Button();
+	private Button					btnFileUpload		= new Button();
 	private Button					btnClose				= null;
 	private Button					btnOk					= null;
 	private ConfirmPanel			confirmPanel			= null;
@@ -84,12 +84,16 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 	private int						DMS_Content_Related_ID	= 0;
 
-	private MDMSContent				versionDMSContent		= null;
+	private MDMSContent				DMSContent				= null;
+
+	private boolean					isVersion				= false;
 
 	private CharSequence[]			specialCh				= { "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "+" };
 
-	public WUploadContent()
+	public WUploadContent(MDMSContent mDMSContent, boolean isVersion)
 	{
+		this.DMSContent = (MDMSContent) mDMSContent;
+
 		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
 
 		if (fileStorgProvider == null)
@@ -106,15 +110,15 @@ public class WUploadContent extends Window implements EventListener<Event>
 			throw new AdempiereException("Content manager is not found.");
 
 		init();
-	}
 
-	public WUploadContent(MDMSContent mDMSContent)
-	{
-		this();
-		contentTypeRow.setVisible(false);
-		nameRow.setVisible(false);
-		this.versionDMSContent = mDMSContent;
-		DMS_Content_Related_ID = Utils.getDMS_Content_Related_ID(mDMSContent);
+		if (isVersion)
+		{
+			contentTypeRow.setVisible(false);
+			nameRow.setVisible(false);
+			DMS_Content_Related_ID = Utils.getDMS_Content_Related_ID(mDMSContent);
+			this.isVersion = isVersion;
+		}
+
 	}
 
 	public void init()
@@ -149,15 +153,15 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 		lblFile.setValue(Msg.getMsg(Env.getCtx(), "SelectFile") + "* ");
 		lblContentType.setValue("DMS Content Type*");
-		fileUploadButton.setLabel("-");
-		fileUploadButton.setWidth("100%");
+		btnFileUpload.setLabel("-");
+		btnFileUpload.setWidth("100%");
 		lblDesc.setValue("Description");
 		txtDesc.setMultiline(true);
 		txtDesc.setRows(2);
 		txtDesc.setWidth("100%");
 		txtName.setWidth("100%");
 		txtName.addEventListener(Events.ON_CHANGE, this);
-		LayoutUtils.addSclass("txt-btn", fileUploadButton);
+		LayoutUtils.addSclass("txt-btn", btnFileUpload);
 
 		Columns columns = new Columns();
 		gridView.appendChild(columns);
@@ -177,7 +181,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 		Row row = new Row();
 		row.appendChild(lblFile);
-		row.appendChild(fileUploadButton);
+		row.appendChild(btnFileUpload);
 		rows.appendChild(row);
 
 		lblName.setValue("Name");
@@ -209,8 +213,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 		confirmPanelCell.appendChild(btnClose);
 		row.appendChild(confirmPanelCell);
 
-		fileUploadButton.setUpload(AdempiereWebUI.getUploadSetting());
-		fileUploadButton.addEventListener(Events.ON_UPLOAD, this);
+		btnFileUpload.setUpload(AdempiereWebUI.getUploadSetting());
+		btnFileUpload.addEventListener(Events.ON_UPLOAD, this);
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
 		addEventListener(Events.ON_UPLOAD, this);
@@ -238,8 +242,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
 		MDMSContent uploadedDMSContent = null;
 
-		if (fileUploadButton.getLabel().equalsIgnoreCase("-"))
-			throw new WrongValueException(fileUploadButton, fillMandatory);
+		if (btnFileUpload.getLabel().equalsIgnoreCase("-"))
+			throw new WrongValueException(btnFileUpload, fillMandatory);
 
 		if (nameRow.isVisible())
 		{
@@ -267,8 +271,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 
 		if (DMS_Content_Related_ID > 0)
 		{
-			if (Utils.getMimeTypeID(uploadedMedia) != versionDMSContent.getDMS_MimeType_ID())
-				throw new WrongValueException(fileUploadButton,
+			if (Utils.getMimeTypeID(uploadedMedia) != DMSContent.getDMS_MimeType_ID())
+				throw new WrongValueException(btnFileUpload,
 						"Mime type not matched, please upload same mime type version document.");
 		}
 
@@ -284,19 +288,19 @@ public class WUploadContent extends Window implements EventListener<Event>
 					uploadedDMSContent.setName(txtName.getValue());
 			}
 			else
-				uploadedDMSContent.setName(versionDMSContent.getName());
+				uploadedDMSContent.setName(DMSContent.getName());
 
 			uploadedDMSContent.setDescription(txtDesc.getValue());
 			uploadedDMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(uploadedMedia));
 			uploadedDMSContent.setDMS_Status_ID(Utils.getStatusID());
 
 			if (DMS_Content_Related_ID != 0)
-				uploadedDMSContent.setDMS_ContentType_ID(versionDMSContent.getDMS_ContentType_ID());
+				uploadedDMSContent.setDMS_ContentType_ID(DMSContent.getDMS_ContentType_ID());
 			else
 				uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
 
 			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
-			uploadedDMSContent.setParentURL(contentManager.getPath(WDocumentViewer.currDMSContent));
+			uploadedDMSContent.setParentURL(contentManager.getPath(DMSContent));
 			uploadedDMSContent.saveEx();
 
 			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
@@ -314,8 +318,8 @@ public class WUploadContent extends Window implements EventListener<Event>
 			}
 			else
 			{
-				if (WDocumentViewer.currDMSContent != null)
-					dmsAssociation.setDMS_Content_Related_ID(WDocumentViewer.currDMSContent.getDMS_Content_ID());
+				if (DMSContent != null)
+					dmsAssociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
 
 				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
 			}
@@ -345,7 +349,7 @@ public class WUploadContent extends Window implements EventListener<Event>
 		try
 		{
 			uploadedMedia = new AMedia(media.getName(), null, null, media.getByteData());
-			fileUploadButton.setLabel(media.getName());
+			btnFileUpload.setLabel(media.getName());
 			txtName.setValue(FilenameUtils.getBaseName(media.getName()));
 		}
 		catch (Exception e)

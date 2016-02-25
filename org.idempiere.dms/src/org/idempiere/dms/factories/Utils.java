@@ -317,6 +317,10 @@ public class Utils
 			String fileName = document.getName();
 			String path = fullPath.substring(0, fullPath.length() - fileName.length());
 			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.lastIndexOf("."));
+			if (fileNameWOExt.contains("(") && fileNameWOExt.contains(")"))
+			{
+				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.indexOf(0) + 1, fileNameWOExt.indexOf("("));
+			}
 			String ext = FilenameUtils.getExtension(document.getName());
 			int n = 1;
 			do

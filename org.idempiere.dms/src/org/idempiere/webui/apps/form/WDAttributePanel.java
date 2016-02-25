@@ -73,6 +73,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 	private Panel					panelAttribute			= new Panel();
 	private Panel					panelButtons			= new Panel();
+	private Panel					panelFooterButtons			= new Panel();
 	private Borderlayout			mainLayout				= new Borderlayout();
 
 	private Tabbox					tabBoxAttribute			= new Tabbox();
@@ -108,7 +109,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private IContentManager			contentManager			= null;
 	private IThumbnailProvider		thumbnailProvider		= null;
 
-	private WDocumentViewer			viewer					= null;
+	private WDMSPanel			viewer					= null;
 
 	private int						m_M_AttributeSetInstance_ID;
 
@@ -117,7 +118,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 																	+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
 																	+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID";
 
-	public WDAttributePanel(I_DMS_Content DMS_Content, WDocumentViewer viewer)
+	public WDAttributePanel(I_DMS_Content DMS_Content, WDMSPanel viewer)
 	{
 		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
 
@@ -164,7 +165,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		mainLayout.appendChild(north);
 		north.appendChild(panelAttribute);
 		north.setHeight("100%");
-		mainLayout.appendChild(north);
 
 		lblStatus = new Label();
 		ZkCssHelper.appendStyle(lblStatus, "font-weight: bold;");
@@ -176,18 +176,23 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		tabBoxAttribute.appendChild(tabpanelsAttribute);
 		panelAttribute.appendChild(tabBoxAttribute);
 		tabBoxAttribute.setMold("accordion");
+		tabBoxAttribute.setHeight("90%");
+		tabBoxAttribute.setWidth("100%");
 
 		tabsAttribute.appendChild(tabAttribute);
 		tabsAttribute.appendChild(tabVersionHistory);
 
 		tabAttribute.setLabel("Attribute Set");
+		tabAttribute.setWidth("100%");
 		tabVersionHistory.setLabel("Version History");
 
 		tabpanelsAttribute.appendChild(tabpanelAttribute);
-		tabpanelsAttribute.setHeight("600px");
+		//tabpanelsAttribute.setStyle("display: flex;");
+		tabpanelsAttribute.setHeight("450px");
+		tabpanelsAttribute.setWidth("100%");
 
 		tabpanelsAttribute.appendChild(tabpanelVersionHitory);
-		tabpanelAttribute.setHeight("550px");
+		tabpanelAttribute.setHeight("100%");
 
 		tabpanelAttribute.appendChild(gridAttributeLayout);
 		tabVersionHistory.setWidth("100%");
@@ -211,6 +216,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		confirmPanel = new ConfirmPanel();
 		btnDelete = confirmPanel.createButton(ConfirmPanel.A_DELETE);
+		btnDelete.setEnabled(false);
 
 		btnDownload = new Button();
 		btnDownload.setTooltiptext("Download");
@@ -223,6 +229,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		btnRequery = confirmPanel.createButton(ConfirmPanel.A_REFRESH);
 
 		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
+		btnClose.setStyle("float:right;");
 
 		btnEdit = new Button();
 		btnEdit.setTooltiptext("Edit");
@@ -242,15 +249,23 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		btnVersionUpload.addEventListener(Events.ON_CLICK, this);
 
 		South south = new South();
+		rows.appendChild(row);
+		
 		panelButtons.appendChild(btnEdit);
 		panelButtons.appendChild(btnSave);
-		panelButtons.appendChild(btnDelete);
-		panelButtons.appendChild(btnRequery);
-		panelButtons.appendChild(btnDownload);
-		panelButtons.appendChild(btnVersionUpload);
-		panelButtons.appendChild(btnClose);
+
+		panelFooterButtons.appendChild(btnVersionUpload);
+		panelFooterButtons.appendChild(btnDelete);
+		panelFooterButtons.appendChild(btnRequery);
+		panelFooterButtons.appendChild(btnDownload);
+		panelFooterButtons.appendChild(btnClose);
+		
+		panelButtons.setStyle("position: fixed; bottom: 8%;");
+		panelFooterButtons.setStyle("position: fixed; bottom: 2%;");
+		
 		
 		panelAttribute.appendChild(panelButtons);
+		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
 		
 	}
@@ -261,8 +276,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		Grid versionGrid = new Grid();
 		versionGrid.setHeight("100%");
 		versionGrid.setWidth("100%");
-		versionGrid.setStyle("position:relative; float: right;overflow: auto;");
-		this.setStyle("position:relative; float: right;overflow: auto;");
+		versionGrid.setStyle("position:relative; float: right; overflow-y: auto;");
+		this.setStyle("position:relative; float: right; ");
 
 		tabpanelVersionHitory.appendChild(versionGrid);
 
@@ -338,7 +353,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			{
 				Cell cell = new Cell();
 				cell.setColspan(2);
-				cell.appendChild(new Label("No version Documet available."));
+				cell.appendChild(new Label("No version Document available."));
 				row = new Row();
 				row.appendChild(cell);
 				rows.appendChild(row);
@@ -347,7 +362,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Version listing failure");
+			log.log(Level.SEVERE, "Version listing failure" + e);
 		}
 
 	}
@@ -359,9 +374,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		Grid attributeGrid = new Grid();
 		attributeGrid.setHeight("100%");
 		attributeGrid.setWidth("100%");
-		attributeGrid.setStyle("position:relative; float: right;overflow: auto;");
+		attributeGrid.setStyle("position:relative; float: right;overflow-y: auto;");
 		
-		this.setStyle("position:relative; float: right;overflow: auto;");
+		this.setStyle("position:relative; float: right;");
 
 		tabpanelsAttribute.appendChild(attributeGrid);
 
@@ -538,13 +553,13 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 					null);
 			DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID(), null);
 			viewer.tabBox.getSelectedTab().close();
-			viewer.renderViewer(viewer.currDMSContent);
+			viewer.renderViewer();
 		}
 		else if (event.getTarget().equals(btnVersionUpload))
 		{
 			final Tab tab = (Tab) viewer.tabBox.getSelectedTab();
 
-			WUploadContent uploadContent = new WUploadContent(DMS_Content);
+			WUploadContent uploadContent = new WUploadContent(DMS_Content,true);
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
