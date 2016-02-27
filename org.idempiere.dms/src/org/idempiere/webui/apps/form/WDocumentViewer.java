@@ -27,23 +27,15 @@ public class WDocumentViewer extends Window
 	private Tabbox				tabBox				= null;
 	private Tabpanel			tabDataPanel		= new Tabpanel();
 	private MDMSContent			mDMSContent			= null;
-	private IContentEditor		contentEditor		= null;
+	private MDMSMimeType		mimeType			= null;
+	private File				document_preview	= null;
 
 	public WDocumentViewer(Tabbox tabBox, File document_preview, MDMSContent mdms_content)
 	{
-		MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), mdms_content.getDMS_MimeType_ID(), null);
-		contentEditor = Utils.getContentEditor(mimeType.getMimeType());
-		
-		if(contentEditor!=null)
-		{
-			contentEditor.setFile(document_preview);
-			contentEditor.setContent(mdms_content);
-		}
-		else
-			throw new AdempiereException("No Content Editor found.");
-		
+		mimeType = new MDMSMimeType(Env.getCtx(), mdms_content.getDMS_MimeType_ID(), null);
 		this.tabBox = tabBox;
 		this.mDMSContent = mdms_content;
+		this.document_preview = document_preview;
 	}
 
 	public Tabpanel initForm()
@@ -57,6 +49,17 @@ public class WDocumentViewer extends Window
 
 		Cell cellPreview = new Cell();
 		cellPreview.setWidth("70%");
+
+		IContentEditor contentEditor = Utils.getContentEditor(mimeType.getMimeType());
+
+		if (contentEditor != null)
+		{
+			contentEditor.setFile(document_preview);
+			contentEditor.setContent(mDMSContent);
+		}
+		else
+			throw new AdempiereException("No Content Editor found.");
+
 		cellPreview.appendChild(contentEditor.initPanel());
 
 		Cell cellCPreview = new Cell();

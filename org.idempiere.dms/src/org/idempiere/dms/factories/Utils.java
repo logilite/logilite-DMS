@@ -61,16 +61,9 @@ public class Utils
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail			= new CCache<Integer, MImage>(
 																						"MimetypeThumbnail", 2);
 
-	static CCache<String, IContentEditor>		cache_contentEditor				= new CCache<String, IContentEditor>(
-																						"ContentEditor", 2);
-
 	public static IContentEditor getContentEditor(String mimeType)
 	{
-		IContentEditor contentEditor = cache_contentEditor.get(mimeType);
-
-		if (contentEditor != null)
-			return contentEditor;
-
+		IContentEditor contentEditor = null;
 		List<IContentEditorFactory> factories = Service.locator().list(IContentEditorFactory.class).getServices();
 
 		for (IContentEditorFactory factory : factories)
@@ -78,7 +71,6 @@ public class Utils
 			contentEditor = factory.get(mimeType);
 			if (contentEditor != null)
 			{
-				cache_contentEditor.put(mimeType, contentEditor);
 				break;
 			}
 		}
