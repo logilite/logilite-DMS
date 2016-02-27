@@ -2,7 +2,6 @@ package org.idempiere.dms.storage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Panel;
@@ -19,7 +18,6 @@ public class PDFContentEditor extends Panel implements IContentEditor
 	/**
 	 * 
 	 */
-	@SuppressWarnings("unused")
 	private static final long	serialVersionUID	= 3166734130983495805L;
 	public static CLogger		log					= CLogger.getCLogger(PDFContentEditor.class);
 
