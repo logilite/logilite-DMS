@@ -66,7 +66,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 			if (fileStorageProvider == null)
 				throw new AdempiereException("Storage provider is not found");
 
-			contentManager = Utils.getContentManager(RelationalContentManager.KEY);
+			contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
 
 			if (contentManager == null)
 				throw new AdempiereException("Content manager is not found");

@@ -12,9 +12,6 @@ import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
-import org.adempiere.webui.component.ListItem;
-import org.adempiere.webui.component.Listbox;
-import org.adempiere.webui.component.NumberBox;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -23,17 +20,11 @@ import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
-import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
-import org.compiere.model.MAttribute;
-import org.compiere.model.MAttributeInstance;
-import org.compiere.model.MAttributeSet;
-import org.compiere.model.MAttributeSetInstance;
-import org.compiere.model.MAttributeValue;
 import org.compiere.model.MImage;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
@@ -43,7 +34,6 @@ import org.compiere.util.Util;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.storage.RelationalContentManager;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
@@ -73,7 +63,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 	private Panel					panelAttribute			= new Panel();
 	private Panel					panelButtons			= new Panel();
-	private Panel					panelFooterButtons			= new Panel();
+	private Panel					panelFooterButtons		= new Panel();
 	private Borderlayout			mainLayout				= new Borderlayout();
 
 	private Tabbox					tabBoxAttribute			= new Tabbox();
@@ -102,14 +92,13 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 	private ConfirmPanel			confirmPanel			= null;
 
-	private MAttributeSetInstance	m_masi;
 	private MDMSContent				DMS_Content				= null;
 
 	private IFileStorageProvider	fileStorageProvider		= null;
 	private IContentManager			contentManager			= null;
 	private IThumbnailProvider		thumbnailProvider		= null;
 
-	private WDMSPanel			viewer					= null;
+	private Tabbox					tabBox					= null;
 
 	private int						m_M_AttributeSetInstance_ID;
 
@@ -118,14 +107,14 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 																	+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
 																	+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID";
 
-	public WDAttributePanel(I_DMS_Content DMS_Content, WDMSPanel viewer)
+	public WDAttributePanel(I_DMS_Content DMS_Content, Tabbox tabBox)
 	{
 		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
 
 		if (fileStorageProvider == null)
 			throw new AdempiereException("Storage provider is not found");
 
-		contentManager = Utils.getContentManager(RelationalContentManager.KEY);
+		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
 
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found");
@@ -138,12 +127,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		m_M_AttributeSetInstance_ID = DMS_Content.getM_AttributeSetInstance_ID();
 
 		this.DMS_Content = (MDMSContent) DMS_Content;
-		this.viewer = viewer;
+		this.tabBox = tabBox;
 
 		try
 		{
 			init();
-			// initAttributes();
+			initAttributes();
 			initVersionHistory();
 		}
 		catch (Exception ex)
@@ -187,7 +176,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		tabVersionHistory.setLabel("Version History");
 
 		tabpanelsAttribute.appendChild(tabpanelAttribute);
-		//tabpanelsAttribute.setStyle("display: flex;");
+		// tabpanelsAttribute.setStyle("display: flex;");
 		tabpanelsAttribute.setHeight("450px");
 		tabpanelsAttribute.setWidth("100%");
 
@@ -199,10 +188,10 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		Columns columns = new Columns();
 		Column column = new Column();
-		
+
 		Rows rows = new Rows();
 		Row row = new Row();
-		
+
 		gridAttributeLayout.appendChild(columns);
 		gridAttributeLayout.appendChild(rows);
 
@@ -250,7 +239,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		South south = new South();
 		rows.appendChild(row);
-		
+
 		panelButtons.appendChild(btnEdit);
 		panelButtons.appendChild(btnSave);
 
@@ -259,15 +248,14 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		panelFooterButtons.appendChild(btnRequery);
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
-		
+
 		panelButtons.setStyle("position: fixed; bottom: 8%;");
 		panelFooterButtons.setStyle("position: fixed; bottom: 2%;");
-		
-		
+
 		panelAttribute.appendChild(panelButtons);
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
-		
+
 	}
 
 	private void initVersionHistory()
@@ -367,145 +355,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 	}
 
-	private boolean initAttributes()
+	private void initAttributes()
 	{
-		Components.removeAllChildren(tabpanelsAttribute);
+		Components.removeAllChildren(tabpanelAttribute);
 
-		Grid attributeGrid = new Grid();
-		attributeGrid.setHeight("100%");
-		attributeGrid.setWidth("100%");
-		attributeGrid.setStyle("position:relative; float: right;overflow-y: auto;");
-		
-		this.setStyle("position:relative; float: right;");
-
-		tabpanelsAttribute.appendChild(attributeGrid);
-
-		Columns columns = new Columns();
-
-		Column column = new Column();
-		column.setWidth("30%");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("70%");
-
-		columns.appendChild(column);
-
-		Rows rows = new Rows();
-		Row row = null;
-
-		MAttributeSet as = null;
-
-		m_masi = new MAttributeSetInstance(Env.getCtx(), DMS_Content.getM_AttributeSetInstance_ID(), null);
-		as = m_masi.getMAttributeSet();
-
-		if (as == null)
-		{
-			log.log(Level.SEVERE, "No AttributeSet Found");
-			return false;
-		}
-
-		MAttribute[] attributes = as.getMAttributes(true);
-
-		for (int i = 0; i < attributes.length; i++)
-			addAttributeLine(rows, attributes[i]);
-
-		return true;
-	}
-
-	private void addAttributeLine(Rows rows, MAttribute attribute)
-	{
-		Label label = new Label(attribute.getName());
-
-		if (attribute.getDescription() != null)
-			label.setTooltiptext(attribute.getDescription());
-
-		Row row = rows.newRow();
-		row.appendChild(label.rightAlign());
-
-		if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attribute.getAttributeValueType()))
-		{
-			MAttributeValue[] values = attribute.getMAttributeValues(); // optional
-																		// =
-																		// null
-			Listbox editor = new Listbox();
-			editor.setMold("select");
-			for (MAttributeValue value : values)
-			{
-				ListItem item = new ListItem(value != null ? value.getName() : "", value);
-				editor.appendChild(item);
-			}
-			row.appendChild(editor);
-			editor.setHflex("1");
-			setListAttribute(attribute, editor);
-		}
-		else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attribute.getAttributeValueType()))
-		{
-			NumberBox editor = new NumberBox(false);
-			setNumberAttribute(attribute, editor);
-			row.appendChild(editor);
-			editor.setHflex("1");
-		}
-		else if(MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attribute.getAD_Reference()))
-		{
-			
-		}
-		else
-		// Text Field
-		{
-			Textbox editor = new Textbox();
-			setStringAttribute(attribute, editor);
-			row.appendChild(editor);
-			editor.setHflex("1");
-		}
-
-	}
-
-	private void setStringAttribute(MAttribute attribute, Textbox editor)
-	{
-		MAttributeInstance instance = attribute.getMAttributeInstance(m_M_AttributeSetInstance_ID);
-		if (instance != null)
-			editor.setText(instance.getValue());
-	}
-
-	private void setNumberAttribute(MAttribute attribute, NumberBox editor)
-	{
-		MAttributeInstance instance = attribute.getMAttributeInstance(m_M_AttributeSetInstance_ID);
-		if (instance != null)
-			editor.setValue(instance.getValueNumber());
-		else
-			editor.setValue(Env.ZERO);
-	}
-
-	private void setListAttribute(MAttribute attribute, Listbox editor)
-	{
-		boolean found = false;
-		MAttributeInstance instance = attribute.getMAttributeInstance(m_M_AttributeSetInstance_ID);
-		MAttributeValue[] values = attribute.getMAttributeValues(); // optional
-																	// = null
-		if (instance != null)
-		{
-			for (int i = 0; i < values.length; i++)
-			{
-				if (values[i] != null && values[i].getM_AttributeValue_ID() == instance.getM_AttributeValue_ID())
-				{
-					editor.setSelectedIndex(i);
-					found = true;
-					break;
-				}
-			}
-			if (found)
-			{
-				if (log.isLoggable(Level.FINE))
-					log.fine("Attribute=" + attribute.getName() + " #" + values.length + " - found: " + instance);
-			}
-			else
-			{
-				log.warning("Attribute=" + attribute.getName() + " #" + values.length + " - NOT found: " + instance);
-			}
-		} // setComboBox
-		else if (log.isLoggable(Level.FINE))
-			log.fine("Attribute=" + attribute.getName() + " #" + values.length + " no instance");
+		tabpanelAttribute.appendChild(new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(),
+				m_M_AttributeSetInstance_ID));
 	}
 
 	@Override
@@ -519,10 +374,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
+			
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_CANCEL))
 		{
-			viewer.tabBox.getSelectedTab().close();
+			tabBox.getSelectedTab().close();
 		}
 		else if (event.getTarget().equals(btnDownload))
 		{
@@ -552,25 +408,25 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			DB.executeUpdate("DELETE FROM DMS_Association WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID(),
 					null);
 			DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID(), null);
-			viewer.tabBox.getSelectedTab().close();
-			viewer.renderViewer();
+			tabBox.getSelectedTab().close();
 		}
 		else if (event.getTarget().equals(btnVersionUpload))
 		{
-			final Tab tab = (Tab) viewer.tabBox.getSelectedTab();
+			final Tab tab = (Tab) tabBox.getSelectedTab();
 
-			WUploadContent uploadContent = new WUploadContent(DMS_Content,true);
+			WUploadContent uploadContent = new WUploadContent(DMS_Content, true);
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event arg0) throws Exception
 				{
-					viewer.tabBox.setSelectedTab(tab);
+					tabBox.setSelectedTab(tab);
 				}
 			});
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_REFRESH))
 		{
+			initAttributes();
 			initVersionHistory();
 		}
 

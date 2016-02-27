@@ -49,11 +49,11 @@ import org.idempiere.componenet.DMSViewerComponent;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.storage.RelationalContentManager;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
@@ -152,7 +152,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		if (thumbnailProvider == null)
 			throw new AdempiereException("Thumbnail provider is not found.");
 
-		contentManager = Utils.getContentManager(RelationalContentManager.KEY);
+		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
 
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
@@ -164,8 +164,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Render Component Problem.");
-			throw new AdempiereException("Render Component Problem: " + e);
+			log.log(Level.SEVERE, "Render Component Problem.", e);
+			throw new AdempiereException("Render Component Problem: " + e.getLocalizedMessage());
 		}
 	}
 
@@ -537,8 +537,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		}
 		catch (SQLException e)
 		{
-			log.log(Level.SEVERE, "Root content fetching failure: ", e);
-			throw new AdempiereException("Root content fetching failure: " + e);
+			log.log(Level.SEVERE, "Content fetching failure: ", e);
+			throw new AdempiereException("Content fetching failure: " + e);
 		}
 		finally
 		{
@@ -578,18 +578,24 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		{
 			File documentToPreview = null;
 
+			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), currDMSContent.getDMS_MimeType_ID(), null);
+
 			documentToPreview = fileStorageProvider.getFile(contentManager.getPath(currDMSContent));
 
 			if (documentToPreview != null)
 			{
-				if (Utils.accept(documentToPreview))
+				if (mimeType.getMimeType().equalsIgnoreCase("application/pdf")
+						|| mimeType.getMimeType().startsWith("image/"))
 				{
 					Tab tabData = new Tab(currDMSContent.getName());
 					tabData.setClosable(true);
 					tabs.appendChild(tabData);
 					tabBox.setSelectedTab(tabData);
-					Tabpanel tabDataPanel = new Tabpanel();
-					new WDocumentViewer(this, documentToPreview, tabDataPanel, currDMSContent);
+
+					WDocumentViewer documentViewer = new WDocumentViewer(tabBox, documentToPreview, currDMSContent);
+					tabPanels.appendChild(documentViewer.initForm());
+
+					this.appendChild(tabBox);
 					currDMSContent = prevDMSContent;
 				}
 				else
@@ -601,8 +607,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			}
 			else
 			{
-				FDialog.error(0, currDMSContent.getName() + " Document not found");
-				log.log(Level.SEVERE, currDMSContent.getName() + " Document not found");
+				FDialog.error(0, contentManager.getPath(currDMSContent) + " Document not found");
 			}
 		}
 	}
@@ -659,7 +664,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 	private void uploadContent()
 	{
-		uploadContent = new WUploadContent(prevDMSContent, false);
+		uploadContent = new WUploadContent(currDMSContent, false);
 
 		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 

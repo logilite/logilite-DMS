@@ -52,7 +52,7 @@ public class Utils
 																						"ThumbnailProvider", 2);
 	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator		= new CCache<String, IThumbnailGenerator>(
 																						"ThumbnailGenerator", 2);
-	static CCache<String, IContentManager>		cache_contentManager			= new CCache<String, IContentManager>(
+	static CCache<Integer, IContentManager>		cache_contentManager			= new CCache<Integer, IContentManager>(
 																						"ContentManager", 2);
 	static CCache<String, String>				cache_fileseparator				= new CCache<String, String>(
 																						"FileSeparator", 2);
@@ -61,18 +61,29 @@ public class Utils
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail			= new CCache<Integer, MImage>(
 																						"MimetypeThumbnail", 2);
 
+	static CCache<String, IContentEditor>		cache_contentEditor				= new CCache<String, IContentEditor>(
+																						"ContentEditor", 2);
+
 	public static IContentEditor getContentEditor(String mimeType)
 	{
+		IContentEditor contentEditor = cache_contentEditor.get(mimeType);
+
+		if (contentEditor != null)
+			return contentEditor;
+
 		List<IContentEditorFactory> factories = Service.locator().list(IContentEditorFactory.class).getServices();
-		IContentEditor editor = null;
+
 		for (IContentEditorFactory factory : factories)
 		{
-			editor = factory.get(mimeType);
-			if (editor != null)
+			contentEditor = factory.get(mimeType);
+			if (contentEditor != null)
+			{
+				cache_contentEditor.put(mimeType, contentEditor);
 				break;
+			}
 		}
 
-		return editor;
+		return contentEditor;
 	}
 
 	public static IThumbnailGenerator getThumbnailGenerator(String mimeType)
@@ -98,22 +109,29 @@ public class Utils
 		return thumbnailGenerator;
 	}
 
-	public static IContentManager getContentManager(String key)
+	public static IContentManager getContentManager(int AD_Client_ID)
 	{
-		IContentManager contentManager = cache_contentManager.get(key);
+		IContentManager contentManager = cache_contentManager.get(AD_Client_ID);
 
 		if (contentManager != null)
 			return contentManager;
+
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID);
+
+		String c_key = clientInfo.get_ValueAsString("DMS_ContentManagerType");
+
+		if (Util.isEmpty(c_key))
+			throw new AdempiereException("Content Manager is not defined");
 
 		List<IContentManagerProvider> factories = Service.locator().list(IContentManagerProvider.class).getServices();
 
 		for (IContentManagerProvider factory : factories)
 		{
-			contentManager = factory.get(key);
+			contentManager = factory.get(AD_Client_ID);
 
 			if (contentManager != null)
 			{
-				cache_contentManager.put(key, contentManager);
+				cache_contentManager.put(AD_Client_ID, contentManager);
 				break;
 			}
 		}
@@ -182,31 +200,6 @@ public class Utils
 			return new MStorageProvider(Env.getCtx(), clientInfo.get_ValueAsInt("DMS_StorageProvider_ID"), null);
 		else
 			return null;
-	}
-
-	/**
-	 * Use for check uploaded content for image or pdf.
-	 * 
-	 * @param file
-	 * @return
-	 */
-	public static boolean accept(File file)
-	{
-		String[] filter = new String[] { "jpg", "png", "gif", "jpeg", "pdf", "ico" };
-
-		if (file != null)
-		{
-			if (file.isDirectory())
-				return false;
-
-			for (int i = 0; i < filter.length; i++)
-			{
-				if (filter[i].equalsIgnoreCase(FilenameUtils.getExtension(file.getName())))
-					return true;
-			}
-		}
-
-		return false;
 	}
 
 	public static int getMimeTypeID(AMedia media)

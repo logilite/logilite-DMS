@@ -128,7 +128,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Blob Writting Failure " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Blob Writting Failure ", e);
 			throw new AdempiereException("Blob Writting Failure: " + e.getLocalizedMessage());
 		}
 	}

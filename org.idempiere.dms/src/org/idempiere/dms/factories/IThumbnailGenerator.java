@@ -12,6 +12,6 @@ public interface IThumbnailGenerator
 {
 	public void init();
 
-	public ArrayList<File> getThumbnails(File document, I_DMS_Content dms_content);
+	public void addThumbnail(I_DMS_Content content, File file, String size);
 
 }

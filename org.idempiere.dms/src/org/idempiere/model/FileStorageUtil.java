@@ -3,6 +3,7 @@ package org.idempiere.model;
 import java.util.List;
 
 import org.adempiere.base.Service;
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CCache;
 import org.idempiere.dms.factories.Utils;
@@ -30,7 +31,7 @@ public class FileStorageUtil
 		{
 			String method = storageProvider.getMethod();
 			if (method == null)
-				method = "FileSystem";
+				throw new AdempiereException("Method is not define on Storage Provider.");
 
 			List<IFileStorageProviderFactory> factories = Service.locator().list(IFileStorageProviderFactory.class)
 					.getServices();

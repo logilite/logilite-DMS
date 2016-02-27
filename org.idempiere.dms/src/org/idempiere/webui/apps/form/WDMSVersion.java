@@ -27,7 +27,6 @@ import org.idempiere.componenet.DMSViewerComponent;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.storage.RelationalContentManager;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
@@ -77,7 +76,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		if (fileStorgProvider == null)
 			throw new AdempiereException("Storage provider is not define on clientInfo.");
 
-		contentManager = Utils.getContentManager(RelationalContentManager.KEY);
+		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
 
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
@@ -229,13 +228,13 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 			if (dmsContent.size() == 0)
 			{
-				FDialog.warn(0, "No Version are avialable.");
+				throw new AdempiereException("No versions are available.");
 			}
 		}
 		catch (SQLException e)
 		{
-			log.log(Level.SEVERE, "Root content fetching failure: ", e);
-			throw new AdempiereException("Root content fetching failure: " + e);
+			log.log(Level.SEVERE, "Version list fetching failure: ", e);
+			throw new AdempiereException("Version list fetching failure: " + e);
 		}
 		finally
 		{

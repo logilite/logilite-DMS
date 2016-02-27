@@ -1,6 +1,7 @@
 package org.idempiere.dms.factories;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import org.idempiere.model.I_DMS_Content;
 
@@ -14,7 +15,7 @@ public interface IThumbnailProvider
 	public String getURL(I_DMS_Content content, String size);
 
 	public File getFile(I_DMS_Content content, String size);
-
-	public void addThumbnail(I_DMS_Content content, File file, String size);
+	
+	public ArrayList<File> getThumbnails(File document, I_DMS_Content dms_content);
 
 }

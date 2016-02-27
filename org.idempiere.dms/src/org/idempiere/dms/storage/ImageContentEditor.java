@@ -13,15 +13,15 @@ import org.idempiere.model.I_DMS_Content;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zul.Iframe;
 
-public class PDFContentEditor extends Panel implements IContentEditor
+public class ImageContentEditor extends Panel implements IContentEditor
 {
 
 	/**
 	 * 
 	 */
-	@SuppressWarnings("unused")
-	private static final long	serialVersionUID	= 3166734130983495805L;
-	public static CLogger		log					= CLogger.getCLogger(PDFContentEditor.class);
+	private static final long	serialVersionUID	= 7241323248511502223L;
+
+	public static CLogger		log					= CLogger.getCLogger(ImageContentEditor.class);
 
 	File						file				= null;
 	I_DMS_Content				content				= null;
@@ -46,7 +46,7 @@ public class PDFContentEditor extends Panel implements IContentEditor
 		provider = storageProvider;
 		baseDir = storageProvider.getFolder();
 	}
-	
+
 	@Override
 	public Panel initPanel()
 	{
@@ -56,13 +56,14 @@ public class PDFContentEditor extends Panel implements IContentEditor
 		Iframe iframeContentPriview = new Iframe();
 
 		AMedia media = null;
-		
+
 		try
 		{
 			media = new AMedia(file, null, null);
 		}
 		catch (FileNotFoundException e)
 		{
+			log.log(Level.SEVERE, "Document cannot be displayed:" + e.getLocalizedMessage());
 			throw new AdempiereException("Document cannot be displayed:" + e.getLocalizedMessage());
 		}
 
@@ -70,7 +71,7 @@ public class PDFContentEditor extends Panel implements IContentEditor
 		iframeContentPriview.setWidth("100%");
 		iframeContentPriview.setHeight("100%");
 		iframeContentPriview.setStyle("overflow: auto;");
-		
+
 		this.appendChild(iframeContentPriview);
 
 		return this;

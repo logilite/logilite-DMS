@@ -13,9 +13,9 @@ public class DefaultContentEditorFactory implements IContentEditorFactory
 		{
 			return new PDFContentEditor();
 		}
-		else if (mimeType.startsWith("imeges/"))
+		else if (mimeType.startsWith("image/"))
 		{
-			return new PDFContentEditor();
+			return new ImageContentEditor();
 		}
 		return null;
 	}

@@ -11,11 +11,11 @@ public class DefaultThumbnailGeneratorFactory implements IThumbnailGeneratorFact
 	{
 		if (mimeType.equalsIgnoreCase("application/pdf"))
 		{
-			return new ThumbnailGenerator();
+			return new PDFThumbnailGenerator();
 		}
-		else if (mimeType.startsWith("imeges/"))
+		else if (mimeType.startsWith("image/"))
 		{
-			return new ThumbnailGenerator();
+			return new ImageThumbnailGenerator();
 		}
 		return null;
 	}
