@@ -46,12 +46,14 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.idempiere.componenet.DMSViewerComponent;
+import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.X_DMS_Content;
@@ -63,7 +65,9 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
+import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
+import org.zkoss.zul.Image;
 import org.zkoss.zul.Menuitem;
 
 public class WDMSPanel extends Panel implements EventListener<Event>
@@ -140,6 +144,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	public static final int					COMPONENT_HEIGHT		= 150;
 	public static final int					COMPONENT_WIDTH			= 150;
 
+	private static DMSViewerComponent		prevComponent			= null;
+	public static int						copyDMSContent			= 0;
+
+	/**
+	 * Constructor initialize
+	 */
 	public WDMSPanel()
 	{
 		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
@@ -169,6 +179,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		}
 	}
 
+	/**
+	 * initialize components
+	 */
 	private void initForm()
 	{
 		tabBox.setWidth("100%");
@@ -180,7 +193,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		// View Result Tab
 
 		Grid gridView = GridFactory.newGridLayout();
-		gridView.setStyle("position:relative; float: right; overflow: auto;");
+		gridView.setStyle("height:100%; position:relative; float: right; overflow: auto;");
 		gridView.setWidth("30%");
 		gridView.setHeight("100%");
 		gridView.makeNoStrip();
@@ -213,6 +226,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		btnBack.setTooltiptext("Previous Record");
 
 		lblPositionInfo.setHflex("1");
+		lblPositionInfo.setStyle("float: right;");
 		ZkCssHelper.appendStyle(lblPositionInfo, "font-weight: bold;");
 		ZkCssHelper.appendStyle(lblPositionInfo, "text-align: center;");
 
@@ -367,6 +381,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		cell.setWidth("100%");
 		cell.setStyle("position: absolute;");
 		cell.appendChild(grid);
+		cell.addEventListener(Events.ON_RIGHT_CLICK, this);
 		boxViewSeparator.appendChild(cell);
 
 		cell = new Cell();
@@ -384,6 +399,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
+		// this.addEventListener(Events.ON_RIGHT_CLICK, this);
 
 		SessionManager.getAppDesktop();
 	}
@@ -429,6 +445,50 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
 			currentCompSelection(DMSViewerComp);
 		}
+		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(WDMSPanel.class))
+		{
+			if (prevComponent != null)
+			{
+				// currDMSContent = prevDMSContent;
+
+				ZkCssHelper.appendStyle(prevComponent.getfLabel(),
+						"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+			}
+		}
+		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Cell.class))
+		{
+			Cell cell = (Cell) event.getTarget();
+
+			Menupopup popup = new Menupopup();
+			popup.setPage(cell.getPage());
+
+			Menuitem paste = new Menuitem("Paste");
+			paste.setDisabled(true);
+
+			if (copyDMSContent > 0 && (copyDMSContent != currDMSContent.getDMS_Content_ID() || currDMSContent == null))
+			{
+				paste.setDisabled(false);
+
+				paste.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+
+					@Override
+					public void onEvent(Event event) throws Exception
+					{
+						MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
+						DMSassociation.setDMS_Content_ID(copyDMSContent);
+						if (currDMSContent != null)
+							DMSassociation.setDMS_Content_Related_ID(currDMSContent.getDMS_Content_ID());
+						DMSassociation.saveEx();
+
+						// List<I_DMS_Content> dmsContent =
+						// DMSClipboard.getDMSContent();
+					}
+				});
+			}
+			popup.appendChild(paste);
+			cell.setContext(popup);
+
+		}
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
 				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
@@ -437,6 +497,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		}
 	}
 
+	/**
+	 * @throws IOException
+	 * @throws URISyntaxException Render the Thumb Component
+	 */
 	public void renderViewer() throws IOException, URISyntaxException
 	{
 		byte[] imgByteData = null;
@@ -506,6 +570,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		tabBox.setSelectedIndex(0);
 	}
 
+	/**
+	 * get all DMS Contents for rendering
+	 */
 	private List<I_DMS_Content> getDMSContents()
 	{
 		List<I_DMS_Content> dmsContent = new ArrayList<I_DMS_Content>();
@@ -549,6 +616,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		return dmsContent;
 	}
 
+	/**
+	 * clear the gridview components
+	 */
 	private void clearComponenets()
 	{
 		vsearchBox.setText(null);
@@ -563,6 +633,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		seBPartnerField.setValue(null);
 	}
 
+	/**
+	 * open the Directory OR Content
+	 * 
+	 * @param DMSViewerComp
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
 	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException
 	{
 		currDMSContent = DMSViewerComp.getDMSContent();
@@ -607,11 +684,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			}
 			else
 			{
-				FDialog.error(0, contentManager.getPath(currDMSContent) + " Document not found");
+				FDialog.error(0, contentManager.getPath(currDMSContent) + " Content missing in storage,");
 			}
 		}
 	}
 
+	/**
+	 * Navigate the Previous Directory.
+	 * 
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
 	private void backNavigation() throws IOException, URISyntaxException
 	{
 		nextDMSContent = currDMSContent;
@@ -636,6 +719,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		btnNext.setEnabled(true);
 	}
 
+	/**
+	 * Move in the Directory
+	 * 
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 */
 	private void directoryNavigation() throws IOException, URISyntaxException
 	{
 		if (nextDMSContent != null)
@@ -648,6 +737,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		btnBack.setEnabled(true);
 	}
 
+	/**
+	 * Make Directory
+	 */
 	private void createDirectory()
 	{
 		createDirectoryForm = new CreateDirectoryForm(currDMSContent);
@@ -662,6 +754,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		});
 	}
 
+	/**
+	 * Upload Content
+	 */
 	private void uploadContent()
 	{
 		uploadContent = new WUploadContent(currDMSContent, false);
@@ -677,9 +772,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		uploadContent.addEventListener(Events.ON_CLOSE, this);
 	}
 
+	/**
+	 * Open MenuPopup when Right click on Directory OR Content
+	 * 
+	 * @param DMSViewerCom
+	 */
 	private void openMenuPopup(final DMSViewerComponent DMSViewerCom)
 	{
-		currDMSContent = DMSViewerCom.getDMSContent();
+		final MDMSContent versionContent = DMSViewerCom.getDMSContent();
 
 		Menupopup popup = new Menupopup();
 		popup.setPage(DMSViewerCom.getPage());
@@ -688,6 +788,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		Menuitem copy = new Menuitem("Copy");
 		Menuitem paste = new Menuitem("Paste");
 		Menuitem createLink = new Menuitem("Create Link");
+
+		versionList.setImage(ThemeManager.getThemeResource("images/Wizard24.png"));
+		copy.setImage(ThemeManager.getThemeResource("images/Copy16.png"));
+		createLink.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
+
+		paste.setDisabled(true);
 
 		if (X_DMS_Content.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType()))
 		{
@@ -702,30 +808,66 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			popup.appendChild(versionList);
 
 		}
-		else if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType()))
-		{
-
-		}
 		popup.appendChild(copy);
-		popup.appendChild(paste);
 		popup.appendChild(createLink);
+		if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType()))
+		{
+			if (copyDMSContent > 0)
+			{
+				paste.setDisabled(false);
+				paste.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+					@Override
+					public void onEvent(Event event) throws Exception
+					{
+
+						MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
+						DMSassociation.setDMS_Content_ID(copyDMSContent);
+						DMSassociation.setDMS_Content_Related_ID(versionContent.getDMS_Content_ID());
+						// DMSassociation.setDMS_AssociationType_ID(1000003);
+						DMSassociation.saveEx();
+					}
+				});
+			}
+			popup.appendChild(paste);
+		}
+
+		copy.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+			@Override
+			public void onEvent(Event e) throws Exception
+			{
+				copyDMSContent = DMSViewerCom.getDMSContent().getDMS_Content_ID();
+				//DMSClipboard.putDMSContent(copyDMSContent);
+			}
+		});
+
 		DMSViewerCom.setContext(popup);
 	}
 
+	/**
+	 * select the directory or content
+	 * 
+	 * @param DMSViewerComp
+	 */
 	private void currentCompSelection(DMSViewerComponent DMSViewerComp)
 	{
-		currDMSContent = DMSViewerComp.getDMSContent();
-		for (DMSViewerComponent thumbComponent : viewerComponents)
+		// currDMSContent = DMSViewerComp.getDMSContent();
+		// currDMSContent = prevDMSContent;
+		if (prevComponent != null)
 		{
-			if (thumbComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent().getDMS_Content_ID())
+			ZkCssHelper.appendStyle(prevComponent.getfLabel(),
+					"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+		}
+
+		for (DMSViewerComponent viewerComponent : viewerComponents)
+		{
+			if (viewerComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent()
+					.getDMS_Content_ID())
 			{
 				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(),
 						"background-color:#99cbff; box-shadow: 7px 7px 7px #888888");
-			}
-			else
-			{
-				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(),
-						"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+
+				prevComponent = viewerComponent;
+				break;
 			}
 		}
 	}

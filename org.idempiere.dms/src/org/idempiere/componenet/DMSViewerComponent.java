@@ -25,24 +25,24 @@ public class DMSViewerComponent extends Div
 	private String				contentBaseType		= null;
 
 	protected Image				prevImg;
-	
+
 	private Div					fLabel				= new Div();
 	protected Div				dImage				= new Div();
 
 	protected int				dHeight;
 	protected int				dWidth;
-	
+
 	private MDMSContent			DMSContent			= null;
 
 	protected Menuitem			menuItem			= null;
 
 	protected Vbox				vbox				= new Vbox();
-	
+
 	public MDMSContent getDMSContent()
 	{
 		return DMSContent;
 	}
-	
+
 	public void setDMSContent(MDMSContent dMSContent)
 	{
 		DMSContent = dMSContent;
@@ -93,11 +93,21 @@ public class DMSViewerComponent extends Div
 		prevImg.setWidth(dwidth + "px");
 	}
 
+	public String getfName()
+	{
+		return fName;
+	}
+
+	public void setfName(String fName)
+	{
+		this.fName = fName;
+	}
+
 	public DMSViewerComponent(I_DMS_Content content, AImage image)
 	{
 		this.contentBaseType = content.getContentBaseType();
 		this.fName = content.getName();
-		this.DMSContent= (MDMSContent) content;
+		this.DMSContent = (MDMSContent) content;
 
 		fLabel.appendChild(new Label(fName));
 		fLabel.setTooltiptext(content.getName());

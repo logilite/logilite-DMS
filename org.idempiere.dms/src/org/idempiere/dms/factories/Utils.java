@@ -78,6 +78,12 @@ public class Utils
 		return contentEditor;
 	}
 
+	/**
+	 * generate the thumbnail of content or directory
+	 * 
+	 * @param mimeType
+	 * @return
+	 */
 	public static IThumbnailGenerator getThumbnailGenerator(String mimeType)
 	{
 		IThumbnailGenerator thumbnailGenerator = cache_thumbnailGenerator.get(mimeType);
@@ -131,6 +137,12 @@ public class Utils
 		return contentManager;
 	}
 
+	/**
+	 * apply the thumbnail of content or directory
+	 * 
+	 * @param Ad_Client_ID
+	 * @return
+	 */
 	public static IThumbnailProvider getThumbnailProvider(int Ad_Client_ID)
 	{
 		IThumbnailProvider thumbnailProvider = cache_thumbnailProvider.get(Ad_Client_ID);
@@ -156,6 +168,11 @@ public class Utils
 		return thumbnailProvider;
 	}
 
+	/**
+	 * get File separator "/"
+	 * 
+	 * @return
+	 */
 	public static String getStorageProviderFileSeparator()
 	{
 		String fileSeparator = cache_fileseparator.get(STORAGE_PROVIDER_FILE_SEPARATOR);
@@ -170,6 +187,12 @@ public class Utils
 		return fileSeparator;
 	}
 
+	/**
+	 * convert component image toBufferedImage
+	 * 
+	 * @param src
+	 * @return
+	 */
 	public static BufferedImage toBufferedImage(java.awt.Image src)
 	{
 		int w = src.getWidth(null);
@@ -184,6 +207,10 @@ public class Utils
 		return dest;
 	} // BufferedImage
 
+	/**
+	 * @param AD_Client_ID
+	 * @return
+	 */
 	public static I_AD_StorageProvider getStorageProvider(int AD_Client_ID)
 	{
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID);
@@ -194,6 +221,13 @@ public class Utils
 			return null;
 	}
 
+	
+	/**
+	 * get mimetypeID from media
+	 * 
+	 * @param media
+	 * @return
+	 */
 	public static int getMimeTypeID(AMedia media)
 	{
 		int dmsMimeType_ID = -1;
@@ -228,6 +262,9 @@ public class Utils
 		}
 	}
 
+	/**
+	 * @return
+	 */
 	public static int getStatusID()
 	{
 		int dms_statusID = DB.getSQLValue(null, "SELECT dms_Status_ID FROM DMS_Status WHERE name ilike ?", DRAFT);
@@ -248,6 +285,11 @@ public class Utils
 		return dms_statusID;
 	}
 
+	/**
+	 * get contenttype is directory or content
+	 * 
+	 * @return
+	 */
 	public static int getContentTypeID()
 	{
 		int dms_ContentType_ID = DB.getSQLValue(null,
@@ -269,6 +311,13 @@ public class Utils
 		return dms_ContentType_ID;
 	}
 
+	/**
+	 * get thumbnail for file
+	 * 
+	 * @param file
+	 * @param size
+	 * @return
+	 */
 	public static BufferedImage getImageThumbnail(File file, String size)
 	{
 		BufferedImage thumbnailImage = null;
@@ -293,6 +342,12 @@ public class Utils
 		return thumbnailImage;
 	}
 
+	/**
+	 * get unique name for version history
+	 * 
+	 * @param fullPath
+	 * @return
+	 */
 	public static String getUniqueFilename(String fullPath)
 	{
 		File document = new File(fullPath);
@@ -318,6 +373,11 @@ public class Utils
 		return fullPath;
 	}
 
+	/**
+	 * get thumbnail of directory
+	 * 
+	 * @return
+	 */
 	public static MImage getDirThumbnail()
 	{
 		MImage mImage = cache_dirThumbnail.get(DIRECTORY);
@@ -332,6 +392,12 @@ public class Utils
 		return mImage;
 	}
 
+	/**
+	 * get thumbnail of content related mimetype
+	 * 
+	 * @param DMS_MimeType_ID
+	 * @return
+	 */
 	public static MImage getMimetypeThumbnail(int DMS_MimeType_ID)
 	{
 		MImage mImage = cache_mimetypeThumbnail.get(DMS_MimeType_ID);
@@ -358,6 +424,12 @@ public class Utils
 
 	}
 
+	/**
+	 * get DMS_Content_Related_ID from DMS_content
+	 * 
+	 * @param DMS_Content
+	 * @return
+	 */
 	public static int getDMS_Content_Related_ID(I_DMS_Content DMS_Content)
 	{
 		if (DMS_Content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))

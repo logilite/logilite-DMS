@@ -105,9 +105,16 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 	private CharSequence[]			specialCh				= { "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "+" };
 
+	/**
+	 * Constructor initialize
+	 * 
+	 * @param mDMSContent
+	 * @param isVersion
+	 */
 	public WUploadContent(MDMSContent mDMSContent, boolean isVersion)
 	{
 		this.DMSContent = (MDMSContent) mDMSContent;
+		this.isVersion = isVersion;
 
 		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
 
@@ -125,17 +132,23 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		{
 			contentTypeRow.setVisible(false);
 			nameRow.setVisible(false);
+			tabBoxAttribute.setVisible(false);
 			DMS_Content_Related_ID = Utils.getDMS_Content_Related_ID(mDMSContent);
-			this.isVersion = isVersion;
-			this.setHeight("35%");
+			this.setHeight("26%");
 			this.setWidth("40%");
 		}
 	}
 
+	/**
+	 * initialize components
+	 */
 	public void init()
 	{
-		this.setHeight("70%");
-		this.setWidth("44%");
+		// this.setHeight("50%");
+		if(!isVersion){
+			this.setStyle("min-height:40%; max-height:60%; overflow-y:auto;");
+			this.setWidth("50%");
+		}
 		this.setTitle("Upload Content");
 		this.setClosable(true);
 		this.appendChild(gridView);
@@ -225,7 +238,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		tabAttribute.setLabel("Attribute Set");
 		tabsAttribute.appendChild(tabAttribute);
 		tabPanelsAttribute.appendChild(tabPanelAttribute);
-
 		tabBoxAttribute.setMold("accordion");
 
 		cell.appendChild(tabBoxAttribute);
@@ -240,6 +252,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		cell.appendChild(new Space());
 		cell.appendChild(btnClose);
 		row.appendChild(cell);
+		cell.setStyle("position: relative;");
 
 		btnFileUpload.setUpload(AdempiereWebUI.getUploadSetting());
 		btnFileUpload.addEventListener(Events.ON_UPLOAD, this);
@@ -249,6 +262,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		AEnv.showCenterScreen(this);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * org.zkoss.zk.ui.event.EventListener#onEvent(org.zkoss.zk.ui.event.Event)
+	 */
 	@Override
 	public void onEvent(Event e) throws Exception
 	{
@@ -265,6 +283,9 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			this.detach();
 	}
 
+	/**
+	 * save uploaded document in current directory
+	 */
 	private void saveUploadedDcoument()
 	{
 		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
@@ -374,15 +395,20 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 						fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
 
 		}
-		catch (Exception ex)
+		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Upload Content Failure :" + ex.getLocalizedMessage());
-			throw new AdempiereException("Upload Content Failure :" + ex.getLocalizedMessage());
+			log.log(Level.SEVERE, "Upload Content Failure :" + e);
+			throw new AdempiereException("Upload Content Failure :" + e);
 		}
 
 		this.detach();
 	}
 
+	/**
+	 * check media is uploaded
+	 * 
+	 * @param media
+	 */
 	private void processUploadMedia(Media media)
 	{
 		if (media == null)

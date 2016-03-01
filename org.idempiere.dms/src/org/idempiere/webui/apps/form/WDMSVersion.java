@@ -57,6 +57,8 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	private IFileStorageProvider			fileStorgProvider		= null;
 	private IContentManager					contentManager			= null;
 
+	private static DMSViewerComponent		prevComponent			= null;
+
 	private Grid							gridView				= GridFactory.newGridLayout();
 
 	private static final String				SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
@@ -181,6 +183,10 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
+		log.info(event.getName());
+		
+		event.getTarget();
+		
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName())
 				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
@@ -192,6 +198,14 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		{
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
 			currentCompSelection(DMSViewerComp);
+		}
+		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(WDMSVersion.class))
+		{
+			if (prevComponent != null)
+			{
+				ZkCssHelper.appendStyle(prevComponent.getfLabel(),
+						"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+			}
 		}
 	}
 
@@ -247,17 +261,22 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 	private void currentCompSelection(DMSViewerComponent DMSViewerComp)
 	{
-		for (DMSViewerComponent thumbComponent : viewerComponents)
+		if (prevComponent != null)
 		{
-			if (thumbComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent().getDMS_Content_ID())
+			ZkCssHelper.appendStyle(prevComponent.getfLabel(),
+					"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+		}
+
+		for (DMSViewerComponent viewerComponent : viewerComponents)
+		{
+			if (viewerComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent()
+					.getDMS_Content_ID())
 			{
 				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(),
 						"background-color:#99cbff; box-shadow: 7px 7px 7px #888888");
-			}
-			else
-			{
-				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(),
-						"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+
+				prevComponent = viewerComponent;
+				break;
 			}
 		}
 	}

@@ -80,7 +80,7 @@ public class WDLoadASIPanel extends Panel
 
 	public void initPanel()
 	{
-		this.setHeight("100%");
+		this.setHeight("65%");
 		this.setWidth("100%");
 		this.appendChild(attributeGrid);
 

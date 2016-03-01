@@ -142,6 +142,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 	}
 
+	/**
+	 * initialize components
+	 */
 	private void init()
 	{
 		this.appendChild(mainLayout);
@@ -165,7 +168,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		tabBoxAttribute.appendChild(tabpanelsAttribute);
 		panelAttribute.appendChild(tabBoxAttribute);
 		tabBoxAttribute.setMold("accordion");
-		tabBoxAttribute.setHeight("90%");
+		tabBoxAttribute.setHeight("100%");
 		tabBoxAttribute.setWidth("100%");
 
 		tabsAttribute.appendChild(tabAttribute);
@@ -177,10 +180,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		tabpanelsAttribute.appendChild(tabpanelAttribute);
 		// tabpanelsAttribute.setStyle("display: flex;");
-		tabpanelsAttribute.setHeight("450px");
+		tabpanelsAttribute.setHeight("100%");
 		tabpanelsAttribute.setWidth("100%");
 
 		tabpanelsAttribute.appendChild(tabpanelVersionHitory);
+		tabpanelVersionHitory.setHeight("70%");
 		tabpanelAttribute.setHeight("100%");
 
 		tabpanelAttribute.appendChild(gridAttributeLayout);
@@ -258,14 +262,17 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 	}
 
+	/**
+	 * initialize version history components
+	 */
 	private void initVersionHistory()
 	{
 		Components.removeAllChildren(tabpanelVersionHitory);
 		Grid versionGrid = new Grid();
-		versionGrid.setHeight("100%");
+		versionGrid.setHeight("65%");
 		versionGrid.setWidth("100%");
 		versionGrid.setStyle("position:relative; float: right; overflow-y: auto;");
-		this.setStyle("position:relative; float: right; ");
+		this.setStyle("position:relative; float: right; height: 100%; overflow: auto;");
 
 		tabpanelVersionHitory.appendChild(versionGrid);
 
@@ -344,6 +351,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				cell.appendChild(new Label("No version Document available."));
 				row = new Row();
 				row.appendChild(cell);
+				cell.setHeight("15px");
 				rows.appendChild(row);
 			}
 
@@ -363,6 +371,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				m_M_AttributeSetInstance_ID));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * org.zkoss.zk.ui.event.EventListener#onEvent(org.zkoss.zk.ui.event.Event)
+	 */
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
@@ -374,7 +387,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
-			
+
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_CANCEL))
 		{
@@ -423,6 +436,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 					tabBox.setSelectedTab(tab);
 				}
 			});
+			uploadContent.addEventListener(Events.ON_CLOSE, this);
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_REFRESH))
 		{

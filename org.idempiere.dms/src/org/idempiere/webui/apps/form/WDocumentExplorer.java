@@ -10,6 +10,9 @@ public class WDocumentExplorer extends ADForm
 	 */
 	private static final long	serialVersionUID	= 4615438048526323068L;
 
+	/* (non-Javadoc)
+	 * @see org.adempiere.webui.panel.ADForm#initForm()
+	 */
 	@Override
 	protected void initForm()
 	{

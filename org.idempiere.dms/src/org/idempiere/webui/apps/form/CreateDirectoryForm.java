@@ -55,6 +55,11 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private IFileStorageProvider	fileStorageProvider	= null;
 	private IContentManager			contentManager		= null;
 
+	/**
+	 * Constructor initialize
+	 * 
+	 * @param DMSContent
+	 */
 	public CreateDirectoryForm(I_DMS_Content DMSContent)
 	{
 		try
@@ -81,6 +86,10 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		}
 	}
 
+	/**
+	 * initialize components
+	 * @throws Exception
+	 */
 	public void init() throws Exception
 	{
 		this.setHeight("150px");
@@ -124,6 +133,9 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		AEnv.showCenterScreen(this);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.zkoss.zk.ui.event.EventListener#onEvent(org.zkoss.zk.ui.event.Event)
+	 */
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
