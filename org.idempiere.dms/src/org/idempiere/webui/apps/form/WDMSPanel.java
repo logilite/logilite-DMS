@@ -46,7 +46,6 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.idempiere.componenet.DMSViewerComponent;
-import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
@@ -65,9 +64,7 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
-import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
-import org.zkoss.zul.Image;
 import org.zkoss.zul.Menuitem;
 
 public class WDMSPanel extends Panel implements EventListener<Event>
@@ -76,9 +73,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	private static final long				serialVersionUID		= -6813481516566180243L;
 	public static CLogger					log						= CLogger.getCLogger(WDMSPanel.class);
 
-	private static final String				SQL_FETCH_DMS_CONTENTS	= "SELECT * FROM DMS_Document_Explorer_V "
-																			+ "WHERE COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) "
-																			+ "ORDER BY DMS_Content_ID";
+	private static final String				SQL_FETCH_DMS_CONTENTS	= "WITH ContentAssociation AS "
+																			+ " ( "
+																			+ " SELECT	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, "
+																			+ " a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
+																			+ " FROM DMS_Association a "
+																			+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID) "
+																			+ " ) "
+																			+ " SELECT "
+																			+ " COALESCE((SELECT a.DMS_Content_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_ID) AS DMS_Content_ID, "
+																			+ " COALESCE((SELECT a.DMS_Content_Related_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_Related_ID) AS DMS_Content_Related_ID "
+																			+ " FROM ContentAssociation ca "
+																			+ " WHERE "
+																			+ " (COALESCE(AD_Table_ID,0) = COALESCE(?,0) AND COALESCE(Record_ID,0) = COALESCE(?,0) AND COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0)) OR "
+																			+ " (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND ContentBaseType = 'DIR') OR "
+																			+ " (CASE WHEN (? = 0 AND ? = 0) "
+																			+ " THEN ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND COALESCE(AD_Table_ID,0) != 0 AND COALESCE(Record_ID,0) != 0)) "
+																			+ " ELSE ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND AD_Table_ID = ? AND Record_ID = ?)) "
+																			+ " END) ";
+
 	// private CustomForm form = new CustomForm();
 	public Tabbox							tabBox					= new Tabbox();
 	private Tabs							tabs					= new Tabs();
@@ -141,6 +154,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	private WUploadContent					uploadContent			= null;
 	private CreateDirectoryForm				createDirectoryForm		= null;
 
+	public int								recordID				= 0;
+	public int								tableID					= 0;
+
 	public static final int					COMPONENT_HEIGHT		= 150;
 	public static final int					COMPONENT_WIDTH			= 150;
 
@@ -177,6 +193,26 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			log.log(Level.SEVERE, "Render Component Problem.", e);
 			throw new AdempiereException("Render Component Problem: " + e.getLocalizedMessage());
 		}
+	}
+
+	public int getRecord_ID()
+	{
+		return recordID;
+	}
+
+	public void setRecord_ID(int record_ID)
+	{
+		this.recordID = record_ID;
+	}
+
+	public int getTable_ID()
+	{
+		return tableID;
+	}
+
+	public void setTable_ID(int table_ID)
+	{
+		this.tableID = table_ID;
 	}
 
 	/**
@@ -465,7 +501,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			Menuitem paste = new Menuitem("Paste");
 			paste.setDisabled(true);
 
-			if (copyDMSContent > 0 && (copyDMSContent != currDMSContent.getDMS_Content_ID() || currDMSContent == null))
+			if (copyDMSContent > 0 && (currDMSContent == null || copyDMSContent != currDMSContent.getDMS_Content_ID()))
 			{
 				paste.setDisabled(false);
 
@@ -575,22 +611,30 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	 */
 	private List<I_DMS_Content> getDMSContents()
 	{
+		int contentID = 0;
+
+		if (currDMSContent != null)
+			contentID = currDMSContent.getDMS_Content_ID();
+
 		List<I_DMS_Content> dmsContent = new ArrayList<I_DMS_Content>();
+
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement(SQL_FETCH_DMS_CONTENTS, ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_UPDATABLE, null);
 
-			if (currDMSContent == null)
-			{
-				pstmt.setInt(1, 0);
-			}
-			else
-			{
-				pstmt.setInt(1, currDMSContent.getDMS_Content_ID());
-			}
+			pstmt = DB.prepareStatement(SQL_FETCH_DMS_CONTENTS, null);
+
+			pstmt.setInt(1, tableID);
+			pstmt.setInt(2, recordID);
+			pstmt.setInt(3, contentID);
+			pstmt.setInt(4, contentID);
+			pstmt.setInt(5, tableID);
+			pstmt.setInt(6, recordID);
+			pstmt.setInt(7, contentID);
+			pstmt.setInt(8, contentID);
+			pstmt.setInt(9, tableID);
+			pstmt.setInt(10, recordID);
 
 			rs = pstmt.executeQuery();
 
@@ -613,6 +657,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			rs = null;
 			pstmt = null;
 		}
+
 		return dmsContent;
 	}
 
@@ -836,7 +881,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			public void onEvent(Event e) throws Exception
 			{
 				copyDMSContent = DMSViewerCom.getDMSContent().getDMS_Content_ID();
-				//DMSClipboard.putDMSContent(copyDMSContent);
+				// DMSClipboard.putDMSContent(copyDMSContent);
 			}
 		});
 

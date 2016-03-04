@@ -100,6 +100,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 	private Tabbox					tabBox					= null;
 
+	private WDLoadASIPanel			ASIPanel				= null;
+
 	private int						m_M_AttributeSetInstance_ID;
 
 	private static final String		SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
@@ -366,9 +368,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private void initAttributes()
 	{
 		Components.removeAllChildren(tabpanelAttribute);
-
-		tabpanelAttribute.appendChild(new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(),
-				m_M_AttributeSetInstance_ID));
+		ASIPanel = new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(), m_M_AttributeSetInstance_ID);
+		ASIPanel.setEditableAttribute(false);
+		tabpanelAttribute.appendChild(ASIPanel);
 	}
 
 	/*
@@ -382,12 +384,14 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		if (event.getTarget().equals(btnEdit))
 		{
-
+			ASIPanel.setEditableAttribute(true);
 			btnSave.setVisible(true);
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
-
+			ASIPanel.saveAttributes();
+			btnSave.setVisible(false);
+			ASIPanel.setEditableAttribute(false);
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_CANCEL))
 		{

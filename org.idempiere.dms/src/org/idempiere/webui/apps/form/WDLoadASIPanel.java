@@ -241,7 +241,7 @@ public class WDLoadASIPanel extends Panel
 						|| editor instanceof WAccountEditor)
 				{
 					if (instance.getValueInt() > 0)
-						editor.setValue(instance.getValueInt() > 0);
+						editor.setValue(instance.getValueInt());
 				}
 				else if (editor instanceof WNumberEditor)
 				{
@@ -362,5 +362,13 @@ public class WDLoadASIPanel extends Panel
 		}
 		m_M_AttributeSetInstance_ID = m_masi.getM_AttributeSetInstance_ID();
 		return m_M_AttributeSetInstance_ID;
+	}
+
+	public void setEditableAttribute(boolean isEditable)
+	{
+		for (WEditor editor : m_editors)
+		{
+			editor.setReadWrite(isEditable);
+		}
 	}
 }

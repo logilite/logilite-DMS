@@ -125,7 +125,7 @@ public class Utils
 
 		for (IContentManagerProvider factory : factories)
 		{
-			contentManager = factory.get(AD_Client_ID);
+			contentManager = factory.get(c_key);
 
 			if (contentManager != null)
 			{
@@ -299,7 +299,7 @@ public class Utils
 		else
 		{
 			MDMSContentType dms_ContentType = new MDMSContentType(Env.getCtx(), 0, null);
-			dms_ContentType.setName("Directory");
+			dms_ContentType.setName(DIRECTORY);
 			dms_ContentType.setValue("Dir");
 			dms_ContentType.setIsDefault(true);
 			dms_ContentType.setM_AttributeSet_ID(100);
