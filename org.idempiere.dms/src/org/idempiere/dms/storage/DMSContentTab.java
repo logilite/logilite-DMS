@@ -98,8 +98,9 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void createUI()
 	{
-		documentViewerPanel.setTable_ID(gridTab.getParentTab().getAD_Tab_ID());
+		documentViewerPanel.setTable_ID(gridTab.getParentTab().getAD_Table_ID());
 		documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
+		renderViewer();
 	}
 
 	@Override
@@ -131,7 +132,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	public void refresh()
 	{
 		documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
-		renderViewer();
+		documentViewerPanel.setTable_ID((gridTab.getParentTab().getAD_Table_ID()));
 	}
 
 	@Override
@@ -154,7 +155,6 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	public void dynamicDisplay(int i)
 	{
 		createUI();
-		renderViewer();
 	}
 
 	@Override

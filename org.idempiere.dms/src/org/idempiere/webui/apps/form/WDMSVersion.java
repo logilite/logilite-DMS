@@ -61,6 +61,9 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 	private Grid							gridView				= GridFactory.newGridLayout();
 
+	private static final int				COMPONENT_HEIGHT		= 150;
+	private static final int				COMPONENT_WIDTH			= 150;
+
 	private static final String				SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
 																			+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "
 																			+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
@@ -94,7 +97,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		}
 		catch (IOException e)
 		{
-			log.log(Level.SEVERE, "DMS Version fetching failure :" , e);
+			log.log(Level.SEVERE, "DMS Version fetching failure :", e);
 			throw new AdempiereException("DMS Version fetching failure :" + e);
 		}
 
@@ -155,8 +158,8 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 			DMSViewerComponent viewerComponent = new DMSViewerComponent(dmsContent.get(i), image);
 
-			viewerComponent.setDheight(WDMSPanel.COMPONENT_HEIGHT);
-			viewerComponent.setDwidth(WDMSPanel.COMPONENT_WIDTH);
+			viewerComponent.setDheight(COMPONENT_HEIGHT);
+			viewerComponent.setDwidth(COMPONENT_WIDTH);
 
 			viewerComponent.addEventListener(Events.ON_DOUBLE_CLICK, this);
 			viewerComponent.addEventListener(Events.ON_CLICK, this);
@@ -184,9 +187,9 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	public void onEvent(Event event) throws Exception
 	{
 		log.info(event.getName());
-		
+
 		event.getTarget();
-		
+
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName())
 				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{

@@ -157,11 +157,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	public int								recordID				= 0;
 	public int								tableID					= 0;
 
-	public static final int					COMPONENT_HEIGHT		= 150;
-	public static final int					COMPONENT_WIDTH			= 150;
+	private static final int				COMPONENT_HEIGHT		= 150;
+	private static final int				COMPONENT_WIDTH			= 150;
 
-	private static DMSViewerComponent		prevComponent			= null;
-	private static MDMSContent				copyDMSContent			= null;
+	private DMSViewerComponent				prevComponent			= null;
+	private MDMSContent						copyDMSContent			= null;
 
 	/**
 	 * Constructor initialize
@@ -587,8 +587,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap;");
 			row.setZclass("none");
 			row.appendCellChild(cell);
-			rows.appendChild(row);
 			row.appendChild(viewerComponent);
+			rows.appendChild(row);
 		}
 
 		grid.appendChild(rows);
@@ -835,7 +835,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			paste.setDisabled(true);
 			associate.setDisabled(true);
 		}
-		else if (copyDMSContent != null && copyDMSContent == DMSViewerCom.getDMSContent())
+		else if ((copyDMSContent != null && copyDMSContent == DMSViewerCom.getDMSContent())
+				|| (X_DMS_Content.CONTENTBASETYPE_Directory.equals(copyDMSContent.getContentBaseType())))
 		{
 			associate.setDisabled(true);
 		}
@@ -938,6 +939,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			if (DMSContent != null)
 				DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
 			DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
+			DMSassociation.setRecord_ID(recordID);
+			DMSassociation.setAD_Table_ID(tableID);
 			DMSassociation.saveEx();
 		}
 		else
