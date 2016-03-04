@@ -139,7 +139,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		catch (Exception ex)
 		{
-			log.log(Level.SEVERE, "WDMSAsi: " + ex);
+			log.log(Level.SEVERE, "WDMSAsi: ", ex);
 		}
 
 	}
@@ -360,7 +360,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Version listing failure" + e);
+			log.log(Level.SEVERE, "Version listing failure", e);
 		}
 
 	}

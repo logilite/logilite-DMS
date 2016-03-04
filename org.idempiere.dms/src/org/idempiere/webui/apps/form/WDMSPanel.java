@@ -161,7 +161,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	public static final int					COMPONENT_WIDTH			= 150;
 
 	private static DMSViewerComponent		prevComponent			= null;
-	public static int						copyDMSContent			= 0;
+	private static MDMSContent				copyDMSContent			= null;
 
 	/**
 	 * Constructor initialize
@@ -191,7 +191,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Render Component Problem.", e);
-			throw new AdempiereException("Render Component Problem: " + e.getLocalizedMessage());
+			throw new AdempiereException("Render Component Problem: " + e);
 		}
 	}
 
@@ -485,8 +485,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		{
 			if (prevComponent != null)
 			{
-				// currDMSContent = prevDMSContent;
-
 				ZkCssHelper.appendStyle(prevComponent.getfLabel(),
 						"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
 			}
@@ -494,37 +492,28 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Cell.class))
 		{
 			Cell cell = (Cell) event.getTarget();
-
 			Menupopup popup = new Menupopup();
-			popup.setPage(cell.getPage());
-
 			Menuitem paste = new Menuitem("Paste");
-			paste.setDisabled(true);
 
-			if (copyDMSContent > 0 && (currDMSContent == null || copyDMSContent != currDMSContent.getDMS_Content_ID()))
-			{
-				paste.setDisabled(false);
-
-				paste.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
-
-					@Override
-					public void onEvent(Event event) throws Exception
-					{
-						MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
-						DMSassociation.setDMS_Content_ID(copyDMSContent);
-						if (currDMSContent != null)
-							DMSassociation.setDMS_Content_Related_ID(currDMSContent.getDMS_Content_ID());
-						DMSassociation.saveEx();
-
-						// List<I_DMS_Content> dmsContent =
-						// DMSClipboard.getDMSContent();
-					}
-				});
-			}
+			popup.setPage(cell.getPage());
 			popup.appendChild(paste);
 			cell.setContext(popup);
 
+			if (copyDMSContent == null)
+				paste.setDisabled(true);
+			else
+				paste.setDisabled(false);
+
+			paste.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+
+				@Override
+				public void onEvent(Event event) throws Exception
+				{
+					pasteDocument(currDMSContent, false);
+				}
+			});
 		}
+
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
 				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
@@ -825,20 +814,36 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	private void openMenuPopup(final DMSViewerComponent DMSViewerCom)
 	{
 		final MDMSContent versionContent = DMSViewerCom.getDMSContent();
-
 		Menupopup popup = new Menupopup();
 		popup.setPage(DMSViewerCom.getPage());
 
 		Menuitem versionList = new Menuitem("Version List");
 		Menuitem copy = new Menuitem("Copy");
 		Menuitem paste = new Menuitem("Paste");
-		Menuitem createLink = new Menuitem("Create Link");
+		Menuitem delete = new Menuitem("Delete");
+		Menuitem associate = new Menuitem("Associate");
 
 		versionList.setImage(ThemeManager.getThemeResource("images/Wizard24.png"));
 		copy.setImage(ThemeManager.getThemeResource("images/Copy16.png"));
-		createLink.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
+		delete.setImage(ThemeManager.getThemeResource("images/Delete24.png"));
+		associate.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
 
-		paste.setDisabled(true);
+		delete.setDisabled(true);
+
+		if (copyDMSContent == null)
+		{
+			paste.setDisabled(true);
+			associate.setDisabled(true);
+		}
+		else if (copyDMSContent != null && copyDMSContent == DMSViewerCom.getDMSContent())
+		{
+			associate.setDisabled(true);
+		}
+		else
+		{
+			paste.setDisabled(false);
+			associate.setDisabled(false);
+		}
 
 		if (X_DMS_Content.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType()))
 		{
@@ -850,42 +855,42 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 					WDMSVersion DMSVersion = new WDMSVersion(DMSViewerCom.getDMSContent());
 				}
 			});
-			popup.appendChild(versionList);
+			associate.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+				@Override
+				public void onEvent(Event e) throws Exception
+				{
+					WDAssociationType associationType = new WDAssociationType(copyDMSContent, DMSViewerCom
+							.getDMSContent());
+				}
+			});
 
+			popup.appendChild(versionList);
+			popup.appendChild(associate);
 		}
 		popup.appendChild(copy);
-		popup.appendChild(createLink);
+
 		if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType()))
 		{
-			if (copyDMSContent > 0)
-			{
-				paste.setDisabled(false);
-				paste.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
-					@Override
-					public void onEvent(Event event) throws Exception
-					{
+			paste.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+				@Override
+				public void onEvent(Event event) throws Exception
+				{
+					pasteDocument(versionContent, true);
+				}
+			});
 
-						MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
-						DMSassociation.setDMS_Content_ID(copyDMSContent);
-						DMSassociation.setDMS_Content_Related_ID(versionContent.getDMS_Content_ID());
-						// DMSassociation.setDMS_AssociationType_ID(1000003);
-						DMSassociation.saveEx();
-					}
-				});
-			}
 			popup.appendChild(paste);
 		}
+		popup.appendChild(delete);
+		DMSViewerCom.setContext(popup);
 
 		copy.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
 			@Override
 			public void onEvent(Event e) throws Exception
 			{
-				copyDMSContent = DMSViewerCom.getDMSContent().getDMS_Content_ID();
-				// DMSClipboard.putDMSContent(copyDMSContent);
+				copyDMSContent = DMSViewerCom.getDMSContent();
 			}
 		});
-
-		DMSViewerCom.setContext(popup);
 	}
 
 	/**
@@ -895,8 +900,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	 */
 	private void currentCompSelection(DMSViewerComponent DMSViewerComp)
 	{
-		// currDMSContent = DMSViewerComp.getDMSContent();
-		// currDMSContent = prevDMSContent;
 		if (prevComponent != null)
 		{
 			ZkCssHelper.appendStyle(prevComponent.getfLabel(),
@@ -916,4 +919,49 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			}
 		}
 	}
+
+	private void pasteDocument(MDMSContent DMSContent, boolean isDir)
+	{
+		boolean isDocPresent = false;
+
+		if (copyDMSContent == null)
+		{
+			return;
+		}
+
+		isDocPresent = isDoumentPresent(DMSContent, isDir);
+
+		if (!isDocPresent)
+		{
+			MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
+			DMSassociation.setDMS_Content_ID(copyDMSContent.getDMS_Content_ID());
+			if (DMSContent != null)
+				DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
+			DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
+			DMSassociation.saveEx();
+		}
+		else
+		{
+			FDialog.warn(0, "Document already exists.");
+		}
+	}
+
+	private boolean isDoumentPresent(MDMSContent DMSContent, boolean isDir)
+	{
+		StringBuilder query = new StringBuilder();
+		query.append("SELECT count(DMS_Content_ID) FROM DMS_Association where DMS_Content_ID = ");
+		query.append(copyDMSContent.getDMS_Content_ID());
+
+		if (currDMSContent == null && !isDir)
+		{
+			query.append("AND DMS_Content_Related_ID IS NULL");
+		}
+		else
+		{
+			query.append("AND DMS_Content_Related_ID = ").append(DMSContent.getDMS_Content_ID());
+		}
+
+		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
+	}
+
 }

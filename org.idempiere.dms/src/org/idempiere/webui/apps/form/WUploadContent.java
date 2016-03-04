@@ -171,8 +171,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Contenttype fetching failure :" + e.getLocalizedMessage());
-			throw new AdempiereException("Contenttype fetching failure :" + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Contenttype fetching failure :" , e);
+			throw new AdempiereException("Contenttype fetching failure :" + e);
 		}
 
 		lblFile.setValue(Msg.getMsg(Env.getCtx(), "SelectFile") + "* ");
@@ -238,6 +238,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		tabAttribute.setLabel("Attribute Set");
 		tabsAttribute.appendChild(tabAttribute);
 		tabPanelsAttribute.appendChild(tabPanelAttribute);
+		tabPanelAttribute.setStyle("min-height :20px; max-height: 120px; overflow: auto;");
 		tabBoxAttribute.setMold("accordion");
 
 		cell.appendChild(tabBoxAttribute);
@@ -397,7 +398,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Upload Content Failure :" + e);
+			log.log(Level.SEVERE, "Upload Content Failure :" , e);
 			throw new AdempiereException("Upload Content Failure :" + e);
 		}
 
@@ -421,8 +422,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Upload Content Failure: " + e.getLocalizedMessage());
-			throw new AdempiereException("Upload Content Failure: " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Upload Content Failure: " , e);
+			throw new AdempiereException("Upload Content Failure: " + e);
 		}
 	}
 

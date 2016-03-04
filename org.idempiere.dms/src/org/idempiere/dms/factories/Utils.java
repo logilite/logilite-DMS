@@ -47,6 +47,9 @@ public class Utils
 	public static final String					DEFAULT							= "Default";
 	public static final String					DOWNLOAD						= "Download";
 	public static final String					DRAFT							= "Draft";
+	public static final String					Link							= "Link";
+
+	private static final String					SQL_GETASSOCIATIONLINKTYPE		= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
 
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider			= new CCache<Integer, IThumbnailProvider>(
 																						"ThumbnailProvider", 2);
@@ -221,7 +224,6 @@ public class Utils
 			return null;
 	}
 
-	
 	/**
 	 * get mimetypeID from media
 	 * 
@@ -452,5 +454,16 @@ public class Utils
 			else
 				return DMSAssociation.getDMS_Content_ID();
 		}
+	}
+
+	public static int getDMS_Association_Link_ID()
+	{
+		int linkID = 0;
+		linkID = DB.getSQLValue(null, SQL_GETASSOCIATIONLINKTYPE, Link);
+
+		if (linkID != -1)
+			return linkID;
+		else
+			return 0;
 	}
 }

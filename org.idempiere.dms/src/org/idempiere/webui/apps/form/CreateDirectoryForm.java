@@ -16,7 +16,6 @@ import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.storage.RelationalContentManager;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
@@ -81,13 +80,14 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Render Component Problem");
+			log.log(Level.SEVERE, "Render Component Problem", e);
 			throw new AdempiereException("Render Component Problem : " + e);
 		}
 	}
 
 	/**
 	 * initialize components
+	 * 
 	 * @throws Exception
 	 */
 	public void init() throws Exception
@@ -133,8 +133,10 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		AEnv.showCenterScreen(this);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.zkoss.zk.ui.event.EventListener#onEvent(org.zkoss.zk.ui.event.Event)
+	/*
+	 * (non-Javadoc)
+	 * @see
+	 * org.zkoss.zk.ui.event.EventListener#onEvent(org.zkoss.zk.ui.event.Event)
 	 */
 	@Override
 	public void onEvent(Event event) throws Exception
@@ -182,20 +184,20 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
 				if (mDMSContent != null)
 					dmsAssociation.setDMS_Content_Related_ID(mDMSContent.getDMS_Content_ID());
-				//dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
+				// dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
 				dmsAssociation.saveEx();
 				this.detach();
 
 			}
 			catch (AdempiereException e)
 			{
-				log.log(Level.SEVERE, "Directory is allready created");
+				log.log(Level.SEVERE, "Directory is allready created", e);
 				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is allready created"));
 			}
 			catch (Exception e)
 			{
 
-				log.log(Level.SEVERE, "Directory is not created");
+				log.log(Level.SEVERE, "Directory is not created", e);
 				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is not created"));
 
 			}

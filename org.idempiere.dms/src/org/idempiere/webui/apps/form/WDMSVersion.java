@@ -94,7 +94,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		}
 		catch (IOException e)
 		{
-			log.log(Level.SEVERE, "DMS Version fetching failure :" + e);
+			log.log(Level.SEVERE, "DMS Version fetching failure :" , e);
 			throw new AdempiereException("DMS Version fetching failure :" + e);
 		}
 
