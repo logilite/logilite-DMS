@@ -63,6 +63,8 @@ public class Utils
 																						"DirThumbnail", 2);
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail			= new CCache<Integer, MImage>(
 																						"MimetypeThumbnail", 2);
+	static CCache<String, MImage>				cache_linkThumbnail				= new CCache<String, MImage>(
+																						"LinkThumbnail", 2);
 
 	public static IContentEditor getContentEditor(String mimeType)
 	{
@@ -465,5 +467,19 @@ public class Utils
 			return linkID;
 		else
 			return 0;
+	}
+
+	public static MImage getLinkThumbnail()
+	{
+		MImage mImage = cache_linkThumbnail.get(Link);
+		if (mImage != null)
+		{
+			return mImage;
+		}
+
+		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE name ilike ?", Link);
+		mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
+		cache_linkThumbnail.put(Link, mImage);
+		return mImage;
 	}
 }

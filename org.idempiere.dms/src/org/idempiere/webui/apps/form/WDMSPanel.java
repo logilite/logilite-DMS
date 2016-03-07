@@ -7,7 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -51,6 +52,7 @@ import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
+import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
@@ -82,7 +84,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 																			+ " ) "
 																			+ " SELECT "
 																			+ " COALESCE((SELECT a.DMS_Content_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_ID) AS DMS_Content_ID, "
-																			+ " COALESCE((SELECT a.DMS_Content_Related_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_Related_ID) AS DMS_Content_Related_ID "
+																			+ " COALESCE((SELECT a.DMS_Content_Related_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_Related_ID) AS DMS_Content_Related_ID, DMS_Association_ID "
 																			+ " FROM ContentAssociation ca "
 																			+ " WHERE "
 																			+ " (COALESCE(AD_Table_ID,0) = COALESCE(?,0) AND COALESCE(Record_ID,0) = COALESCE(?,0) AND COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0)) OR "
@@ -435,7 +437,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
-		// this.addEventListener(Events.ON_RIGHT_CLICK, this);
 
 		SessionManager.getAppDesktop();
 	}
@@ -534,39 +535,46 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		Components.removeAllChildren(grid);
 		Rows rows = new Rows();
 		Row row = new Row();
-		Cell cell = null;
 		MImage mImage = null;
 		AImage image = null;
 
-		int i = 0;
-
-		List<I_DMS_Content> dmsContent = getDMSContents();
-
 		viewerComponents = new ArrayList<DMSViewerComponent>();
 
-		for (i = 0; i < dmsContent.size(); i++)
+		HashMap<I_DMS_Content, I_DMS_Association> dmsContent = getDMSContents();
+
+		for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : dmsContent.entrySet())
 		{
-			thumbFile = thumbnailProvider.getFile(dmsContent.get(i), "150");
+
+			thumbFile = thumbnailProvider.getFile(entry.getKey(), "150");
+
 			if (thumbFile == null)
 			{
-				if (dmsContent.get(i).getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+				if (entry.getKey().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 				{
 					mImage = Utils.getDirThumbnail();
 				}
 				else
 				{
-					mImage = Utils.getMimetypeThumbnail(dmsContent.get(i).getDMS_MimeType_ID());
+					mImage = Utils.getMimetypeThumbnail(entry.getKey().getDMS_MimeType_ID());
 				}
 				imgByteData = mImage.getData();
 				if (imgByteData != null)
-					image = new AImage(dmsContent.get(i).getName(), imgByteData);
+					image = new AImage(entry.getKey().getName(), imgByteData);
 			}
 			else
 			{
 				image = new AImage(thumbFile);
 			}
 
-			DMSViewerComponent viewerComponent = new DMSViewerComponent(dmsContent.get(i), image);
+			DMSViewerComponent viewerComponent = null;
+			if (entry.getValue().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+			{
+				viewerComponent = new DMSViewerComponent(entry.getKey(), image, true);
+			}
+			else
+			{
+				viewerComponent = new DMSViewerComponent(entry.getKey(), image, false);
+			}
 
 			viewerComponent.addEventListener(Events.ON_DOUBLE_CLICK, this);
 			viewerComponent.addEventListener(Events.ON_CLICK, this);
@@ -574,22 +582,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 			viewerComponents.add(viewerComponent);
 
-			grid.setSizedByContent(true);
-			grid.setZclass("none");
 			viewerComponent.setDheight(COMPONENT_HEIGHT);
 			viewerComponent.setDwidth(COMPONENT_WIDTH);
-
-			cell = new Cell();
-			cell.setWidth(row.getWidth());
-			cell.appendChild(viewerComponent);
-			// flex: 1 0 150px;
-			// justify-content:space-around;
-			row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap;");
-			row.setZclass("none");
-			row.appendCellChild(cell);
+			
 			row.appendChild(viewerComponent);
-			rows.appendChild(row);
 		}
+		row.setZclass("none");
+		//row.setWidth(row.getWidth());
+		row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%; overflow: hidden;");
+		rows.appendChild(row);
 
 		grid.appendChild(rows);
 		tabBox.setSelectedIndex(0);
@@ -598,15 +599,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	/**
 	 * get all DMS Contents for rendering
 	 */
-	private List<I_DMS_Content> getDMSContents()
+	private HashMap<I_DMS_Content, I_DMS_Association> getDMSContents()
 	{
 		int contentID = 0;
 
 		if (currDMSContent != null)
 			contentID = currDMSContent.getDMS_Content_ID();
 
-		List<I_DMS_Content> dmsContent = new ArrayList<I_DMS_Content>();
-
+		HashMap<I_DMS_Content, I_DMS_Association> map = new HashMap<I_DMS_Content, I_DMS_Association>();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -631,7 +631,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			{
 				while (rs.next())
 				{
-					dmsContent.add(new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null));
+					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)), (new MDMSAssociation(
+							Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
 				}
 			}
 		}
@@ -647,7 +648,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			pstmt = null;
 		}
 
-		return dmsContent;
+		return map;
 	}
 
 	/**

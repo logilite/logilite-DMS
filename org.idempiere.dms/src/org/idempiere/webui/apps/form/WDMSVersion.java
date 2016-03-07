@@ -156,7 +156,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 				image = new AImage(thumbFile);
 			}
 
-			DMSViewerComponent viewerComponent = new DMSViewerComponent(dmsContent.get(i), image);
+			DMSViewerComponent viewerComponent = new DMSViewerComponent(dmsContent.get(i), image, false);
 
 			viewerComponent.setDheight(COMPONENT_HEIGHT);
 			viewerComponent.setDwidth(COMPONENT_WIDTH);

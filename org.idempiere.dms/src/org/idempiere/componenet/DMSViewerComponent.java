@@ -1,8 +1,13 @@
 package org.idempiere.componenet;
 
+import java.util.logging.Level;
+
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ZkCssHelper;
+import org.compiere.model.MImage;
 import org.compiere.util.CLogger;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
@@ -37,6 +42,12 @@ public class DMSViewerComponent extends Div
 	protected Menuitem			menuItem			= null;
 
 	protected Vbox				vbox				= new Vbox();
+
+	private boolean				isLink				= false;
+	private Image				linkImage			= null;
+	private MImage				mImage				= null;
+	private Div					mimeIcon			= new Div();
+	private Div					footerDiv			= new Div();
 
 	public MDMSContent getDMSContent()
 	{
@@ -77,7 +88,12 @@ public class DMSViewerComponent extends Div
 	{
 		this.dHeight = dheight;
 		this.setHeight(dheight + "px");
-		prevImg.setHeight(dheight - 40 + "px");
+		if (isLink)
+		{
+			footerDiv.setHeight(dHeight - 120 + "px");
+		}
+
+		prevImg.setHeight(dheight - 30 + "px");
 	}
 
 	public int getDwidth()
@@ -89,8 +105,15 @@ public class DMSViewerComponent extends Div
 	{
 		this.dWidth = dwidth;
 		this.setWidth(dwidth + "px");
-		fLabel.setWidth(dwidth - 10 + "px");
+		if (isLink)
+		{
+			footerDiv.setWidth(dwidth + "px");
+			mimeIcon.setWidth(dwidth - 120 + "px");
+		}
+
 		prevImg.setWidth(dwidth + "px");
+
+		fLabel.setWidth(dwidth - 30 + "px");
 	}
 
 	public String getfName()
@@ -103,14 +126,42 @@ public class DMSViewerComponent extends Div
 		this.fName = fName;
 	}
 
-	public DMSViewerComponent(I_DMS_Content content, AImage image)
+	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink)
 	{
 		this.contentBaseType = content.getContentBaseType();
 		this.fName = content.getName();
 		this.DMSContent = (MDMSContent) content;
+		this.isLink = isLink;
 
-		fLabel.appendChild(new Label(fName));
-		fLabel.setTooltiptext(content.getName());
+		if (isLink)
+		{
+			AImage aImage = null;
+			try
+			{
+				byte[] imgByteData = null;
+
+				mImage = Utils.getLinkThumbnail();
+				imgByteData = mImage.getData();
+
+				if (imgByteData != null)
+					aImage = new AImage(fName, imgByteData);
+
+				linkImage = new Image();
+				linkImage.setContent(aImage);
+
+				mimeIcon.appendChild(linkImage);
+				mimeIcon.setStyle("float :left;");
+				ZkCssHelper.appendStyle(mimeIcon, "align: left");
+
+				footerDiv.appendChild(mimeIcon);
+			}
+			catch (Exception e)
+			{
+				log.log(Level.SEVERE, "Link image fetching failure: ", e);
+				throw new AdempiereException("Link image fetching failure: " + e);
+			}
+
+		}
 
 		prevImg = new Image();
 		prevImg.setContent(image);
@@ -118,11 +169,16 @@ public class DMSViewerComponent extends Div
 		dImage.appendChild(prevImg);
 
 		vbox.appendChild(dImage);
-		vbox.appendChild(fLabel);
 
-		fLabel.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden;");
+		fLabel.appendChild(new Label(fName));
+		fLabel.setTooltiptext(content.getName());
 
-		ZkCssHelper.appendStyle(fLabel, "text-align: left");
+		footerDiv.appendChild(fLabel);
+
+		vbox.appendChild(footerDiv);
+
+		fLabel.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
+
 		ZkCssHelper.appendStyle(dImage, "text-align: center");
 
 		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
