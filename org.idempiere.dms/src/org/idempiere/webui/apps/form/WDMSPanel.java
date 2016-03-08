@@ -47,6 +47,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.idempiere.componenet.DMSViewerComponent;
+import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
@@ -163,7 +164,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	private static final int				COMPONENT_WIDTH			= 150;
 
 	private DMSViewerComponent				prevComponent			= null;
-	private MDMSContent						copyDMSContent			= null;
 
 	/**
 	 * Constructor initialize
@@ -468,11 +468,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		{
 			directoryNavigation();
 		}
-		else if (event.getTarget().getId().equals(confirmPanel.A_RESET))
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_RESET))
 		{
 			clearComponenets();
 		}
-		else if (event.getTarget().getId().equals(confirmPanel.A_REFRESH))
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH))
 		{
 			renderViewer();
 		}
@@ -492,27 +492,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		}
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Cell.class))
 		{
-			Cell cell = (Cell) event.getTarget();
-			Menupopup popup = new Menupopup();
-			Menuitem paste = new Menuitem("Paste");
-
-			popup.setPage(cell.getPage());
-			popup.appendChild(paste);
-			cell.setContext(popup);
-
-			if (copyDMSContent == null)
-				paste.setDisabled(true);
-			else
-				paste.setDisabled(false);
-
-			paste.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
-
-				@Override
-				public void onEvent(Event event) throws Exception
-				{
-					pasteDocument(currDMSContent, false);
-				}
-			});
+			createPasteMenu(event);
 		}
 
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
@@ -584,11 +564,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 			viewerComponent.setDheight(COMPONENT_HEIGHT);
 			viewerComponent.setDwidth(COMPONENT_WIDTH);
-			
+
 			row.appendChild(viewerComponent);
 		}
 		row.setZclass("none");
-		//row.setWidth(row.getWidth());
+		// row.setWidth(row.getWidth());
 		row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%; overflow: hidden;");
 		rows.appendChild(row);
 
@@ -814,7 +794,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	 */
 	private void openMenuPopup(final DMSViewerComponent DMSViewerCom)
 	{
-		final MDMSContent versionContent = DMSViewerCom.getDMSContent();
+		final MDMSContent dirContent = DMSViewerCom.getDMSContent();
 		Menupopup popup = new Menupopup();
 		popup.setPage(DMSViewerCom.getPage());
 
@@ -831,6 +811,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 		delete.setDisabled(true);
 
+		final MDMSContent copyDMSContent = DMSClipboard.getCopyDMSContent();
 		if (copyDMSContent == null)
 		{
 			paste.setDisabled(true);
@@ -854,15 +835,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event e) throws Exception
 				{
-					WDMSVersion DMSVersion = new WDMSVersion(DMSViewerCom.getDMSContent());
+					new WDMSVersion(DMSViewerCom.getDMSContent());
 				}
 			});
 			associate.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
 				@Override
 				public void onEvent(Event e) throws Exception
 				{
-					WDAssociationType associationType = new WDAssociationType(copyDMSContent, DMSViewerCom
-							.getDMSContent());
+					new WDAssociationType(copyDMSContent, DMSViewerCom.getDMSContent());
 				}
 			});
 
@@ -877,7 +857,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event event) throws Exception
 				{
-					pasteDocument(versionContent, true);
+					pasteDocument(dirContent, true);
 				}
 			});
 
@@ -890,7 +870,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			@Override
 			public void onEvent(Event e) throws Exception
 			{
-				copyDMSContent = DMSViewerCom.getDMSContent();
+				DMSClipboard.putCopyDMSContent(DMSViewerCom.getDMSContent());
 			}
 		});
 	}
@@ -922,21 +902,84 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		}
 	}
 
+	private void createPasteMenu(Event event)
+	{
+		Cell cell = (Cell) event.getTarget();
+		Menupopup popup = new Menupopup();
+		Menuitem paste = new Menuitem("Paste");
+
+		popup.setPage(cell.getPage());
+		popup.appendChild(paste);
+		cell.setContext(popup);
+
+		if (DMSClipboard.getCopyDMSContent() == null)
+		{
+			paste.setDisabled(true);
+		}
+		else
+		{
+			paste.setDisabled(false);
+		}
+
+		paste.addEventListener(Events.ON_CLICK, new EventListener<Event>() {
+
+			@Override
+			public void onEvent(Event event) throws Exception
+			{
+				pasteDocument(currDMSContent, false);
+				renderViewer();
+			}
+		});
+
+	}
+
 	private void pasteDocument(MDMSContent DMSContent, boolean isDir)
 	{
 		boolean isDocPresent = false;
 
-		if (copyDMSContent == null)
+		if (DMSClipboard.getCopyDMSContent() == null)
 		{
 			return;
 		}
 
 		isDocPresent = isDoumentPresent(DMSContent, isDir);
 
-		if (!isDocPresent)
+		// IF DMS Tab
+		if (recordID > 0 && tableID > 0)
+		{
+			int DMS_Content_ID = DB
+					.getSQLValue(
+							null,
+							"SELECT DMS_Content_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID = ?",
+							DMSClipboard.getCopyDMSContent().getDMS_Content_ID(), Utils.getDMS_Association_Record_ID());
+
+			if (DMS_Content_ID == -1)
+			{
+				MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
+				DMSassociation.setDMS_Content_ID(DMSClipboard.getCopyDMSContent().getDMS_Content_ID());
+
+				int DMS_Content_Related_ID = DB.getSQLValue(null,
+						"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ?", DMSClipboard
+								.getCopyDMSContent().getDMS_Content_ID());
+
+				if (DMS_Content_Related_ID != -1)
+					DMSassociation.setDMS_Content_Related_ID(DMS_Content_Related_ID);
+
+				DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Record_ID());
+				DMSassociation.setRecord_ID(recordID);
+				DMSassociation.setAD_Table_ID(tableID);
+				DMSassociation.saveEx();
+			}
+			else
+			{
+				FDialog.warn(0, "Document already exists.");
+			}
+
+		}
+		else if (!isDocPresent)
 		{
 			MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
-			DMSassociation.setDMS_Content_ID(copyDMSContent.getDMS_Content_ID());
+			DMSassociation.setDMS_Content_ID(DMSClipboard.getCopyDMSContent().getDMS_Content_ID());
 			if (DMSContent != null)
 				DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
 			DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
@@ -954,7 +997,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	{
 		StringBuilder query = new StringBuilder();
 		query.append("SELECT count(DMS_Content_ID) FROM DMS_Association where DMS_Content_ID = ");
-		query.append(copyDMSContent.getDMS_Content_ID());
+		query.append(DMSClipboard.getCopyDMSContent().getDMS_Content_ID());
 
 		if (currDMSContent == null && !isDir)
 		{
@@ -967,5 +1010,4 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
 	}
-
 }

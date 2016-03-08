@@ -47,9 +47,10 @@ public class Utils
 	public static final String					DEFAULT							= "Default";
 	public static final String					DOWNLOAD						= "Download";
 	public static final String					DRAFT							= "Draft";
-	public static final String					Link							= "Link";
+	public static final String					LINK							= "Link";
+	public static final String					RECORD							= "Record";
 
-	private static final String					SQL_GETASSOCIATIONLINKTYPE		= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
+	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
 
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider			= new CCache<Integer, IThumbnailProvider>(
 																						"ThumbnailProvider", 2);
@@ -458,10 +459,15 @@ public class Utils
 		}
 	}
 
+	/**
+	 * get DMS_Association_Link_ID
+	 * 
+	 * @return
+	 */
 	public static int getDMS_Association_Link_ID()
 	{
 		int linkID = 0;
-		linkID = DB.getSQLValue(null, SQL_GETASSOCIATIONLINKTYPE, Link);
+		linkID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, LINK);
 
 		if (linkID != -1)
 			return linkID;
@@ -469,17 +475,38 @@ public class Utils
 			return 0;
 	}
 
+	/**
+	 * get Thumbnail of create Link
+	 * 
+	 * @return
+	 */
 	public static MImage getLinkThumbnail()
 	{
-		MImage mImage = cache_linkThumbnail.get(Link);
+		MImage mImage = cache_linkThumbnail.get(LINK);
 		if (mImage != null)
 		{
 			return mImage;
 		}
 
-		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE name ilike ?", Link);
+		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE name ilike ?", LINK);
 		mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
-		cache_linkThumbnail.put(Link, mImage);
+		cache_linkThumbnail.put(LINK, mImage);
 		return mImage;
+	}
+
+	/**
+	 * get DMS_Association_Record_ID
+	 * 
+	 * @return
+	 */
+	public static int getDMS_Association_Record_ID()
+	{
+		int recordID = 0;
+		recordID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, RECORD);
+
+		if (recordID != -1)
+			return recordID;
+		else
+			return 0;
 	}
 }
