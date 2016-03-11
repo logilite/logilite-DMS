@@ -1,6 +1,7 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
@@ -31,6 +32,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.idempiere.componenet.DMSViewerComponent;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
@@ -48,7 +50,6 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Cell;
-import org.zkoss.zul.Image;
 import org.zkoss.zul.North;
 import org.zkoss.zul.South;
 
@@ -90,9 +91,13 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private Button					btnSave					= null;
 	private Button					btnVersionUpload		= null;
 
+	private AImage					imageVersion			= null;
+
 	private ConfirmPanel			confirmPanel			= null;
 
 	private MDMSContent				DMS_Content				= null;
+
+	private DMSViewerComponent		viewerComponenet		= null;
 
 	private IFileStorageProvider	fileStorageProvider		= null;
 	private IContentManager			contentManager			= null;
@@ -103,15 +108,17 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private WDLoadASIPanel			ASIPanel				= null;
 
 	private int						m_M_AttributeSetInstance_ID;
+	private int						tableId					= 0;
+	private int						recordId				= 0;
 
 	private static final String		SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
 																	+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "
 																	+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
-																	+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID";
+																	+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID DESC";
 
-	public WDAttributePanel(I_DMS_Content DMS_Content, Tabbox tabBox)
+	public WDAttributePanel(I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID)
 	{
-		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
+		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 
 		if (fileStorageProvider == null)
 			throw new AdempiereException("Storage provider is not found");
@@ -130,6 +137,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		this.DMS_Content = (MDMSContent) DMS_Content;
 		this.tabBox = tabBox;
+		this.tableId = tableID;
+		this.recordId = recordID;
 
 		try
 		{
@@ -186,7 +195,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		tabpanelsAttribute.setWidth("100%");
 
 		tabpanelsAttribute.appendChild(tabpanelVersionHitory);
-		tabpanelVersionHitory.setHeight("70%");
+		tabpanelVersionHitory.setHeight("550px");
 		tabpanelAttribute.setHeight("100%");
 
 		tabpanelAttribute.appendChild(gridAttributeLayout);
@@ -293,6 +302,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		Row row = null;
 
 		versionGrid.appendChild(columns);
+		versionGrid.setHeight("100%");
 		versionGrid.appendChild(rows);
 
 		try
@@ -314,14 +324,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 			ResultSet rs = pstmt.executeQuery();
 
-			if (rs.next())
+			if (rs != null)
 			{
-				rs.beforeFirst();
-
 				while (rs.next())
 				{
 					versionContent = new MDMSContent(Env.getCtx(), rs.getInt(1), null);
-					Image imageVersion = new Image();
 
 					if (Util.isEmpty(thumbnailProvider.getURL(versionContent, "150")))
 					{
@@ -330,18 +337,21 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 						if (imgByteData != null)
 						{
-							imageVersion.setContent(new AImage(versionContent.getName(), imgByteData));
+							imageVersion = new AImage(versionContent.getName(), imgByteData);
 						}
 					}
 					else
 					{
-						imageVersion.setContent(new AImage(thumbnailProvider.getURL(versionContent, "150")));
+						imageVersion = new AImage(thumbnailProvider.getURL(versionContent, "150"));
 					}
 
-					labelVersion = new Label(versionContent.getName() + "     " + versionContent.getCreated());
+					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false);
+					viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
+
+					labelVersion = new Label("Created: " + versionContent.getCreated());
 
 					row = new Row();
-					row.appendChild(imageVersion);
+					row.appendChild(viewerComponenet);
 					row.appendChild(labelVersion);
 					rows.appendChild(row);
 				}
@@ -353,7 +363,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				cell.appendChild(new Label("No version Document available."));
 				row = new Row();
 				row.appendChild(cell);
-				cell.setHeight("15px");
+				cell.setHeight("30px");
 				rows.appendChild(row);
 			}
 
@@ -431,7 +441,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		{
 			final Tab tab = (Tab) tabBox.getSelectedTab();
 
-			WUploadContent uploadContent = new WUploadContent(DMS_Content, true);
+			WUploadContent uploadContent = new WUploadContent(DMS_Content, true, tableId, recordId);
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -447,7 +457,31 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			initAttributes();
 			initVersionHistory();
 		}
+		else if (event.getTarget().getClass().equals(DMSViewerComponent.class))
+		{
+			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
+			downloadSelectedComponent(DMSViewerComp);
+		}
 
 	}
 
+	private void downloadSelectedComponent(DMSViewerComponent DMSViewerComp) throws FileNotFoundException
+	{
+		IFileStorageProvider fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
+
+		if (fileStorgProvider == null)
+			throw new AdempiereException("Storage provider is not define on clientInfo.");
+
+		File document = fileStorgProvider.getFile(contentManager.getPath(DMSViewerComp.getDMSContent()));
+
+		if (document.exists())
+		{
+			AMedia media = new AMedia(document, "application/octet-stream", null);
+			Filedownload.save(media);
+		}
+		else
+		{
+			FDialog.warn(0, "Docuement is not available to download.");
+		}
+	}
 }

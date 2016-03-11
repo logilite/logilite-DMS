@@ -28,9 +28,6 @@ import org.compiere.util.Util;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.MDMSContentType;
-import org.idempiere.model.MDMSMimeType;
-import org.idempiere.model.MDMSStatus;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.util.media.AMedia;
 
@@ -46,7 +43,6 @@ public class Utils
 	public static final String					DIRECTORY						= "Directory";
 	public static final String					DEFAULT							= "Default";
 	public static final String					DOWNLOAD						= "Download";
-	public static final String					DRAFT							= "Draft";
 	public static final String					LINK							= "Link";
 	public static final String					RECORD							= "Record";
 
@@ -58,8 +54,6 @@ public class Utils
 																						"ThumbnailGenerator", 2);
 	static CCache<Integer, IContentManager>		cache_contentManager			= new CCache<Integer, IContentManager>(
 																						"ContentManager", 2);
-	static CCache<String, String>				cache_fileseparator				= new CCache<String, String>(
-																						"FileSeparator", 2);
 	static CCache<String, MImage>				cache_dirThumbnail				= new CCache<String, MImage>(
 																						"DirThumbnail", 2);
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail			= new CCache<Integer, MImage>(
@@ -181,14 +175,10 @@ public class Utils
 	 */
 	public static String getStorageProviderFileSeparator()
 	{
-		String fileSeparator = cache_fileseparator.get(STORAGE_PROVIDER_FILE_SEPARATOR);
+		String fileSeparator = MSysConfig.getValue(STORAGE_PROVIDER_FILE_SEPARATOR, "0");
 
-		if (!Util.isEmpty(fileSeparator, true))
-			return fileSeparator;
-
-		fileSeparator = MSysConfig.getValue(STORAGE_PROVIDER_FILE_SEPARATOR, "/");
-
-		cache_fileseparator.put(STORAGE_PROVIDER_FILE_SEPARATOR, fileSeparator);
+		if (fileSeparator.equals("0"))
+			fileSeparator = File.separator;
 
 		return fileSeparator;
 	}
@@ -228,6 +218,20 @@ public class Utils
 	}
 
 	/**
+	 * @param AD_Client_ID
+	 * @return
+	 */
+	public static I_AD_StorageProvider getThumbnailStorageProvider(int AD_Client_ID)
+	{
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID);
+
+		if (clientInfo.get_ValueAsInt("DMS_Thumb_Storage_Provider_ID") != 0)
+			return new MStorageProvider(Env.getCtx(), clientInfo.get_ValueAsInt("DMS_Thumb_Storage_Provider_ID"), null);
+		else
+			return null;
+	}
+
+	/**
 	 * get mimetypeID from media
 	 * 
 	 * @param media
@@ -247,73 +251,9 @@ public class Utils
 		{
 			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE name ilike ?",
 					DEFAULT);
-			if (dmsMimeType_ID == -1)
-			{
-				MDMSMimeType dmsMimeType = new MDMSMimeType(Env.getCtx(), 0, null);
-				dmsMimeType.setName("Default");
-				dmsMimeType.setValue("Default");
-				dmsMimeType.setIsDefault(true);
-				dmsMimeType.setFileExtension("def");
-				if (media != null)
-					dmsMimeType.setMimeType(media.getContentType());
-				else
-					dmsMimeType.setMimeType("Default");
-				dmsMimeType.saveEx();
-
-				dmsMimeType_ID = dmsMimeType.getDMS_MimeType_ID();
-			}
-
-			return dmsMimeType_ID;
-		}
-	}
-
-	/**
-	 * @return
-	 */
-	public static int getStatusID()
-	{
-		int dms_statusID = DB.getSQLValue(null, "SELECT dms_Status_ID FROM DMS_Status WHERE name ilike ?", DRAFT);
-
-		if (dms_statusID != -1)
-			return dms_statusID;
-		else
-		{
-			MDMSStatus dmsStatus = new MDMSStatus(Env.getCtx(), 0, null);
-			dmsStatus.setName("Draft");
-			dmsStatus.setValue("Draft");
-			dmsStatus.setIsDefault(true);
-			dmsStatus.setDMS_ContentType_ID(Utils.getContentTypeID());
-			dmsStatus.saveEx();
-
-			dms_statusID = dmsStatus.getDMS_Status_ID();
-		}
-		return dms_statusID;
-	}
-
-	/**
-	 * get contenttype is directory or content
-	 * 
-	 * @return
-	 */
-	public static int getContentTypeID()
-	{
-		int dms_ContentType_ID = DB.getSQLValue(null,
-				"SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE name ilike ?", DIRECTORY);
-		if (dms_ContentType_ID != -1)
-			return dms_ContentType_ID;
-		else
-		{
-			MDMSContentType dms_ContentType = new MDMSContentType(Env.getCtx(), 0, null);
-			dms_ContentType.setName(DIRECTORY);
-			dms_ContentType.setValue("Dir");
-			dms_ContentType.setIsDefault(true);
-			dms_ContentType.setM_AttributeSet_ID(100);
-			dms_ContentType.saveEx();
-
-			dms_ContentType_ID = dms_ContentType.getDMS_ContentType_ID();
 		}
 
-		return dms_ContentType_ID;
+		return dmsMimeType_ID;
 	}
 
 	/**

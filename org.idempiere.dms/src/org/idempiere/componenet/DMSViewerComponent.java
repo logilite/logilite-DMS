@@ -128,8 +128,12 @@ public class DMSViewerComponent extends Div
 
 	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink)
 	{
+		String name = content.getName();
+		if (name.contains("(") && name.contains(")"))
+			name = name.replace(name.substring(name.indexOf("("), name.indexOf(")")+1), "");
+
 		this.contentBaseType = content.getContentBaseType();
-		this.fName = content.getName();
+		this.fName = name;
 		this.DMSContent = (MDMSContent) content;
 		this.isLink = isLink;
 
@@ -171,7 +175,7 @@ public class DMSViewerComponent extends Div
 		vbox.appendChild(dImage);
 
 		fLabel.appendChild(new Label(fName));
-		fLabel.setTooltiptext(content.getName());
+		fLabel.setTooltiptext(name);
 
 		footerDiv.appendChild(fLabel);
 

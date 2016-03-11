@@ -25,7 +25,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 
 	public I_AD_StorageProvider	provider		= null;
 
-	public String				baseDir;
+	public String				baseDir			= null;
 	private String				fileSeparator	= null;
 
 	@Override
@@ -106,7 +106,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 		File file = null;
 		try
 		{
-			file = new File(baseDir + fileSeparator + path);
+			file = new File(path);
 
 			String absolutePath = file.getAbsolutePath();
 			String folderpath = absolutePath.substring(0, absolutePath.lastIndexOf(fileSeparator));

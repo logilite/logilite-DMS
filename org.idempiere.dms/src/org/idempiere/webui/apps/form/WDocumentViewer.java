@@ -30,12 +30,17 @@ public class WDocumentViewer extends Window
 	private MDMSMimeType		mimeType			= null;
 	private File				document_preview	= null;
 
-	public WDocumentViewer(Tabbox tabBox, File document_preview, MDMSContent mdms_content)
+	private int					tableID				= 0;
+	private int					recordID			= 0;
+
+	public WDocumentViewer(Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID)
 	{
 		mimeType = new MDMSMimeType(Env.getCtx(), mdms_content.getDMS_MimeType_ID(), null);
 		this.tabBox = tabBox;
 		this.mDMSContent = mdms_content;
 		this.document_preview = document_preview;
+		this.tableID = tableID;
+		this.recordID = recordID;
 	}
 
 	public Tabpanel initForm()
@@ -64,7 +69,7 @@ public class WDocumentViewer extends Window
 
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		cellCPreview.appendChild(new WDAttributePanel(mDMSContent, tabBox));
+		cellCPreview.appendChild(new WDAttributePanel(mDMSContent, tabBox, tableID, recordID));
 
 		boxViewSeparator.appendChild(cellPreview);
 		boxViewSeparator.appendChild(cellCPreview);

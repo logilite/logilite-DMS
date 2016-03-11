@@ -15,7 +15,9 @@ public interface IThumbnailProvider
 	public String getURL(I_DMS_Content content, String size);
 
 	public File getFile(I_DMS_Content content, String size);
-	
-	public ArrayList<File> getThumbnails(File document, I_DMS_Content dms_content);
+
+	public ArrayList<File> getThumbnails(I_DMS_Content dms_content);
+
+	public String getThumbDirPath(I_DMS_Content dms_content);
 
 }

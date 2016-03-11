@@ -97,6 +97,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	private Tabpanel				tabPanelAttribute		= new Tabpanel();
 
 	private int						DMS_Content_Related_ID	= 0;
+	private int						tableID					= 0;
+	private int						recordID				= 0;
 
 	private MDMSContent				DMSContent				= null;
 
@@ -111,12 +113,14 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 * @param mDMSContent
 	 * @param isVersion
 	 */
-	public WUploadContent(MDMSContent mDMSContent, boolean isVersion)
+	public WUploadContent(MDMSContent mDMSContent, boolean isVersion, int tableID, int recordID)
 	{
 		this.DMSContent = (MDMSContent) mDMSContent;
 		this.isVersion = isVersion;
+		this.tableID = tableID;
+		this.recordID = recordID;
 
-		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
+		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 
 		if (fileStorgProvider == null)
 			throw new AdempiereException("Storage provider is not define on clientInfo.");
@@ -145,7 +149,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	public void init()
 	{
 		// this.setHeight("50%");
-		if(!isVersion){
+		if (!isVersion)
+		{
 			this.setStyle("min-height:40%; max-height:60%; overflow-y:auto;");
 			this.setWidth("50%");
 		}
@@ -171,7 +176,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Contenttype fetching failure :" , e);
+			log.log(Level.SEVERE, "Contenttype fetching failure :", e);
 			throw new AdempiereException("Contenttype fetching failure :" + e);
 		}
 
@@ -315,10 +320,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 					throw new WrongValueException(txtName, "Invalid File Extension.");
 		}
 
-		if (contentTypeRow.isVisible())
-			if (contentType.getValue() == null || (Integer) contentType.getValue() == 0)
-				throw new WrongValueException(contentType.getComponent(), fillMandatory);
-
 		if (isVersion)
 		{
 			if (Utils.getMimeTypeID(uploadedMedia) != DMSContent.getDMS_MimeType_ID())
@@ -341,8 +342,12 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 					uploadedDMSContent.setName(txtName.getValue());
 				}
 
-				uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
-				uploadedDMSContent.setM_AttributeSetInstance_ID(asiPanel.saveAttributes());
+				// if(contentType.getValue()!= null)
+				if (contentType.getValue() != null)
+				{
+					uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
+					uploadedDMSContent.setM_AttributeSetInstance_ID(asiPanel.saveAttributes());
+				}
 				uploadedDMSContent.setParentURL(contentManager.getPath(DMSContent));
 			}
 			else
@@ -355,7 +360,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			uploadedDMSContent.setDescription(txtDesc.getValue());
 			uploadedDMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(uploadedMedia));
-			uploadedDMSContent.setDMS_Status_ID(Utils.getStatusID());
 			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
 
 			uploadedDMSContent.saveEx();
@@ -373,6 +377,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 						"SELECT MAX(seqNo) FROM DMS_Association WHERE DMS_Content_Related_ID = ?",
 						DMS_Content_Related_ID);
 				dmsAssociation.setSeqNo(seqNo + 1);
+
 			}
 			else
 			{
@@ -382,10 +387,12 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
 			}
 
+			dmsAssociation.setAD_Table_ID(tableID);
+			dmsAssociation.setRecord_ID(recordID);
 			dmsAssociation.saveEx();
 
-			fileStorgProvider.writeBLOB(contentManager.getPath(uploadedDMSContent), uploadedMedia.getByteData(),
-					uploadedDMSContent);
+			fileStorgProvider.writeBLOB(fileStorgProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent)),
+					uploadedMedia.getByteData(), uploadedDMSContent);
 
 			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), uploadedDMSContent.getDMS_MimeType_ID(), null);
 
@@ -398,7 +405,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Upload Content Failure :" , e);
+			log.log(Level.SEVERE, "Upload Content Failure :", e);
 			throw new AdempiereException("Upload Content Failure :" + e);
 		}
 
@@ -422,7 +429,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Upload Content Failure: " , e);
+			log.log(Level.SEVERE, "Upload Content Failure: ", e);
 			throw new AdempiereException("Upload Content Failure: " + e);
 		}
 	}

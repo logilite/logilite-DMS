@@ -54,18 +54,23 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private IFileStorageProvider	fileStorageProvider	= null;
 	private IContentManager			contentManager		= null;
 
+	private int						tableID				= 0;
+	private int						recordID			= 0;
+
 	/**
 	 * Constructor initialize
 	 * 
 	 * @param DMSContent
 	 */
-	public CreateDirectoryForm(I_DMS_Content DMSContent)
+	public CreateDirectoryForm(I_DMS_Content DMSContent, int tableID, int recordID)
 	{
 		try
 		{
 			this.mDMSContent = (MDMSContent) DMSContent;
+			this.tableID = tableID;
+			this.recordID = recordID;
 
-			fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
+			fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 
 			if (fileStorageProvider == null)
 				throw new AdempiereException("Storage provider is not found");
@@ -171,8 +176,6 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				MDMSContent content = new MDMSContent(Env.getCtx(), 0, null);
 				content.setDMS_MimeType_ID(Utils.getMimeTypeID(null));
 				content.setName(dirName);
-				content.setDMS_ContentType_ID(Utils.getContentTypeID());
-				content.setDMS_Status_ID(Utils.getStatusID());
 
 				content.setParentURL(contentManager.getPath(mDMSContent));
 
@@ -184,6 +187,8 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
 				if (mDMSContent != null)
 					dmsAssociation.setDMS_Content_Related_ID(mDMSContent.getDMS_Content_ID());
+				dmsAssociation.setAD_Table_ID(tableID);
+				dmsAssociation.setRecord_ID(recordID);
 				// dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
 				dmsAssociation.saveEx();
 				this.detach();

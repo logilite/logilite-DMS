@@ -1,5 +1,6 @@
 package org.idempiere.dms.storage;
 
+import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -17,6 +18,7 @@ import org.compiere.util.CLogger;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zul.Button;
 
 public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListener
 {
@@ -54,6 +56,10 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		this.windowNumber = windowNo;
 		this.gridTab = gridTab;
 		this.gridWindow = gridWindow;
+		
+		if(gridTab.getParentTab() == null)
+			throw new AdempiereException("Parent Tab not found");
+		
 		documentViewerPanel = new WDMSPanel();
 		this.appendChild(documentViewerPanel);
 		gridTab.addDataStatusListener(this);
@@ -298,5 +304,12 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	public boolean isEnableProcessButton()
 	{
 		return false;
+	}
+
+	@Override
+	public List<Button> getToolbarButtons()
+	{
+		
+		return null;
 	}
 }

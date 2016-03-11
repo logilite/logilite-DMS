@@ -13,20 +13,28 @@ import org.idempiere.dms.factories.Utils;
  */
 public class FileStorageUtil
 {
-	static CCache<Integer, IFileStorageProvider>	s_cache	= new CCache<Integer, IFileStorageProvider>(
-																	"FileStorageProvider", 2);
+	static CCache<String, IFileStorageProvider>	s_cache	= new CCache<String, IFileStorageProvider>(
+																"FileStorageProvider", 2);
 
 	// TODO This util method should be added in MStorageProvider when it ended
 	// into iDempiere core
-	public static IFileStorageProvider get(Integer AD_Client_ID)
+	public static IFileStorageProvider get(Integer AD_Client_ID, Boolean isThumbStorage)
 	{
+		String key = AD_Client_ID + "_" + isThumbStorage;
+		I_AD_StorageProvider storageProvider = null;
 
-		IFileStorageProvider fileStorageProvider = s_cache.get(AD_Client_ID);
+		IFileStorageProvider fileStorageProvider = s_cache.get(key);
+
 		if (fileStorageProvider != null)
 		{
 			return fileStorageProvider;
 		}
-		I_AD_StorageProvider storageProvider = Utils.getStorageProvider(AD_Client_ID);
+
+		if (isThumbStorage)
+			storageProvider = Utils.getThumbnailStorageProvider(AD_Client_ID);
+		else
+			storageProvider = Utils.getStorageProvider(AD_Client_ID);
+
 		if (storageProvider != null)
 		{
 			String method = storageProvider.getMethod();
@@ -41,7 +49,7 @@ public class FileStorageUtil
 				if (fileStorageProvider != null)
 				{
 					fileStorageProvider.init(storageProvider);
-					s_cache.put(AD_Client_ID, fileStorageProvider);
+					s_cache.put(key, fileStorageProvider);
 					return fileStorageProvider;
 				}
 			}

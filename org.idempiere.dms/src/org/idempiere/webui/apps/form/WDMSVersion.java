@@ -67,7 +67,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	private static final String				SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
 																			+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "
 																			+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
-																			+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID";
+																			+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID DESC";
 
 	public WDMSVersion(MDMSContent mDMSContent)
 	{
@@ -76,7 +76,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		if (thumbnailProvider == null)
 			throw new AdempiereException("Thumbnail provider is not found.");
 
-		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()));
+		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 
 		if (fileStorgProvider == null)
 			throw new AdempiereException("Storage provider is not define on clientInfo.");
