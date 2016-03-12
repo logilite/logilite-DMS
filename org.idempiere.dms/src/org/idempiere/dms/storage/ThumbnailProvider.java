@@ -16,7 +16,6 @@ public class ThumbnailProvider implements IThumbnailProvider
 
 	private String				thumbnailBasePath			= null;
 
-	public static final String	DMS_THUMBNAIL_BASEPATH		= "DMS_THUMBNAIL_BASEPATH";
 	public static final String	DMS_THUMBNAILS_SIZES		= "DMS_THUMBNAILS_SIZES";
 
 	private MStorageProvider	thumbnailStorageProvider	= null;
@@ -91,9 +90,7 @@ public class ThumbnailProvider implements IThumbnailProvider
 	@Override
 	public String getThumbDirPath(I_DMS_Content content)
 	{
-		File thumbnailFolder = new File(thumbnailBasePath + fileSeparator + Env.getAD_Client_ID(Env.getCtx())
-				+ fileSeparator + content.getDMS_Content_ID() + fileSeparator + content.getDMS_Content_ID());
-
-		return thumbnailFolder.getAbsolutePath();
+		return thumbnailBasePath + fileSeparator + Env.getAD_Client_ID(Env.getCtx()) + fileSeparator
+				+ content.getDMS_Content_ID() + fileSeparator + content.getDMS_Content_ID();
 	}
 }

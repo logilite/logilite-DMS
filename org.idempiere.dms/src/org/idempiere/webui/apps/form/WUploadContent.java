@@ -105,8 +105,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	private boolean					isVersion				= false;
 	private WDLoadASIPanel			asiPanel				= null;
 
-	private CharSequence[]			specialCh				= { "!", "@", "#", "$", "%", "^", "&", "*", "`", "~", "+" };
-
 	/**
 	 * Constructor initialize
 	 * 
@@ -294,6 +292,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	private void saveUploadedDcoument()
 	{
+		String regExp = "^[A-Za-z0-9\\-\\._]+$";
+		
 		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
 		MDMSContent uploadedDMSContent = null;
 
@@ -307,17 +307,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			String newFilename = txtName.getValue();
 
-			for (int i = 0; i < specialCh.length; i++)
+			if(!newFilename.matches(regExp))
 			{
-				if (newFilename.contains(specialCh[i]))
-					throw new WrongValueException(txtName, "Invalid File Name.");
-
+				throw new WrongValueException(txtName, "Invalid File Name.");
 			}
-
-			if (newFilename.contains("."))
-				if (!newFilename.substring(newFilename.lastIndexOf('.') + 1, newFilename.length()).equals(
-						uploadedMedia.getFormat()))
-					throw new WrongValueException(txtName, "Invalid File Extension.");
+			
 		}
 
 		if (isVersion)
@@ -342,7 +336,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 					uploadedDMSContent.setName(txtName.getValue());
 				}
 
-				// if(contentType.getValue()!= null)
 				if (contentType.getValue() != null)
 				{
 					uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());

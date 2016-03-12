@@ -290,11 +290,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		Columns columns = new Columns();
 
 		Column column = new Column();
-		column.setWidth("50%");
 		columns.appendChild(column);
 
 		column = new Column();
-		column.setWidth("50%");
 
 		columns.appendChild(column);
 
@@ -304,6 +302,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		versionGrid.appendChild(columns);
 		versionGrid.setHeight("100%");
 		versionGrid.appendChild(rows);
+		versionGrid.setZclass("none");
 
 		try
 		{
@@ -347,7 +346,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false);
 					viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
-
+					
+					viewerComponenet.setDheight(150);
+					viewerComponenet.setDwidth(150);
+					
+					viewerComponenet.getfLabel().setStyle(
+							"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
 					labelVersion = new Label("Created: " + versionContent.getCreated());
 
 					row = new Row();
