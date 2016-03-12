@@ -323,7 +323,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 			ResultSet rs = pstmt.executeQuery();
 
-			if (rs != null)
+			if (rs.isBeforeFirst())
 			{
 				while (rs.next())
 				{
@@ -367,7 +367,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				cell.appendChild(new Label("No version Document available."));
 				row = new Row();
 				row.appendChild(cell);
-				cell.setHeight("30px");
 				rows.appendChild(row);
 			}
 
