@@ -1,7 +1,21 @@
+/******************************************************************************
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ *****************************************************************************/
+
 package org.idempiere.webui.apps.form;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
@@ -14,19 +28,7 @@ import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
-import org.adempiere.webui.editor.WAccountEditor;
-import org.adempiere.webui.editor.WAssignmentEditor;
-import org.adempiere.webui.editor.WDateEditor;
-import org.adempiere.webui.editor.WDatetimeEditor;
 import org.adempiere.webui.editor.WEditor;
-import org.adempiere.webui.editor.WImageEditor;
-import org.adempiere.webui.editor.WLocatorEditor;
-import org.adempiere.webui.editor.WNumberEditor;
-import org.adempiere.webui.editor.WPaymentEditor;
-import org.adempiere.webui.editor.WSearchEditor;
-import org.adempiere.webui.editor.WTableDirEditor;
-import org.adempiere.webui.editor.WTimeEditor;
-import org.adempiere.webui.editor.WYesNoEditor;
 import org.adempiere.webui.editor.WebEditorFactory;
 import org.adempiere.webui.session.SessionManager;
 import org.compiere.model.GridField;
@@ -68,7 +70,7 @@ public class WDLoadASIPanel extends Panel
 	private boolean				m_changed					= false;
 
 	/** List of Editors */
-	private ArrayList<WEditor>	m_editors					= new ArrayList<WEditor>();
+	public ArrayList<WEditor>	m_editors					= new ArrayList<WEditor>();
 
 	public WDLoadASIPanel(int DMS_ContentType_ID, int m_M_AttributeSetInstance_ID)
 	{
@@ -153,7 +155,7 @@ public class WDLoadASIPanel extends Panel
 			if (label.getValue() == null || label.getValue().trim().length() < 1)
 				label.setValue(attribute.getName());
 
-			row.appendChild(label.rightAlign());
+			row.appendChild(label);
 
 			editor.setMandatory(attribute.isMandatory());
 			editor.fillHorizontal();
@@ -206,8 +208,8 @@ public class WDLoadASIPanel extends Panel
 	private GridField getListTypeGridField(MAttribute attribute)
 	{
 		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0,
-				"M_AttributeValue_ID", Msg.translate(Env.getCtx(), "M_AttributeValue_ID"), DisplayType.TableDir, 0,
-				false, false);
+				"M_AttributeValue_ID", attribute.getName(), DisplayType.TableDir, 0,
+			     false, false);
 		vo.ValidationCode = "M_AttributeValue.M_Attribute_ID=" + attribute.get_ID();
 		vo.lookupInfo.ValidationCode = vo.ValidationCode;
 		vo.lookupInfo.IsValidated = true;
@@ -230,20 +232,27 @@ public class WDLoadASIPanel extends Panel
 			}
 			else
 			{
-				if (editor instanceof WDateEditor || editor instanceof WTimeEditor || editor instanceof WDatetimeEditor)
+
+				int displayType = editor.getGridField().getDisplayType();
+				if (displayType == DisplayType.Date || displayType == DisplayType.DateTime
+						|| displayType == DisplayType.Time)
 				{
 					if (instance.getValueTimeStamp() != null)
 						editor.setValue(instance.getValueTimeStamp());
 				}
-				else if (editor instanceof WImageEditor || editor instanceof WAssignmentEditor
-						|| editor instanceof WLocatorEditor || editor instanceof WPaymentEditor
-						|| editor instanceof WTableDirEditor || editor instanceof WSearchEditor
-						|| editor instanceof WAccountEditor)
+				else if (displayType == DisplayType.Image || displayType == DisplayType.Assignment
+						|| displayType == DisplayType.Locator || displayType == DisplayType.Payment
+						|| displayType == DisplayType.TableDir || displayType == DisplayType.Table
+						|| displayType == DisplayType.Search || displayType == DisplayType.Account)
 				{
 					if (instance.getValueInt() > 0)
 						editor.setValue(instance.getValueInt());
 				}
-				else if (editor instanceof WNumberEditor)
+				else if (displayType == DisplayType.Integer)
+				{
+					editor.setValue(instance.getValueInt());
+				}
+				else if (DisplayType.isNumeric(displayType))
 				{
 					if (instance.getValueNumber() != null)
 						editor.setValue(instance.getValueNumber());
@@ -297,48 +306,7 @@ public class WDLoadASIPanel extends Panel
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attributes[i].getAttributeValueType()))
 			{
-				WEditor editor = m_editors.get(i);
-				if (editor instanceof WYesNoEditor)
-				{
-					String value = (boolean) editor.getValue() ? "Y" : "N";
-					attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
-				}
-				else if (editor instanceof WDateEditor || editor instanceof WDatetimeEditor
-						|| editor instanceof WTimeEditor)
-				{
-					Timestamp value = (Timestamp) editor.getValue();
-					if (attributes[i].isMandatory() && value == null)
-						mandatory += " - " + attributes[i].getName();
-					attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
-				}
-				else if (editor instanceof WNumberEditor)
-				{
-					Object value = editor.getValue();
-					if (attributes[i].isMandatory() && value == null)
-						mandatory += " - " + attributes[i].getName();
-					if (value instanceof Number)
-						attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, ((Number) value).intValue());
-					else
-						attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, (BigDecimal) value);
-				}
-				else if (editor instanceof WImageEditor || editor instanceof WAssignmentEditor
-						|| editor instanceof WLocatorEditor || editor instanceof WSearchEditor
-						|| editor instanceof WPaymentEditor || editor instanceof WTableDirEditor
-						|| editor instanceof WAccountEditor)
-				{
-					Integer value = (Integer) editor.getValue();
-					if (attributes[i].isMandatory() && value == null)
-						mandatory += " - " + attributes[i].getName();
-					attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID,
-							value == null ? 0 : value.intValue());
-				}
-				else
-				{
-					String value = String.valueOf(editor.getValue());
-					if (attributes[i].isMandatory() && value == null)
-						mandatory += " - " + attributes[i].getName();
-					attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
-				}
+				setEditorValue(mandatory, attributes[i], m_editors.get(i));
 			}
 			else
 			{
@@ -357,7 +325,7 @@ public class WDLoadASIPanel extends Panel
 		if (m_changed)
 		{
 			m_masi.setM_AttributeSet_ID(M_AttributeSet_ID);
-			m_masi.setDescription();
+			// m_masi.setDescription();
 			m_masi.save();
 		}
 		m_M_AttributeSetInstance_ID = m_masi.getM_AttributeSetInstance_ID();
@@ -371,4 +339,82 @@ public class WDLoadASIPanel extends Panel
 			editor.setReadWrite(isEditable);
 		}
 	}
+
+	private String setEditorValue(String mandatory, MAttribute attributes, WEditor editor)
+	{
+		int displayType = editor.getGridField().getDisplayType();
+		if (displayType == DisplayType.YesNo)
+		{
+			String value = (boolean) editor.getValue() ? "Y" : "N";
+			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
+		}
+		else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime
+				|| displayType == DisplayType.Time)
+		{
+			Timestamp valueTimeStamp = (Timestamp) editor.getValue();
+			if (attributes.isMandatory() && valueTimeStamp == null)
+				mandatory += " - " + attributes.getName();
+
+			String value = null;
+			if (valueTimeStamp != null)
+			{
+				if (displayType == DisplayType.Date)
+				{
+					SimpleDateFormat sdf = Env.getLanguage(Env.getCtx()).getDateFormat();
+					value = sdf.format(valueTimeStamp);
+				}
+				else if (displayType == DisplayType.DateTime)
+				{
+					SimpleDateFormat sdf = Env.getLanguage(Env.getCtx()).getDateTimeFormat();
+					value = sdf.format(valueTimeStamp);
+				}
+				else if (displayType == DisplayType.Time)
+				{
+					SimpleDateFormat sdf = Env.getLanguage(Env.getCtx()).getTimeFormat();
+					value = sdf.format(valueTimeStamp);
+				}
+			}
+			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, valueTimeStamp, value);
+		}
+		else if (DisplayType.isNumeric(displayType))
+		{
+			Object value = editor.getValue();
+			if (attributes.isMandatory() && value == null)
+				mandatory += " - " + attributes.getName();
+			if (displayType == DisplayType.Integer)
+				attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID,
+						value == null ? 0 : ((Number) value).intValue(), null);
+			else
+				attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, (BigDecimal) value);
+		}
+		else if (displayType == DisplayType.Image || displayType == DisplayType.Assignment
+				|| displayType == DisplayType.Locator || displayType == DisplayType.Payment
+				|| displayType == DisplayType.TableDir || displayType == DisplayType.Table
+				|| displayType == DisplayType.Search || displayType == DisplayType.Account)
+		{
+			Integer value = (Integer) editor.getValue();
+			if (attributes.isMandatory() && value == null)
+				mandatory += " - " + attributes.getName();
+
+			String valueLable = null;
+			if (displayType == DisplayType.TableDir || displayType == DisplayType.Table
+					|| displayType == DisplayType.Search || displayType == DisplayType.Account)
+			{
+				valueLable = editor.getDisplay();
+			}
+
+			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, value == null ? 0 : value.intValue(),
+					valueLable);
+		}
+		else
+		{
+			String value = String.valueOf(editor.getValue());
+			if (attributes.isMandatory() && value == null)
+				mandatory += " - " + attributes.getName();
+
+			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
+		}
+		return mandatory;
+	}
+
 }

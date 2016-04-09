@@ -1,15 +1,32 @@
+/******************************************************************************
+ * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
+ * you can redistribute it and/or modify it * under the terms version 2 of the
+ * GNU General Public License as published * by the Free Software Foundation.
+ * This program is distributed in the hope * that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
+ * more details. * You should have received a copy of the GNU General Public
+ * License along * with this program; if not, write to the Free Software
+ * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
+ *****************************************************************************/
+
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -18,11 +35,12 @@ import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
+import org.adempiere.webui.component.DatetimeBox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
-import org.adempiere.webui.component.Listbox;
 import org.adempiere.webui.component.Menupopup;
+import org.adempiere.webui.component.NumberBox;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -34,14 +52,19 @@ import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
-import org.adempiere.webui.editor.WSearchEditor;
+import org.adempiere.webui.editor.WEditor;
+import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.DialogEvents;
+import org.adempiere.webui.event.ValueChangeEvent;
+import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
+import org.compiere.model.MColumn;
 import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
+import org.compiere.model.X_AD_User;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
@@ -61,19 +84,28 @@ import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.X_DMS_Content;
+import org.idempiere.model.X_DMS_ContentType;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zhtml.Filedownload;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Menuitem;
+import org.zkoss.zul.Space;
+import org.zkoss.zul.Splitter;
+import org.zkoss.zul.Timebox;
 
-public class WDMSPanel extends Panel implements EventListener<Event>
+import com.logilite.search.factory.IIndexSearcher;
+import com.logilite.search.factory.ServiceUtils;
+
+public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
 
 	private static final long				serialVersionUID			= -6813481516566180243L;
@@ -98,48 +130,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 																				+ " ELSE ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND AD_Table_ID = ? AND Record_ID = ?)) "
 																				+ " END)";
 
-	private static String					SQL_FETCH_SEARCH_CONTENT	= " SELECT Distinct * FROM ( "
-																				+ " (WITH ContentRelated AS ( "
-																				+ " 	SELECT	c.DMS_Content_ID, c.Name, c.Created, c.Updated, c.Description, c.ContentBaseType, a.DMS_Content_Related_ID, a.AD_Table_ID, a.Record_ID, a.DMS_Association_ID  "
-																				+ " 	FROM DMS_Association a  "
-																				+ " 	INNER JOIN DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID)  "
-																				+ " 	WHERE c.ContentBaseType <> 'DIR' AND a.dms_associationtype_id IN  "
-																				+ " 		(SELECT dms_associationtype.dms_associationtype_id FROM dms_associationtype WHERE dms_associationtype.name::text <> 'Link'::text) "
-																				+ " ), "
-																				+ " LatestCreated AS ( "
-																				+ " 	SELECT a.DMS_Content_Related_ID, MAX(a.seqNo) AS maxSeqNo, cr.Created, cr.Updated, cr.Name, cr.Description, cr.AD_Table_ID, cr.Record_ID, cr.DMS_Association_ID "
-																				+ " 	FROM ContentRelated cr "
-																				+ " 	INNER JOIN DMS_Association a ON (a.DMS_Content_Related_ID = cr.DMS_Content_Related_ID) "
-																				+ " 	INNER JOIN DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID) "
-																				+ " 	GROUP BY a.DMS_Content_Related_ID, cr.Created, cr.Updated, cr.Name, cr.Description, cr.AD_Table_ID, cr.Record_ID, cr.DMS_Association_ID "
-																				+ " ) "
-																				+ "  "
-																				+ " SELECT c.DMS_Content_ID, a.DMS_Content_Related_ID, lc.Created, lc.Updated, lc.Name, lc.Description, lc.AD_Table_ID, lc.Record_ID, lc.DMS_Association_ID  "
-																				+ " FROM LatestCreated lc "
-																				+ " INNER JOIN DMS_Association a	ON (a.DMS_Content_Related_ID = lc.DMS_Content_Related_ID AND a.seqNo = lc.maxSeqNo) "
-																				+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID AND c.ContentBaseType <> 'DIR') "
-																				+ " INNER JOIN DMS_Content cc	ON (cc.DMS_Content_ID = a.DMS_Content_Related_ID) "
-																				+ " INNER JOIN DMS_Association aa	ON (aa.DMS_Content_ID = cc.DMS_Content_ID) "
-																				+ " ) "
-																				+ " UNION ALL "
-																				+ " ( "
-																				+ " 	SELECT c.DMS_Content_ID, a.DMS_Content_Related_ID, c.Created, c.Updated, c.Name, c.Description, a.AD_Table_ID, a.Record_ID, a.DMS_Association_ID  "
-																				+ " 	FROM DMS_Content c "
-																				+ " 	INNER JOIN DMS_Association a ON (a.DMS_Content_ID = c.DMS_Content_ID AND c.ContentBaseType <> 'DIR' "
-																				+ " 	AND (a.DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE NAME <>'Version' AND NAME <> 'Link') OR a.DMS_AssociationType_ID IS NULL)) "
-																				+ " EXCEPT "
-																				+ " 	SELECT c.DMS_Content_ID, aa.DMS_Content_Related_ID, c.Created, c.Updated, c.Name, c.Description, a.AD_Table_ID, a.Record_ID, a.DMS_Association_ID "
-																				+ " 	FROM DMS_Content c "
-																				+ " 	INNER JOIN DMS_Association a ON (a.DMS_Content_Related_ID = c.DMS_Content_ID "
-																				+ " 		AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE NAME='Version')) "
-																				+ " 	INNER JOIN DMS_Content cc	ON (cc.DMS_Content_ID = a.DMS_Content_Related_ID) "
-																				+ " 	INNER JOIN DMS_Association aa	ON (aa.DMS_Content_ID = cc.DMS_Content_ID) WHERE c.ContentBaseType <> 'DIR' "
-																				+ " 	GROUP BY c.DMS_Content_ID, aa.DMS_Content_Related_ID, a.AD_Table_ID, a.Record_ID, a.DMS_Association_ID "
-																				+ " ) " + " ) AS searchRecord ";
-	// +
-	// " WHERE COALESCE(AD_Table_ID,0) = COALESCE(null,0) AND COALESCE(Record_ID,0) = COALESCE(null,0) ";
+	private static String					SQL_LATEST_VERSION			= ""
+																				+ "SELECT DMS_Content_ID, DMS_Association_ID "
+																				+ "FROM DMS_Association "
+																				+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID= ? "
+																				+ "GROUP BY DMS_Content_ID,DMS_Association_ID "
+																				+ "ORDER BY Max(seqNo) DESC FETCH FIRST ROW ONLY";
 
-	// private CustomForm form = new CustomForm();
 	public Tabbox							tabBox						= new Tabbox();
 	private Tabs							tabs						= new Tabs();
 	public Tab								tabView						= new Tab(Msg.getMsg(Env.getCtx(), "Explorer"));
@@ -152,28 +149,28 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	private Label							lblAdvanceSearch			= new Label(Msg.translate(Env.getCtx(),
 																				"Advance Search"));
 	private Label							lblDocumentName				= new Label(Msg.translate(Env.getCtx(), "Name"));
-	private Label							lblCategory					= new Label(Msg.translate(Env.getCtx(),
-																				"Category"));
+	private Label							lblContentType				= new Label(Msg.translate(Env.getCtx(),
+																				"Content Type"));
 	private Label							lblCreated					= new Label(Msg.translate(Env.getCtx(),
 																				"Created"));
 	private Label							lblUpdated					= new Label(Msg.translate(Env.getCtx(),
 																				"Updated"));
 	private Label							lblContentMeta				= new Label(Msg.translate(Env.getCtx(),
 																				"Content Meta"));
-	private Label							lblReportDate				= new Label(Msg.translate(Env.getCtx(),
-																				"Report Date"));
-	private Label							lblBPartner					= new Label(Msg.translate(Env.getCtx(),
-																				"C_BPartner_ID"));
 
 	private Label							lblDescription				= new Label(Msg.translate(Env.getCtx(),
 																				"Description"));
+
+	private Label							lblCreatedBy				= new Label(Msg.translate(Env.getCtx(),
+																				"CreatedBy"));
+
+	private Label							lblUpdatedBy				= new Label(Msg.translate(Env.getCtx(),
+																				"UpdatedBy"));
 
 	private Datebox							dbCreatedTo					= new Datebox();
 	private Datebox							dbCreatedFrom				= new Datebox();
 	private Datebox							dbUpdatedTo					= new Datebox();
 	private Datebox							dbUpdatedFrom				= new Datebox();
-	private Datebox							dbReportTo					= new Datebox();
-	private Datebox							dbReportFrom				= new Datebox();
 
 	private ConfirmPanel					confirmPanel				= new ConfirmPanel();
 
@@ -189,9 +186,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	private Textbox							txtDocumentName				= new Textbox();
 	private Textbox							txtDescription				= new Textbox();
 
-	private Listbox							lstboxCategory				= new Listbox();
-
-	private WSearchEditor					seBPartnerField				= null;
+	private WTableDirEditor					lstboxContentType			= null;
+	private WTableDirEditor					lstboxCreatedBy				= null;
+	private WTableDirEditor					lstboxUpdatedBy				= null;
 
 	// create Directory
 	private Button							btnCreateDir				= new Button();
@@ -211,6 +208,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	public IThumbnailProvider				thumbnailProvider			= null;
 	public IContentManager					contentManager				= null;
 	public IFileStorageProvider				thumbnailStorageProvider	= null;
+	private IIndexSearcher					indexSeracher				= null;
 
 	private Menupopup						contentContextMenu			= new Menupopup();
 	private Menupopup						canvasContextMenu			= new Menupopup();
@@ -230,6 +228,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	private WUploadContent					uploadContent				= null;
 	private CreateDirectoryForm				createDirectoryForm			= null;
 
+	private Panel							panelAttribute				= new Panel();
+	private WDLoadASIPanel					asiPanel					= null;
+
 	public int								recordID					= 0;
 	public int								tableID						= 0;
 
@@ -239,6 +240,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	private static final int				COMPONENT_WIDTH				= 150;
 
 	private DMSViewerComponent				prevComponent				= null;
+
+	private ArrayList<WEditor>				m_editors					= new ArrayList<WEditor>();
+
+	private Map<String, Component>			ASI_Value					= new HashMap<String, Component>();
+	private DateFormat						dateFormat					= new SimpleDateFormat(
+																				"yyyy-MM-dd'T'HH:mm:ss'Z'");
 
 	/**
 	 * Constructor initialize
@@ -264,6 +271,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
+
+		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+
+		if (indexSeracher == null)
+			throw new AdempiereException("Index server is not found.");
 
 		try
 		{
@@ -311,8 +323,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		// View Result Tab
 
 		Grid gridView = GridFactory.newGridLayout();
-		gridView.setStyle("height:100%; position:relative; float: right; overflow: auto;");
-		gridView.setWidth("30%");
+		gridView.setStyle("height:100%; position:relative; overflow: auto;");
+		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
@@ -407,19 +419,57 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		row.appendChild(lblDescription);
 		nameCell.appendChild(txtDescription);
 		row.appendChild(nameCell);
-		txtDocumentName.setWidth("100%");
+		txtDescription.setWidth("100%");
+
+		int Column_ID = MColumn.getColumn_ID(X_AD_User.Table_Name, X_AD_User.COLUMNNAME_AD_User_ID);
+		MLookup lookup = null;
+		try
+		{
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
+					Env.getLanguage(Env.getCtx()), X_AD_User.COLUMNNAME_AD_User_ID, 0, true, "");
+			lstboxCreatedBy = new WTableDirEditor(X_AD_User.COLUMNNAME_AD_User_ID, false, false, true, lookup);
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "User fetching failure :", e);
+			throw new AdempiereException("User fetching failure :" + e);
+		}
 
 		row = new Row();
 		rows.appendChild(row);
 		row.setAlign("right");
-		row.appendChild(lblCategory);
-		lblCategory.setStyle("float: left;");
-		Cell categoryListCell = new Cell();
-		categoryListCell.setColspan(2);
-		lstboxCategory.setMold("select");
-		categoryListCell.appendChild(lstboxCategory);
-		lstboxCategory.setWidth("100%");
-		row.appendChild(categoryListCell);
+		row.appendChild(lblCreatedBy);
+		lblCreatedBy.setStyle("float: left;");
+		Cell createdByCell = new Cell();
+		createdByCell.setColspan(2);
+		lstboxCreatedBy.getComponent().setWidth("100%");
+		createdByCell.appendChild(lstboxCreatedBy.getComponent());
+		row.appendChild(createdByCell);
+
+		Column_ID = MColumn.getColumn_ID(X_AD_User.Table_Name, X_AD_User.COLUMNNAME_AD_User_ID);
+		lookup = null;
+		try
+		{
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
+					Env.getLanguage(Env.getCtx()), X_AD_User.COLUMNNAME_AD_User_ID, 0, true, "");
+			lstboxUpdatedBy = new WTableDirEditor(X_AD_User.COLUMNNAME_AD_User_ID, false, false, true, lookup);
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "User fetching failure :", e);
+			throw new AdempiereException("User fetching failure :" + e);
+		}
+
+		row = new Row();
+		rows.appendChild(row);
+		row.setAlign("right");
+		row.appendChild(lblUpdatedBy);
+		lblUpdatedBy.setStyle("float: left;");
+		Cell updatedByCell = new Cell();
+		updatedByCell.setColspan(2);
+		lstboxUpdatedBy.getComponent().setWidth("100%");
+		updatedByCell.appendChild(lstboxUpdatedBy.getComponent());
+		row.appendChild(updatedByCell);
 
 		row = new Row();
 		rows.appendChild(row);
@@ -449,6 +499,33 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		updatedCell.appendChild(hbox);
 		row.appendChild(updatedCell);
 
+		Column_ID = MColumn.getColumn_ID(X_DMS_ContentType.Table_Name, X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID);
+		lookup = null;
+		try
+		{
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
+					Env.getLanguage(Env.getCtx()), X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
+			lstboxContentType = new WTableDirEditor(X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, false, false,
+					true, lookup);
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Contenttype fetching failure :", e);
+			throw new AdempiereException("Contenttype fetching failure :" + e);
+		}
+
+		row = new Row();
+		rows.appendChild(row);
+		row.setAlign("right");
+		row.appendChild(lblContentType);
+		lblContentType.setStyle("float: left;");
+		Cell contentTypeListCell = new Cell();
+		contentTypeListCell.setColspan(2);
+		lstboxContentType.getComponent().setWidth("100%");
+		contentTypeListCell.appendChild(lstboxContentType.getComponent());
+		lstboxContentType.addValueChangeListener(this);
+		row.appendChild(contentTypeListCell);
+
 		row = new Row();
 		rows.appendChild(row);
 		row.appendChild(lblContentMeta);
@@ -456,28 +533,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 		row = new Row();
 		rows.appendChild(row);
-		row.appendChild(lblReportDate);
-		hbox = new Hbox();
-		dbReportFrom.setStyle("width: 100%; display:flex; flex-direction: row; flex-wrap: wrap;");
-		dbReportTo.setStyle("width: 100%; display:flex; flex-direction: row; flex-wrap: wrap;");
-		hbox.appendChild(dbReportFrom);
-		hbox.appendChild(dbReportTo);
-
-		Cell reportingCell = new Cell();
-		reportingCell.setColspan(2);
-		reportingCell.appendChild(hbox);
-		row.appendChild(reportingCell);
-
-		row = new Row();
-		rows.appendChild(row);
-		row.appendChild(lblBPartner);
-
-		MLookup lookup = MLookupFactory.get(Env.getCtx(), 0, 0, 2762, DisplayType.Search);
-		seBPartnerField = new WSearchEditor(lookup, Msg.translate(Env.getCtx(), "C_BPartner_ID"), "", true, false, true);
-		Cell bpartnercell = new Cell();
-		bpartnercell.setColspan(2);
-		bpartnercell.appendChild(seBPartnerField.getComponent());
-		row.appendChild(bpartnercell);
+		Cell cell = new Cell();
+		cell.setColspan(3);
+		cell.appendChild(panelAttribute);
+		panelAttribute.setStyle("max-height: 200px; overflow: auto;");
+		row.appendChild(cell);
 
 		row = new Row();
 		rows.appendChild(row);
@@ -496,7 +556,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		hbox.appendChild(btnSearch);
 		hbox.appendChild(btnCloseTab);
 
-		Cell cell = new Cell();
+		cell = new Cell();
 		cell.setColspan(3);
 		cell.setRowspan(1);
 		cell.setAlign("right");
@@ -517,8 +577,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		cell.addEventListener(Events.ON_RIGHT_CLICK, this);
 		boxViewSeparator.appendChild(cell);
 
+		Splitter splitter = new Splitter();
+		splitter.setCollapse("after");
+		boxViewSeparator.appendChild(splitter);
+
 		cell = new Cell();
-		cell.setWidth("100%");
+		cell.setWidth("30%");
 		cell.appendChild(gridView);
 		boxViewSeparator.appendChild(cell);
 		tabViewPanel.appendChild(boxViewSeparator);
@@ -562,6 +626,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 		delete.setDisabled(true);
 
+		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
 		SessionManager.getAppDesktop();
 	}
 
@@ -597,11 +663,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		{
 			isSearch = false;
 			clearComponenets();
-			renderViewer();
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH))
 		{
+			isSearch = true;
 			renderViewer();
+			btnBack.setEnabled(true);
 		}
 		else if (event.getTarget().equals(btnSearch))
 		{
@@ -659,6 +726,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		{
 			pasteDocument(currDMSContent, false);
 		}
+		else if (event.getName().equals("onUploadComplete"))
+		{
+			renderViewer();
+		}
 	}
 
 	/**
@@ -670,7 +741,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		byte[] imgByteData = null;
 		File thumbFile = null;
 
-		Components.removeAllChildren(grid);
 		Rows rows = new Rows();
 		Row row = new Row();
 		MImage mImage = null;
@@ -685,6 +755,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		else
 			dmsContent = getDMSContents();
 
+		Components.removeAllChildren(grid);
 		for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : dmsContent.entrySet())
 		{
 
@@ -750,7 +821,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			contentID = currDMSContent.getDMS_Content_ID();
 
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-		
+
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -791,7 +862,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			rs = null;
 			pstmt = null;
 		}
-		
+
 		return map;
 	}
 
@@ -802,14 +873,21 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 	{
 		vsearchBox.setText(null);
 		txtDocumentName.setValue(null);
-		lstboxCategory.setValue(null);
+		txtDescription.setValue(null);
+		lstboxContentType.setValue(null);
+		lstboxCreatedBy.setValue(null);
+		lstboxUpdatedBy.setValue(null);
 		dbCreatedFrom.setValue(null);
 		dbCreatedTo.setValue(null);
 		dbUpdatedFrom.setValue(null);
 		dbUpdatedTo.setValue(null);
-		dbReportFrom.setValue(null);
-		dbReportTo.setValue(null);
-		seBPartnerField.setValue(null);
+
+		if (m_editors != null)
+		{
+			for (WEditor editor : m_editors)
+				editor.setValue(null);
+		}
+		Components.removeAllChildren(panelAttribute);
 	}
 
 	/**
@@ -856,6 +934,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 					WDocumentViewer documentViewer = new WDocumentViewer(tabBox, documentToPreview, selectedContent,
 							tableID, recordID);
 					tabPanels.appendChild(documentViewer.initForm());
+					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
 
 					this.appendChild(tabBox);
 				}
@@ -1004,7 +1083,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 		{
 			versionList.setDisabled(false);
 			paste.setDisabled(true);
-			
+
 			if (copyDMSContent != null && copyDMSContent != DMSViewerCom.getDMSContent())
 				associate.setDisabled(false);
 			else
@@ -1107,6 +1186,24 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 				try
 				{
 					renderViewer();
+
+					int DMS_Content_ID = DMSassociation.getDMS_Content_Related_ID();
+
+					if (DMS_Content_ID <= 0)
+						DMS_Content_ID = DMSassociation.getDMS_Content_ID();
+					else
+					{
+						MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+
+						if (dmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+							DMS_Content_ID = DMSassociation.getDMS_Content_ID();
+						else
+							DMS_Content_ID = DMSassociation.getDMS_Content_Related_ID();
+					}
+
+					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+
+					indexSeracher.indexContent(Utils.createIndexMap(dmsContent, DMSassociation));
 				}
 				catch (Exception e)
 				{
@@ -1169,27 +1266,23 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 
 	private HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent()
 	{
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-
-		StringBuilder query = new StringBuilder();
-		query.append(" WHERE ");
-
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-
-		if (recordID > 0 && tableID > 0)
-		{
-			query.append(" AND ").append(" AD_Table_ID= '" + tableID + "' AND Record_ID = '" + recordID + "'");
-		}
+		HashMap<String, List<Object>> params = new HashMap<String, List<Object>>();
+		List<Object> value = new ArrayList<Object>();
+		List<Integer> documentList = null;
 
 		if (!Util.isEmpty(txtDocumentName.getValue()))
 		{
-			query.append(" AND ").append(" name ilike '" + txtDocumentName.getValue() + "' ");
+			value.add(txtDocumentName.getValue());
+			params.put(Utils.NAME, value);
+
 		}
 
 		if (!Util.isEmpty(txtDescription.getValue()))
 		{
-			query.append(" AND ").append(" description ilike '%" + txtDescription.getName() + "%' ");
+			value = new ArrayList<Object>();
+			value.add("*" + txtDescription.getValue() + "*");
+			params.put(Utils.DESCRIPTION, value);
 		}
 
 		if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() != null)
@@ -1197,70 +1290,371 @@ public class WDMSPanel extends Panel implements EventListener<Event>
 			if (dbCreatedFrom.getValue().after(dbCreatedTo.getValue()))
 				throw new WrongValueException(dbCreatedFrom, "Invalid Date Range");
 			else
-				query.append(" AND ").append(
-						" Created between '" + dbCreatedFrom.getValue() + "' AND '" + dbCreatedTo.getValue() + "' ");
+			{
+				value = new ArrayList<Object>();
+				value.add(dateFormat.format(dbCreatedFrom.getValue()));
+				value.add(dateFormat.format(dbCreatedTo.getValue()));
+				params.put(Utils.CREATED, value);
+			}
 		}
 		else if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() == null)
 		{
-			query.append(" AND ").append(" Created >= '" + dbCreatedFrom.getValue() + "'");
+			value = new ArrayList<Object>();
+			value.add(dateFormat.format(dbCreatedFrom.getValue()));
+			value.add("*");
+			params.put(Utils.CREATED, value);
 		}
 		else if (dbCreatedTo.getValue() != null && dbCreatedFrom.getValue() == null)
 		{
-			query.append(" AND ").append(" Created <= '" + dbCreatedTo.getValue() + "'");
+			value = new ArrayList<Object>();
+			value.add("*");
+			value.add(dateFormat.format(dbCreatedTo.getValue()));
+			params.put(Utils.CREATED, value);
 		}
 
-		if (dbUpdatedFrom.getValue() != null && dbCreatedTo.getValue() != null)
+		if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() != null)
 		{
 			if (dbUpdatedFrom.getValue().after(dbUpdatedTo.getValue()))
 				throw new WrongValueException(dbUpdatedFrom, "Invalid Date Range");
 			else
-				query.append(" AND ")
-						.append(" AND Updated between '" + dbUpdatedFrom.getValue() + "' AND '"
-								+ dbUpdatedTo.getValue() + "' ");
-		}
-		else if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() == null)
-		{
-			query.append(" AND ").append(" Updated >= '" + dbUpdatedFrom.getValue() + "'");
-		}
-		else if (dbUpdatedTo.getValue() != null && dbUpdatedFrom.getValue() == null)
-		{
-			query.append(" AND ").append(" Updated <= '" + dbUpdatedTo.getValue() + "'");
-		}
-
-		if (query.length() > 7)
-			query.delete(8, 13);
-		else
-			query.delete(0, 6);
-
-		try
-		{
-			pstmt = DB.prepareStatement(SQL_FETCH_SEARCH_CONTENT + query, null);
-
-			rs = pstmt.executeQuery();
-
-			if (rs != null)
 			{
-				while (rs.next())
-				{
-					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)), (new MDMSAssociation(
-							Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
-				}
+				value = new ArrayList<Object>();
+				value.add(dateFormat.format(dbUpdatedFrom.getValue()));
+				value.add(dateFormat.format(dbUpdatedTo.getValue()));
+				params.put(Utils.UPDATED, value);
 			}
 
 		}
-		catch (Exception e)
+		else if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() == null)
 		{
-			log.log(Level.SEVERE, "Search failure.", e);
-			throw new AdempiereException("Search failure: " + e);
+			value = new ArrayList<Object>();
+			value.add(dateFormat.format(dbUpdatedFrom.getValue()));
+			value.add("*");
+			params.put(Utils.UPDATED, value);
 		}
-		finally
+		else if (dbUpdatedTo.getValue() != null && dbUpdatedFrom.getValue() == null)
 		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
+			value = new ArrayList<Object>();
+			value.add("*");
+			value.add(dateFormat.format(dbUpdatedTo.getValue()));
+			params.put(Utils.UPDATED, value);
+		}
+
+		if (tableID > 0)
+		{
+			value = new ArrayList<Object>();
+			value.add(tableID);
+			params.put(Utils.AD_Table_ID, value);
+		}
+
+		if (recordID > 0)
+		{
+			value = new ArrayList<Object>();
+			value.add(recordID);
+			params.put(Utils.RECORD_ID, value);
+		}
+
+		if (lstboxCreatedBy.getValue() != null)
+		{
+			value = new ArrayList<Object>();
+			value.add(lstboxCreatedBy.getValue());
+			params.put(Utils.CREATEDBY, value);
+		}
+
+		if (lstboxUpdatedBy.getValue() != null)
+		{
+			value = new ArrayList<Object>();
+			value.add(lstboxUpdatedBy.getValue());
+			params.put(Utils.UPDATEDBY, value);
+		}
+
+		if (lstboxContentType.getValue() != null)
+		{
+
+			for (WEditor editor : m_editors)
+			{
+				if (editor.getValue() != null && editor.getValue() != "")
+				{
+					int displayType = editor.getGridField().getDisplayType();
+					String compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
+					compName = compName.replaceAll("/", "");
+
+					if (displayType == DisplayType.Number)
+					{
+						NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName);
+						NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to");
+
+						if (fromNumBox.getValue() != null && toNumBox.getValue() != null)
+						{
+							value = new ArrayList<Object>();
+							value.add(fromNumBox.getValue());
+							value.add(toNumBox.getValue());
+							params.put(compName, value);
+						}
+						else if (fromNumBox.getValue() != null && toNumBox.getValue() == null)
+						{
+							value = new ArrayList<Object>();
+							value.add(fromNumBox.getValue());
+							params.put(compName, value);
+						}
+						else if (fromNumBox.getValue() == null && toNumBox.getValue() != null)
+						{
+							value = new ArrayList<Object>();
+							value.add("*");
+							value.add(toNumBox.getValue());
+							params.put(compName, value);
+						}
+					}
+					else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime
+							|| displayType == DisplayType.Time)
+					{
+
+						if (displayType == DisplayType.Date)
+						{
+							Datebox fromDate = (Datebox) ASI_Value.get(compName);
+							Datebox toDate = (Datebox) ASI_Value.get(compName + "to");
+
+							if (fromDate.getValue() != null && toDate.getValue() != null)
+							{
+								if (fromDate.getValue().after(toDate.getValue()))
+								{
+									Clients.scrollIntoView(fromDate);
+									throw new WrongValueException(fromDate, "Invalid Date Range");
+								}
+								else
+								{
+									value = new ArrayList<Object>();
+									value.add(dateFormat.format(fromDate.getValue()));
+									value.add(dateFormat.format(toDate.getValue()));
+									params.put(compName, value);
+								}
+							}
+							else if (fromDate.getValue() != null && toDate.getValue() == null)
+							{
+								value = new ArrayList<Object>();
+								value.add(dateFormat.format(fromDate.getValue()));
+								value.add("*");
+								params.put(compName, value);
+							}
+							else if (toDate.getValue() != null && fromDate.getValue() == null)
+							{
+								value = new ArrayList<Object>();
+								value.add("*");
+								value.add(dateFormat.format(toDate.getValue()));
+								params.put(compName, value);
+							}
+						}
+						else if (displayType == DisplayType.DateTime)
+						{
+							DatetimeBox fromDatetime = (DatetimeBox) ASI_Value.get(compName);
+							DatetimeBox toDatetime = (DatetimeBox) ASI_Value.get(compName + "to");
+
+							if (fromDatetime.getValue() != null && toDatetime.getValue() != null)
+							{
+								if (fromDatetime.getValue().after(toDatetime.getValue()))
+									throw new WrongValueException(fromDatetime, "Invalid Date Range");
+								else
+								{
+									value = new ArrayList<Object>();
+									value.add(dateFormat.format(fromDatetime.getValue()));
+									value.add(dateFormat.format(toDatetime.getValue()));
+									params.put(compName, value);
+								}
+							}
+							else if (fromDatetime.getValue() != null && toDatetime.getValue() == null)
+							{
+								value = new ArrayList<Object>();
+								value.add(dateFormat.format(fromDatetime.getValue()));
+								value.add("*");
+								params.put(compName, value);
+							}
+							else if (toDatetime.getValue() != null && fromDatetime.getValue() == null)
+							{
+								value = new ArrayList<Object>();
+								value.add("*");
+								value.add(dateFormat.format(toDatetime.getValue()));
+								params.put(compName, value);
+							}
+
+						}
+						else if (displayType == DisplayType.Time)
+						{
+							Timebox timeboxFrom = (Timebox) ASI_Value.get(compName);
+							Timebox timeboxTo = (Timebox) ASI_Value.get(compName + "to");
+
+							if (timeboxFrom.getValue() != null && timeboxTo.getValue() != null)
+							{
+								if (timeboxFrom.getValue().after(timeboxTo.getValue()))
+									throw new WrongValueException(timeboxFrom, "Invalid Date Range");
+								else
+								{
+									value = new ArrayList<Object>();
+									value.add(dateFormat.format(timeboxFrom.getValue()));
+									value.add(dateFormat.format(timeboxTo.getValue()));
+									params.put(compName, value);
+								}
+							}
+							else if (timeboxFrom.getValue() != null && timeboxTo.getValue() == null)
+							{
+								value = new ArrayList<Object>();
+								value.add(dateFormat.format(timeboxFrom.getValue()));
+								value.add("*");
+								params.put(compName, value);
+							}
+							else if (timeboxTo.getValue() != null && timeboxFrom.getValue() == null)
+							{
+								value = new ArrayList<Object>();
+								value.add("*");
+								value.add(dateFormat.format(timeboxTo.getValue()));
+								params.put(compName, value);
+							}
+
+						}
+					}
+					else
+					{
+						value = new ArrayList<Object>();
+						value.add(editor.getDisplay());
+						params.put(compName, value);
+					}
+				}
+			}
+		}
+
+		String query = indexSeracher.buildSolrSearchQuery(params);
+		documentList = indexSeracher.searchIndex(query);
+
+		for (Integer entry : documentList)
+		{
+			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
+
+			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
+					new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
 		}
 
 		return map;
 
+	}
+
+	@Override
+	public void valueChange(ValueChangeEvent event)
+	{
+		if (event.getSource().equals(lstboxContentType))
+		{
+			Components.removeAllChildren(panelAttribute);
+
+			Grid gridView = GridFactory.newGridLayout();
+
+			gridView.setHeight("100%");
+
+			Columns columns = new Columns();
+
+			Column column = new Column();
+			columns.appendChild(column);
+
+			column = new Column();
+			columns.appendChild(column);
+
+			column = new Column();
+			columns.appendChild(column);
+
+			Rows rows = new Rows();
+
+			gridView.appendChild(rows);
+			gridView.appendChild(columns);
+
+			if (lstboxContentType.getValue() != null)
+			{
+				ASI_Value.clear();
+				asiPanel = new WDLoadASIPanel((int) lstboxContentType.getValue(), 0);
+				m_editors = asiPanel.m_editors;
+
+				for (WEditor editor : m_editors)
+				{
+					Row row = new Row();
+					rows.appendChild(row);
+
+					int displayType = editor.getGridField().getDisplayType();
+					String compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
+					compName = compName.replaceAll("/", "");
+
+					if (displayType == DisplayType.Number)
+					{
+						NumberBox numBox = new NumberBox(false);
+
+						row.appendChild(editor.getLabel());
+						row.appendChild(editor.getComponent());
+						row.appendChild(numBox);
+
+						ASI_Value.put(compName, editor.getComponent());
+						ASI_Value.put(compName + "to", numBox);
+
+					}
+
+					else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime
+							|| displayType == DisplayType.Time)
+					{
+
+						if (displayType == DisplayType.Date)
+						{
+							Datebox dateBox = new Datebox();
+							dateBox.setName(compName + "to");
+							row.appendChild(editor.getLabel());
+							row.appendChild(editor.getComponent());
+							row.appendChild(dateBox);
+
+							ASI_Value.put(compName, editor.getComponent());
+							ASI_Value.put(dateBox.getName(), dateBox);
+						}
+						else if (displayType == DisplayType.Time)
+						{
+							Timebox timebox = new Timebox();
+							timebox.setName(compName + "to");
+							row.appendChild(editor.getLabel());
+							row.appendChild(editor.getComponent());
+							row.appendChild(timebox);
+
+							ASI_Value.put(compName, editor.getComponent());
+							ASI_Value.put(timebox.getName(), timebox);
+						}
+						else if (displayType == DisplayType.DateTime)
+						{
+							DatetimeBox datetimeBox = new DatetimeBox();
+
+							Cell cell = new Cell();
+							cell.setColspan(2);
+
+							row.appendChild(editor.getLabel());
+							cell.appendChild(editor.getComponent());
+							row.appendChild(cell);
+
+							ASI_Value.put(compName, editor.getComponent());
+
+							row = new Row();
+							rows.appendChild(row);
+
+							row.appendChild(new Space());
+							cell = new Cell();
+							cell.setColspan(2);
+							cell.appendChild(datetimeBox);
+							row.appendChild(cell);
+
+							ASI_Value.put(compName + "to", datetimeBox);
+						}
+					}
+					else
+					{
+						Cell cell = new Cell();
+						cell.setColspan(2);
+						row.appendChild(editor.getLabel());
+						cell.appendChild(editor.getComponent());
+						row.appendChild(cell);
+
+						ASI_Value.put(editor.getLabel().getValue(), editor.getComponent());
+					}
+				}
+				panelAttribute.appendChild(gridView);
+			}
+		}
 	}
 }

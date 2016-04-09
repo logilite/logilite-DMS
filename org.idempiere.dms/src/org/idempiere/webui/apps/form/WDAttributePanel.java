@@ -1,9 +1,24 @@
+
+/******************************************************************************
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ *****************************************************************************/
+
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -41,6 +56,7 @@ import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zhtml.Filedownload;
@@ -53,6 +69,9 @@ import org.zkoss.zul.Cell;
 import org.zkoss.zul.North;
 import org.zkoss.zul.South;
 
+import com.logilite.search.factory.IIndexSearcher;
+import com.logilite.search.factory.ServiceUtils;
+
 public class WDAttributePanel extends Panel implements EventListener<Event>
 {
 
@@ -63,7 +82,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private static CLogger			log						= CLogger.getCLogger(WDAttributePanel.class);
 
 	private Panel					panelAttribute			= new Panel();
-	private Panel					panelButtons			= new Panel();
 	private Panel					panelFooterButtons		= new Panel();
 	private Borderlayout			mainLayout				= new Borderlayout();
 
@@ -102,6 +120,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private IFileStorageProvider	fileStorageProvider		= null;
 	private IContentManager			contentManager			= null;
 	private IThumbnailProvider		thumbnailProvider		= null;
+	private IIndexSearcher			indexSeracher			= null;
 
 	private Tabbox					tabBox					= null;
 
@@ -237,12 +256,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		btnEdit = new Button();
 		btnEdit.setTooltiptext("Edit");
-		btnEdit.setImage(ThemeManager.getThemeResource("images/Editor24.png"));
+		btnEdit.setImage(ThemeManager.getThemeResource("images/Editor16.png"));
 
 		btnSave = new Button();
 		btnSave.setVisible(false);
 		btnSave.setTooltiptext("Save");
-		btnSave.setImage(ThemeManager.getThemeResource("images/Save24.png"));
+		btnSave.setImage(ThemeManager.getThemeResource("images/Save16.png"));
 
 		btnSave.addEventListener(Events.ON_CLICK, this);
 		btnDelete.addEventListener(Events.ON_CLICK, this);
@@ -255,19 +274,14 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		South south = new South();
 		rows.appendChild(row);
 
-		panelButtons.appendChild(btnEdit);
-		panelButtons.appendChild(btnSave);
-
 		panelFooterButtons.appendChild(btnVersionUpload);
 		panelFooterButtons.appendChild(btnDelete);
 		panelFooterButtons.appendChild(btnRequery);
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
 
-		panelButtons.setStyle("position: fixed; bottom: 8%;");
 		panelFooterButtons.setStyle("position: fixed; bottom: 2%;");
 
-		panelAttribute.appendChild(panelButtons);
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
 
@@ -346,10 +360,10 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false);
 					viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
-					
+
 					viewerComponenet.setDheight(150);
 					viewerComponenet.setDwidth(150);
-					
+
 					viewerComponenet.getfLabel().setStyle(
 							"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
 					labelVersion = new Label("Created: " + versionContent.getCreated());
@@ -384,6 +398,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		ASIPanel = new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(), m_M_AttributeSetInstance_ID);
 		ASIPanel.setEditableAttribute(false);
 		tabpanelAttribute.appendChild(ASIPanel);
+		ASIPanel.appendChild(btnEdit);
+		ASIPanel.appendChild(btnSave);
 	}
 
 	/*
@@ -402,9 +418,39 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
+			indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+
+			if (indexSeracher == null)
+				throw new AdempiereException("Index server is not found.");
+
 			ASIPanel.saveAttributes();
 			btnSave.setVisible(false);
 			ASIPanel.setEditableAttribute(false);
+
+			int DMS_Content_ID = DB.getSQLValue(null,
+					"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
+					DMS_Content.getDMS_Content_ID());
+
+			if (DMS_Content_ID <= 0)
+				DMS_Content_ID = DMS_Content.getDMS_Content_ID();
+			else
+			{
+				MDMSContent dirContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+				if (dirContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+				{
+					DMS_Content_ID = DMS_Content.getDMS_Content_ID();
+				}
+			}
+
+			int DMS_Association_ID = DB.getSQLValue(null,
+					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?", DMS_Content_ID);
+
+			MDMSContent DMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+			MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+
+			Map<String, Object> solrValue = Utils.createIndexMap(DMSContent, DMSAssociation);
+			indexSeracher.deleteIndex(DMS_Content_ID);
+			indexSeracher.indexContent(solrValue);
 		}
 		else if (event.getTarget().getId().equals(confirmPanel.A_CANCEL))
 		{
@@ -443,6 +489,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		else if (event.getTarget().equals(btnVersionUpload))
 		{
 			final Tab tab = (Tab) tabBox.getSelectedTab();
+			final WDAttributePanel panel = this;
 
 			WUploadContent uploadContent = new WUploadContent(DMS_Content, true, tableId, recordId);
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
@@ -450,6 +497,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event arg0) throws Exception
 				{
+					Events.sendEvent(new Event("onUploadComplete", panel));
 					tabBox.setSelectedTab(tab);
 				}
 			});

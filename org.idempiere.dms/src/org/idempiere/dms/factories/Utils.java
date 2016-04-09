@@ -1,3 +1,15 @@
+/******************************************************************************
+ * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
+ * you can redistribute it and/or modify it * under the terms version 2 of the
+ * GNU General Public License as published * by the Free Software Foundation.
+ * This program is distributed in the hope * that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
+ * more details. * You should have received a copy of the GNU General Public
+ * License along * with this program; if not, write to the Free Software
+ * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
+ *****************************************************************************/
+
 package org.idempiere.dms.factories;
 
 import java.awt.Color;
@@ -7,7 +19,12 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
 import javax.imageio.ImageIO;
@@ -46,7 +63,24 @@ public class Utils
 	public static final String					LINK							= "Link";
 	public static final String					RECORD							= "Record";
 
+	// constant for index fields
+
+	public static final String					NAME							= "Name";
+	public static final String					CREATED							= "created";
+	public static final String					CREATEDBY						= "createdBY";
+	public static final String					UPDATED							= "updated";
+	public static final String					UPDATEDBY						= "updatedBy";
+	public static final String					DESCRIPTION						= "description";
+	public static final String					CONTENTTYPE						= "contentType";
+	public static final String					DMS_CONTENT_ID					= "DMS_Content_ID";
+	public static final String					AD_Table_ID						= "AD_Table_ID";
+	public static final String					RECORD_ID						= "Record_ID";
+
 	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
+
+	private static final String					SQL_GETASI						= "SELECT a.Name,ai.value,ai.valuetimestamp FROM M_AttributeInstance ai "
+																						+ " INNER JOIN  M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
+																						+ " WHERE ai.M_AttributeSetInstance_Id = ?";
 
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider			= new CCache<Integer, IThumbnailProvider>(
 																						"ThumbnailProvider", 2);
@@ -448,5 +482,59 @@ public class Utils
 			return recordID;
 		else
 			return 0;
+	}
+
+	public static Map<String, Object> createIndexMap(MDMSContent DMSContent, MDMSAssociation DMSAssociation)
+	{
+		Map<String, Object> solrValue = new HashMap<String, Object>();
+
+		solrValue.put(NAME, DMSContent.getName().toLowerCase());
+		solrValue.put(CREATED, DMSContent.getCreated());
+		solrValue.put(CREATEDBY, DMSContent.getCreatedBy());
+		solrValue.put(UPDATED, DMSContent.getUpdated());
+		solrValue.put(UPDATEDBY, DMSContent.getUpdatedBy());
+		solrValue.put(DESCRIPTION, DMSContent.getDescription());
+		solrValue.put(CONTENTTYPE, DMSContent.getDMS_ContentType_ID());
+		solrValue.put(DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
+
+		if (DMSAssociation.getAD_Table_ID() > 0)
+			solrValue.put(AD_Table_ID, DMSAssociation.getAD_Table_ID());
+
+		if (DMSAssociation.getRecord_ID() > 0)
+			solrValue.put(RECORD_ID, DMSAssociation.getRecord_ID());
+
+		PreparedStatement stmt = null;
+		ResultSet rs = null;
+		try
+		{
+			stmt = DB.prepareStatement(SQL_GETASI, null);
+			stmt.setInt(1, DMSContent.getM_AttributeSetInstance_ID());
+			rs = stmt.executeQuery();
+
+			if (rs.isBeforeFirst())
+			{
+				while (rs.next())
+				{
+					if (rs.getObject("value") != null)
+					{
+						if (rs.getObject("valuetimestamp") != null)
+						{
+							solrValue.put("ASI_" + rs.getString("Name"), rs.getObject("valuetimestamp"));
+						}
+						else
+						{
+							solrValue.put("ASI_" + rs.getString("Name"), rs.getObject("value"));
+						}
+					}
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, "ASI fetching failure.", e);
+			throw new AdempiereException("ASI fetching failure." + e.getLocalizedMessage());
+		}
+
+		return solrValue;
 	}
 }

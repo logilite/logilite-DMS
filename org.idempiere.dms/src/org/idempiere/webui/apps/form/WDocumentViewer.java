@@ -1,3 +1,16 @@
+/******************************************************************************
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ *****************************************************************************/
+
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
@@ -14,6 +27,7 @@ import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
+import org.zkoss.zul.Splitter;
 
 public class WDocumentViewer extends Window
 {
@@ -30,6 +44,8 @@ public class WDocumentViewer extends Window
 	private MDMSMimeType		mimeType			= null;
 	private File				document_preview	= null;
 
+	private WDAttributePanel	attributePanel		= null;
+
 	private int					tableID				= 0;
 	private int					recordID			= 0;
 
@@ -41,6 +57,11 @@ public class WDocumentViewer extends Window
 		this.document_preview = document_preview;
 		this.tableID = tableID;
 		this.recordID = recordID;
+	}
+
+	public WDAttributePanel getAttributePanel()
+	{
+		return attributePanel;
 	}
 
 	public Tabpanel initForm()
@@ -66,12 +87,16 @@ public class WDocumentViewer extends Window
 			throw new AdempiereException("No Content Editor found.");
 
 		cellPreview.appendChild(contentEditor.initPanel());
-
+		Splitter splitter = new Splitter();
+		splitter.setCollapse("after");
+		
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		cellCPreview.appendChild(new WDAttributePanel(mDMSContent, tabBox, tableID, recordID));
+		attributePanel = new WDAttributePanel(mDMSContent, tabBox, tableID, recordID);
+		cellCPreview.appendChild(attributePanel);
 
 		boxViewSeparator.appendChild(cellPreview);
+		boxViewSeparator.appendChild(splitter);
 		boxViewSeparator.appendChild(cellCPreview);
 
 		tabDataPanel.appendChild(boxViewSeparator);

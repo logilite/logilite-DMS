@@ -12,7 +12,8 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="3.1.0",
  org.adempiere.ui.zk;bundle-version="3.1.0",
  org.zkoss.zk.library;bundle-version="7.0.7",
  org.adempiere.ui;bundle-version="3.1.0",
- org.apache.commons.net
+ org.apache.commons.net,
+ com.logilite.search;bundle-version="1.0.0"
 Bundle-Vendor: Logilite
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,

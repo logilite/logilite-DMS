@@ -1,5 +1,19 @@
+/******************************************************************************
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ *****************************************************************************/
+
 package org.idempiere.webui.apps.form;
 
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -56,6 +70,9 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Space;
 
+import com.logilite.search.factory.IIndexSearcher;
+import com.logilite.search.factory.ServiceUtils;
+
 public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
 {
 
@@ -89,6 +106,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	private IFileStorageProvider	fileStorgProvider		= null;
 	private IThumbnailGenerator		thumbnailGenerator		= null;
 	private IContentManager			contentManager			= null;
+	private IIndexSearcher			indexSeracher			= null;
 
 	private Tabbox					tabBoxAttribute			= new Tabbox();
 	private Tabs					tabsAttribute			= new Tabs();
@@ -292,10 +310,15 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	private void saveUploadedDcoument()
 	{
-		String regExp = "^[A-Za-z0-9\\-\\._]+$";
-		
+		String regExp = "^[A-Za-z0-9\\s\\-\\._]+$";
+
 		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
 		MDMSContent uploadedDMSContent = null;
+
+		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+
+		if (indexSeracher == null)
+			throw new AdempiereException("Index server is not found.");
 
 		if (btnFileUpload.getLabel().equalsIgnoreCase("-"))
 			throw new WrongValueException(btnFileUpload, fillMandatory);
@@ -307,11 +330,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			String newFilename = txtName.getValue();
 
-			if(!newFilename.matches(regExp))
+			if (!newFilename.matches(regExp))
 			{
 				throw new WrongValueException(txtName, "Invalid File Name.");
 			}
-			
+
 		}
 
 		if (isVersion)
@@ -394,6 +417,20 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			if (thumbnailGenerator != null)
 				thumbnailGenerator.addThumbnail(uploadedDMSContent,
 						fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
+
+			if (!isVersion)
+			{
+				try
+				{
+					Map<String, Object> solrValue = Utils.createIndexMap(uploadedDMSContent, dmsAssociation);
+					indexSeracher.indexContent(solrValue);
+				}
+				catch (Exception e)
+				{
+					log.log(Level.SEVERE, "Indexing of Content Failure :", e);
+					throw new AdempiereException("Indexing of Content Failure :" + e);
+				}
+			}
 
 		}
 		catch (Exception e)
