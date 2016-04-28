@@ -14,8 +14,8 @@
 package org.idempiere.dms.storage;
 
 import org.adempiere.webui.adwindow.IADTabpanel;
+import org.adempiere.webui.factory.IADTabPanelFactory;
 
-import com.adempiere.webui.adwindow.factory.IADTabPanelFactory;
 
 public class CustomADTabPanelFactory implements IADTabPanelFactory
 {
