@@ -3,6 +3,6 @@
    <implementation class="org.idempiere.dms.storage.CustomADTabPanelFactory"/>
    <property name="service.ranking" type="Integer" value="5"/>
    <service>
-      <provide interface="com.adempiere.webui.adwindow.factory.IADTabPanelFactory"/>
+      <provide interface="org.adempiere.webui.factory.IADTabPanelFactory"/>
    </service>
 </scr:component>
