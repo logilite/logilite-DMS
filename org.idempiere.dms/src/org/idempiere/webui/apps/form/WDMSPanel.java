@@ -319,7 +319,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		tabBox.appendChild(tabs);
 		tabBox.appendChild(tabPanels);
 		tabBox.addEventListener(Events.ON_SELECT, this);
-		grid.setStyle("width: 69%; height:100%; position:relative; overflow: auto;");
+		grid.setStyle("width: 100%; height:100%; position:relative; overflow: auto;");
 		// View Result Tab
 
 		Grid gridView = GridFactory.newGridLayout();
