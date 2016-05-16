@@ -1,14 +1,13 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP								  *
- * This program is free software; you can redistribute it and/or modify it    *
- * under the terms version 2 of the GNU General Public License as published   *
- * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
- * See the GNU General Public License for more details.                       *
- * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
+ * you can redistribute it and/or modify it * under the terms version 2 of the
+ * GNU General Public License as published * by the Free Software Foundation.
+ * This program is distributed in the hope * that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
+ * more details. * You should have received a copy of the GNU General Public
+ * License along * with this program; if not, write to the Free Software
+ * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
  *****************************************************************************/
 
 package org.idempiere.webui.apps.form;
@@ -44,6 +43,8 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.idempiere.model.MDMSContentType;
 import org.zkoss.zk.ui.Component;
+import org.zkoss.zk.ui.WrongValueException;
+import org.zkoss.zk.ui.util.Clients;
 
 public class WDLoadASIPanel extends Panel
 {
@@ -155,6 +156,11 @@ public class WDLoadASIPanel extends Panel
 			if (label.getValue() == null || label.getValue().trim().length() < 1)
 				label.setValue(attribute.getName());
 
+			if (attribute.isMandatory())
+			{
+				label.setValue(label.getValue() + "*");
+			}
+
 			row.appendChild(label);
 
 			editor.setMandatory(attribute.isMandatory());
@@ -208,8 +214,7 @@ public class WDLoadASIPanel extends Panel
 	private GridField getListTypeGridField(MAttribute attribute)
 	{
 		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0,
-				"M_AttributeValue_ID", attribute.getName(), DisplayType.TableDir, 0,
-			     false, false);
+				"M_AttributeValue_ID", attribute.getName(), DisplayType.TableDir, 0, false, false);
 		vo.ValidationCode = "M_AttributeValue.M_Attribute_ID=" + attribute.get_ID();
 		vo.lookupInfo.ValidationCode = vo.ValidationCode;
 		vo.lookupInfo.IsValidated = true;
@@ -268,7 +273,7 @@ public class WDLoadASIPanel extends Panel
 
 	public int saveAttributes()
 	{
-		String mandatory = "";
+		String mandatory = null;
 
 		MAttributeSetInstance m_masi = new MAttributeSetInstance(Env.getCtx(), m_M_AttributeSetInstance_ID,
 				M_AttributeSet_ID, null);
@@ -288,7 +293,11 @@ public class WDLoadASIPanel extends Panel
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
+				{
 					mandatory += " - " + attributes[i].getName();
+					Clients.scrollIntoView(editor.getComponent());
+					throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+				}
 				attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attributes[i].getAttributeValueType()))
@@ -298,15 +307,18 @@ public class WDLoadASIPanel extends Panel
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
+				{
 					mandatory += " - " + attributes[i].getName();
-				// setMAttributeInstance doesn't work without decimal point
+					Clients.scrollIntoView(editor.getComponent());
+					throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+				} // setMAttributeInstance doesn't work without decimal point
 				if (value != null && value.scale() == 0)
 					value = value.setScale(1, BigDecimal.ROUND_HALF_UP);
 				attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attributes[i].getAttributeValueType()))
 			{
-				setEditorValue(mandatory, attributes[i], m_editors.get(i));
+				mandatory = setEditorValue(mandatory, attributes[i], m_editors.get(i));
 			}
 			else
 			{
@@ -315,7 +327,10 @@ public class WDLoadASIPanel extends Panel
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && (value == null || value.length() == 0))
+				{
 					mandatory += " - " + attributes[i].getName();
+					throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+				}
 				attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
 			}
 			m_changed = true;
@@ -353,7 +368,11 @@ public class WDLoadASIPanel extends Panel
 		{
 			Timestamp valueTimeStamp = (Timestamp) editor.getValue();
 			if (attributes.isMandatory() && valueTimeStamp == null)
+			{
 				mandatory += " - " + attributes.getName();
+				Clients.scrollIntoView(editor.getComponent());
+				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+			}
 
 			String value = null;
 			if (valueTimeStamp != null)
@@ -380,7 +399,11 @@ public class WDLoadASIPanel extends Panel
 		{
 			Object value = editor.getValue();
 			if (attributes.isMandatory() && value == null)
+			{
 				mandatory += " - " + attributes.getName();
+				Clients.scrollIntoView(editor.getComponent());
+				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+			}
 			if (displayType == DisplayType.Integer)
 				attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID,
 						value == null ? 0 : ((Number) value).intValue(), null);
@@ -394,7 +417,11 @@ public class WDLoadASIPanel extends Panel
 		{
 			Integer value = (Integer) editor.getValue();
 			if (attributes.isMandatory() && value == null)
+			{
 				mandatory += " - " + attributes.getName();
+				Clients.scrollIntoView(editor.getComponent());
+				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+			}
 
 			String valueLable = null;
 			if (displayType == DisplayType.TableDir || displayType == DisplayType.Table
@@ -410,7 +437,11 @@ public class WDLoadASIPanel extends Panel
 		{
 			String value = String.valueOf(editor.getValue());
 			if (attributes.isMandatory() && value == null)
+			{
 				mandatory += " - " + attributes.getName();
+				Clients.scrollIntoView(editor.getComponent());
+				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+			}
 
 			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
 		}

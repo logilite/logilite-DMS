@@ -1,14 +1,13 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP								  *
- * This program is free software; you can redistribute it and/or modify it    *
- * under the terms version 2 of the GNU General Public License as published   *
- * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
- * See the GNU General Public License for more details.                       *
- * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
- * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
+ * you can redistribute it and/or modify it * under the terms version 2 of the
+ * GNU General Public License as published * by the Free Software Foundation.
+ * This program is distributed in the hope * that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
+ * more details. * You should have received a copy of the GNU General Public
+ * License along * with this program; if not, write to the Free Software
+ * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
  *****************************************************************************/
 
 package org.idempiere.webui.apps.form;
@@ -311,6 +310,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	private void saveUploadedDcoument()
 	{
 		String regExp = "^[A-Za-z0-9\\s\\-\\._]+$";
+		int ASI_ID = 0;
 
 		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
 		MDMSContent uploadedDMSContent = null;
@@ -344,6 +344,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 						"Mime type not matched, please upload same mime type version document.");
 		}
 
+		if (contentType.getValue() != null)
+		{
+			ASI_ID = asiPanel.saveAttributes();
+		}
+
 		try
 		{
 			uploadedDMSContent = new MDMSContent(Env.getCtx(), 0, null);
@@ -362,7 +367,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				if (contentType.getValue() != null)
 				{
 					uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
-					uploadedDMSContent.setM_AttributeSetInstance_ID(asiPanel.saveAttributes());
+					uploadedDMSContent.setM_AttributeSetInstance_ID(ASI_ID);
 				}
 				uploadedDMSContent.setParentURL(contentManager.getPath(DMSContent));
 			}
