@@ -218,6 +218,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem						paste						= null;
 	private Menuitem						delete						= null;
 	private Menuitem						associate					= null;
+	private Menuitem						uploadVersion				= null;
 
 	private Menuitem						canvasPaste					= null;
 
@@ -602,22 +603,26 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		paste = new Menuitem("Paste");
 		delete = new Menuitem("Delete");
 		associate = new Menuitem("Associate");
+		uploadVersion = new Menuitem("Upload Version");
 
 		canvasPaste = new Menuitem("Paste");
 		canvasContextMenu.appendChild(canvasPaste);
 		canvasPaste.addEventListener(Events.ON_CLICK, this);
 
+		contentContextMenu.appendChild(uploadVersion);
 		contentContextMenu.appendChild(versionList);
 		contentContextMenu.appendChild(copy);
 		contentContextMenu.appendChild(paste);
 		contentContextMenu.appendChild(delete);
 		contentContextMenu.appendChild(associate);
 
+		uploadVersion.setImage(ThemeManager.getThemeResource("images/Assignment16.png"));
 		versionList.setImage(ThemeManager.getThemeResource("images/Wizard24.png"));
 		copy.setImage(ThemeManager.getThemeResource("images/Copy16.png"));
 		delete.setImage(ThemeManager.getThemeResource("images/Delete24.png"));
 		associate.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
 
+		uploadVersion.addEventListener(Events.ON_CLICK, this);
 		versionList.addEventListener(Events.ON_CLICK, this);
 		paste.addEventListener(Events.ON_CLICK, this);
 		copy.addEventListener(Events.ON_CLICK, this);
@@ -705,6 +710,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(versionList))
 		{
 			new WDMSVersion(DMSViewerComp.getDMSContent());
+		}
+		else if (event.getTarget().equals(uploadVersion))
+		{
+			WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(), this.getRecord_ID());
+			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+
+				@Override
+				public void onEvent(Event arg0) throws Exception
+				{
+					renderViewer();
+				}
+			});
 		}
 		else if (event.getTarget().equals(copy))
 		{
@@ -1062,6 +1079,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			paste.setDisabled(true);
 			associate.setDisabled(true);
 			versionList.setDisabled(true);
+			uploadVersion.setDisabled(true);
 		}
 		else if (copyDMSContent == DMSViewerCom.getDMSContent())
 		{
@@ -1072,6 +1090,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			associate.setDisabled(true);
 			versionList.setDisabled(true);
+			uploadVersion.setDisabled(true);
 		}
 		else
 		{
@@ -1082,6 +1101,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (X_DMS_Content.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType()))
 		{
 			versionList.setDisabled(false);
+			uploadVersion.setDisabled(false);
 			paste.setDisabled(true);
 
 			if (copyDMSContent != null && copyDMSContent != DMSViewerCom.getDMSContent())
