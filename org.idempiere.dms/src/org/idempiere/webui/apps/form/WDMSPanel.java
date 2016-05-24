@@ -1,13 +1,14 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
- * you can redistribute it and/or modify it * under the terms version 2 of the
- * GNU General Public License as published * by the Free Software Foundation.
- * This program is distributed in the hope * that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
- * more details. * You should have received a copy of the GNU General Public
- * License along * with this program; if not, write to the Free Software
- * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
 package org.idempiere.webui.apps.form;
@@ -219,6 +220,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem						delete						= null;
 	private Menuitem						associate					= null;
 	private Menuitem						uploadVersion				= null;
+	private Menuitem						rename						= null;
 
 	private Menuitem						canvasPaste					= null;
 
@@ -237,8 +239,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private boolean							isSearch					= false;
 
-	private static final int				COMPONENT_HEIGHT			= 150;
-	private static final int				COMPONENT_WIDTH				= 150;
+	private static final int				COMPONENT_HEIGHT			= 120;
+	private static final int				COMPONENT_WIDTH				= 120;
+	
+	private static final String				MENUITEM_UPLOADVERSION		= "Upload Version";
+	private static final String				MENUITEM_VERSIONlIST		= "Version List";
+	private static final String				MENUITEM_RENAME				= "Rename";
+	private static final String				MENUITEM_COPY				= "Copy";
+	private static final String				MENUITEM_PASTE				= "Paste";
+	private static final String				MENUITEM_DELETE				= "Delete";
+	private static final String				MENUITEM_ASSOCIATE			= "Associate";
 
 	private DMSViewerComponent				prevComponent				= null;
 
@@ -598,14 +608,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
 
-		versionList = new Menuitem("Version List");
-		copy = new Menuitem("Copy");
-		paste = new Menuitem("Paste");
-		delete = new Menuitem("Delete");
-		associate = new Menuitem("Associate");
-		uploadVersion = new Menuitem("Upload Version");
+		versionList = new Menuitem(MENUITEM_VERSIONlIST);
+		copy = new Menuitem(MENUITEM_COPY);
+		paste = new Menuitem(MENUITEM_PASTE);
+		delete = new Menuitem(MENUITEM_DELETE);
+		associate = new Menuitem(MENUITEM_ASSOCIATE);
+		uploadVersion = new Menuitem(MENUITEM_UPLOADVERSION);
+		rename = new Menuitem(MENUITEM_RENAME);
+		
+		canvasPaste = new Menuitem(MENUITEM_PASTE);
 
-		canvasPaste = new Menuitem("Paste");
 		canvasContextMenu.appendChild(canvasPaste);
 		canvasPaste.addEventListener(Events.ON_CLICK, this);
 
@@ -613,10 +625,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.appendChild(versionList);
 		contentContextMenu.appendChild(copy);
 		contentContextMenu.appendChild(paste);
+		contentContextMenu.appendChild(rename);
 		contentContextMenu.appendChild(delete);
 		contentContextMenu.appendChild(associate);
 
 		uploadVersion.setImage(ThemeManager.getThemeResource("images/Assignment16.png"));
+		rename.setImage(ThemeManager.getThemeResource("images/Editor16.png"));
 		versionList.setImage(ThemeManager.getThemeResource("images/Wizard24.png"));
 		copy.setImage(ThemeManager.getThemeResource("images/Copy16.png"));
 		delete.setImage(ThemeManager.getThemeResource("images/Delete24.png"));
@@ -624,6 +638,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		uploadVersion.addEventListener(Events.ON_CLICK, this);
 		versionList.addEventListener(Events.ON_CLICK, this);
+		rename.addEventListener(Events.ON_CLICK, this);
 		paste.addEventListener(Events.ON_CLICK, this);
 		copy.addEventListener(Events.ON_CLICK, this);
 		delete.addEventListener(Events.ON_CLICK, this);
@@ -713,13 +728,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(uploadVersion))
 		{
-			WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(), this.getRecord_ID());
+			final WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(), this.getRecord_ID());
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
-				public void onEvent(Event arg0) throws Exception
+				public void onEvent(Event e) throws Exception
 				{
-					renderViewer();
+					if(!uploadContent.isCancel())
+					{
+						renderViewer();
+					}
 				}
 			});
 		}
@@ -730,6 +748,22 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(paste))
 		{
 			pasteDocument(dirContent, true);
+		}
+		else if(event.getTarget().equals(rename))
+		{
+			final WRenameContent renameContent = new WRenameContent(dirContent, tableID, recordID);
+			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+
+				@Override
+				public void onEvent(Event e) throws Exception
+				{
+					if(!renameContent.isCancel())
+					{
+						renderViewer();
+					}
+				}
+			});
+			
 		}
 		else if (event.getTarget().equals(delete))
 		{

@@ -181,6 +181,17 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 					rootFolder.mkdirs();
 
 				file = new File(rootFolder + fileSeprator + dirName);
+
+				File files[] = rootFolder.listFiles();
+
+				for (int i = 0; i < files.length; i++)
+				{
+					if (file.getName().equalsIgnoreCase(files[i].getName()))
+					{
+						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists."));
+					}
+				}
+
 				if (!file.exists())
 					file.mkdir();
 				else

@@ -496,12 +496,8 @@ public class Utils
 		solrValue.put(DESCRIPTION, DMSContent.getDescription());
 		solrValue.put(CONTENTTYPE, DMSContent.getDMS_ContentType_ID());
 		solrValue.put(DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
-
-		if (DMSAssociation.getAD_Table_ID() > 0)
-			solrValue.put(AD_Table_ID, DMSAssociation.getAD_Table_ID());
-
-		if (DMSAssociation.getRecord_ID() > 0)
-			solrValue.put(RECORD_ID, DMSAssociation.getRecord_ID());
+		solrValue.put(AD_Table_ID, DMSAssociation.getAD_Table_ID());
+		solrValue.put(RECORD_ID, DMSAssociation.getRecord_ID());
 
 		PreparedStatement stmt = null;
 		ResultSet rs = null;

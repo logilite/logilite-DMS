@@ -1,13 +1,14 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
- * you can redistribute it and/or modify it * under the terms version 2 of the
- * GNU General Public License as published * by the Free Software Foundation.
- * This program is distributed in the hope * that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
- * more details. * You should have received a copy of the GNU General Public
- * License along * with this program; if not, write to the Free Software
- * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
 package org.idempiere.webui.apps.form;
@@ -121,6 +122,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 	private boolean					isVersion				= false;
 	private WDLoadASIPanel			asiPanel				= null;
+	private boolean					cancel					= false;
 
 	/**
 	 * Constructor initialize
@@ -186,7 +188,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		{
 			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
 					Env.getLanguage(Env.getCtx()), X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			contentType = new WTableDirEditor(X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, true, false, true,
+			contentType = new WTableDirEditor(X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true,
 					lookup);
 		}
 		catch (Exception e)
@@ -196,7 +198,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 
 		lblFile.setValue(Msg.getMsg(Env.getCtx(), "SelectFile") + "* ");
-		lblContentType.setValue("DMS Content Type*");
+		lblContentType.setValue("DMS Content Type");
 		btnFileUpload.setLabel("-");
 		btnFileUpload.setWidth("100%");
 		lblDesc.setValue("Description");
@@ -301,7 +303,10 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			saveUploadedDcoument();
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
+		{
+			cancel = true;
 			this.detach();
+		}
 	}
 
 	/**
@@ -309,7 +314,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	private void saveUploadedDcoument()
 	{
-		String regExp = "^[A-Za-z0-9\\s\\-\\._]+$";
+		String regExp = "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
 		int ASI_ID = 0;
 
 		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
@@ -475,9 +480,21 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		if (event.getSource().equals(contentType))
 		{
 			Components.removeAllChildren(tabPanelAttribute);
-			asiPanel = new WDLoadASIPanel((int) contentType.getValue(), 0);
-			tabPanelAttribute.appendChild(asiPanel);
+
+			if (contentType.getValue() != null)
+			{
+				asiPanel = new WDLoadASIPanel((int) contentType.getValue(), 0);
+				tabPanelAttribute.appendChild(asiPanel);
+			}
 		}
+	}
+
+	/**
+	 * @return true if dialog cancel by user
+	 */
+	public boolean isCancel()
+	{
+		return cancel;
 	}
 
 }
