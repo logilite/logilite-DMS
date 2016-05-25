@@ -74,8 +74,8 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 	private Grid							gridView				= GridFactory.newGridLayout();
 
-	private static final int				COMPONENT_HEIGHT		= 150;
-	private static final int				COMPONENT_WIDTH			= 150;
+	private static final int				COMPONENT_HEIGHT		= 120;
+	private static final int				COMPONENT_WIDTH			= 120;
 
 	private static final String				SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
 																			+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "

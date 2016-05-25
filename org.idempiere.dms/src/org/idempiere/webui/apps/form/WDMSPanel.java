@@ -24,6 +24,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.adwindow.BreadCrumbLink;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
@@ -143,7 +145,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public Tab								tabView						= new Tab(Msg.getMsg(Env.getCtx(), "Explorer"));
 	public Tabpanels						tabPanels					= new Tabpanels();
 	public Tabpanel							tabViewPanel				= new Tabpanel();
+
 	private Grid							grid						= GridFactory.newGridLayout();
+	private Grid							gridBreadCrumb				= GridFactory.newGridLayout();
+	private BreadCrumbLink					breadCrumbEvent				= null;
+
+	private Rows							breadRows					= new Rows();
+	private Row								breadRow					= new Row();
 
 	// View Result Tab
 	private Searchbox						vsearchBox					= new Searchbox();
@@ -167,6 +175,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Label							lblUpdatedBy				= new Label(Msg.translate(Env.getCtx(),
 																				"UpdatedBy"));
+
+	private Label							lblShowBreadCrumb			= null;
 
 	private Datebox							dbCreatedTo					= new Datebox();
 	private Datebox							dbCreatedFrom				= new Datebox();
@@ -241,7 +251,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private static final int				COMPONENT_HEIGHT			= 120;
 	private static final int				COMPONENT_WIDTH				= 120;
-	
+
 	private static final String				MENUITEM_UPLOADVERSION		= "Upload Version";
 	private static final String				MENUITEM_VERSIONlIST		= "Version List";
 	private static final String				MENUITEM_RENAME				= "Rename";
@@ -584,9 +594,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		cell = new Cell();
 		cell.setWidth("100%");
 		cell.setStyle("position: absolute;");
+		cell.appendChild(gridBreadCrumb);
 		cell.appendChild(grid);
 		cell.addEventListener(Events.ON_RIGHT_CLICK, this);
 		boxViewSeparator.appendChild(cell);
+
+		gridBreadCrumb
+				.setStyle("width: 100%; position:relative; overflow: auto; background-color: rgba(0,0,0,.2); background-clip: padding-box; color: #222; background: transparent;font-family: Roboto,sans-serif; border: solid transparent; border-width: 1px 1px 1px 6px;min-height: 28px; padding: 100px 0 0;box-shadow: inset 1px 1px 0 rgba(0,0,0,.1),inset 0 -1px 0 rgba(0,0,0,.07);");
+
+		breadRow.setZclass("none");
+		breadRow.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%;");
 
 		Splitter splitter = new Splitter();
 		splitter.setCollapse("after");
@@ -615,7 +632,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		associate = new Menuitem(MENUITEM_ASSOCIATE);
 		uploadVersion = new Menuitem(MENUITEM_UPLOADVERSION);
 		rename = new Menuitem(MENUITEM_RENAME);
-		
+
 		canvasPaste = new Menuitem(MENUITEM_PASTE);
 
 		canvasContextMenu.appendChild(canvasPaste);
@@ -647,7 +664,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		delete.setDisabled(true);
 
 		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-
+		addRootBreadCrumb();
 		SessionManager.getAppDesktop();
 	}
 
@@ -672,7 +689,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(btnBack))
 		{
-			isSearch = false;
+			if(isSearch)
+			{	
+				isSearch = false;
+				currDMSContent = null;
+				lblPositionInfo.setValue(null);
+			}
 			backNavigation();
 		}
 		else if (event.getTarget().equals(btnNext))
@@ -687,13 +709,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH))
 		{
 			isSearch = true;
+			lblPositionInfo.setValue(null);
 			renderViewer();
+			breadRow.getChildren().clear();
 			btnBack.setEnabled(true);
 		}
 		else if (event.getTarget().equals(btnSearch))
 		{
 			isSearch = true;
+			lblPositionInfo.setValue(null);
 			renderViewer();
+			breadRow.getChildren().clear();
 			prevDMSContent = currDMSContent;
 			btnBack.setEnabled(true);
 		}
@@ -728,13 +754,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(uploadVersion))
 		{
-			final WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(), this.getRecord_ID());
+			final WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(),
+					this.getRecord_ID());
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event e) throws Exception
 				{
-					if(!uploadContent.isCancel())
+					if (!uploadContent.isCancel())
 					{
 						renderViewer();
 					}
@@ -749,7 +776,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			pasteDocument(dirContent, true);
 		}
-		else if(event.getTarget().equals(rename))
+		else if (event.getTarget().equals(rename))
 		{
 			final WRenameContent renameContent = new WRenameContent(dirContent, tableID, recordID);
 			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
@@ -757,13 +784,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				@Override
 				public void onEvent(Event e) throws Exception
 				{
-					if(!renameContent.isCancel())
+					if (!renameContent.isCancel())
 					{
 						renderViewer();
 					}
 				}
 			});
-			
+
 		}
 		else if (event.getTarget().equals(delete))
 		{
@@ -781,6 +808,51 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			renderViewer();
 		}
+		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(BreadCrumbLink.class))
+		{
+			renderBreadCrumb(event);
+		}
+	}
+
+	private void renderBreadCrumb(Event event) throws IOException, URISyntaxException
+	{
+		breadCrumbEvent = (BreadCrumbLink) event.getTarget();
+
+		int DMS_Content_ID = DB.getSQLValue(null,
+				"SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ? ",
+				Integer.valueOf(breadCrumbEvent.getPathId()));
+
+		currDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+
+		lblPositionInfo.setValue(currDMSContent.getName());
+
+		List<BreadCrumbLink> parents = getParentLinks();
+		if (!parents.isEmpty())
+		{
+			breadRow.getChildren().clear();
+			Iterator<BreadCrumbLink> iterator = parents.iterator();
+			while (iterator.hasNext())
+			{
+				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
+				breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+				
+				breadRow.appendChild(breadCrumbLink);
+				
+				lblShowBreadCrumb = new Label();
+				lblShowBreadCrumb.setValue(" >");
+				breadRow.appendChild(new Space());
+				breadRow.appendChild(lblShowBreadCrumb);
+
+				if (Integer.valueOf(breadCrumbLink.getPathId()) == currDMSContent.getDMS_Content_ID())
+				{
+					breadRow.removeChild(lblShowBreadCrumb);
+					break;
+				}
+				breadRows.appendChild(breadRow);
+				gridBreadCrumb.appendChild(breadRows);
+			}
+		}
+		renderViewer();		
 	}
 
 	/**
@@ -955,6 +1027,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (selectedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 		{
 			currDMSContent = selectedContent;
+			showBreadcumb(currDMSContent);
 			renderViewer();
 			lblPositionInfo.setValue(selectedContent.getName());
 			btnBack.setEnabled(true);
@@ -1010,6 +1083,42 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void backNavigation() throws IOException, URISyntaxException
 	{
+		List<BreadCrumbLink> parents = getParentLinks();
+		if (!parents.isEmpty())
+		{
+			breadRow.getChildren().clear();
+			int count = 0;
+			Iterator<BreadCrumbLink> iterator = parents.iterator();
+			while (iterator.hasNext())
+			{
+				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
+				breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+
+				if (currDMSContent != null && parents.size() > 1)
+				{
+					breadRow.appendChild(breadCrumbLink);
+					lblShowBreadCrumb = new Label();
+					lblShowBreadCrumb.setValue(" >");
+					breadRow.appendChild(new Space());
+					breadRow.appendChild(lblShowBreadCrumb);
+
+					count++;
+
+					if (parents.size() - 1 == count)
+					{
+						breadRow.removeChild(lblShowBreadCrumb);
+						break;
+					}
+				}
+				breadRows.appendChild(breadRow);
+				gridBreadCrumb.appendChild(breadRows);
+			}
+		}
+		else
+		{
+			addRootBreadCrumb();
+		}
+
 		nextDMSContent = currDMSContent;
 
 		if (currDMSContent != null)
@@ -1025,6 +1134,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				currDMSContent = null;
 				lblPositionInfo.setValue("");
 				btnBack.setEnabled(false);
+
+				lblShowBreadCrumb = new Label();
+				lblShowBreadCrumb.setValue(" > ");
+				breadRow.appendChild(new Space());
+				breadRow.appendChild(lblShowBreadCrumb);
 			}
 			else
 			{
@@ -1052,6 +1166,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void directoryNavigation() throws IOException, URISyntaxException
 	{
+		BreadCrumbLink breadCrumbLink = new BreadCrumbLink();
+		breadCrumbLink.setPathId(nextDMSContent.getName());
+		breadCrumbLink.setLabel(nextDMSContent.getName());
+		breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+
+		breadRow.appendChild(breadCrumbLink);
+		breadRows.appendChild(breadRow);
+		gridBreadCrumb.appendChild(breadRows);
+
 		if (nextDMSContent != null)
 		{
 			currDMSContent = nextDMSContent;
@@ -1711,4 +1834,59 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 	}
+
+	private void showBreadcumb(MDMSContent breadcumbContent)
+	{
+		Components.removeAllChildren(gridBreadCrumb);
+
+		if (breadcumbContent.getParentURL() != null)
+		{
+			lblShowBreadCrumb = new Label();
+			lblShowBreadCrumb.setValue(" > ");
+			breadRow.appendChild(new Space());
+			breadRow.appendChild(lblShowBreadCrumb);
+		}
+
+		BreadCrumbLink breadCrumbLink = new BreadCrumbLink();
+		breadCrumbLink.setPathId(String.valueOf(breadcumbContent.getDMS_Content_ID()));
+		breadCrumbLink.addEventListener(Events.ON_CLICK, this);
+		// breadCrumbLink.addEventListener(Events.ON_MOUSE_OVER, this);
+		breadCrumbLink.setLabel(breadcumbContent.getName());
+		breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+
+		breadRow.appendChild(breadCrumbLink);
+		breadRows.appendChild(breadRow);
+		gridBreadCrumb.appendChild(breadRows);
+	}
+
+	public List<BreadCrumbLink> getParentLinks()
+	{
+		List<BreadCrumbLink> parents = new ArrayList<BreadCrumbLink>();
+		for (Component component : breadRow.getChildren())
+		{
+			if (component instanceof BreadCrumbLink)
+				parents.add((BreadCrumbLink) component);
+		}
+		return parents;
+	}
+	
+	private void addRootBreadCrumb()
+	{
+		BreadCrumbLink rootBreadCrumbLink = new BreadCrumbLink();
+
+		rootBreadCrumbLink.setLabel("/");
+		rootBreadCrumbLink.setPathId(String.valueOf(0));
+		rootBreadCrumbLink.addEventListener(Events.ON_CLICK, this);
+		rootBreadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+
+		breadRow.appendChild(rootBreadCrumbLink);
+		lblShowBreadCrumb = new Label();
+		lblShowBreadCrumb.setValue(" > ");
+		breadRow.appendChild(new Space());
+		breadRow.appendChild(lblShowBreadCrumb);
+
+		breadRows.appendChild(breadRow);
+		gridBreadCrumb.appendChild(breadRows);
+	}
+
 }

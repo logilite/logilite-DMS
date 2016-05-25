@@ -159,7 +159,7 @@ public class WDLoadASIPanel extends Panel
 
 			if (attribute.isMandatory())
 			{
-				label.setValue(label.getValue() + "*");
+				label.setValue(label.getValue());
 			}
 
 			row.appendChild(label);

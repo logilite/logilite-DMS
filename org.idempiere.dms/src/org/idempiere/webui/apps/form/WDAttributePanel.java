@@ -361,8 +361,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false);
 					viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
 
-					viewerComponenet.setDheight(150);
-					viewerComponenet.setDwidth(150);
+					viewerComponenet.setDheight(100);
+					viewerComponenet.setDwidth(100);
 
 					viewerComponenet.getfLabel().setStyle(
 							"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
