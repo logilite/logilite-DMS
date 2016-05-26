@@ -17,8 +17,27 @@
       [Enter License Description here.]
    </license>
 
+   <requires>
+      <import plugin="org.adempiere.plugin.utils" version="3.1.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.base" version="3.1.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.ui.zk" version="3.1.0" match="greaterOrEqual"/>
+      <import plugin="org.zkoss.zk.library" version="7.0.7" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.ui" version="3.1.0" match="greaterOrEqual"/>
+      <import plugin="org.apache.commons.net"/>
+      <import plugin="com.logilite.search" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.osgi"/>
+      <import plugin="org.eclipse.osgi.services"/>
+   </requires>
+
    <plugin
          id="org.idempiere.dms"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.search"
          download-size="0"
          install-size="0"
          version="0.0.0"
