@@ -149,8 +149,13 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	@Override
 	public String getBaseDirectory(String path)
 	{
-		if (path != null)
-			return baseDir + fileSeparator + path;
+		if (!Util.isEmpty(path))
+		{
+			if (path.charAt(0) == fileSeparator.charAt(0))
+				return baseDir + path;
+			else
+				return baseDir + fileSeparator + path;
+		}
 		else
 			return baseDir;
 	}

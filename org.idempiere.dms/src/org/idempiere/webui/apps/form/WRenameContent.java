@@ -16,7 +16,6 @@ package org.idempiere.webui.apps.form;
 import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -55,45 +54,34 @@ public class WRenameContent extends Window implements EventListener<Event>
 	/**
 	 * 
 	 */
-	private static final long		serialVersionUID				= -4440351217070536198L;
-	private static CLogger			log								= CLogger.getCLogger(WRenameContent.class);
+	private static final long		serialVersionUID	= -4440351217070536198L;
+	private static CLogger			log					= CLogger.getCLogger(WRenameContent.class);
 
-	private static final String		SQL_GET_RELATED_FOLDER_CONTENT	= " WITH ContentAssociation AS ( SELECT c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, "
-																			+ " a.Record_ID FROM DMS_Association a "
-																			+ " INNER JOIN DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID) ) "
-																			+ " SELECT "
-																			+ " DMS_Content_ID,DMS_Association_ID FROM ContentAssociation ca WHERE (COALESCE(AD_Table_ID,0) = COALESCE(?,0) AND COALESCE(Record_ID,0) = COALESCE(?,0) "
-																			+ " AND COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0)) OR (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND ContentBaseType = 'DIR') "
-																			+ " OR (CASE WHEN (? = 0 AND ? = 0) THEN ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND COALESCE(AD_Table_ID,0) != 0 "
-																			+ " AND COALESCE(Record_ID,0) != 0)) ELSE ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND AD_Table_ID = ? AND Record_ID = ?)) END)";
+	private static final String		spFileSeprator		= Utils.getStorageProviderFileSeparator();
 
-	private static final String		SQL_GET_RELATED_CONTENT			= "SELECT DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ?";
+	private MDMSContent				DMSContent			= null;
 
-	private static final String		spFileSeprator					= Utils.getStorageProviderFileSeparator();
+	private Grid					gridView			= null;
 
-	private MDMSContent				DMSContent						= null;
+	private Textbox					txtName				= null;
 
-	private Grid					gridView						= null;
+	private Label					lblName				= null;
 
-	private Textbox					txtName							= null;
+	private ConfirmPanel			confirmpanel		= null;
 
-	private Label					lblName							= null;
+	private Button					btnOk				= null;
+	private Button					btnCancel			= null;
 
-	private ConfirmPanel			confirmpanel					= null;
+	private boolean					cancel				= false;
 
-	private Button					btnOk							= null;
-	private Button					btnCancel						= null;
+	private IContentManager			contentManager		= null;
+	private IFileStorageProvider	fileStorgProvider	= null;
 
-	private boolean					cancel							= false;
+	private int						tableID				= 0;
+	private int						recordID			= 0;
 
-	private IContentManager			contentManager					= null;
-	private IFileStorageProvider	fileStorgProvider				= null;
-
-	private int						tableID							= 0;
-	private int						recordID						= 0;
-
-	private String					baseURL							= null;
-	private String					renamedURL						= null;
+	private String					baseURL				= null;
+	private String					renamedURL			= null;
 
 	public WRenameContent(MDMSContent DMSContent, int tableID, int recordID)
 	{
@@ -260,7 +248,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 				else
 					renamedURL = spFileSeprator + txtName.getValue();
 
-				renameDBPath(DMSContent);
+				Utils.renameFolder(DMSContent, baseURL, renamedURL, tableID, recordID);
 				dirPath.renameTo(newFile);
 
 				DMSContent.setName(txtName.getValue());
@@ -275,7 +263,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 					content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 					renameFile(content);
 
-					pstmt = DB.prepareStatement(SQL_GET_RELATED_CONTENT, null);
+					pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_CONTENT, null);
 					pstmt.setInt(1, DMS_Content_ID);
 
 					rs = pstmt.executeQuery();
@@ -289,7 +277,8 @@ public class WRenameContent extends Window implements EventListener<Event>
 				}
 				catch (Exception e)
 				{
-
+					log.log(Level.SEVERE, "Rename content failure.", e);
+					throw new AdempiereException("Rename content failure: " + e.getLocalizedMessage());
 				}
 				finally
 				{
@@ -326,77 +315,5 @@ public class WRenameContent extends Window implements EventListener<Event>
 		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf("/") + 1,
 				newFile.getAbsolutePath().length()));
 		content.saveEx();
-	}
-
-	private void renameDBPath(MDMSContent content)
-	{
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-
-		try
-		{
-			pstmt = DB.prepareStatement(SQL_GET_RELATED_FOLDER_CONTENT, null);
-			pstmt.setInt(1, tableID);
-			pstmt.setInt(2, recordID);
-			pstmt.setInt(3, content.getDMS_Content_ID());
-			pstmt.setInt(4, content.getDMS_Content_ID());
-			pstmt.setInt(5, tableID);
-			pstmt.setInt(6, recordID);
-			pstmt.setInt(7, content.getDMS_Content_ID());
-			pstmt.setInt(8, content.getDMS_Content_ID());
-			pstmt.setInt(9, tableID);
-			pstmt.setInt(10, recordID);
-
-			rs = pstmt.executeQuery();
-
-			while (rs.next())
-			{
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-
-				if (dmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-				{
-					if (dmsContent.getParentURL().startsWith(baseURL))
-					{
-						dmsContent.setParentURL(dmsContent.getParentURL().replaceFirst(baseURL, renamedURL));
-						dmsContent.saveEx();
-					}
-					renameDBPath(dmsContent);
-				}
-				else
-				{
-					PreparedStatement ps = DB.prepareStatement(SQL_GET_RELATED_CONTENT, null);
-					ps.setInt(1, dmsContent.getDMS_Content_ID());
-					ResultSet res = ps.executeQuery();
-
-					if (dmsContent.getParentURL().startsWith(baseURL))
-					{
-						dmsContent.setParentURL(dmsContent.getParentURL().replaceFirst(baseURL, renamedURL));
-						dmsContent.saveEx();
-					}
-
-					while (res.next())
-					{
-						MDMSContent content_file = new MDMSContent(Env.getCtx(), res.getInt("DMS_Content_ID"), null);
-
-						if (content_file.getParentURL().startsWith(baseURL))
-						{
-							content_file.setParentURL(content_file.getParentURL().replaceFirst(baseURL, renamedURL));
-							content_file.saveEx();
-						}
-					}
-				}
-			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Content renaming failure: ", e);
-			throw new AdempiereException("Content renaming failure: " + e.getLocalizedMessage());
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
 	}
 }

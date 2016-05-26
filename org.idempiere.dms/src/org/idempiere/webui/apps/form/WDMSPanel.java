@@ -140,6 +140,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 																				+ "GROUP BY DMS_Content_ID,DMS_Association_ID "
 																				+ "ORDER BY Max(seqNo) DESC FETCH FIRST ROW ONLY";
 
+	private static final String				spFileSeprator				= Utils.getStorageProviderFileSeparator();
+
 	public Tabbox							tabBox						= new Tabbox();
 	private Tabs							tabs						= new Tabs();
 	public Tab								tabView						= new Tab(Msg.getMsg(Env.getCtx(), "Explorer"));
@@ -212,6 +214,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private MDMSContent						currDMSContent				= null;
 	private MDMSContent						prevDMSContent				= null;
 	private MDMSContent						nextDMSContent				= null;
+	private MDMSContent						cutDMSContent				= null;
 
 	private ArrayList<DMSViewerComponent>	viewerComponents			= null;
 
@@ -226,12 +229,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Menuitem						versionList					= null;
 	private Menuitem						copy						= null;
-	private Menuitem						paste						= null;
+	private Menuitem						createLink					= null;
 	private Menuitem						delete						= null;
 	private Menuitem						associate					= null;
 	private Menuitem						uploadVersion				= null;
 	private Menuitem						rename						= null;
+	private Menuitem						cut							= null;
+	private Menuitem						paste						= null;
 
+	private Menuitem						canvasCreateLink			= null;
 	private Menuitem						canvasPaste					= null;
 
 	private DMSViewerComponent				DMSViewerComp				= null;
@@ -248,6 +254,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public int								tableID						= 0;
 
 	private boolean							isSearch					= false;
+	private boolean							isCut						= false;
+	private boolean							isCopy						= false;
 
 	private static final int				COMPONENT_HEIGHT			= 120;
 	private static final int				COMPONENT_WIDTH				= 120;
@@ -255,8 +263,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private static final String				MENUITEM_UPLOADVERSION		= "Upload Version";
 	private static final String				MENUITEM_VERSIONlIST		= "Version List";
 	private static final String				MENUITEM_RENAME				= "Rename";
+	private static final String				MENUITEM_CUT				= "Cut";
 	private static final String				MENUITEM_COPY				= "Copy";
 	private static final String				MENUITEM_PASTE				= "Paste";
+	private static final String				MENUITEM_CREATELINK			= "Create Link";
 	private static final String				MENUITEM_DELETE				= "Delete";
 	private static final String				MENUITEM_ASSOCIATE			= "Associate";
 
@@ -626,37 +636,49 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
 
 		versionList = new Menuitem(MENUITEM_VERSIONlIST);
+		cut = new Menuitem(MENUITEM_CUT);
 		copy = new Menuitem(MENUITEM_COPY);
 		paste = new Menuitem(MENUITEM_PASTE);
+		createLink = new Menuitem(MENUITEM_CREATELINK);
 		delete = new Menuitem(MENUITEM_DELETE);
 		associate = new Menuitem(MENUITEM_ASSOCIATE);
 		uploadVersion = new Menuitem(MENUITEM_UPLOADVERSION);
 		rename = new Menuitem(MENUITEM_RENAME);
 
+		canvasCreateLink = new Menuitem(MENUITEM_CREATELINK);
 		canvasPaste = new Menuitem(MENUITEM_PASTE);
 
 		canvasContextMenu.appendChild(canvasPaste);
+		canvasContextMenu.appendChild(canvasCreateLink);
+		canvasCreateLink.addEventListener(Events.ON_CLICK, this);
 		canvasPaste.addEventListener(Events.ON_CLICK, this);
+
+		canvasCreateLink.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
 
 		contentContextMenu.appendChild(uploadVersion);
 		contentContextMenu.appendChild(versionList);
+		contentContextMenu.appendChild(cut);
 		contentContextMenu.appendChild(copy);
 		contentContextMenu.appendChild(paste);
+		contentContextMenu.appendChild(createLink);
 		contentContextMenu.appendChild(rename);
 		contentContextMenu.appendChild(delete);
 		contentContextMenu.appendChild(associate);
 
-		uploadVersion.setImage(ThemeManager.getThemeResource("images/Assignment16.png"));
-		rename.setImage(ThemeManager.getThemeResource("images/Editor16.png"));
+		uploadVersion.setImage(ThemeManager.getThemeResource("images/Assignment24.png"));
+		rename.setImage(ThemeManager.getThemeResource("images/Editor24.png"));
+		cut.setImage(ThemeManager.getThemeResource("images/Cancel24.png"));
 		versionList.setImage(ThemeManager.getThemeResource("images/Wizard24.png"));
-		copy.setImage(ThemeManager.getThemeResource("images/Copy16.png"));
+		copy.setImage(ThemeManager.getThemeResource("images/Copy24.png"));
 		delete.setImage(ThemeManager.getThemeResource("images/Delete24.png"));
 		associate.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
 
 		uploadVersion.addEventListener(Events.ON_CLICK, this);
 		versionList.addEventListener(Events.ON_CLICK, this);
-		rename.addEventListener(Events.ON_CLICK, this);
+		cut.addEventListener(Events.ON_CLICK, this);
 		paste.addEventListener(Events.ON_CLICK, this);
+		rename.addEventListener(Events.ON_CLICK, this);
+		createLink.addEventListener(Events.ON_CLICK, this);
 		copy.addEventListener(Events.ON_CLICK, this);
 		delete.addEventListener(Events.ON_CLICK, this);
 		associate.addEventListener(Events.ON_CLICK, this);
@@ -689,8 +711,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(btnBack))
 		{
-			if(isSearch)
-			{	
+			if (isSearch)
+			{
 				isSearch = false;
 				currDMSContent = null;
 				lblPositionInfo.setValue(null);
@@ -770,11 +792,33 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(copy))
 		{
+			isCopy = true;
+			isCut = false;
 			DMSClipboard.put(DMSViewerComp.getDMSContent());
 		}
-		else if (event.getTarget().equals(paste))
+		else if (event.getTarget().equals(createLink))
 		{
-			pasteDocument(dirContent, true);
+			linkCopyDocument(dirContent, true);
+		}
+		else if (event.getTarget().equals(cut))
+		{
+			cutDMSContent = dirContent;
+			isCut = true;
+			isCopy = false;
+		}
+		else if (event.getTarget().equals(paste) || event.getTarget().equals(canvasPaste))
+		{
+			if (isCut && cutDMSContent != null)
+			{
+				MDMSContent destPasteContent = dirContent;
+				pasteCutContent(cutDMSContent, destPasteContent);
+				renderViewer();
+				isCut = false;
+			}
+			else if (isCopy)
+			{
+
+			}
 		}
 		else if (event.getTarget().equals(rename))
 		{
@@ -800,9 +844,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			new WDAssociationType(copyDMSContent, DMSViewerComp.getDMSContent());
 		}
-		else if (event.getTarget().equals(canvasPaste))
+		else if (event.getTarget().equals(canvasCreateLink))
 		{
-			pasteDocument(currDMSContent, false);
+			linkCopyDocument(currDMSContent, false);
 		}
 		else if (event.getName().equals("onUploadComplete"))
 		{
@@ -814,12 +858,141 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 	}
 
+	private void pasteCutContent(MDMSContent sourceCutContent, MDMSContent destPasteContent)
+	{
+
+		if (sourceCutContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		{
+			int DMS_Association_ID = DB
+					.getSQLValue(
+							null,
+							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created FETCH FIRST ROW ONLY",
+							sourceCutContent.getDMS_Content_ID());
+
+			String baseURL = null;
+			String renamedURL = null;
+
+			if (!Util.isEmpty(sourceCutContent.getParentURL()))
+				baseURL = contentManager.getPath(sourceCutContent);
+			else
+				baseURL = spFileSeprator + sourceCutContent.getName();
+
+			File dirPath = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(sourceCutContent)));
+			String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
+
+			File files[] = new File(newFileName).listFiles();
+
+			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+				newFileName = newFileName + sourceCutContent.getName();
+			else
+				newFileName = newFileName + spFileSeprator + sourceCutContent.getName();
+
+			File newFile = new File(newFileName);
+
+			for (int i = 0; i < files.length; i++)
+			{
+				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
+				{
+					throw new AdempiereException("Directory already exists.");
+				}
+			}
+
+			renamedURL = contentManager.getPath(destPasteContent) + spFileSeprator + sourceCutContent.getName();
+
+			Utils.renameFolder(sourceCutContent, baseURL, renamedURL, tableID, recordID);
+			dirPath.renameTo(newFile);
+
+			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+			if (destPasteContent != null)
+			{
+				dmsAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
+				sourceCutContent.setParentURL(contentManager.getPath(destPasteContent));
+			}
+			else
+			{
+				dmsAssociation.setDMS_Content_Related_ID(0);
+				sourceCutContent.setParentURL(null);
+			}
+
+			sourceCutContent.saveEx();
+			dmsAssociation.saveEx();
+		}
+		else
+		{
+			int DMS_Content_ID = Utils.getDMS_Content_Related_ID(sourceCutContent);
+
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+
+			try
+			{
+				pstmt = DB
+						.prepareStatement(
+								"SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID",
+								null);
+
+				pstmt.setInt(1, DMS_Content_ID);
+				pstmt.setInt(2, DMS_Content_ID);
+
+				rs = pstmt.executeQuery();
+
+				while (rs.next())
+				{
+					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+					MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
+							null);
+
+					moveFile(dmsContent, destPasteContent);
+					if (dmsAssociation.getDMS_AssociationType_ID() == 1000001)
+					{
+						if (destPasteContent != null && destPasteContent.getDMS_Content_ID() == 0)
+						{
+							destPasteContent = null;
+						}
+
+						if(destPasteContent == null || destPasteContent.getDMS_Content_ID() == 0)
+						{
+							dmsAssociation.setDMS_Content_Related_ID(0);
+							dmsAssociation.saveEx();
+						}
+						else
+						{
+							dmsAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
+							dmsAssociation.saveEx();
+						}
+					}
+
+					dmsContent.setParentURL(contentManager.getPath(destPasteContent));
+					dmsContent.saveEx();
+				}
+			}
+			catch (SQLException e)
+			{
+				log.log(Level.SEVERE, "Content move failure.", e);
+				throw new AdempiereException("Content move failure." + e.getLocalizedMessage());
+			}
+		}
+	}
+
+	private void moveFile(MDMSContent dmsContent, MDMSContent destContent)
+	{
+		String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destContent));
+		newPath = newPath + spFileSeprator + dmsContent.getName();
+
+		File oldFile = new File(fileStorageProvider.getFile(contentManager.getPath(dmsContent)).getAbsolutePath());
+		File newFile = new File(newPath);
+
+		if (!newFile.exists())
+		{
+			oldFile.renameTo(newFile);
+		}
+	}
+
 	private void renderBreadCrumb(Event event) throws IOException, URISyntaxException
 	{
 		breadCrumbEvent = (BreadCrumbLink) event.getTarget();
 
-		int DMS_Content_ID = DB.getSQLValue(null,
-				"SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ? ",
+		int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ? ",
 				Integer.valueOf(breadCrumbEvent.getPathId()));
 
 		currDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
@@ -835,9 +1008,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
 				breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
-				
+
 				breadRow.appendChild(breadCrumbLink);
-				
+
 				lblShowBreadCrumb = new Label();
 				lblShowBreadCrumb.setValue(" >");
 				breadRow.appendChild(new Space());
@@ -852,7 +1025,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				gridBreadCrumb.appendChild(breadRows);
 			}
 		}
-		renderViewer();		
+		renderViewer();
 	}
 
 	/**
@@ -1234,32 +1407,40 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (copyDMSContent == null)
 		{
 			paste.setDisabled(true);
+			canvasPaste.setDisabled(true);
+			createLink.setDisabled(true);
 			associate.setDisabled(true);
 			versionList.setDisabled(true);
 			uploadVersion.setDisabled(true);
 		}
 		else if (copyDMSContent == DMSViewerCom.getDMSContent())
 		{
-			associate.setDisabled(true);
 			paste.setDisabled(true);
+			canvasPaste.setDisabled(true);
+			associate.setDisabled(true);
+			createLink.setDisabled(true);
 		}
 		else if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getDMSContent().getContentBaseType()))
 		{
+			paste.setDisabled(false);
+			canvasPaste.setDisabled(false);
 			associate.setDisabled(true);
 			versionList.setDisabled(true);
 			uploadVersion.setDisabled(true);
 		}
 		else
 		{
-			paste.setDisabled(false);
+			createLink.setDisabled(false);
 			associate.setDisabled(false);
 		}
 
 		if (X_DMS_Content.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType()))
 		{
 			versionList.setDisabled(false);
-			uploadVersion.setDisabled(false);
 			paste.setDisabled(true);
+			canvasPaste.setDisabled(true);
+			uploadVersion.setDisabled(false);
+			createLink.setDisabled(true);
 
 			if (copyDMSContent != null && copyDMSContent != DMSViewerCom.getDMSContent())
 				associate.setDisabled(false);
@@ -1270,7 +1451,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType()))
 		{
 			if (copyDMSContent != null)
+				createLink.setDisabled(false);
+
+			if (cutDMSContent != null)
+			{
 				paste.setDisabled(false);
+				canvasPaste.setDisabled(false);
+			}
 		}
 
 		copy.setDisabled(false);
@@ -1308,10 +1495,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		Cell cell = (Cell) event.getTarget();
 
+		dirContent = currDMSContent;
 		canvasContextMenu.setPage(cell.getPage());
 		cell.setContext(canvasContextMenu);
 
 		if (DMSClipboard.get() == null)
+		{
+			canvasCreateLink.setDisabled(true);
+		}
+		else
+		{
+			canvasCreateLink.setDisabled(false);
+		}
+
+		if (cutDMSContent == null)
 		{
 			canvasPaste.setDisabled(true);
 		}
@@ -1319,9 +1516,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			canvasPaste.setDisabled(false);
 		}
+		
+		if(!isCut)
+		{
+		   canvasPaste.setDisabled(true);
+		}
+		else
+		{
+			canvasPaste.setDisabled(false);
+		}
 	}
 
-	private void pasteDocument(MDMSContent DMSContent, boolean isDir)
+	private void linkCopyDocument(MDMSContent DMSContent, boolean isDir)
 	{
 		boolean isDocPresent = false;
 
@@ -1869,7 +2075,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		return parents;
 	}
-	
+
 	private void addRootBreadCrumb()
 	{
 		BreadCrumbLink rootBreadCrumbLink = new BreadCrumbLink();
@@ -1888,5 +2094,4 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
 	}
-
 }
