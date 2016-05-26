@@ -1,6 +1,6 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Dms
+Bundle-Name: DMS
 Bundle-SymbolicName: org.idempiere.dms;singleton:=true
 Bundle-Version: 1.0.17.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
