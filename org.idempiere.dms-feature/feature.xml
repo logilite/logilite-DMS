@@ -25,7 +25,7 @@
       <import plugin="org.adempiere.ui" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.apache.commons.net"/>
       <import plugin="com.logilite.search" version="1.0.0" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.osgi"/>
+      <import plugin="org.eclipse.osgi" version="3.10.2" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi.services"/>
    </requires>
 
