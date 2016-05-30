@@ -63,10 +63,13 @@ import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
+import org.apache.commons.io.FileUtils;
+import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MColumn;
 import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
+import org.compiere.model.PO;
 import org.compiere.model.X_AD_User;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -77,6 +80,7 @@ import org.compiere.util.Util;
 import org.idempiere.componenet.DMSViewerComponent;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentManager;
+import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.FileStorageUtil;
@@ -730,20 +734,49 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH))
 		{
-			isSearch = true;
-			lblPositionInfo.setValue(null);
+			HashMap<String, List<Object>> params = getQueryParamas();
+			String query = indexSeracher.buildSolrSearchQuery(params);
+
+			if (query.equals("*:*"))
+			{
+				isSearch = false;
+				if (currDMSContent != null)
+					lblPositionInfo.setValue(currDMSContent.getName());
+				else
+					lblPositionInfo.setValue(null);
+			}
+			else
+			{
+				isSearch = true;
+				breadRow.getChildren().clear();
+				btnBack.setEnabled(true);
+				lblPositionInfo.setValue(null);
+			}
+
 			renderViewer();
-			breadRow.getChildren().clear();
-			btnBack.setEnabled(true);
 		}
 		else if (event.getTarget().equals(btnSearch))
 		{
-			isSearch = true;
-			lblPositionInfo.setValue(null);
+			HashMap<String, List<Object>> params = getQueryParamas();
+			String query = indexSeracher.buildSolrSearchQuery(params);
+
+			if (query.equals("*:*"))
+			{
+				isSearch = false;
+				if (currDMSContent != null)
+					lblPositionInfo.setValue(currDMSContent.getName());
+				else
+					lblPositionInfo.setValue(null);
+			}
+			else
+			{
+				isSearch = true;
+				breadRow.getChildren().clear();
+				btnBack.setEnabled(true);
+				lblPositionInfo.setValue(null);
+			}
+
 			renderViewer();
-			breadRow.getChildren().clear();
-			prevDMSContent = currDMSContent;
-			btnBack.setEnabled(true);
 		}
 		else if (Events.ON_CLICK.equals(event.getName())
 				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
@@ -815,9 +848,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				renderViewer();
 				isCut = false;
 			}
-			else if (isCopy)
+			else if (isCopy && DMSClipboard.get() != null)
 			{
-
+				MDMSContent copiedContent = DMSClipboard.get();
+				MDMSContent destPasteContent = dirContent;
+				pasteCopyContent(copiedContent, destPasteContent);
+				renderViewer();
 			}
 		}
 		else if (event.getTarget().equals(rename))
@@ -858,9 +894,311 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 	}
 
+	private void pasteCopyContent(MDMSContent copiedContent, MDMSContent destPasteContent) throws IOException,
+			SQLException
+	{
+		if (copiedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		{
+			int DMS_Association_ID = DB
+					.getSQLValue(
+							null,
+							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created FETCH FIRST ROW ONLY",
+							copiedContent.getDMS_Content_ID());
+
+			String baseURL = null;
+			String renamedURL = null;
+
+			if (!Util.isEmpty(copiedContent.getParentURL()))
+				baseURL = contentManager.getPath(copiedContent);
+			else
+				baseURL = spFileSeprator + copiedContent.getName();
+
+			File dirPath = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
+			String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
+
+			File files[] = new File(newFileName).listFiles();
+
+			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+				newFileName = newFileName + copiedContent.getName();
+			else
+				newFileName = newFileName + spFileSeprator + copiedContent.getName();
+
+			File newFile = new File(newFileName);
+
+			for (int i = 0; i < files.length; i++)
+			{
+				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
+				{
+					throw new AdempiereException("Directory already exists.");
+				}
+			}
+
+			renamedURL = contentManager.getPath(destPasteContent) + spFileSeprator + copiedContent.getName();
+
+			MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), copiedContent.getDMS_Content_ID(), null);
+
+			MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
+
+			PO.copyValues(oldDMSContent, newDMSContent);
+
+			MAttributeSetInstance oldASI = null;
+			MAttributeSetInstance newASI = null;
+			if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
+			{
+				oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), null);
+				newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
+				PO.copyValues(oldASI, newASI);
+				newASI.saveEx();
+			}
+			if (newASI != null)
+				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
+
+			newDMSContent.setParentURL(contentManager.getPath(destPasteContent));
+
+			newDMSContent.saveEx();
+
+			MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+			MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
+
+			PO.copyValues(oldDMSAssociation, newDMSAssociation);
+
+			newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
+			if (destPasteContent != null && destPasteContent.getDMS_Content_ID() > 0)
+			{
+				newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
+			}
+			else
+			{
+				newDMSAssociation.setDMS_Content_Related_ID(0);
+			}
+			newDMSAssociation.saveEx();
+
+			copyContent(copiedContent, baseURL, renamedURL, newDMSContent);
+			try
+			{
+				FileUtils.copyDirectory(dirPath, newFile);
+			}
+			catch (IOException e)
+			{
+				log.log(Level.SEVERE, "Copy Content Failure.", e);
+				throw new AdempiereException("Copy Content Failure." + e.getLocalizedMessage());
+			}
+		}
+		else
+		{
+			pasteCopyFileContent(copiedContent, destPasteContent);
+		}
+	}
+
+	private void copyContent(MDMSContent copiedContent, String baseURL, String renamedURL, MDMSContent destPasteContent)
+			throws IOException
+	{
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+
+		try
+		{
+			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT, null);
+			pstmt.setInt(1, tableID);
+			pstmt.setInt(2, recordID);
+			pstmt.setInt(3, copiedContent.getDMS_Content_ID());
+			pstmt.setInt(4, copiedContent.getDMS_Content_ID());
+			pstmt.setInt(5, tableID);
+			pstmt.setInt(6, recordID);
+			pstmt.setInt(7, copiedContent.getDMS_Content_ID());
+			pstmt.setInt(8, copiedContent.getDMS_Content_ID());
+			pstmt.setInt(9, tableID);
+			pstmt.setInt(10, recordID);
+
+			rs = pstmt.executeQuery();
+
+			while (rs.next())
+			{
+				MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				if (oldDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+				{
+					MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
+
+					PO.copyValues(oldDMSContent, newDMSContent);
+
+					MAttributeSetInstance oldASI = null;
+					MAttributeSetInstance newASI = null;
+					if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
+					{
+						oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(),
+								null);
+						newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
+						PO.copyValues(oldASI, newASI);
+						newASI.saveEx();
+					}
+					if (newASI != null)
+						newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
+
+					newDMSContent.saveEx();
+
+					MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(),
+							rs.getInt("DMS_Association_ID"), null);
+					MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
+
+					PO.copyValues(oldDMSAssociation, newDMSAssociation);
+
+					newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
+					newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
+					newDMSAssociation.saveEx();
+
+					if (oldDMSContent.getParentURL().startsWith(baseURL))
+					{
+						newDMSContent.setParentURL(oldDMSContent.getParentURL().replaceFirst(baseURL, renamedURL));
+						newDMSContent.saveEx();
+					}
+					copyContent(oldDMSContent, baseURL, renamedURL, newDMSContent);
+				}
+				else
+				{
+					pasteCopyFileContent(oldDMSContent, destPasteContent);
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, "Content renaming failure: ", e);
+			throw new AdempiereException("Content renaming failure: " + e.getLocalizedMessage());
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+
+	}
+
+	private void pasteCopyFileContent(MDMSContent oldDMSContent, MDMSContent destPasteContent) throws SQLException,
+			IOException
+	{
+		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(new MDMSContent(Env.getCtx(), oldDMSContent
+				.getDMS_Content_ID(), null));
+		int crID = 0;
+		PreparedStatement ps = DB
+				.prepareStatement(
+						"SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID",
+						null);
+		ps.setInt(1, DMS_Content_ID);
+		ps.setInt(2, DMS_Content_ID);
+		ResultSet res = ps.executeQuery();
+
+		while (res.next())
+		{
+			String baseURL = null;
+			String renamedURL = null;
+
+			oldDMSContent = new MDMSContent(Env.getCtx(), res.getInt("DMS_Content_ID"), null);
+
+			if (!Util.isEmpty(oldDMSContent.getParentURL()))
+				baseURL = contentManager.getPath(oldDMSContent);
+			else
+				baseURL = spFileSeprator + oldDMSContent.getName();
+
+			baseURL = baseURL.substring(0, baseURL.lastIndexOf("/"));
+
+			File oldFile = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(oldDMSContent)));
+			String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
+
+			File files[] = new File(newFileName).listFiles();
+
+			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+				newFileName = newFileName + oldDMSContent.getName();
+			else
+				newFileName = newFileName + spFileSeprator + oldDMSContent.getName();
+
+			File newFile = new File(newFileName);
+
+			if (newFile.exists())
+			{
+				String uniqueName = Utils.getUniqueFilename(newFile.getAbsolutePath());
+				newFile = new File(uniqueName);
+			}
+
+			renamedURL = contentManager.getPath(destPasteContent);
+
+			MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
+
+			PO.copyValues(oldDMSContent, newDMSContent);
+
+			MAttributeSetInstance oldASI = null;
+			MAttributeSetInstance newASI = null;
+			if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
+			{
+				oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), null);
+				newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
+				PO.copyValues(oldASI, newASI);
+				newASI.saveEx();
+			}
+			if (newASI != null)
+				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
+
+			newDMSContent.setName(newFile.getName());
+			newDMSContent.saveEx();
+
+			MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), res.getInt("DMS_Association_ID"),
+					null);
+			MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
+
+			PO.copyValues(oldDMSAssociation, newDMSAssociation);
+
+			newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
+
+			if (oldDMSAssociation.getDMS_AssociationType_ID() == 1000001)
+			{
+				crID = newDMSContent.getDMS_Content_ID();
+
+				if (destPasteContent != null && destPasteContent.getDMS_Content_ID() > 0)
+					newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
+				else
+					newDMSAssociation.setDMS_Content_Related_ID(0);
+			}
+			else
+				newDMSAssociation.setDMS_Content_Related_ID(crID);
+
+			newDMSAssociation.saveEx();
+
+			if (oldDMSContent.getParentURL().startsWith(baseURL))
+			{
+				newDMSContent.setParentURL(oldDMSContent.getParentURL().replaceFirst(baseURL, renamedURL));
+				newDMSContent.saveEx();
+			}
+			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), newDMSContent.getDMS_MimeType_ID(), null);
+
+			IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
+
+			if (thumbnailGenerator != null)
+				thumbnailGenerator.addThumbnail(newDMSContent,
+						fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
+
+			String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
+			newPath = newPath + spFileSeprator + oldDMSContent.getName();
+
+			if (!newFile.exists())
+			{
+				FileUtils.copyFile(oldFile, newFile);
+			}
+
+			try
+			{
+				Map<String, Object> solrValue = Utils.createIndexMap(newDMSContent, newDMSAssociation);
+				indexSeracher.deleteIndex(newDMSContent.getDMS_Content_ID());
+				indexSeracher.indexContent(solrValue);
+			}
+			catch (Exception e)
+			{
+				log.log(Level.SEVERE, "Indexing of copy Content Failure :", e);
+				throw new AdempiereException("Indexing of copy Content Failure :" + e);
+			}
+		}
+	}
+
 	private void pasteCutContent(MDMSContent sourceCutContent, MDMSContent destPasteContent)
 	{
-
 		if (sourceCutContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 		{
 			int DMS_Association_ID = DB
@@ -950,7 +1288,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							destPasteContent = null;
 						}
 
-						if(destPasteContent == null || destPasteContent.getDMS_Content_ID() == 0)
+						if (destPasteContent == null || destPasteContent.getDMS_Content_ID() == 0)
 						{
 							dmsAssociation.setDMS_Content_Related_ID(0);
 							dmsAssociation.saveEx();
@@ -964,6 +1302,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					dmsContent.setParentURL(contentManager.getPath(destPasteContent));
 					dmsContent.saveEx();
+
+					try
+					{
+						Map<String, Object> solrValue = Utils.createIndexMap(dmsContent, dmsAssociation);
+						indexSeracher.deleteIndex(dmsContent.getDMS_Content_ID());
+						indexSeracher.indexContent(solrValue);
+					}
+					catch (Exception e)
+					{
+						log.log(Level.SEVERE, "RE-Indexing of Content Failure :", e);
+						throw new AdempiereException("RE-Indexing of Content Failure :" + e);
+					}
+
 				}
 			}
 			catch (SQLException e)
@@ -1516,10 +1867,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			canvasPaste.setDisabled(false);
 		}
-		
-		if(!isCut)
+
+		if (!isCut && !isCopy)
 		{
-		   canvasPaste.setDisabled(true);
+			canvasPaste.setDisabled(true);
 		}
 		else
 		{
@@ -1647,12 +1998,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
 	}
 
-	private HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent()
+	private HashMap<String, List<Object>> getQueryParamas()
 	{
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
 		HashMap<String, List<Object>> params = new HashMap<String, List<Object>>();
 		List<Object> value = new ArrayList<Object>();
-		List<Integer> documentList = null;
 
 		if (!Util.isEmpty(txtDocumentName.getValue()))
 		{
@@ -1903,7 +2252,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			}
 		}
+		return params;
+	}
 
+	private HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent()
+	{
+		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
+		List<Integer> documentList = null;
+
+		HashMap<String, List<Object>> params = getQueryParamas();
 		String query = indexSeracher.buildSolrSearchQuery(params);
 		documentList = indexSeracher.searchIndex(query);
 
@@ -1914,9 +2271,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
 					new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
 		}
-
 		return map;
-
 	}
 
 	@Override

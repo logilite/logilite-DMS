@@ -16,6 +16,7 @@ package org.idempiere.webui.apps.form;
 import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -40,6 +41,7 @@ import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
+import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.zk.ui.WrongValueException;
@@ -47,6 +49,9 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
+
+import com.logilite.search.factory.IIndexSearcher;
+import com.logilite.search.factory.ServiceUtils;
 
 public class WRenameContent extends Window implements EventListener<Event>
 {
@@ -76,6 +81,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private IContentManager			contentManager		= null;
 	private IFileStorageProvider	fileStorgProvider	= null;
+	private IIndexSearcher			indexSeracher		= null;
 
 	private int						tableID				= 0;
 	private int						recordID			= 0;
@@ -99,6 +105,13 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
+
+		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+
+		if (indexSeracher == null)
+		{
+			throw new AdempiereException("Index Server not found");
+		}
 
 		init();
 	}
@@ -258,22 +271,21 @@ public class WRenameContent extends Window implements EventListener<Event>
 			{
 				int DMS_Content_ID = Utils.getDMS_Content_Related_ID(DMSContent);
 				MDMSContent content = null;
+				MDMSAssociation association = null;
 				try
 				{
-					content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-					renameFile(content);
-
 					pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_CONTENT, null);
 					pstmt.setInt(1, DMS_Content_ID);
+					pstmt.setInt(2, DMS_Content_ID);
 
 					rs = pstmt.executeQuery();
 
 					while (rs.next())
 					{
 						content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-						renameFile(content);
+						association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+						renameFile(content, association);
 					}
-
 				}
 				catch (Exception e)
 				{
@@ -300,7 +312,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 		return cancel;
 	}
 
-	private void renameFile(MDMSContent content)
+	private void renameFile(MDMSContent content, MDMSAssociation association)
 	{
 		String newPath = fileStorgProvider.getFile(contentManager.getPath(content)).getAbsolutePath();
 		String fileExt = newPath.substring(newPath.lastIndexOf("."), newPath.length());
@@ -315,5 +327,17 @@ public class WRenameContent extends Window implements EventListener<Event>
 		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf("/") + 1,
 				newFile.getAbsolutePath().length()));
 		content.saveEx();
+
+		try
+		{
+			Map<String, Object> solrValue = Utils.createIndexMap(content, association);
+			indexSeracher.deleteIndex(content.getDMS_Content_ID());
+			indexSeracher.indexContent(solrValue);
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "RE-Indexing of Content Failure :", e);
+			throw new AdempiereException("RE-Indexing of Content Failure :" + e);
+		}
 	}
 }

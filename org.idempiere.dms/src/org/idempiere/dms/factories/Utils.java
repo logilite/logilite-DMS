@@ -91,7 +91,7 @@ public class Utils
 																						+ " OR (CASE WHEN (? = 0 AND ? = 0) THEN ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND COALESCE(AD_Table_ID,0) != 0 "
 																						+ " AND COALESCE(Record_ID,0) != 0)) ELSE ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND AD_Table_ID = ? AND Record_ID = ?)) END)";
 
-	public static final String					SQL_GET_RELATED_CONTENT			= "SELECT DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ?";
+	public static final String					SQL_GET_RELATED_CONTENT			= "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID";
 
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider			= new CCache<Integer, IThumbnailProvider>(
 																						"ThumbnailProvider", 2);
@@ -581,15 +581,11 @@ public class Utils
 				}
 				else
 				{
-					PreparedStatement ps = DB.prepareStatement(Utils.SQL_GET_RELATED_CONTENT, null);
+					PreparedStatement ps = DB.prepareStatement(SQL_GET_RELATED_CONTENT, null);
 					ps.setInt(1, dmsContent.getDMS_Content_ID());
-					ResultSet res = ps.executeQuery();
+					ps.setInt(2, dmsContent.getDMS_Content_ID());
 
-					if (dmsContent.getParentURL().startsWith(baseURL))
-					{
-						dmsContent.setParentURL(dmsContent.getParentURL().replaceFirst(baseURL, renamedURL));
-						dmsContent.saveEx();
-					}
+					ResultSet res = ps.executeQuery();
 
 					while (res.next())
 					{
