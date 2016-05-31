@@ -732,39 +732,21 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			isSearch = false;
 			clearComponenets();
 		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH))
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH) || event.getTarget().equals(btnSearch))
 		{
 			HashMap<String, List<Object>> params = getQueryParamas();
 			String query = indexSeracher.buildSolrSearchQuery(params);
 
-			if (query.equals("*:*"))
+			if (query.equals("*:*") || query.startsWith("AD_Table_ID"))
 			{
 				isSearch = false;
 				if (currDMSContent != null)
+				{
 					lblPositionInfo.setValue(currDMSContent.getName());
-				else
-					lblPositionInfo.setValue(null);
-			}
-			else
-			{
-				isSearch = true;
-				breadRow.getChildren().clear();
-				btnBack.setEnabled(true);
-				lblPositionInfo.setValue(null);
-			}
-
-			renderViewer();
-		}
-		else if (event.getTarget().equals(btnSearch))
-		{
-			HashMap<String, List<Object>> params = getQueryParamas();
-			String query = indexSeracher.buildSolrSearchQuery(params);
-
-			if (query.equals("*:*"))
-			{
-				isSearch = false;
-				if (currDMSContent != null)
-					lblPositionInfo.setValue(currDMSContent.getName());
+					breadRow.getChildren().clear();
+					addRootBreadCrumb();
+					showBreadcumb(currDMSContent);
+				}
 				else
 					lblPositionInfo.setValue(null);
 			}
@@ -2000,7 +1982,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private HashMap<String, List<Object>> getQueryParamas()
 	{
-		HashMap<String, List<Object>> params = new HashMap<String, List<Object>>();
+		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
 		List<Object> value = new ArrayList<Object>();
 
 		if (!Util.isEmpty(txtDocumentName.getValue()))
@@ -2070,20 +2052,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			value.add("*");
 			value.add(dateFormat.format(dbUpdatedTo.getValue()));
 			params.put(Utils.UPDATED, value);
-		}
-
-		if (tableID > 0)
-		{
-			value = new ArrayList<Object>();
-			value.add(tableID);
-			params.put(Utils.AD_Table_ID, value);
-		}
-
-		if (recordID > 0)
-		{
-			value = new ArrayList<Object>();
-			value.add(recordID);
-			params.put(Utils.RECORD_ID, value);
 		}
 
 		if (lstboxCreatedBy.getValue() != null)
@@ -2252,6 +2220,21 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			}
 		}
+		
+		if (tableID > 0)
+		{
+			value = new ArrayList<Object>();
+			value.add(tableID);
+			params.put(Utils.AD_Table_ID, value);
+		}
+
+		if (recordID > 0)
+		{
+			value = new ArrayList<Object>();
+			value.add(recordID);
+			params.put(Utils.RECORD_ID, value);
+		}
+
 		return params;
 	}
 
