@@ -37,6 +37,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_AssociationType;
@@ -163,7 +164,8 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		cell.setStyle("position: relative;");
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
-
+		btnOk.setImageContent(Utils.getImage("Ok24.png"));
+		btnClose.setImageContent(Utils.getImage("Cancel24.png"));
 		AEnv.showCenterScreen(this);
 	}
 

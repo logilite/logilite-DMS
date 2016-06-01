@@ -120,13 +120,13 @@ public class WRenameContent extends Window implements EventListener<Event>
 	{
 		gridView = GridFactory.newGridLayout();
 
-		this.setHeight("20%");
+		this.setHeight("22%");
 		this.setWidth("30%");
 		this.setTitle("Rename");
 		this.appendChild(gridView);
 		this.setClosable(true);
 
-		gridView.setStyle("overflow: auto; position:relative;");
+		gridView.setStyle("position:relative;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
 		gridView.setZclass("none");
@@ -180,6 +180,8 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		btnOk.addEventListener(Events.ON_CLICK, this);
 		btnCancel.addEventListener(Events.ON_CLICK, this);
+		btnOk.setImageContent(Utils.getImage("Ok24.png"));
+		btnCancel.setImageContent(Utils.getImage("Cancel24.png"));
 
 		AEnv.showCenterScreen(this);
 	}

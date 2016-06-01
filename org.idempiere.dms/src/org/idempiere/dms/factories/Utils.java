@@ -19,6 +19,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -29,6 +30,8 @@ import java.util.logging.Level;
 
 import javax.imageio.ImageIO;
 
+import org.adempiere.base.Core;
+import org.adempiere.base.IResourceFinder;
 import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FilenameUtils;
@@ -46,6 +49,7 @@ import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
+import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 
 /**
@@ -611,5 +615,23 @@ public class Utils
 			rs = null;
 			pstmt = null;
 		}
+	}
+	
+	public static AImage getImage(String name)
+	{
+		IResourceFinder rf = null;
+		URL url = null;
+		AImage image = null;
+		try
+		{
+			rf = Core.getResourceFinder();
+			url = rf.getResource("/dmsimages/" + name);
+			image = new AImage(url);
+		}
+		catch (IOException e1)
+		{
+			log.log(Level.INFO, name + " Icon not found");
+		}
+		return image;
 	}
 }

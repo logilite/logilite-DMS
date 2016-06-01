@@ -256,12 +256,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		btnEdit = new Button();
 		btnEdit.setTooltiptext("Edit");
-		btnEdit.setImage(ThemeManager.getThemeResource("images/Editor16.png"));
+		btnEdit.setImageContent(Utils.getImage("Edit24.png"));
 
 		btnSave = new Button();
 		btnSave.setVisible(false);
 		btnSave.setTooltiptext("Save");
-		btnSave.setImage(ThemeManager.getThemeResource("images/Save16.png"));
+		btnSave.setImageContent(Utils.getImage("Save24.png"));
 
 		btnSave.addEventListener(Events.ON_CLICK, this);
 		btnDelete.addEventListener(Events.ON_CLICK, this);
@@ -279,6 +279,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		panelFooterButtons.appendChild(btnRequery);
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
+		
+		btnVersionUpload.setImageContent(Utils.getImage("uploadversion24.png"));
+		btnDelete.setImageContent(Utils.getImage("Delete24.png"));
+		btnRequery.setImageContent(Utils.getImage("Refresh24.png"));
+		btnDownload.setImageContent(Utils.getImage("Downloads24.png"));
+		btnClose.setImageContent(Utils.getImage("Close24.png"));
 
 		panelFooterButtons.setStyle("position: fixed; bottom: 2%;");
 

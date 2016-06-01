@@ -147,6 +147,8 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		mainLayout.appendChild(south);
 		south.appendChild(confirmPanel);
 
+		confirmPanel.getButton(ConfirmPanel.A_OK).setImageContent(Utils.getImage("Ok24.png"));
+		confirmPanel.getButton(ConfirmPanel.A_CANCEL).setImageContent(Utils.getImage("Cancel24.png"));
 		confirmPanel.addActionListener(Events.ON_CLICK, this);
 		AEnv.showCenterScreen(this);
 	}

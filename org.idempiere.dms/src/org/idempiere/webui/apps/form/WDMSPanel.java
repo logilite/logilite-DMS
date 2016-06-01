@@ -386,16 +386,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		Row row = new Row();
 		rows.appendChild(row);
-
-		btnBack.setImage(ThemeManager.getThemeResource("images/wfBack24.png"));
+		btnBack.setImageContent(Utils.getImage("Left24.png"));
 		btnBack.setTooltiptext("Previous Record");
-
+		
+		
 		lblPositionInfo.setHflex("1");
 		lblPositionInfo.setStyle("float: right;");
 		ZkCssHelper.appendStyle(lblPositionInfo, "font-weight: bold;");
 		ZkCssHelper.appendStyle(lblPositionInfo, "text-align: center;");
 
-		btnNext.setImage(ThemeManager.getThemeResource("images/wfNext24.png"));
+		btnNext.setImageContent(Utils.getImage("Right24.png"));
 		btnNext.setTooltiptext("Next Record");
 		btnBack.addEventListener(Events.ON_CLICK, this);
 		btnNext.addEventListener(Events.ON_CLICK, this);
@@ -414,11 +414,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendChild(btnCreateDir);
 		row.appendChild(btnUploadContent);
 
-		btnCreateDir.setImage(ThemeManager.getThemeResource("images/Folder24.png"));
+		btnCreateDir.setImageContent(Utils.getImage("Folder24.png"));
 		btnCreateDir.setTooltiptext("Create Directory");
 		btnCreateDir.addEventListener(Events.ON_CLICK, this);
 
-		btnUploadContent.setImage(ThemeManager.getThemeResource("images/Parent24.png"));
+		btnUploadContent.setImageContent(Utils.getImage("Upload24.png"));
 		btnUploadContent.setTooltiptext("Upload Content");
 		btnUploadContent.addEventListener(Events.ON_CLICK, this);
 
@@ -429,7 +429,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		searchCell.appendChild(vsearchBox);
 		rows.appendChild(row);
 		row.appendChild(searchCell);
-		vsearchBox.getButton().setImage(ThemeManager.getThemeResource("images/Find16.png"));
+		vsearchBox.getButton().setImageContent(Utils.getImage("Search16.png"));
 
 		row = new Row();
 		rows.appendChild(row);
@@ -581,11 +581,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnClear.addEventListener(Events.ON_CLICK, this);
 		btnRefresh.addEventListener(Events.ON_CLICK, this);
 
-		btnSearch.setImage(ThemeManager.getThemeResource("images/Find24.png"));
+		btnSearch.setImageContent(Utils.getImage("Search24.png"));
 		btnSearch.setTooltiptext("Search");
 
 		btnSearch.addEventListener(Events.ON_CLICK, this);
-
+		
+		btnClear.setImageContent(Utils.getImage("Reset24.png"));
+		btnRefresh.setImageContent(Utils.getImage("Refresh24.png"));
+		btnCloseTab.setImageContent(Utils.getImage("Close24.png"));
+		
 		hbox.appendChild(btnClear);
 		hbox.appendChild(btnRefresh);
 		hbox.appendChild(btnSearch);
@@ -657,7 +661,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		canvasCreateLink.addEventListener(Events.ON_CLICK, this);
 		canvasPaste.addEventListener(Events.ON_CLICK, this);
 
-		canvasCreateLink.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
 
 		contentContextMenu.appendChild(uploadVersion);
 		contentContextMenu.appendChild(versionList);
@@ -669,13 +672,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.appendChild(delete);
 		contentContextMenu.appendChild(associate);
 
-		uploadVersion.setImage(ThemeManager.getThemeResource("images/Assignment24.png"));
-		rename.setImage(ThemeManager.getThemeResource("images/Editor24.png"));
-		cut.setImage(ThemeManager.getThemeResource("images/Cancel24.png"));
-		versionList.setImage(ThemeManager.getThemeResource("images/Wizard24.png"));
-		copy.setImage(ThemeManager.getThemeResource("images/Copy24.png"));
-		delete.setImage(ThemeManager.getThemeResource("images/Delete24.png"));
-		associate.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
+		canvasCreateLink.setImageContent(Utils.getImage("Link24.png"));
+		canvasPaste.setImageContent(Utils.getImage("Paste24.png"));
+		createLink.setImageContent(Utils.getImage("Link24.png"));
+		uploadVersion.setImageContent(Utils.getImage("uploadversion24.png"));
+		paste.setImageContent(Utils.getImage("Paste24.png"));
+		rename.setImageContent(Utils.getImage("Rename24.png"));
+		cut.setImageContent(Utils.getImage("Cut24.png"));
+		versionList.setImageContent(Utils.getImage("Versions24.png"));
+		copy.setImageContent(Utils.getImage("Copy24.png"));
+		delete.setImageContent(Utils.getImage("Delete24.png"));
+		associate.setImageContent(Utils.getImage("Associate24.png"));
 
 		uploadVersion.addEventListener(Events.ON_CLICK, this);
 		versionList.addEventListener(Events.ON_CLICK, this);

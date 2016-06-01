@@ -248,6 +248,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		confirmPanel = new ConfirmPanel();
 		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 		btnOk = confirmPanel.createButton(ConfirmPanel.A_OK);
+		btnOk.setImageContent(Utils.getImage("Ok24.png"));
+		btnClose.setImageContent(Utils.getImage("Cancel24.png"));
 
 		row = new Row();
 		rows.appendChild(row);
