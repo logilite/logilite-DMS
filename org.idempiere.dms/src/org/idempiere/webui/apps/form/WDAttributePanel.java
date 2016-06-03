@@ -310,6 +310,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		Columns columns = new Columns();
 
 		Column column = new Column();
+		column.setWidth("30%");
 		columns.appendChild(column);
 
 		column = new Column();
@@ -327,7 +328,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		try
 		{
 			MDMSContent versionContent = null;
-			Label labelVersion = null;
 
 			int DMS_Association_ID = DB.getSQLValue(null,
 					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
@@ -372,11 +372,21 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 					viewerComponenet.getfLabel().setStyle(
 							"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
-					labelVersion = new Label("Created: " + versionContent.getCreated());
-
+					
+					Cell cell = new Cell();
+					cell.setRowspan(1);
+					
+					Label created = new Label("Created: " + versionContent.getCreated());
+					Label createdby = new Label("Created By: " + MUser.getNameOfUser(versionContent.getCreatedBy()));
+					Label size = new Label("Size: " + versionContent.getDMS_FileSize());
+					
+					cell.appendChild(created);
+					cell.appendChild(createdby);
+					cell.appendChild(size);
+					
 					row = new Row();
 					row.appendChild(viewerComponenet);
-					row.appendChild(labelVersion);
+					row.appendChild(cell);
 					rows.appendChild(row);
 				}
 			}
