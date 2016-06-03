@@ -61,9 +61,9 @@ import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.session.SessionManager;
-import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MColumn;
 import org.compiere.model.MImage;
@@ -354,7 +354,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		tabBox.appendChild(tabs);
 		tabBox.appendChild(tabPanels);
 		tabBox.addEventListener(Events.ON_SELECT, this);
-		grid.setStyle("width: 100%; height:100%; position:relative; overflow: auto;");
+		grid.setStyle("width: 100%; height:95%; position:relative; overflow: auto;");
 		// View Result Tab
 
 		Grid gridView = GridFactory.newGridLayout();
@@ -388,8 +388,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		rows.appendChild(row);
 		btnBack.setImageContent(Utils.getImage("Left24.png"));
 		btnBack.setTooltiptext("Previous Record");
-		
-		
+
 		lblPositionInfo.setHflex("1");
 		lblPositionInfo.setStyle("float: right;");
 		ZkCssHelper.appendStyle(lblPositionInfo, "font-weight: bold;");
@@ -585,11 +584,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnSearch.setTooltiptext("Search");
 
 		btnSearch.addEventListener(Events.ON_CLICK, this);
-		
+
 		btnClear.setImageContent(Utils.getImage("Reset24.png"));
 		btnRefresh.setImageContent(Utils.getImage("Refresh24.png"));
 		btnCloseTab.setImageContent(Utils.getImage("Close24.png"));
-		
+
 		hbox.appendChild(btnClear);
 		hbox.appendChild(btnRefresh);
 		hbox.appendChild(btnSearch);
@@ -660,7 +659,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		canvasContextMenu.appendChild(canvasCreateLink);
 		canvasCreateLink.addEventListener(Events.ON_CLICK, this);
 		canvasPaste.addEventListener(Events.ON_CLICK, this);
-
 
 		contentContextMenu.appendChild(uploadVersion);
 		contentContextMenu.appendChild(versionList);
@@ -883,6 +881,113 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 	}
 
+	private String pastePhysicalCopiedFolder(MDMSContent copiedContent, MDMSContent destPasteContent)
+	{
+		File dirPath = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
+		String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
+
+		File files[] = new File(newFileName).listFiles();
+
+		if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+			newFileName = newFileName + copiedContent.getName();
+		else
+			newFileName = newFileName + spFileSeprator + copiedContent.getName();
+
+		File newFile = new File(newFileName);
+
+		for (int i = 0; i < files.length; i++)
+		{
+			if (newFile.getName().equalsIgnoreCase(files[i].getName()))
+			{
+				if (!newFileName.contains(" - copy "))
+					newFileName = newFileName + " - copy ";
+
+				newFile = new File(newFileName);
+
+				if (newFile.exists())
+				{
+					newFileName = Utils.getUniqueFoldername(newFile.getAbsolutePath());
+					newFile = new File(newFileName);
+				}
+			}
+		}
+
+		try
+		{
+			FileUtils.copyDirectory(dirPath, newFile);
+		}
+		catch (IOException e)
+		{
+			log.log(Level.SEVERE, "Copy Content Failure.", e);
+			throw new AdempiereException("Copy Content Failure." + e.getLocalizedMessage());
+		}
+
+		return newFile.getName();
+	}
+
+	private String pastePhysicalCopiedContent(MDMSContent copiedContent, MDMSContent destPasteContent, String parentName)
+	{
+		File oldFile = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
+		String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
+
+		if (Util.isEmpty(parentName))
+		{
+			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+				newFileName = newFileName + copiedContent.getName();
+			else
+				newFileName = newFileName + spFileSeprator + copiedContent.getName();
+		}
+		else
+		{
+			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+				newFileName = newFileName + parentName;
+			else
+				newFileName = newFileName + spFileSeprator + parentName;
+		}
+
+		File newFile = new File(newFileName);
+		File parent = new File(newFile.getParent());
+
+		File files[] = parent.listFiles();
+
+		for (int i = 0; i < files.length; i++)
+		{
+			if (newFile.getName().equals(files[i].getName()))
+			{
+				String uniqueName = newFile.getName();
+
+				if (!newFile.getName().contains(" - copy "))
+				{
+					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy ";
+					String ext = FilenameUtils.getExtension(newFile.getName());
+					newFile = new File(parent.getAbsolutePath() + spFileSeprator + uniqueName + "." + ext);
+				}
+				else
+				{
+					newFile = new File(parent.getAbsolutePath() + spFileSeprator + parentName);
+				}
+
+				if (newFile.exists())
+				{
+					uniqueName = Utils.getCopiedUniqueFilename(newFile.getAbsolutePath());
+					newFile = new File(uniqueName);
+				}
+			}
+		}
+
+		try
+		{
+			FileUtils.copyFile(oldFile, newFile);
+		}
+		catch (IOException e)
+		{
+			log.log(Level.SEVERE, "Copy Content Failure.", e);
+			throw new AdempiereException("Copy Content Failure." + e.getLocalizedMessage());
+		}
+
+		return newFile.getName();
+	}
+
 	private void pasteCopyContent(MDMSContent copiedContent, MDMSContent destPasteContent) throws IOException,
 			SQLException
 	{
@@ -896,32 +1001,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			String baseURL = null;
 			String renamedURL = null;
+			String contentname = null;
 
 			if (!Util.isEmpty(copiedContent.getParentURL()))
 				baseURL = contentManager.getPath(copiedContent);
 			else
 				baseURL = spFileSeprator + copiedContent.getName();
 
-			File dirPath = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
-			String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-
-			File files[] = new File(newFileName).listFiles();
-
-			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
-				newFileName = newFileName + copiedContent.getName();
-			else
-				newFileName = newFileName + spFileSeprator + copiedContent.getName();
-
-			File newFile = new File(newFileName);
-
-			for (int i = 0; i < files.length; i++)
+			if (copiedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
-				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
-				{
-					throw new AdempiereException("Directory already exists.");
-				}
+				contentname = pastePhysicalCopiedFolder(copiedContent, destPasteContent);
 			}
-
 			renamedURL = contentManager.getPath(destPasteContent) + spFileSeprator + copiedContent.getName();
 
 			MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), copiedContent.getDMS_Content_ID(), null);
@@ -943,7 +1033,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
 			newDMSContent.setParentURL(contentManager.getPath(destPasteContent));
-
+			newDMSContent.setName(contentname);
 			newDMSContent.saveEx();
 
 			MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
@@ -963,15 +1053,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			newDMSAssociation.saveEx();
 
 			copyContent(copiedContent, baseURL, renamedURL, newDMSContent);
-			try
-			{
-				FileUtils.copyDirectory(dirPath, newFile);
-			}
-			catch (IOException e)
-			{
-				log.log(Level.SEVERE, "Copy Content Failure.", e);
-				throw new AdempiereException("Copy Content Failure." + e.getLocalizedMessage());
-			}
 		}
 		else
 		{
@@ -1075,6 +1156,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		ps.setInt(1, DMS_Content_ID);
 		ps.setInt(2, DMS_Content_ID);
 		ResultSet res = ps.executeQuery();
+		String parentFileName = null;
 
 		while (res.next())
 		{
@@ -1090,24 +1172,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			baseURL = baseURL.substring(0, baseURL.lastIndexOf("/"));
 
-			File oldFile = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(oldDMSContent)));
-			String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-
-			File files[] = new File(newFileName).listFiles();
-
-			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
-				newFileName = newFileName + oldDMSContent.getName();
-			else
-				newFileName = newFileName + spFileSeprator + oldDMSContent.getName();
-
-			File newFile = new File(newFileName);
-
-			if (newFile.exists())
-			{
-				String uniqueName = Utils.getUniqueFilename(newFile.getAbsolutePath());
-				newFile = new File(uniqueName);
-			}
-
+			String fname = pastePhysicalCopiedContent(oldDMSContent, destPasteContent, parentFileName);
+			parentFileName = fname;
 			renamedURL = contentManager.getPath(destPasteContent);
 
 			MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
@@ -1126,7 +1192,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (newASI != null)
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
-			newDMSContent.setName(newFile.getName());
+			newDMSContent.setName(fname);
 			newDMSContent.saveEx();
 
 			MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), res.getInt("DMS_Association_ID"),
@@ -1151,11 +1217,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			newDMSAssociation.saveEx();
 
-			if (oldDMSContent.getParentURL().startsWith(baseURL))
+			if (!Util.isEmpty(oldDMSContent.getParentURL()))
 			{
-				newDMSContent.setParentURL(oldDMSContent.getParentURL().replaceFirst(baseURL, renamedURL));
-				newDMSContent.saveEx();
+				if (oldDMSContent.getParentURL().startsWith(baseURL))
+				{
+					newDMSContent.setParentURL(oldDMSContent.getParentURL().replaceFirst(baseURL, renamedURL));
+				}
 			}
+			else
+			{
+				newDMSContent.setParentURL(null);
+			}
+
+			newDMSContent.saveEx();
 			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), newDMSContent.getDMS_MimeType_ID(), null);
 
 			IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
@@ -1166,11 +1240,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
 			newPath = newPath + spFileSeprator + oldDMSContent.getName();
-
-			if (!newFile.exists())
-			{
-				FileUtils.copyFile(oldFile, newFile);
-			}
 
 			try
 			{
@@ -2227,7 +2296,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			}
 		}
-		
+
 		if (tableID > 0)
 		{
 			value = new ArrayList<Object>();

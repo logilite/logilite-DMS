@@ -142,8 +142,13 @@ public class DMSViewerComponent extends Div
 	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink)
 	{
 		String name = content.getName();
-		if (name.contains("(") && name.contains(")"))
-			name = name.replace(name.substring(name.indexOf("("), name.indexOf(")")+1), "");
+		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+			name = name.replace("\\(.*\\d\\)", "");
+		else
+		{	
+			if(name.contains("(") && name.contains(")"))
+			name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1 ), "");
+		}
 
 		this.contentBaseType = content.getContentBaseType();
 		this.fName = name;

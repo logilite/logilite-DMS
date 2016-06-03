@@ -366,6 +366,58 @@ public class Utils
 		}
 		return fullPath;
 	}
+	
+	public static String getCopiedUniqueFilename(String fullPath)
+	{
+		File document = new File(fullPath);
+
+		if (document.exists())
+		{
+			String fileName = document.getName();
+			String path = fullPath.substring(0, fullPath.length() - fileName.length());
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.lastIndexOf("."));
+			if (fileNameWOExt.matches("\\(.*\\d\\)"))
+			{
+				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1, fileNameWOExt.lastIndexOf("("));
+			}
+			String ext = FilenameUtils.getExtension(document.getName());
+			int n = 1;
+			do
+			{
+				fullPath = path + fileNameWOExt + "(" + n++ + ")." + ext;
+				document = new File(fullPath);
+			}
+			while (document.exists());
+		}
+		
+		
+		
+		return fullPath;
+	}
+	
+	public static String getUniqueFoldername(String fullPath)
+	{
+		File document = new File(fullPath);
+
+		if (document.exists())
+		{
+			String fileName = document.getName();
+			String path = fullPath.substring(0, fullPath.length() - fileName.length());
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.length());
+			if (fileNameWOExt.matches("\\(.*\\d\\)"))
+			{
+				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1, fileNameWOExt.lastIndexOf("("));
+			}
+			int n = 1;
+			do
+			{
+				fullPath = path + fileNameWOExt + "(" + n++ + ")";
+				document = new File(fullPath);
+			}
+			while (document.exists());
+		}
+		return fullPath;
+	}
 
 	/**
 	 * get thumbnail of directory
