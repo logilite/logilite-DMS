@@ -291,7 +291,10 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 			if (value.size() == 2)
 			{
-				query.append(" AND ").append(key + ":[\"" + value.get(0) + "\" TO \"" + value.get(1) +"\" ]");
+				if (value.get(1).equals("*"))
+					query.append(" AND ").append(key + ":[\"" + value.get(0) + "\" TO " + value.get(1) + " ]");
+				else
+					query.append(" AND ").append(key + ":[\"" + value.get(0) + "\" TO \"" + value.get(1) + "\" ]");
 			}
 			else
 			{
