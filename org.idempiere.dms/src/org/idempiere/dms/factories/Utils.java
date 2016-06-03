@@ -23,6 +23,7 @@ import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,7 @@ import org.compiere.util.Util;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
@@ -685,5 +687,39 @@ public class Utils
 			log.log(Level.INFO, name + " Icon not found");
 		}
 		return image;
+	}
+	
+	public static String readableFileSize(long size)
+	{
+		if (size <= 0)
+			return "0";
+		final String[] units = new String[] { "Byte", "kB", "MB", "GB", "TB" };
+		int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
+		return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
+	}
+
+	public static String getToolTipTextMsg(I_DMS_Content content)
+	{
+		MDMSContentType mdmsContentType = null;
+		String msg = null;
+		
+		if(content.getDMS_ContentType_ID() > 0)
+		{
+			mdmsContentType = new MDMSContentType(Env.getCtx(), content.getDMS_ContentType_ID(), null);
+			msg = "Content Type: " + mdmsContentType.getName() + "\n";
+		}
+		
+		if(!Util.isEmpty(content.getDMS_FileSize()) && !Util.isEmpty(msg)) 
+		{
+			msg = msg + "Size: " + content.getDMS_FileSize() + "\n"; 
+		}
+		else
+		{
+			msg = "Size: " + content.getDMS_FileSize() + "\n";
+		}
+		
+		msg = msg + "Created: " + content.getCreated();
+			
+		return msg;
 	}
 }

@@ -145,9 +145,9 @@ public class DMSViewerComponent extends Div
 		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			name = name.replace("\\(.*\\d\\)", "");
 		else
-		{	
-			if(name.contains("(") && name.contains(")"))
-			name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1 ), "");
+		{
+			if (name.contains("(") && name.contains(")"))
+				name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
 		}
 
 		this.contentBaseType = content.getContentBaseType();
@@ -189,7 +189,7 @@ public class DMSViewerComponent extends Div
 		prevImg.setContent(image);
 
 		dImage.appendChild(prevImg);
-
+		dImage.setTooltiptext(Utils.getToolTipTextMsg(content));
 		vbox.appendChild(dImage);
 
 		fLabel.appendChild(new Label(fName));

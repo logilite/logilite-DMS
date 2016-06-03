@@ -389,6 +389,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			uploadedDMSContent.setDescription(txtDesc.getValue());
 			uploadedDMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(uploadedMedia));
 			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
+			uploadedDMSContent.setDMS_FileSize(Utils.readableFileSize(uploadedMedia.getByteData().length));
 
 			uploadedDMSContent.saveEx();
 

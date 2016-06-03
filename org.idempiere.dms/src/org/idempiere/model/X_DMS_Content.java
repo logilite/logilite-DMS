@@ -27,7 +27,7 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20160106L;
+	private static final long serialVersionUID = 20160603L;
 
     /** Standard Constructor */
     public X_DMS_Content (Properties ctx, int DMS_Content_ID, String trxName)
@@ -36,9 +36,7 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
       /** if (DMS_Content_ID == 0)
         {
 			setDMS_Content_ID (0);
-			setDMS_ContentType_ID (0);
 			setDMS_MimeType_ID (0);
-			setDMS_Status_ID (0);
 			setName (null);
 			setValue (null);
         } */
@@ -128,9 +126,9 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		return ii.intValue();
 	}
 
-	public org.idempiere.model.I_DMS_ContentType getDMS_ContentType() throws RuntimeException
+	public I_DMS_ContentType getDMS_ContentType() throws RuntimeException
     {
-		return (org.idempiere.model.I_DMS_ContentType)MTable.get(getCtx(), org.idempiere.model.I_DMS_ContentType.Table_Name)
+		return (I_DMS_ContentType)MTable.get(getCtx(), I_DMS_ContentType.Table_Name)
 			.getPO(getDMS_ContentType_ID(), get_TrxName());	}
 
 	/** Set DMS Content Type.
@@ -156,9 +154,23 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		return ii.intValue();
 	}
 
-	public org.idempiere.model.I_DMS_MimeType getDMS_MimeType() throws RuntimeException
+	/** Set DMS_FileSize.
+		@param DMS_FileSize DMS_FileSize	  */
+	public void setDMS_FileSize (String DMS_FileSize)
+	{
+		set_Value (COLUMNNAME_DMS_FileSize, DMS_FileSize);
+	}
+
+	/** Get DMS_FileSize.
+		@return DMS_FileSize	  */
+	public String getDMS_FileSize () 
+	{
+		return (String)get_Value(COLUMNNAME_DMS_FileSize);
+	}
+
+	public I_DMS_MimeType getDMS_MimeType() throws RuntimeException
     {
-		return (org.idempiere.model.I_DMS_MimeType)MTable.get(getCtx(), org.idempiere.model.I_DMS_MimeType.Table_Name)
+		return (I_DMS_MimeType)MTable.get(getCtx(), I_DMS_MimeType.Table_Name)
 			.getPO(getDMS_MimeType_ID(), get_TrxName());	}
 
 	/** Set Mime Type.
@@ -184,9 +196,9 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		return ii.intValue();
 	}
 
-	public org.idempiere.model.I_DMS_Status getDMS_Status() throws RuntimeException
+	public I_DMS_Status getDMS_Status() throws RuntimeException
     {
-		return (org.idempiere.model.I_DMS_Status)MTable.get(getCtx(), org.idempiere.model.I_DMS_Status.Table_Name)
+		return (I_DMS_Status)MTable.get(getCtx(), I_DMS_Status.Table_Name)
 			.getPO(getDMS_Status_ID(), get_TrxName());	}
 
 	/** Set Content Status.

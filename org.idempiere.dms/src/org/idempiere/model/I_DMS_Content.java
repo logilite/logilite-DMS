@@ -121,7 +121,16 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_ContentType_ID();
 
-	public org.idempiere.model.I_DMS_ContentType getDMS_ContentType() throws RuntimeException;
+	public I_DMS_ContentType getDMS_ContentType() throws RuntimeException;
+
+    /** Column name DMS_FileSize */
+    public static final String COLUMNNAME_DMS_FileSize = "DMS_FileSize";
+
+	/** Set DMS_FileSize	  */
+	public void setDMS_FileSize (String DMS_FileSize);
+
+	/** Get DMS_FileSize	  */
+	public String getDMS_FileSize();
 
     /** Column name DMS_MimeType_ID */
     public static final String COLUMNNAME_DMS_MimeType_ID = "DMS_MimeType_ID";
@@ -136,7 +145,7 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_MimeType_ID();
 
-	public org.idempiere.model.I_DMS_MimeType getDMS_MimeType() throws RuntimeException;
+	public I_DMS_MimeType getDMS_MimeType() throws RuntimeException;
 
     /** Column name DMS_Status_ID */
     public static final String COLUMNNAME_DMS_Status_ID = "DMS_Status_ID";
@@ -151,7 +160,7 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_Status_ID();
 
-	public org.idempiere.model.I_DMS_Status getDMS_Status() throws RuntimeException;
+	public I_DMS_Status getDMS_Status() throws RuntimeException;
 
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
