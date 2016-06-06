@@ -21,7 +21,9 @@ import org.adempiere.webui.component.ZkCssHelper;
 import org.compiere.model.MImage;
 import org.compiere.util.CLogger;
 import org.idempiere.dms.factories.Utils;
+import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
@@ -51,6 +53,7 @@ public class DMSViewerComponent extends Div
 	protected int				dWidth;
 
 	private MDMSContent			DMSContent			= null;
+	private MDMSAssociation 	DMSAssociation 		= null;
 
 	protected Menuitem			menuItem			= null;
 
@@ -139,7 +142,7 @@ public class DMSViewerComponent extends Div
 		this.fName = fName;
 	}
 
-	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink)
+	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink,I_DMS_Association DMSAssociation)
 	{
 		String name = content.getName();
 		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
@@ -154,6 +157,7 @@ public class DMSViewerComponent extends Div
 		this.fName = name;
 		this.DMSContent = (MDMSContent) content;
 		this.isLink = isLink;
+		this.DMSAssociation = (MDMSAssociation) DMSAssociation;
 
 		if (isLink)
 		{
@@ -212,5 +216,15 @@ public class DMSViewerComponent extends Div
 		this.setStyle("background-color: #ffffff");
 
 		ZkCssHelper.appendStyle(this, "text-align: center");
+	}
+	
+	public MDMSAssociation getDMSAssociation()
+	{
+		return DMSAssociation;
+	}
+
+	public void setDMSAssociation(MDMSAssociation dMSAssociation)
+	{
+		DMSAssociation = dMSAssociation;
 	}
 }

@@ -219,7 +219,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private MDMSContent						prevDMSContent				= null;
 	private MDMSContent						nextDMSContent				= null;
 	private MDMSContent						cutDMSContent				= null;
-
+	
+	private MDMSAssociation					selectedDMSAssociation      = null;
+	private MDMSContent						selectedContent				= null;
+	
 	private ArrayList<DMSViewerComponent>	viewerComponents			= null;
 
 	public IFileStorageProvider				fileStorageProvider			= null;
@@ -748,9 +751,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (currDMSContent != null)
 				{
 					lblPositionInfo.setValue(currDMSContent.getName());
-					breadRow.getChildren().clear();
-					addRootBreadCrumb();
-					showBreadcumb(currDMSContent);
 				}
 				else
 					lblPositionInfo.setValue(null);
@@ -1488,11 +1488,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			DMSViewerComponent viewerComponent = null;
 			if (entry.getValue().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
 			{
-				viewerComponent = new DMSViewerComponent(entry.getKey(), image, true);
+				viewerComponent = new DMSViewerComponent(entry.getKey(), image, true, entry.getValue());
 			}
 			else
 			{
-				viewerComponent = new DMSViewerComponent(entry.getKey(), image, false);
+				viewerComponent = new DMSViewerComponent(entry.getKey(), image, false, entry.getValue());
 			}
 
 			viewerComponent.addEventListener(Events.ON_DOUBLE_CLICK, this);
@@ -1604,7 +1604,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException
 	{
-		MDMSContent selectedContent = DMSViewerComp.getDMSContent();
+		selectedContent = DMSViewerComp.getDMSContent();
+		
+		if(DMSViewerComp.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+			selectedDMSAssociation = DMSViewerComp.getDMSAssociation();
 
 		if (selectedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 		{
@@ -1703,7 +1706,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		nextDMSContent = currDMSContent;
 
-		if (currDMSContent != null)
+		
+		if(selectedDMSAssociation!= null && selectedDMSAssociation.getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID() && currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.getDMS_Content_ID())
+		{
+			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.getDMS_Content_Related_ID(), null);
+			lblPositionInfo.setValue(currDMSContent.getName());
+			if (currDMSContent.getParentURL() == null)
+				btnBack.setEnabled(true);
+			
+			selectedDMSAssociation = null;
+		}
+		else if (currDMSContent != null)
 		{
 			int DMS_Content_ID = DB
 					.getSQLValue(
@@ -1716,11 +1729,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				currDMSContent = null;
 				lblPositionInfo.setValue("");
 				btnBack.setEnabled(false);
-
-				lblShowBreadCrumb = new Label();
-				lblShowBreadCrumb.setValue(" > ");
-				breadRow.appendChild(new Space());
-				breadRow.appendChild(lblShowBreadCrumb);
 			}
 			else
 			{
@@ -2459,13 +2467,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		Components.removeAllChildren(gridBreadCrumb);
 
-		if (breadcumbContent.getParentURL() != null)
-		{
-			lblShowBreadCrumb = new Label();
-			lblShowBreadCrumb.setValue(" > ");
-			breadRow.appendChild(new Space());
-			breadRow.appendChild(lblShowBreadCrumb);
-		}
+		lblShowBreadCrumb = new Label();
+		lblShowBreadCrumb.setValue(" > ");
+		breadRow.appendChild(new Space());
+		breadRow.appendChild(lblShowBreadCrumb);
 
 		BreadCrumbLink breadCrumbLink = new BreadCrumbLink();
 		breadCrumbLink.setPathId(String.valueOf(breadcumbContent.getDMS_Content_ID()));
@@ -2494,14 +2499,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		BreadCrumbLink rootBreadCrumbLink = new BreadCrumbLink();
 
-		rootBreadCrumbLink.setLabel("/");
+		rootBreadCrumbLink.setImageContent(Utils.getImage("Home24.png"));
 		rootBreadCrumbLink.setPathId(String.valueOf(0));
 		rootBreadCrumbLink.addEventListener(Events.ON_CLICK, this);
 		rootBreadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
 
 		breadRow.appendChild(rootBreadCrumbLink);
 		lblShowBreadCrumb = new Label();
-		lblShowBreadCrumb.setValue(" > ");
+		//lblShowBreadCrumb.setValue(" > ");
 		breadRow.appendChild(new Space());
 		breadRow.appendChild(lblShowBreadCrumb);
 

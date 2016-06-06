@@ -364,7 +364,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 						imageVersion = new AImage(thumbnailProvider.getURL(versionContent, "150"));
 					}
 
-					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false);
+					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false,dmsAssociation);
 					viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
 
 					viewerComponenet.setDheight(100);
