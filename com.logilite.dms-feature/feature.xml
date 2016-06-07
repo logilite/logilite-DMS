@@ -24,9 +24,9 @@
       <import plugin="org.zkoss.zk.library" version="7.0.7" match="greaterOrEqual"/>
       <import plugin="org.adempiere.ui" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.apache.commons.net"/>
-      <import plugin="com.logilite.search" version="1.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi" version="3.10.2" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi.services" version="3.4.0" match="greaterOrEqual"/>
+      <import plugin="com.logilite.search" version="1.0.2" match="greaterOrEqual"/>
    </requires>
 
    <plugin
@@ -49,6 +49,13 @@
          install-size="0"
          version="0.0.0"
          fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.search.solr"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
          unpack="false"/>
 
 </feature>
