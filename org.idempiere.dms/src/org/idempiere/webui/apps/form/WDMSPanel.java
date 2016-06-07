@@ -751,6 +751,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (currDMSContent != null)
 				{
 					lblPositionInfo.setValue(currDMSContent.getName());
+					breadRow.getChildren().clear();
+					addRootBreadCrumb();
+					showBreadcumb(currDMSContent);
 				}
 				else
 					lblPositionInfo.setValue(null);
@@ -1706,14 +1709,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		nextDMSContent = currDMSContent;
 
-		
-		if(selectedDMSAssociation!= null && selectedDMSAssociation.getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID() && currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.getDMS_Content_ID())
+		if (selectedDMSAssociation != null
+				&& selectedDMSAssociation.getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID()
+				&& currDMSContent != null
+				&& currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.getDMS_Content_ID())
 		{
 			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.getDMS_Content_Related_ID(), null);
 			lblPositionInfo.setValue(currDMSContent.getName());
 			if (currDMSContent.getParentURL() == null)
 				btnBack.setEnabled(true);
 			
+			btnNext.setEnabled(true);
 			selectedDMSAssociation = null;
 		}
 		else if (currDMSContent != null)
