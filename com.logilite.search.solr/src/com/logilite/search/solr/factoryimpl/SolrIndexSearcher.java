@@ -10,7 +10,7 @@
  * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
  *****************************************************************************/
 
-package com.logilite.search.factory;
+package com.logilite.search.solr.factoryimpl;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,6 +51,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.compiere.util.CLogger;
 
 import com.idempiere.model.MIndexingConfig;
+import com.logilite.search.factory.IIndexSearcher;
 
 public class SolrIndexSearcher implements IIndexSearcher
 {

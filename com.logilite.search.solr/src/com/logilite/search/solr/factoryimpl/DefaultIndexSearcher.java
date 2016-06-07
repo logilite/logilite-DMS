@@ -11,7 +11,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package com.logilite.search.factory;
+package com.logilite.search.solr.factoryimpl;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.IIndexSearcherFactory;
