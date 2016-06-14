@@ -219,10 +219,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private MDMSContent						prevDMSContent				= null;
 	private MDMSContent						nextDMSContent				= null;
 	private MDMSContent						cutDMSContent				= null;
-	
-	private MDMSAssociation					selectedDMSAssociation      = null;
+
+	private MDMSAssociation					selectedDMSAssociation		= null;
 	private MDMSContent						selectedContent				= null;
-	
+
 	private ArrayList<DMSViewerComponent>	viewerComponents			= null;
 
 	public IFileStorageProvider				fileStorageProvider			= null;
@@ -263,6 +263,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private boolean							isSearch					= false;
 	private boolean							isCut						= false;
 	private boolean							isCopy						= false;
+	private boolean							isGenericSearch				= false;
 
 	private static final int				COMPONENT_HEIGHT			= 120;
 	private static final int				COMPONENT_WIDTH				= 120;
@@ -432,6 +433,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		rows.appendChild(row);
 		row.appendChild(searchCell);
 		vsearchBox.getButton().setImageContent(Utils.getImage("Search16.png"));
+		vsearchBox.getButton().addEventListener(Events.ON_CLICK, this);
+		vsearchBox.addEventListener(Events.ON_OK, this);
 
 		row = new Row();
 		rows.appendChild(row);
@@ -723,9 +726,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(btnBack))
 		{
-			if (isSearch)
+			if (isSearch || isGenericSearch)
 			{
 				isSearch = false;
+				isGenericSearch = false;
 				currDMSContent = null;
 				lblPositionInfo.setValue(null);
 			}
@@ -751,9 +755,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (currDMSContent != null)
 				{
 					lblPositionInfo.setValue(currDMSContent.getName());
-					breadRow.getChildren().clear();
-					addRootBreadCrumb();
-					showBreadcumb(currDMSContent);
 				}
 				else
 					lblPositionInfo.setValue(null);
@@ -882,6 +883,21 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			renderBreadCrumb(event);
 		}
+		else if (Events.ON_OK.equals(event.getName())
+				|| (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass()
+						.equals(vsearchBox.getButton().getClass())))
+		{
+			if (!Util.isEmpty(vsearchBox.getTextbox().getValue()))
+			{
+				breadRow.getChildren().clear();
+				btnBack.setEnabled(true);
+				lblPositionInfo.setValue(null);
+				isGenericSearch = true;
+				isSearch = false;
+				renderViewer();
+			}
+		}
+
 	}
 
 	private String pastePhysicalCopiedFolder(MDMSContent copiedContent, MDMSContent destPasteContent)
@@ -1460,6 +1476,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (isSearch)
 			dmsContent = renderSearchedContent();
+		else if(isGenericSearch)
+			dmsContent = getGenericSearchedContent();
 		else
 			dmsContent = getDMSContents();
 
@@ -1516,6 +1534,22 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		grid.appendChild(rows);
 		tabBox.setSelectedIndex(0);
+	}
+
+	private HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent()
+	{
+		String query = "*"+vsearchBox.getTextbox().getValue()+"*";
+		List<Integer> documentList =  indexSeracher.searchIndex(query);
+		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
+
+		for (Integer entry : documentList)
+		{
+			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
+
+			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
+					new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
+		}
+		return map;
 	}
 
 	/**
@@ -1608,8 +1642,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException
 	{
 		selectedContent = DMSViewerComp.getDMSContent();
-		
-		if(DMSViewerComp.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+
+		if (DMSViewerComp.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
 			selectedDMSAssociation = DMSViewerComp.getDMSAssociation();
 
 		if (selectedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
@@ -1718,7 +1752,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			lblPositionInfo.setValue(currDMSContent.getName());
 			if (currDMSContent.getParentURL() == null)
 				btnBack.setEnabled(true);
-			
+
 			btnNext.setEnabled(true);
 			selectedDMSAssociation = null;
 		}
@@ -2512,7 +2546,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		breadRow.appendChild(rootBreadCrumbLink);
 		lblShowBreadCrumb = new Label();
-		//lblShowBreadCrumb.setValue(" > ");
+		// lblShowBreadCrumb.setValue(" > ");
 		breadRow.appendChild(new Space());
 		breadRow.appendChild(lblShowBreadCrumb);
 

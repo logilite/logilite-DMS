@@ -394,7 +394,7 @@ public class WDLoadASIPanel extends Panel
 					value = sdf.format(valueTimeStamp);
 				}
 			}
-			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, valueTimeStamp, value);
+			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, valueTimeStamp);
 		}
 		else if (DisplayType.isNumeric(displayType))
 		{
