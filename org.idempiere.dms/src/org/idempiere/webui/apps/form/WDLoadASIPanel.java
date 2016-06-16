@@ -375,25 +375,6 @@ public class WDLoadASIPanel extends Panel
 				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
 			}
 
-			String value = null;
-			if (valueTimeStamp != null)
-			{
-				if (displayType == DisplayType.Date)
-				{
-					SimpleDateFormat sdf = Env.getLanguage(Env.getCtx()).getDateFormat();
-					value = sdf.format(valueTimeStamp);
-				}
-				else if (displayType == DisplayType.DateTime)
-				{
-					SimpleDateFormat sdf = Env.getLanguage(Env.getCtx()).getDateTimeFormat();
-					value = sdf.format(valueTimeStamp);
-				}
-				else if (displayType == DisplayType.Time)
-				{
-					SimpleDateFormat sdf = Env.getLanguage(Env.getCtx()).getTimeFormat();
-					value = sdf.format(valueTimeStamp);
-				}
-			}
 			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, valueTimeStamp);
 		}
 		else if (DisplayType.isNumeric(displayType))
