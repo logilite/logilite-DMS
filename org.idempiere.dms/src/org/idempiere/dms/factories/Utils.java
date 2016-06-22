@@ -73,7 +73,7 @@ public class Utils
 
 	public static final String					NAME							= "Name";
 	public static final String					CREATED							= "created";
-	public static final String					CREATEDBY						= "createdBY";
+	public static final String					CREATEDBY						= "createdBy";
 	public static final String					UPDATED							= "updated";
 	public static final String					UPDATEDBY						= "updatedBy";
 	public static final String					DESCRIPTION						= "description";
