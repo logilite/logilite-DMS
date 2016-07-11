@@ -24,7 +24,7 @@ public class CustomToolbarFactory implements IAction
 		ADWindow window = (ADWindow) target;
 		winContent = window.getADWindowContent();
 		int record_ID = winContent.getADTab().getSelectedGridTab().getRecord_ID();
-		int table_ID = winContent.getADTab().getSelectedGridTab().getAD_Tab_ID();
+		int table_ID = winContent.getADTab().getSelectedGridTab().getAD_Table_ID();
 
 		if (record_ID == -1 || table_ID == -1)
 			return;

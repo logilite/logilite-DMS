@@ -15,7 +15,6 @@ package org.idempiere.webui.apps.form;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.logging.Level;
 

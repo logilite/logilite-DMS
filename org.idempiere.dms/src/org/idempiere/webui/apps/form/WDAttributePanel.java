@@ -98,6 +98,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private Tabpanel				tabpanelVersionHitory	= new Tabpanel();
 
 	private Grid					gridAttributeLayout		= new Grid();
+	
+	private Grid					grid					= new Grid();
 
 	private Label					lblStatus				= null;
 
@@ -177,17 +179,27 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	 */
 	private void init()
 	{
-		this.appendChild(mainLayout);
-		mainLayout.setHeight("100%");
-		mainLayout.setWidth("100%");
+		this.appendChild(grid);
+		grid.setHeight("100%");
+		grid.setWidth("100%");
+		grid.setZclass("none");
+		panelAttribute.setZclass("none");
+
 		this.setHeight("100%");
 		this.setWidth("100%");
 
-		North north = new North();
-		mainLayout.appendChild(north);
-		north.appendChild(panelAttribute);
-		north.setHeight("100%");
-
+		Columns columns = new Columns();
+		Rows rows = new Rows();
+		
+		Column column = new Column();
+		columns.appendChild(column);
+		
+		Row row = new Row();
+		row.appendChild(panelAttribute);
+		rows.appendChild(row);
+		grid.appendChild(columns);
+		grid.appendChild(rows);
+		
 		lblStatus = new Label();
 		ZkCssHelper.appendStyle(lblStatus, "font-weight: bold;");
 		ZkCssHelper.appendStyle(lblStatus, "align: center;");
@@ -220,11 +232,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		tabpanelAttribute.appendChild(gridAttributeLayout);
 		tabVersionHistory.setWidth("100%");
 
-		Columns columns = new Columns();
-		Column column = new Column();
+		columns = new Columns();
+		column = new Column();
 
-		Rows rows = new Rows();
-		Row row = new Row();
+		rows = new Rows();
+		row = new Row();
 
 		gridAttributeLayout.appendChild(columns);
 		gridAttributeLayout.appendChild(rows);
@@ -286,8 +298,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		btnDownload.setImageContent(Utils.getImage("Downloads24.png"));
 		btnClose.setImageContent(Utils.getImage("Close24.png"));
 
-		panelFooterButtons.setStyle("position: fixed; bottom: 2%;");
-
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
 
@@ -302,6 +312,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		Grid versionGrid = new Grid();
 		versionGrid.setHeight("65%");
 		versionGrid.setWidth("100%");
+		this.setZclass("none");
 		versionGrid.setStyle("position:relative; float: right; overflow-y: auto;");
 		this.setStyle("position:relative; float: right; height: 100%; overflow: auto;");
 

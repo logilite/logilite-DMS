@@ -95,10 +95,13 @@ public class WDocumentViewer extends Window
 		attributePanel = new WDAttributePanel(mDMSContent, tabBox, tableID, recordID);
 		cellCPreview.appendChild(attributePanel);
 
+		boxViewSeparator.setStyle("position:relative; overflow: auto;");
 		boxViewSeparator.appendChild(cellPreview);
 		boxViewSeparator.appendChild(splitter);
 		boxViewSeparator.appendChild(cellCPreview);
 
+		tabDataPanel.setStyle("position:relative; overflow: auto;");
+		tabDataPanel.setZclass("none");
 		tabDataPanel.appendChild(boxViewSeparator);
 		return tabDataPanel;
 	}

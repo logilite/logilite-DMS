@@ -28,6 +28,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
 
@@ -154,6 +155,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Grid							grid						= GridFactory.newGridLayout();
 	private Grid							gridBreadCrumb				= GridFactory.newGridLayout();
+	private Grid							searchgridView				= GridFactory.newGridLayout();
+
 	private BreadCrumbLink					breadCrumbEvent				= null;
 
 	private Rows							breadRows					= new Rows();
@@ -220,8 +223,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private MDMSContent						nextDMSContent				= null;
 	private MDMSContent						cutDMSContent				= null;
 
-	private MDMSAssociation					selectedDMSAssociation		= null;
-	private MDMSContent						selectedContent				= null;
+	private MDMSAssociation					previousDMSAssociation		= null;
+
+	private Stack<MDMSAssociation>			selectedDMSAssociation		= new Stack<MDMSAssociation>();
+	private Stack<MDMSContent>				selectedDMSContent			= new Stack<MDMSContent>();
 
 	private ArrayList<DMSViewerComponent>	viewerComponents			= null;
 
@@ -360,16 +365,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		tabBox.addEventListener(Events.ON_SELECT, this);
 		grid.setStyle("width: 100%; height:95%; position:relative; overflow: auto;");
 		// View Result Tab
-
-		Grid gridView = GridFactory.newGridLayout();
-		gridView.setStyle("height:100%; position:relative; overflow: auto;");
-		gridView.setWidth("100%");
-		gridView.setHeight("100%");
-		gridView.makeNoStrip();
-		gridView.setOddRowSclass("even");
-		gridView.setZclass("none");
+		
+		Grid btngrid = GridFactory.newGridLayout();
 		Columns columns = new Columns();
-
 		Column column = new Column();
 		column.setWidth("90px");
 		column.setAlign("left");
@@ -386,8 +384,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		columns.appendChild(column);
 
 		Rows rows = new Rows();
-		gridView.appendChild(rows);
-
+		btngrid.appendChild(rows);
+		
 		Row row = new Row();
 		rows.appendChild(row);
 		btnBack.setImageContent(Utils.getImage("Left24.png"));
@@ -424,6 +422,29 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnUploadContent.setImageContent(Utils.getImage("Upload24.png"));
 		btnUploadContent.setTooltiptext("Upload Content");
 		btnUploadContent.addEventListener(Events.ON_CLICK, this);
+		
+		
+		searchgridView.setStyle("max-height: 100%;width: 100%;position:relative; overflow: auto;");
+		searchgridView.setVflex(true);
+		columns = new Columns();
+
+		column = new Column();
+		column.setWidth("90px");
+		column.setAlign("left");
+		columns.appendChild(column);
+
+		column = new Column();
+		column.setWidth("130px");
+		column.setAlign("center");
+		columns.appendChild(column);
+
+		column = new Column();
+		column.setWidth("120px");
+		column.setAlign("right");
+		columns.appendChild(column);
+
+		rows = new Rows();
+		searchgridView.appendChild(rows);
 
 		row = new Row();
 		Cell searchCell = new Cell();
@@ -576,7 +597,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		Cell cell = new Cell();
 		cell.setColspan(3);
 		cell.appendChild(panelAttribute);
-		panelAttribute.setStyle("max-height: 200px; overflow: auto;");
+		//panelAttribute.setStyle("max-height: 200px; overflow: auto;");
 		row.appendChild(cell);
 
 		row = new Row();
@@ -634,10 +655,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		cell = new Cell();
 		cell.setWidth("30%");
-		cell.appendChild(gridView);
+		cell.setHeight("100%");
+		//cell.setStyle("height: 100%; overflow: hidden;");
+		cell.appendChild(btngrid);
+		cell.appendChild(searchgridView);
+		searchgridView.setParent(cell);
 		boxViewSeparator.appendChild(cell);
 		tabViewPanel.appendChild(boxViewSeparator);
-		gridView.appendChild(rows);
+		cell.setParent(boxViewSeparator);
+		searchgridView.appendChild(rows);
 
 		tabs.appendChild(tabView);
 		tabPanels.appendChild(tabViewPanel);
@@ -1476,7 +1502,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (isSearch)
 			dmsContent = renderSearchedContent();
-		else if(isGenericSearch)
+		else if (isGenericSearch)
 			dmsContent = getGenericSearchedContent();
 		else
 			dmsContent = getDMSContents();
@@ -1538,8 +1564,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent()
 	{
-		String query = "*"+vsearchBox.getTextbox().getValue()+"*";
-		List<Integer> documentList =  indexSeracher.searchIndex(query);
+		String query = "*" + vsearchBox.getTextbox().getValue() + "*";
+		List<Integer> documentList = indexSeracher.searchIndex(query);
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
 
 		for (Integer entry : documentList)
@@ -1641,31 +1667,30 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException
 	{
-		selectedContent = DMSViewerComp.getDMSContent();
+		selectedDMSContent.push(DMSViewerComp.getDMSContent());
+		
+		selectedDMSAssociation.push(DMSViewerComp.getDMSAssociation());
 
-		if (DMSViewerComp.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
-			selectedDMSAssociation = DMSViewerComp.getDMSAssociation();
-
-		if (selectedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (selectedDMSContent.peek().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 		{
-			currDMSContent = selectedContent;
+			currDMSContent = selectedDMSContent.pop();
 			showBreadcumb(currDMSContent);
 			renderViewer();
-			lblPositionInfo.setValue(selectedContent.getName());
+			lblPositionInfo.setValue(currDMSContent.getName());
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);
 		}
-		else if (selectedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
+		else if (selectedDMSContent.peek().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 		{
 			File documentToPreview = null;
 
-			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), selectedContent.getDMS_MimeType_ID(), null);
+			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), selectedDMSContent.peek().getDMS_MimeType_ID(), null);
 
-			documentToPreview = fileStorageProvider.getFile(contentManager.getPath(selectedContent));
+			documentToPreview = fileStorageProvider.getFile(contentManager.getPath(selectedDMSContent.peek()));
 
 			if (documentToPreview != null)
 			{
-				String name = selectedContent.getName();
+				String name = selectedDMSContent.peek().getName();
 
 				if (name.contains("(") && name.contains(")"))
 					name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
@@ -1677,9 +1702,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					tabs.appendChild(tabData);
 					tabBox.setSelectedTab(tabData);
 
-					WDocumentViewer documentViewer = new WDocumentViewer(tabBox, documentToPreview, selectedContent,
-							tableID, recordID);
-					tabPanels.appendChild(documentViewer.initForm());
+					WDocumentViewer documentViewer = new WDocumentViewer(tabBox, documentToPreview,
+							selectedDMSContent.peek(), tableID, recordID);
+					Tabpanel tabPanel = documentViewer.initForm();
+					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
 
 					this.appendChild(tabBox);
@@ -1744,17 +1770,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		nextDMSContent = currDMSContent;
 
 		if (selectedDMSAssociation != null
-				&& selectedDMSAssociation.getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID()
+				&& selectedDMSAssociation.peek().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID()
 				&& currDMSContent != null
-				&& currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.getDMS_Content_ID())
+				&& currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.peek().getDMS_Content_ID())
 		{
-			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.getDMS_Content_Related_ID(), null);
+			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.peek().getDMS_Content_Related_ID(),
+					null);
 			lblPositionInfo.setValue(currDMSContent.getName());
 			if (currDMSContent.getParentURL() == null)
 				btnBack.setEnabled(true);
 
 			btnNext.setEnabled(true);
-			selectedDMSAssociation = null;
 		}
 		else if (currDMSContent != null)
 		{
@@ -1783,6 +1809,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			btnBack.setEnabled(false);
 		}
+		previousDMSAssociation = selectedDMSAssociation.pop();
 
 		renderViewer();
 
@@ -1801,6 +1828,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		breadCrumbLink.setLabel(nextDMSContent.getName());
 		breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
 
+		breadRow.appendChild(new Label(" > "));
 		breadRow.appendChild(breadCrumbLink);
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
@@ -1808,6 +1836,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (nextDMSContent != null)
 		{
 			currDMSContent = nextDMSContent;
+			if (previousDMSAssociation != null)
+				selectedDMSAssociation.add(selectedDMSAssociation.size(), previousDMSAssociation);
 			renderViewer();
 			lblPositionInfo.setValue(currDMSContent.getName());
 		}
