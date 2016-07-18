@@ -66,7 +66,6 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Cell;
-import org.zkoss.zul.North;
 import org.zkoss.zul.South;
 
 import com.logilite.search.factory.IIndexSearcher;

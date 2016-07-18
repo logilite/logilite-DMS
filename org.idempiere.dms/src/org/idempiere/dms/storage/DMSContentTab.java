@@ -28,6 +28,7 @@ import org.compiere.model.DataStatusListener;
 import org.compiere.model.GridTab;
 import org.compiere.model.GridWindow;
 import org.compiere.util.CLogger;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
@@ -69,11 +70,13 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		this.windowNumber = windowNo;
 		this.gridTab = gridTab;
 		this.gridWindow = gridWindow;
-		
-		if(gridTab.getParentTab() == null)
+
+		if (gridTab.getParentTab() == null)
 			throw new AdempiereException("Parent Tab not found");
-		
-		documentViewerPanel = new WDMSPanel();
+
+		documentViewerPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab()
+				.getRecord_ID());
+		renderViewer();
 		this.appendChild(documentViewerPanel);
 		gridTab.addDataStatusListener(this);
 	}
@@ -119,6 +122,9 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	{
 		documentViewerPanel.setTable_ID(gridTab.getParentTab().getAD_Table_ID());
 		documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
+		Utils.initiateMountingContent(gridTab.getParentTab().getTableName(), gridTab.getParentTab().getRecord_ID(),
+				gridTab.getParentTab().getAD_Table_ID());
+		documentViewerPanel.renderTabContent();
 		renderViewer();
 	}
 
@@ -152,6 +158,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	{
 		documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
 		documentViewerPanel.setTable_ID((gridTab.getParentTab().getAD_Table_ID()));
+		renderViewer();
 	}
 
 	@Override
@@ -290,6 +297,9 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		{
 			documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
 			documentViewerPanel.setTable_ID(gridTab.getParentTab().getAD_Table_ID());
+			Utils.initiateMountingContent(gridTab.getParentTab().getTableName(), gridTab.getParentTab().getRecord_ID(),
+					gridTab.getParentTab().getAD_Table_ID());
+			documentViewerPanel.renderTabContent();
 			renderViewer();
 		}
 	}

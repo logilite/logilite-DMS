@@ -1,13 +1,14 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
- * you can redistribute it and/or modify it * under the terms version 2 of the
- * GNU General Public License as published * by the Free Software Foundation.
- * This program is distributed in the hope * that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
- * more details. * You should have received a copy of the GNU General Public
- * License along * with this program; if not, write to the Free Software
- * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
 package org.idempiere.dms.factories;
@@ -46,6 +47,8 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.idempiere.model.FileStorageUtil;
+import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
@@ -219,6 +222,23 @@ public class Utils
 		return thumbnailProvider;
 	}
 
+	public static IMounting getMountingStrategy()
+	{
+		IMounting mounting = null;
+		List<IMountingFactory> factories = Service.locator().list(IMountingFactory.class).getServices();
+
+		for (IMountingFactory factory : factories)
+		{
+			mounting = factory.getMounting();
+
+			if (mounting != null)
+			{
+				return mounting;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * get File separator "/"
 	 * 
@@ -368,7 +388,7 @@ public class Utils
 		}
 		return fullPath;
 	}
-	
+
 	public static String getCopiedUniqueFilename(String fullPath)
 	{
 		File document = new File(fullPath);
@@ -380,7 +400,8 @@ public class Utils
 			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.lastIndexOf("."));
 			if (fileNameWOExt.matches("\\(.*\\d\\)"))
 			{
-				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1, fileNameWOExt.lastIndexOf("("));
+				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1,
+						fileNameWOExt.lastIndexOf("("));
 			}
 			String ext = FilenameUtils.getExtension(document.getName());
 			int n = 1;
@@ -391,12 +412,10 @@ public class Utils
 			}
 			while (document.exists());
 		}
-		
-		
-		
+
 		return fullPath;
 	}
-	
+
 	public static String getUniqueFoldername(String fullPath)
 	{
 		File document = new File(fullPath);
@@ -408,7 +427,8 @@ public class Utils
 			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.length());
 			if (fileNameWOExt.matches("\\(.*\\d\\)"))
 			{
-				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1, fileNameWOExt.lastIndexOf("("));
+				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1,
+						fileNameWOExt.lastIndexOf("("));
 			}
 			int n = 1;
 			do
@@ -670,7 +690,7 @@ public class Utils
 			pstmt = null;
 		}
 	}
-	
+
 	public static AImage getImage(String name)
 	{
 		IResourceFinder rf = null;
@@ -688,7 +708,7 @@ public class Utils
 		}
 		return image;
 	}
-	
+
 	public static String readableFileSize(long size)
 	{
 		if (size <= 0)
@@ -702,24 +722,119 @@ public class Utils
 	{
 		MDMSContentType mdmsContentType = null;
 		String msg = null;
-		
-		if(content.getDMS_ContentType_ID() > 0)
+
+		if (content.getDMS_ContentType_ID() > 0)
 		{
 			mdmsContentType = new MDMSContentType(Env.getCtx(), content.getDMS_ContentType_ID(), null);
 			msg = "Content Type: " + mdmsContentType.getName() + "\n";
 		}
-		
-		if(!Util.isEmpty(content.getDMS_FileSize()) && !Util.isEmpty(msg)) 
+
+		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 		{
-			msg = msg + "Size: " + content.getDMS_FileSize() + "\n"; 
+			IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
+			IContentManager contentManager = getContentManager(Env.getAD_Client_ID(Env.getCtx()));
+
+			if (fileStorageProvider == null)
+				throw new AdempiereException("File Storage Provider not found.");
+
+			if (contentManager == null)
+				throw new AdempiereException("Content manager is not found.");
+
+			File file = fileStorageProvider.getFile(contentManager.getPath(content));
+
+			if (!Util.isEmpty(msg))
+				msg = msg + "Size: " + readableFileSize(file.length()) + "\n";
+			else
+				msg = "Size: " + readableFileSize(file.length()) + "\n";
 		}
 		else
 		{
-			msg = "Size: " + content.getDMS_FileSize() + "\n";
+			if (!Util.isEmpty(content.getDMS_FileSize()) && !Util.isEmpty(msg))
+			{
+				msg = msg + "Size: " + content.getDMS_FileSize() + "\n";
+			}
+			else
+			{
+				msg = "Size: " + content.getDMS_FileSize() + "\n";
+			}
 		}
-		
+
 		msg = msg + "Created: " + content.getCreated();
-			
+
 		return msg;
+	}
+
+	public static void initiateMountingContent(String table_Name, int Record_ID, int AD_Table_ID)
+	{
+		IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
+
+		String mountingBaseName = MSysConfig.getValue("DMS_MOUNTING_BASE", "Attachment");
+		String baseDir = fileStorageProvider.getBaseDirectory(null);
+		String fileSeprator = Utils.getStorageProviderFileSeparator();
+
+		File file = new File(baseDir + fileSeprator + mountingBaseName);
+
+		int mountingContent_ID = 0;
+		int tableNameContentID = 0;
+		int recordContentID = 0;
+
+		if (!file.exists())
+		{
+			file.mkdirs();
+			mountingContent_ID = createDMSContent(mountingBaseName, null);
+			createAssociation(mountingContent_ID, 0, Record_ID, AD_Table_ID);
+		}
+		else
+		{
+			mountingContent_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ?",
+					mountingBaseName);
+		}
+
+		file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name);
+
+		if (!file.exists())
+		{
+			file.mkdirs();
+			tableNameContentID = createDMSContent(table_Name, fileSeprator + mountingBaseName);
+			createAssociation(tableNameContentID, mountingContent_ID, Record_ID, AD_Table_ID);
+		}
+		else
+		{
+			tableNameContentID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ?",
+					table_Name);
+		}
+
+		file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name + fileSeprator
+				+ Record_ID);
+
+		if (!file.exists())
+		{
+			file.mkdirs();
+			recordContentID = createDMSContent(String.valueOf(Record_ID), fileSeprator + mountingBaseName
+					+ fileSeprator + table_Name);
+			createAssociation(recordContentID, tableNameContentID, Record_ID, AD_Table_ID);
+		}
+	}
+
+	private static int createDMSContent(String mountingBaseName, String parentURL)
+	{
+		MDMSContent DMSContent = new MDMSContent(Env.getCtx(), 0, null);
+		DMSContent.setName(mountingBaseName);
+		DMSContent.setValue(mountingBaseName);
+		DMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(null));
+		DMSContent.setParentURL(parentURL);
+		DMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
+		DMSContent.saveEx();
+		return DMSContent.getDMS_Content_ID();
+	}
+
+	private static void createAssociation(int Content_ID, int Content_Related_ID, int Record_ID, int AD_Table_ID)
+	{
+		MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
+		DMSAssociation.setDMS_Content_ID(Content_ID);
+		DMSAssociation.setDMS_Content_Related_ID(Content_Related_ID);
+		DMSAssociation.setAD_Table_ID(AD_Table_ID);
+		DMSAssociation.setRecord_ID(Record_ID);
+		DMSAssociation.saveEx();
 	}
 }

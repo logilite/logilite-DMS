@@ -1,13 +1,28 @@
+/******************************************************************************
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ *****************************************************************************/
+
 package org.idempiere.dms.toolbar;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.action.IAction;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.session.SessionManager;
+import org.compiere.util.CLogger;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zul.Window.Mode;
 
@@ -17,6 +32,7 @@ public class CustomToolbarFactory implements IAction
 	private AbstractADWindowContent	winContent	= null;
 	private WDMSPanel				dmsPanel	= null;
 	private Window					dmsWindow	= null;
+	public static CLogger			log			= CLogger.getCLogger(CustomToolbarFactory.class);
 
 	@Override
 	public void execute(Object target)
@@ -29,10 +45,7 @@ public class CustomToolbarFactory implements IAction
 		if (record_ID == -1 || table_ID == -1)
 			return;
 
-		dmsPanel = new WDMSPanel();
-
-		dmsPanel.setTable_ID(table_ID);
-		dmsPanel.setRecord_ID(record_ID);
+		dmsPanel = new WDMSPanel(table_ID, record_ID);
 
 		dmsWindow = new Window();
 		dmsWindow.setHeight("80%");
@@ -43,22 +56,19 @@ public class CustomToolbarFactory implements IAction
 		dmsWindow.setTitle("Document Explorer");
 		dmsWindow.setParent(window.getComponent());
 		dmsWindow.appendChild(dmsPanel);
+
+		Utils.initiateMountingContent(winContent.getADTab().getSelectedGridTab().getTableName(), record_ID, table_ID);
+
 		try
 		{
+			dmsPanel.renderTabContent();
 			dmsPanel.renderViewer();
 		}
-		catch (IOException e)
+		catch (Exception e)
 		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.log(Level.SEVERE, "Render Component Problem.", e);
+			throw new AdempiereException("Render Component Problem: " + e);
 		}
-		catch (URISyntaxException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 		SessionManager.getAppDesktop().showWindow(dmsWindow);
-
 	}
 }

@@ -24,7 +24,9 @@ import org.idempiere.model.MDMSContent;
 public class DMSClipboard
 {
 
-	public static Map<Integer, I_DMS_Content>	sessionClip	= new HashMap<Integer, I_DMS_Content>();
+	public static Map<Integer, I_DMS_Content>	sessionClip		= new HashMap<Integer, I_DMS_Content>();
+
+	public static boolean						isViewerCopy	= false;
 
 	public static void put(MDMSContent content)
 	{
@@ -53,4 +55,15 @@ public class DMSClipboard
 		sessionClip.remove(ad_Session_ID);
 
 	}
+
+	public static boolean getIsViewerCopy()
+	{
+		return isViewerCopy;
+	}
+
+	public static void setViewerCopy(boolean isViewerCopy)
+	{
+		DMSClipboard.isViewerCopy = isViewerCopy;
+	}
+
 }
