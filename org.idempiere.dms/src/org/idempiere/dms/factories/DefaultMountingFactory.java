@@ -11,18 +11,17 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package org.idempiere.dms.storage;
+package org.idempiere.dms.factories;
 
-import org.idempiere.dms.factories.IMounting;
+import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.factories.IMountingFactory;
 
 public class DefaultMountingFactory implements IMountingFactory
 {
 
 	@Override
-	public IMounting getMounting()
+	public IMountingStrategy getMountingStrategy(String Table_Name)
 	{
-		return new DefaultMountingFactoryImpl();
+		return new DefaultMountingStrategy();
 	}
-
 }

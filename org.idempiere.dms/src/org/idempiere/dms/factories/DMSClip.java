@@ -13,7 +13,17 @@
 
 package org.idempiere.dms.factories;
 
-public interface IMountingFactory
+public class DMSClip
 {
-	public IMountingStrategy getMountingStrategy(String Table_Name);
+	public boolean	isCopy	= false;
+
+	public boolean isCopy()
+	{
+		return isCopy;
+	}
+
+	public void setCopy(boolean isCopy)
+	{
+		this.isCopy = isCopy;
+	}
 }

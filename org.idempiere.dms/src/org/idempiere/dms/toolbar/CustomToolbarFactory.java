@@ -22,6 +22,7 @@ import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.session.SessionManager;
 import org.compiere.util.CLogger;
+import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zul.Window.Mode;
@@ -61,7 +62,10 @@ public class CustomToolbarFactory implements IAction
 
 		try
 		{
-			dmsPanel.renderTabContent();
+			IMountingStrategy mountingStrategy = Utils.getMountingStrategy(winContent.getADTab().getSelectedGridTab()
+					.getTableName());
+			dmsPanel.setCurrDMSContent(mountingStrategy.getMountingParent(winContent.getADTab().getSelectedGridTab()
+					.getTableName(), record_ID));
 			dmsPanel.renderViewer();
 		}
 		catch (Exception e)

@@ -175,6 +175,15 @@ public interface I_DMS_Content
 	  */
 	public boolean isActive();
 
+    /** Column name IsMounting */
+    public static final String COLUMNNAME_IsMounting = "IsMounting";
+
+	/** Set IsMounting	  */
+	public void setIsMounting (boolean IsMounting);
+
+	/** Get IsMounting	  */
+	public boolean isMounting();
+
     /** Column name IsReadOnly */
     public static final String COLUMNNAME_IsReadOnly = "IsReadOnly";
 

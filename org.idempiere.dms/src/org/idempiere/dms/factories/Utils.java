@@ -91,14 +91,20 @@ public class Utils
 																						+ " INNER JOIN  M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
 																						+ " WHERE ai.M_AttributeSetInstance_Id = ?";
 
-	public static final String					SQL_GET_RELATED_FOLDER_CONTENT	= " WITH ContentAssociation AS ( SELECT c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, "
-																						+ " a.Record_ID FROM DMS_Association a "
-																						+ " INNER JOIN DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID) ) "
+	public static final String					SQL_GET_RELATED_FOLDER_CONTENT	= "WITH ContentAssociation AS "
+																						+ " ( "
+																						+ " SELECT	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, "
+																						+ " a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
+																						+ " FROM DMS_Association a "
+																						+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID) "
+																						+ " ) "
 																						+ " SELECT "
-																						+ " DMS_Content_ID,DMS_Association_ID FROM ContentAssociation ca WHERE (COALESCE(AD_Table_ID,0) = COALESCE(?,0) AND COALESCE(Record_ID,0) = COALESCE(?,0) "
-																						+ " AND COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0)) OR (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND ContentBaseType = 'DIR') "
-																						+ " OR (CASE WHEN (? = 0 AND ? = 0) THEN ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND COALESCE(AD_Table_ID,0) != 0 "
-																						+ " AND COALESCE(Record_ID,0) != 0)) ELSE ((COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND AD_Table_ID = ? AND Record_ID = ?)) END)";
+																						+ " COALESCE((SELECT a.DMS_Content_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_ID) AS DMS_Content_ID, "
+																						+ " COALESCE((SELECT a.DMS_Content_Related_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_Related_ID) AS DMS_Content_Related_ID, DMS_Association_ID "
+																						+ " FROM ContentAssociation ca "
+																						+ " WHERE "
+																						+ " (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0)) OR "
+																						+ " (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND ContentBaseType = 'DIR') ";
 
 	public static final String					SQL_GET_RELATED_CONTENT			= "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID";
 
@@ -222,14 +228,14 @@ public class Utils
 		return thumbnailProvider;
 	}
 
-	public static IMounting getMountingStrategy()
+	public static IMountingStrategy getMountingStrategy(String Table_Name)
 	{
-		IMounting mounting = null;
+		IMountingStrategy mounting = null;
 		List<IMountingFactory> factories = Service.locator().list(IMountingFactory.class).getServices();
 
 		for (IMountingFactory factory : factories)
 		{
-			mounting = factory.getMounting();
+			mounting = factory.getMountingStrategy(Table_Name);
 
 			if (mounting != null)
 			{
@@ -623,7 +629,7 @@ public class Utils
 		return solrValue;
 	}
 
-	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID)
+	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL)
 	{
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
@@ -631,16 +637,8 @@ public class Utils
 		try
 		{
 			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT, null);
-			pstmt.setInt(1, tableID);
-			pstmt.setInt(2, recordID);
-			pstmt.setInt(3, content.getDMS_Content_ID());
-			pstmt.setInt(4, content.getDMS_Content_ID());
-			pstmt.setInt(5, tableID);
-			pstmt.setInt(6, recordID);
-			pstmt.setInt(7, content.getDMS_Content_ID());
-			pstmt.setInt(8, content.getDMS_Content_ID());
-			pstmt.setInt(9, tableID);
-			pstmt.setInt(10, recordID);
+			pstmt.setInt(1, content.getDMS_Content_ID());
+			pstmt.setInt(2, content.getDMS_Content_ID());
 
 			rs = pstmt.executeQuery();
 
@@ -655,7 +653,7 @@ public class Utils
 						dmsContent.setParentURL(dmsContent.getParentURL().replaceFirst(baseURL, renamedURL));
 						dmsContent.saveEx();
 					}
-					renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID);
+					renameFolder(dmsContent, baseURL, renamedURL);
 				}
 				else
 				{
@@ -824,6 +822,7 @@ public class Utils
 		DMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(null));
 		DMSContent.setParentURL(parentURL);
 		DMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
+		DMSContent.setIsMounting(true);
 		DMSContent.saveEx();
 		return DMSContent.getDMS_Content_ID();
 	}

@@ -27,7 +27,7 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20160603L;
+	private static final long serialVersionUID = 20160725L;
 
     /** Standard Constructor */
     public X_DMS_Content (Properties ctx, int DMS_Content_ID, String trxName)
@@ -222,6 +222,27 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
+	}
+
+	/** Set IsMounting.
+		@param IsMounting IsMounting	  */
+	public void setIsMounting (boolean IsMounting)
+	{
+		set_Value (COLUMNNAME_IsMounting, Boolean.valueOf(IsMounting));
+	}
+
+	/** Get IsMounting.
+		@return IsMounting	  */
+	public boolean isMounting () 
+	{
+		Object oo = get_Value(COLUMNNAME_IsMounting);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
 	}
 
 	/** Set Read Only.

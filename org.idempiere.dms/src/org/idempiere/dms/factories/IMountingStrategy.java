@@ -14,15 +14,15 @@
 package org.idempiere.dms.factories;
 
 import org.compiere.model.PO;
-import org.idempiere.model.X_DMS_Content;
+import org.idempiere.model.MDMSContent;
 
-public interface IMounting
+public interface IMountingStrategy
 {
-	public String getMountingStrategy(String Table_Name, int Record_ID);
+	public String getMountingPath(String Table_Name, int Record_ID);
 
-	public String getMountingStrategy(PO po);
+	public String getMountingPath(PO po);
 
-	public String getMountingStrategy(String path);
+	public MDMSContent getMountingParent(String Table_Name, int Record_ID);
 
-	public String getMountingStrategy(X_DMS_Content DMSContent);
+	public MDMSContent getMountingParent(PO po);
 }

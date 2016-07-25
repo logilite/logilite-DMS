@@ -83,18 +83,12 @@ public class WRenameContent extends Window implements EventListener<Event>
 	private IFileStorageProvider	fileStorgProvider	= null;
 	private IIndexSearcher			indexSeracher		= null;
 
-	private int						tableID				= 0;
-	private int						recordID			= 0;
-
 	private String					baseURL				= null;
 	private String					renamedURL			= null;
 
-	public WRenameContent(MDMSContent DMSContent, int tableID, int recordID)
+	public WRenameContent(MDMSContent DMSContent)
 	{
 		this.DMSContent = DMSContent;
-
-		this.recordID = recordID;
-		this.tableID = tableID;
 
 		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 
@@ -263,7 +257,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 				else
 					renamedURL = spFileSeprator + txtName.getValue();
 
-				Utils.renameFolder(DMSContent, baseURL, renamedURL, tableID, recordID);
+				Utils.renameFolder(DMSContent, baseURL, renamedURL);
 				dirPath.renameTo(newFile);
 
 				DMSContent.setName(txtName.getValue());
