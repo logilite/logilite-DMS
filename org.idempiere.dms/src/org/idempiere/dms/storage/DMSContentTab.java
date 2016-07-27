@@ -74,13 +74,14 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		this.gridTab = gridTab;
 		this.gridWindow = gridWindow;
 
+		if (gridTab.getParentTab() == null)
+			throw new AdempiereException("Parent Tab not found");
+
 		mountingStrategy = Utils.getMountingStrategy(gridTab.getParentTab().getTableName());
 
 		if (mountingStrategy == null)
 			throw new AdempiereException("Mounting Strategy not found.");
 
-		if (gridTab.getParentTab() == null)
-			throw new AdempiereException("Parent Tab not found");
 
 		documentViewerPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab()
 				.getRecord_ID());
