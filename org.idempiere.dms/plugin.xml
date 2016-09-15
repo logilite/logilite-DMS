@@ -9,4 +9,12 @@
             class="org.idempiere.webui.apps.form.WDocumentExplorer">
       </form>
    </extension>
+   <extension
+         id="org.idempiere.dms.process.MigrateAttachmentToDMS"
+         name="org.idempiere.dms.process.MigrateAttachmentToDMS"
+         point="org.adempiere.base.Process">
+      <process
+            class="org.idempiere.dms.process.MigrateAttachmentToDMS">
+      </process>
+   </extension>
 </plugin>

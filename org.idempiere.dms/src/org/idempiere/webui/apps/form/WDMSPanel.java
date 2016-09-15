@@ -1947,7 +1947,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.setPage(DMSViewerCom.getPage());
 		copyDMSContent = DMSClipboard.get();
 
-		if (dirContent.isMounting())
+		if (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			mnu_associate.setDisabled(true);
 			mnu_copy.setDisabled(true);

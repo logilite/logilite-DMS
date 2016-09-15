@@ -594,36 +594,40 @@ public class Utils
 		solrValue.put(AD_Table_ID, DMSAssociation.getAD_Table_ID());
 		solrValue.put(RECORD_ID, DMSAssociation.getRecord_ID());
 
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try
+		if (DMSContent.getM_AttributeSetInstance_ID() > 0)
 		{
-			stmt = DB.prepareStatement(SQL_GETASI, null);
-			stmt.setInt(1, DMSContent.getM_AttributeSetInstance_ID());
-			rs = stmt.executeQuery();
-
-			if (rs.isBeforeFirst())
+			PreparedStatement stmt = null;
+			ResultSet rs = null;
+			try
 			{
-				while (rs.next())
+				stmt = DB.prepareStatement(SQL_GETASI, null);
+				stmt.setInt(1, DMSContent.getM_AttributeSetInstance_ID());
+				rs = stmt.executeQuery();
+
+				if (rs.isBeforeFirst())
 				{
-					if (rs.getObject("value") != null)
+					while (rs.next())
 					{
-						if (rs.getObject("valuetimestamp") != null)
+						if (rs.getObject("value") != null)
 						{
-							solrValue.put("ASI_" + rs.getString("Name"), rs.getObject("valuetimestamp"));
-						}
-						else
-						{
-							solrValue.put("ASI_" + rs.getString("Name"), rs.getObject("value"));
+							if (rs.getObject("valuetimestamp") != null)
+							{
+								solrValue.put("ASI_" + rs.getString("Name"), rs.getObject("valuetimestamp"));
+							}
+							else
+							{
+								solrValue.put("ASI_" + rs.getString("Name"), rs.getObject("value"));
+							}
 						}
 					}
 				}
 			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "ASI fetching failure.", e);
-			throw new AdempiereException("ASI fetching failure." + e.getLocalizedMessage());
+
+			catch (SQLException e)
+			{
+				log.log(Level.SEVERE, "ASI fetching failure.", e);
+				throw new AdempiereException("ASI fetching failure." + e.getLocalizedMessage());
+			}
 		}
 
 		return solrValue;
