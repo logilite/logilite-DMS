@@ -151,7 +151,10 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	{
 		if (!Util.isEmpty(path))
 		{
-			if (path.charAt(0) == fileSeparator.charAt(0))
+			if (fileSeparator.charAt(0) == path.charAt(0) && path.charAt(0) == baseDir.charAt(baseDir.length() - 1))
+				return baseDir + path.substring(1, path.length());
+			else if (fileSeparator.charAt(0) == path.charAt(0)
+					|| fileSeparator.charAt(0) == baseDir.charAt(baseDir.length() - 1))
 				return baseDir + path;
 			else
 				return baseDir + fileSeparator + path;

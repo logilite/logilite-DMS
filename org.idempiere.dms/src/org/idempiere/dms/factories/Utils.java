@@ -378,7 +378,7 @@ public class Utils
 		{
 			String fileName = document.getName();
 			String path = fullPath.substring(0, fullPath.length() - fileName.length());
-			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.lastIndexOf("."));
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(getStorageProviderFileSeparator()) + 1, fullPath.lastIndexOf("."));
 			if (fileNameWOExt.contains("(") && fileNameWOExt.contains(")"))
 			{
 				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.indexOf(0) + 1, fileNameWOExt.indexOf("("));
@@ -403,7 +403,7 @@ public class Utils
 		{
 			String fileName = document.getName();
 			String path = fullPath.substring(0, fullPath.length() - fileName.length());
-			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.lastIndexOf("."));
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(getStorageProviderFileSeparator()) + 1, fullPath.lastIndexOf("."));
 			if (fileNameWOExt.matches("\\(.*\\d\\)"))
 			{
 				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1,
@@ -430,7 +430,7 @@ public class Utils
 		{
 			String fileName = document.getName();
 			String path = fullPath.substring(0, fullPath.length() - fileName.length());
-			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf("/") + 1, fullPath.length());
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(getStorageProviderFileSeparator()) + 1, fullPath.length());
 			if (fileNameWOExt.matches("\\(.*\\d\\)"))
 			{
 				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1,

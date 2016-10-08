@@ -203,7 +203,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Label							lblPositionInfo				= new Label();
 
 	private MDMSContent						currDMSContent				= null;
-	private MDMSContent						prevDMSContent				= null;
 	private MDMSContent						nextDMSContent				= null;
 
 	private MDMSAssociation					previousDMSAssociation		= null;
@@ -1231,7 +1230,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			else
 				baseURL = spFileSeprator + oldDMSContent.getName();
 
-			baseURL = baseURL.substring(0, baseURL.lastIndexOf("/"));
+			baseURL = baseURL.substring(0, baseURL.lastIndexOf(spFileSeprator));
 
 			String fname = pastePhysicalCopiedContent(oldDMSContent, destPasteContent, parentFileName);
 			parentFileName = fname;
@@ -1288,7 +1287,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				if (oldDMSContent.getParentURL().startsWith(baseURL))
 				{
-					newDMSContent.setParentURL(oldDMSContent.getParentURL().replaceFirst(baseURL, renamedURL));
+					oldDMSContent.setParentURL(renamedURL);
 				}
 			}
 			else
