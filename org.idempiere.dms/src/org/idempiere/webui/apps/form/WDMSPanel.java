@@ -144,7 +144,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private BreadCrumbLink					breadCrumbEvent				= null;
 
 	private Rows							breadRows					= new Rows();
-	private Row								breadRow					= new Row();
+	public Row								breadRow					= new Row();
 
 	// View Result Tab
 	private Searchbox						vsearchBox					= new Searchbox();
@@ -2651,7 +2651,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return parents;
 	}
 
-	private void addRootBreadCrumb()
+	public void addRootBreadCrumb()
 	{
 		BreadCrumbLink rootBreadCrumbLink = new BreadCrumbLink();
 

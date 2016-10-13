@@ -313,6 +313,9 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 					.getTableName(), gridTab.getParentTab().getRecord_ID()));
 			renderViewer();
 		}
+		
+		documentViewerPanel.breadRow.getChildren().clear();
+		documentViewerPanel.addRootBreadCrumb();
 	}
 
 	private void renderViewer()
