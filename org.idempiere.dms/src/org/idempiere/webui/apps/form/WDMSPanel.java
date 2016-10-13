@@ -984,20 +984,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		File oldFile = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
 		String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
 
-		if (Util.isEmpty(parentName))
-		{
-			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
-				newFileName = newFileName + copiedContent.getName();
-			else
-				newFileName = newFileName + spFileSeprator + copiedContent.getName();
-		}
+		if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+			newFileName = newFileName + copiedContent.getName();
 		else
-		{
-			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
-				newFileName = newFileName + parentName;
-			else
-				newFileName = newFileName + spFileSeprator + parentName;
-		}
+			newFileName = newFileName + spFileSeprator + copiedContent.getName();
 
 		File newFile = new File(newFileName);
 		File parent = new File(newFile.getParent());
@@ -1040,7 +1030,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		return newFile.getName();
-	}
+	} // pastePhysicalCopiedContent
 
 	private void pasteCopyContent(MDMSContent copiedContent, MDMSContent destPasteContent) throws IOException,
 			SQLException
@@ -1203,121 +1193,128 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	}
 
 	private void pasteCopyFileContent(MDMSContent oldDMSContent, MDMSContent destPasteContent) throws SQLException,
-			IOException
+	IOException
 	{
+		int crID = 0;
+		String fileName = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+
 		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(new MDMSContent(Env.getCtx(), oldDMSContent
 				.getDMS_Content_ID(), null));
-		int crID = 0;
-		StringBuffer sqlGetAssociation = new StringBuffer(
-				"SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? ");
 
-		sqlGetAssociation.append(" Order By DMS_Association_ID");
-		PreparedStatement ps = DB.prepareStatement(sqlGetAssociation.toString(), null);
-		ps.setInt(1, DMS_Content_ID);
-		ps.setInt(2, DMS_Content_ID);
-		ResultSet res = ps.executeQuery();
-		String parentFileName = null;
-
-		while (res.next())
+		String sqlGetAssociation = "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association "
+				+ " WHERE DMS_Content_Related_ID=? AND DMS_AssociationType_ID=1000000 OR DMS_Content_ID=? "
+				+ " Order By DMS_Association_ID";
+		try
 		{
-			String baseURL = null;
-			String renamedURL = null;
+			pstmt = DB.prepareStatement(sqlGetAssociation.toString(), null);
+			pstmt.setInt(1, DMS_Content_ID);
+			pstmt.setInt(2, DMS_Content_ID);
+			rs = pstmt.executeQuery();
 
-			oldDMSContent = new MDMSContent(Env.getCtx(), res.getInt("DMS_Content_ID"), null);
-
-			if (!Util.isEmpty(oldDMSContent.getParentURL()))
-				baseURL = contentManager.getPath(oldDMSContent);
-			else
-				baseURL = spFileSeprator + oldDMSContent.getName();
-
-			baseURL = baseURL.substring(0, baseURL.lastIndexOf(spFileSeprator));
-
-			String fname = pastePhysicalCopiedContent(oldDMSContent, destPasteContent, parentFileName);
-			parentFileName = fname;
-			renamedURL = contentManager.getPath(destPasteContent);
-
-			MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
-
-			PO.copyValues(oldDMSContent, newDMSContent);
-
-			MAttributeSetInstance oldASI = null;
-			MAttributeSetInstance newASI = null;
-			if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
+			while (rs.next())
 			{
-				oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), null);
-				newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
-				PO.copyValues(oldASI, newASI);
-				newASI.saveEx();
-			}
-			if (newASI != null)
-				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
+				String baseURL = null;
+				String renamedURL = null;
 
-			newDMSContent.setName(fname);
-			newDMSContent.saveEx();
+				oldDMSContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
 
-			MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), res.getInt("DMS_Association_ID"),
-					null);
-			MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
-
-			PO.copyValues(oldDMSAssociation, newDMSAssociation);
-
-			newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
-
-			if (oldDMSAssociation.getDMS_AssociationType_ID() == 1000001)
-			{
-				crID = newDMSContent.getDMS_Content_ID();
-
-				if (destPasteContent != null && destPasteContent.getDMS_Content_ID() > 0)
-					newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
+				if (!Util.isEmpty(oldDMSContent.getParentURL()))
+					baseURL = contentManager.getPath(oldDMSContent);
 				else
-					newDMSAssociation.setDMS_Content_Related_ID(0);
-			}
-			else
-				newDMSAssociation.setDMS_Content_Related_ID(crID);
+					baseURL = spFileSeprator + oldDMSContent.getName();
 
-			if (isTabViewer())
-			{
-				newDMSAssociation.setAD_Table_ID(tableID);
-				newDMSAssociation.setRecord_ID(recordID);
-			}
+				baseURL = baseURL.substring(0, baseURL.lastIndexOf(spFileSeprator));
 
-			newDMSAssociation.saveEx();
+				fileName = pastePhysicalCopiedContent(oldDMSContent, destPasteContent, fileName);
+				renamedURL = contentManager.getPath(destPasteContent);
 
-			if (!Util.isEmpty(oldDMSContent.getParentURL()))
-			{
-				if (oldDMSContent.getParentURL().startsWith(baseURL))
+				MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
+
+				PO.copyValues(oldDMSContent, newDMSContent);
+
+				MAttributeSetInstance oldASI = null;
+				MAttributeSetInstance newASI = null;
+				if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
 				{
-					oldDMSContent.setParentURL(renamedURL);
+					oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), null);
+					newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
+					PO.copyValues(oldASI, newASI);
+					newASI.saveEx();
 				}
-			}
-			else
-			{
-				newDMSContent.setParentURL(renamedURL);
-			}
+				if (newASI != null)
+					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
-			newDMSContent.saveEx();
-			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), newDMSContent.getDMS_MimeType_ID(), null);
+				newDMSContent.setName(fileName);
+				newDMSContent.saveEx();
 
-			IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
+				MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
+						null);
+				MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 
-			if (thumbnailGenerator != null)
-				thumbnailGenerator.addThumbnail(newDMSContent,
-						fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
+				PO.copyValues(oldDMSAssociation, newDMSAssociation);
 
-			String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-			newPath = newPath + spFileSeprator + oldDMSContent.getName();
+				newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
 
-			try
-			{
+				if (oldDMSAssociation.getDMS_AssociationType_ID() == 1000001)
+				{
+					crID = newDMSContent.getDMS_Content_ID();
+
+					if (destPasteContent != null && destPasteContent.getDMS_Content_ID() > 0)
+						newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
+					else
+						newDMSAssociation.setDMS_Content_Related_ID(0);
+				}
+				else
+					newDMSAssociation.setDMS_Content_Related_ID(crID);
+
+				if (isTabViewer())
+				{
+					newDMSAssociation.setAD_Table_ID(tableID);
+					newDMSAssociation.setRecord_ID(recordID);
+				}
+
+				newDMSAssociation.saveEx();
+
+				if (!Util.isEmpty(oldDMSContent.getParentURL()))
+				{
+					if (oldDMSContent.getParentURL().startsWith(baseURL))
+					{
+						oldDMSContent.setParentURL(renamedURL);
+					}
+				}
+				else
+				{
+					newDMSContent.setParentURL(renamedURL);
+				}
+
+				newDMSContent.saveEx();
+				MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), newDMSContent.getDMS_MimeType_ID(), null);
+
+				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
+
+				if (thumbnailGenerator != null)
+					thumbnailGenerator.addThumbnail(newDMSContent,
+							fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
+
+				String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
+				newPath = newPath + spFileSeprator + oldDMSContent.getName();
+
 				Map<String, Object> solrValue = Utils.createIndexMap(newDMSContent, newDMSAssociation);
 				indexSeracher.deleteIndex(newDMSContent.getDMS_Content_ID());
 				indexSeracher.indexContent(solrValue);
 			}
-			catch (Exception e)
-			{
-				log.log(Level.SEVERE, "Indexing of copy Content Failure :", e);
-				throw new AdempiereException("Indexing of copy Content Failure :" + e);
-			}
+		}
+		catch (Exception e)
+		{
+			throw new AdempiereException(e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
 		}
 	}
 
@@ -2030,6 +2027,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		mnu_copy.setDisabled(false);
 		DMSViewerCom.setContext(contentContextMenu);
+		contentContextMenu.open(this, "at_pointer");
 	}
 
 	/**

@@ -209,7 +209,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		tabBoxAttribute.appendChild(tabpanelsAttribute);
 		panelAttribute.appendChild(tabBoxAttribute);
 		tabBoxAttribute.setMold("accordion");
-		tabBoxAttribute.setHeight("100%");
+		tabBoxAttribute.setHeight("98%");
 		tabBoxAttribute.setWidth("100%");
 
 		tabsAttribute.appendChild(tabAttribute);
@@ -221,12 +221,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		tabpanelsAttribute.appendChild(tabpanelAttribute);
 		// tabpanelsAttribute.setStyle("display: flex;");
-		tabpanelsAttribute.setHeight("100%");
+		tabpanelsAttribute.setHeight("98%");
 		tabpanelsAttribute.setWidth("100%");
 
 		tabpanelsAttribute.appendChild(tabpanelVersionHitory);
-		tabpanelVersionHitory.setHeight("550px");
-		tabpanelAttribute.setHeight("100%");
+		tabpanelVersionHitory.setHeight("500px");
+		tabpanelVersionHitory.setWidth("100%");
 
 		tabpanelAttribute.appendChild(gridAttributeLayout);
 		tabVersionHistory.setWidth("100%");
@@ -290,6 +290,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		panelFooterButtons.appendChild(btnRequery);
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
+		panelFooterButtons.setStyle("display: inline-flex; padding-top: 5px;");
 		
 		btnVersionUpload.setImageContent(Utils.getImage("uploadversion24.png"));
 		btnDelete.setImageContent(Utils.getImage("Delete24.png"));
@@ -309,7 +310,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	{
 		Components.removeAllChildren(tabpanelVersionHitory);
 		Grid versionGrid = new Grid();
-		versionGrid.setHeight("65%");
+		versionGrid.setHeight("100%");
 		versionGrid.setWidth("100%");
 		this.setZclass("none");
 		versionGrid.setStyle("position:relative; float: right; overflow-y: auto;");
@@ -324,7 +325,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		columns.appendChild(column);
 
 		column = new Column();
-
+		column.setWidth("65%");
 		columns.appendChild(column);
 
 		Rows rows = new Rows();
@@ -332,6 +333,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		versionGrid.appendChild(columns);
 		versionGrid.setHeight("100%");
+		versionGrid.setWidth("98%");
 		versionGrid.appendChild(rows);
 		versionGrid.setZclass("none");
 
@@ -478,7 +480,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			indexSeracher.deleteIndex(DMS_Content_ID);
 			indexSeracher.indexContent(solrValue);
 		}
-		else if (event.getTarget().getId().equals(confirmPanel.A_CANCEL))
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
 			tabBox.getSelectedTab().close();
 		}
@@ -493,7 +495,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			else
 				FDialog.warn(0, "Docuement is not available to download.");
 		}
-		else if (event.getTarget().getId().equals(confirmPanel.A_DELETE))
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
 			File document = fileStorageProvider.getFile(contentManager.getPath(DMS_Content));
 
@@ -529,7 +531,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			});
 			uploadContent.addEventListener(Events.ON_CLOSE, this);
 		}
-		else if (event.getTarget().getId().equals(confirmPanel.A_REFRESH))
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH))
 		{
 			initAttributes();
 			initVersionHistory();

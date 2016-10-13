@@ -63,8 +63,8 @@ public class ImageContentEditor extends Panel implements IContentEditor
 	@Override
 	public Panel initPanel()
 	{
-		this.setHeight("100%");
-		this.setWidth("100%");
+		this.setHeight("99%");
+		this.setWidth("99%");
 
 		Iframe iframeContentPriview = new Iframe();
 

@@ -70,7 +70,8 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	@Override
 	public File getFile(String path)
 	{
-		File file = new File(baseDir + fileSeparator + path);
+		path = buildValidPath(path);
+		File file = new File(path);
 
 		if (file.exists())
 			return file;
@@ -151,15 +152,20 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	{
 		if (!Util.isEmpty(path))
 		{
-			if (fileSeparator.charAt(0) == path.charAt(0) && path.charAt(0) == baseDir.charAt(baseDir.length() - 1))
-				return baseDir + path.substring(1, path.length());
-			else if (fileSeparator.charAt(0) == path.charAt(0)
-					|| fileSeparator.charAt(0) == baseDir.charAt(baseDir.length() - 1))
-				return baseDir + path;
-			else
-				return baseDir + fileSeparator + path;
+			return buildValidPath(path);
 		}
 		else
 			return baseDir;
+	}
+
+	private String buildValidPath(String path)
+	{
+		if (fileSeparator.charAt(0) == path.charAt(0) && path.charAt(0) == baseDir.charAt(baseDir.length() - 1))
+			return baseDir + path.substring(1, path.length());
+		else if (fileSeparator.charAt(0) == path.charAt(0)
+				|| fileSeparator.charAt(0) == baseDir.charAt(baseDir.length() - 1))
+			return baseDir + path;
+		else
+			return baseDir + fileSeparator + path;
 	}
 }

@@ -14,6 +14,7 @@
 package org.idempiere.dms.storage;
 
 import org.compiere.util.CLogger;
+import org.compiere.util.Util;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
@@ -27,15 +28,17 @@ public class RelationalContentManager implements IContentManager
 	@Override
 	public String getPath(I_DMS_Content content)
 	{
-		if (content != null)
+		String path = "";
+
+		if (content != null && content.getDMS_Content_ID() > 0)
 		{
-			if (content.getParentURL() != null)
-				return content.getParentURL() + Utils.getStorageProviderFileSeparator() + content.getName();
-			else
-				return Utils.getStorageProviderFileSeparator() + content.getName();
+			if (!Util.isEmpty(content.getParentURL(), true))
+				path = content.getParentURL() + Utils.getStorageProviderFileSeparator() + content.getName();
+			else if (!Util.isEmpty(content.getName(), true))
+				path = Utils.getStorageProviderFileSeparator() + content.getName();
 		}
-		else
-			return "";
+
+		return path;
 	}
 
 }
