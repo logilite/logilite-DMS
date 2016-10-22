@@ -351,6 +351,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public void setCurrDMSContent(MDMSContent currDMSContent)
 	{
 		this.currDMSContent = currDMSContent;
+		selectedDMSContent.add(currDMSContent);
 	}
 
 	public boolean isTabViewer()
@@ -622,6 +623,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnClear.setImageContent(Utils.getImage("Reset24.png"));
 		btnRefresh.setImageContent(Utils.getImage("Refresh24.png"));
 		btnCloseTab.setImageContent(Utils.getImage("Close24.png"));
+		
+		btnCloseTab.addEventListener(Events.ON_CLICK, this);
 
 		hbox.appendChild(btnClear);
 		hbox.appendChild(btnRefresh);
@@ -1610,8 +1613,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent()
 	{
-		String query = "*" + vsearchBox.getTextbox().getValue() + "*";
-		List<Integer> documentList = indexSeracher.searchIndex(query);
+		StringBuffer query = new StringBuffer("*" + vsearchBox.getTextbox().getValue() + "*");
+		
+		if(recordID > 0)
+			query.append(" AND Record_ID:"+ recordID);
+		
+		if(tableID > 0)
+			query.append(" AND AD_Table_ID:"+ tableID);
+		
+		List<Integer> documentList = indexSeracher.searchIndex(query.toString());
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
 
 		for (Integer entry : documentList)
@@ -1857,10 +1867,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y'",
 					recordID + "");
-
+			currDMSContent = selectedDMSContent.peek();
 			if (currDMSContent.getDMS_Content_ID() == id)
 			{
 				btnBack.setDisabled(true);
+				renderViewer();
 			}
 			return;
 		}
@@ -1955,6 +1966,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_uploadVersion.setDisabled(true);
 			mnu_versionList.setDisabled(true);
 			DMSViewerCom.setContext(contentContextMenu);
+			contentContextMenu.open(this, "at_pointer");
 			return;
 		}
 		else
@@ -2096,6 +2108,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_canvasPaste.setDisabled(false);
 			}
 		}
+		
+		canvasContextMenu.open(this, "at_pointer");
 	}
 
 	private void linkCopyDocument(MDMSContent DMSContent, boolean isDir)

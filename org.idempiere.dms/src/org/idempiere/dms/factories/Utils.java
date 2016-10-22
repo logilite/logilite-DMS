@@ -545,25 +545,6 @@ public class Utils
 	}
 
 	/**
-	 * get Thumbnail of create Link
-	 * 
-	 * @return
-	 */
-	public static MImage getLinkThumbnail()
-	{
-		MImage mImage = cache_linkThumbnail.get(LINK);
-		if (mImage != null)
-		{
-			return mImage;
-		}
-
-		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE name ilike ?", LINK);
-		mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
-		cache_linkThumbnail.put(LINK, mImage);
-		return mImage;
-	}
-
-	/**
 	 * get DMS_Association_Record_ID
 	 * 
 	 * @return

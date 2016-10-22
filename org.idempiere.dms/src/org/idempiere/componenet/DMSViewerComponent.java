@@ -18,7 +18,6 @@ import java.util.logging.Level;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ZkCssHelper;
-import org.compiere.model.MImage;
 import org.compiere.util.CLogger;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
@@ -61,7 +60,6 @@ public class DMSViewerComponent extends Div
 
 	private boolean				isLink				= false;
 	private Image				linkImage			= null;
-	private MImage				mImage				= null;
 	private Div					mimeIcon			= new Div();
 	private Div					footerDiv			= new Div();
 
@@ -161,19 +159,10 @@ public class DMSViewerComponent extends Div
 
 		if (isLink)
 		{
-			AImage aImage = null;
 			try
 			{
-				byte[] imgByteData = null;
-
-				mImage = Utils.getLinkThumbnail();
-				imgByteData = mImage.getData();
-
-				if (imgByteData != null)
-					aImage = new AImage(fName, imgByteData);
-
 				linkImage = new Image();
-				linkImage.setContent(aImage);
+				linkImage.setContent(Utils.getImage("Link16.png"));
 
 				mimeIcon.appendChild(linkImage);
 				mimeIcon.setStyle("float :left;");
@@ -213,7 +202,7 @@ public class DMSViewerComponent extends Div
 		}
 
 		this.appendChild(vbox);
-		this.setStyle("background-color: #ffffff");
+		this.setStyle("background-color: #ffffff;padding: 8px; ");
 
 		ZkCssHelper.appendStyle(this, "text-align: center");
 	}
