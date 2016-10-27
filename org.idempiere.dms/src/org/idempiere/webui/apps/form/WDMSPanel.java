@@ -623,7 +623,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnClear.setImageContent(Utils.getImage("Reset24.png"));
 		btnRefresh.setImageContent(Utils.getImage("Refresh24.png"));
 		btnCloseTab.setImageContent(Utils.getImage("Close24.png"));
-		
+
 		btnCloseTab.addEventListener(Events.ON_CLICK, this);
 
 		hbox.appendChild(btnClear);
@@ -1196,7 +1196,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	}
 
 	private void pasteCopyFileContent(MDMSContent oldDMSContent, MDMSContent destPasteContent) throws SQLException,
-	IOException
+			IOException
 	{
 		int crID = 0;
 		String fileName = null;
@@ -1614,13 +1614,31 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent()
 	{
 		StringBuffer query = new StringBuffer("*" + vsearchBox.getTextbox().getValue() + "*");
-		
-		if(recordID > 0)
-			query.append(" AND Record_ID:"+ recordID);
-		
-		if(tableID > 0)
-			query.append(" AND AD_Table_ID:"+ tableID);
-		
+
+		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
+
+		getHierarchicalContent(hirachicalContent, currDMSContent != null ? currDMSContent.getDMS_Content_ID() : 0);
+
+		if (currDMSContent != null)
+		{
+			hirachicalContent.append(currDMSContent.getDMS_Content_ID()).append(")");
+			query.append(hirachicalContent.toString());
+		}
+		else
+		{
+			if (hirachicalContent.substring(hirachicalContent.length() - 4, hirachicalContent.length()).equals(" OR "))
+			{
+				hirachicalContent.replace(hirachicalContent.length() - 4, hirachicalContent.length(), ")");
+				query.append(hirachicalContent.toString());
+			}
+		}
+
+		if (recordID > 0)
+			query.append(" AND Record_ID:" + recordID);
+
+		if (tableID > 0)
+			query.append(" AND AD_Table_ID:" + tableID);
+
 		List<Integer> documentList = indexSeracher.searchIndex(query.toString());
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
 
@@ -2108,7 +2126,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_canvasPaste.setDisabled(false);
 			}
 		}
-		
+
 		canvasContextMenu.open(this, "at_pointer");
 	}
 
@@ -2330,7 +2348,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (editor.getValue() != null && editor.getValue() != "")
 				{
 					int displayType = editor.getGridField().getDisplayType();
-					String compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
+					String compName = "ASI_" + editor.getColumnName();// .replaceAll("(?i)[^a-z0-9-_/]",
+																		// "_");
 					compName = compName.replaceAll("/", "");
 
 					if (displayType == DisplayType.Number)
@@ -2465,11 +2484,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 						}
 					}
-					else
+					else if (displayType == DisplayType.YesNo)
 					{
 						value = new ArrayList<Object>();
-						value.add(editor.getDisplay());
+
+						if ((boolean) editor.getValue())
+							value.add("Y");
+						else
+							value.add("N");
+
 						params.put(compName, value);
+					}
+					else
+					{
+						if (!Util.isEmpty(editor.getDisplay()))
+						{
+							value = new ArrayList<Object>();
+							value.add(editor.getDisplay());
+							params.put(compName, value);
+						}
 					}
 				}
 			}
@@ -2499,6 +2532,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		HashMap<String, List<Object>> params = getQueryParamas();
 		String query = indexSeracher.buildSolrSearchQuery(params);
+
+		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
+
+		getHierarchicalContent(hirachicalContent, currDMSContent != null ? currDMSContent.getDMS_Content_ID() : 0);
+
+		if (currDMSContent != null)
+		{
+			hirachicalContent.append(currDMSContent.getDMS_Content_ID()).append(")");
+			query += " " + hirachicalContent.toString();
+		}
+		else
+		{
+			if (hirachicalContent.substring(hirachicalContent.length() - 4, hirachicalContent.length()).equals(" OR "))
+			{
+				hirachicalContent.replace(hirachicalContent.length() - 4, hirachicalContent.length(), ")");
+				query += " " + hirachicalContent.toString();
+			}
+		}
+
 		documentList = indexSeracher.searchIndex(query);
 
 		for (Integer entry : documentList)
@@ -2550,7 +2602,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					rows.appendChild(row);
 
 					int displayType = editor.getGridField().getDisplayType();
-					String compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
+					String compName = "ASI_" + editor.getColumnName();// getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]",
+																		// "_");
 					compName = compName.replaceAll("/", "");
 
 					if (displayType == DisplayType.Number)
@@ -2584,6 +2637,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						else if (displayType == DisplayType.Time)
 						{
 							Timebox timebox = new Timebox();
+							timebox.setFormat("h:mm:ss a");
+							timebox.setWidth("100%");
 							timebox.setName(compName + "to");
 							row.appendChild(editor.getLabel());
 							row.appendChild(editor.getComponent());
@@ -2682,5 +2737,43 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
+	}
+
+	private void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID)
+	{
+		PreparedStatement pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT, null);
+		ResultSet rs = null;
+		try
+		{
+			pstmt.setInt(1, DMS_Content_ID);
+			pstmt.setInt(2, DMS_Content_ID);
+			rs = pstmt.executeQuery();
+
+			while (rs.next())
+			{
+				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+
+				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+					getHierarchicalContent(hierarchicalContent, dmsContent.getDMS_Content_ID());
+				else
+				{
+					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
+							null);
+					hierarchicalContent.append(association.getDMS_Content_ID() + " OR ");
+				}
+			}
+
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, "Fail to get hierarchical Content.", e);
+			throw new AdempiereException("Fail to get hierarchical Content: " + e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			pstmt = null;
+			rs = null;
+		}
 	}
 }

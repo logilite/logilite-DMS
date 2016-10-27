@@ -121,6 +121,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		lblDir.setStyle("padding-left: 5px");
 		txtboxDirectory.setWidth("300px");
 		txtboxDirectory.setFocus(true);
+		txtboxDirectory.addEventListener(Events.ON_OK, this);
 
 		North north = new North();
 		north.setParent(mainLayout);
@@ -167,7 +168,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		{
 			this.detach();
 		}
-		if (event.getTarget().getId().equals(ConfirmPanel.A_OK))
+		if (event.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(event.getName()))
 		{
 			String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
 			String dirName = txtboxDirectory.getValue();

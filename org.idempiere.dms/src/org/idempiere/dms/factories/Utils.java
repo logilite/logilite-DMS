@@ -118,8 +118,6 @@ public class Utils
 																						"DirThumbnail", 2);
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail			= new CCache<Integer, MImage>(
 																						"MimetypeThumbnail", 2);
-	static CCache<String, MImage>				cache_linkThumbnail				= new CCache<String, MImage>(
-																						"LinkThumbnail", 2);
 
 	public static IContentEditor getContentEditor(String mimeType)
 	{

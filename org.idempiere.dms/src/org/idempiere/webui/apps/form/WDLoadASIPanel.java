@@ -41,6 +41,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Util;
 import org.idempiere.model.MDMSContentType;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.WrongValueException;
@@ -417,14 +418,15 @@ public class WDLoadASIPanel extends Panel
 		else
 		{
 			String value = String.valueOf(editor.getValue());
-			if (attributes.isMandatory() && value == null)
+			if (attributes.isMandatory() && Util.isEmpty(value))
 			{
 				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
 			}
-
-			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
+			
+			if(!Util.isEmpty(value))
+				attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
 		}
 		return mandatory;
 	}

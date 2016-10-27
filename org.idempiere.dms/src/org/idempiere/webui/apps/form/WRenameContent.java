@@ -119,6 +119,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 		this.setTitle("Rename");
 		this.appendChild(gridView);
 		this.setClosable(true);
+		this.addEventListener(Events.ON_OK, this);
 
 		gridView.setStyle("position:relative;");
 		gridView.makeNoStrip();
@@ -188,7 +189,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 			cancel = true;
 			this.detach();
 		}
-		if (event.getTarget().getId().equals(ConfirmPanel.A_OK))
+		if (event.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(event.getName()))
 		{
 			renameContent();
 		}

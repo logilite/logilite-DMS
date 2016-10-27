@@ -174,6 +174,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		this.setTitle("Upload Content");
 		this.setClosable(true);
 		this.appendChild(gridView);
+		this.addEventListener(Events.ON_OK, this);
 		gridView.setStyle("overflow: auto; position:relative;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
@@ -300,7 +301,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			UploadEvent ue = (UploadEvent) e;
 			processUploadMedia(ue.getMedia());
 		}
-		else if (e.getTarget().getId().equals(ConfirmPanel.A_OK))
+		else if (e.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(e.getName()))
 		{
 			saveUploadedDcoument();
 		}

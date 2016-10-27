@@ -179,7 +179,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Searching content failure:", e);
-			throw new AdempiereException("Searching content failure:" + e);
+			//throw new AdempiereException("Searching content failure:" + e);
 		}
 
 		return dmsContentList;
@@ -299,7 +299,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 			}
 			else
 			{
-				query.append(" AND ").append(key + ":" + value.get(0));
+				query.append(" AND ").append(key + ":\"" + value.get(0) + "\"");
 			}
 		}
 
