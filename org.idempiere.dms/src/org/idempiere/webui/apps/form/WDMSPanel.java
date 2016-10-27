@@ -1885,7 +1885,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y'",
 					recordID + "");
-			currDMSContent = selectedDMSContent.peek();
+			
+			if(currDMSContent == null)
+				currDMSContent = selectedDMSContent.peek();
+			
 			if (currDMSContent.getDMS_Content_ID() == id)
 			{
 				btnBack.setDisabled(true);
@@ -2348,8 +2351,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (editor.getValue() != null && editor.getValue() != "")
 				{
 					int displayType = editor.getGridField().getDisplayType();
-					String compName = "ASI_" + editor.getColumnName();// .replaceAll("(?i)[^a-z0-9-_/]",
-																		// "_");
+					String compName = null;
+					
+					if(displayType == DisplayType.Search)
+						compName = "ASI_" + editor.getColumnName();// .replaceAll("(?i)[^a-z0-9-_/]",
+					else
+						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
+					
 					compName = compName.replaceAll("/", "");
 
 					if (displayType == DisplayType.Number)
