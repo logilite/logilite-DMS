@@ -66,6 +66,7 @@ import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MColumn;
 import org.compiere.model.MImage;
@@ -73,6 +74,7 @@ import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.model.X_AD_User;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -1075,6 +1077,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
 				PO.copyValues(oldASI, newASI);
 				newASI.saveEx();
+				
+				List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
+						"M_AttributeSetInstance_ID = ?", null).setParameters(
+						oldASI.getM_AttributeSetInstance_ID()).list();
+
+				for (MAttributeInstance AI : oldAI)
+				{
+					MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, null);
+					PO.copyValues(AI, newAI);
+					newAI.setM_Attribute_ID(AI.getM_Attribute_ID());
+					newAI.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
+					newAI.saveEx();
+				}
 			}
 			if (newASI != null)
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
@@ -1146,6 +1161,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
 						PO.copyValues(oldASI, newASI);
 						newASI.saveEx();
+
+						List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
+								"M_AttributeSetInstance_ID = ?", null).setParameters(
+								oldASI.getM_AttributeSetInstance_ID()).list();
+
+						for (MAttributeInstance AI : oldAI)
+						{
+							MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, null);
+							PO.copyValues(AI, newAI);
+							newAI.setM_Attribute_ID(AI.getM_Attribute_ID());
+							newAI.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
+							newAI.saveEx();
+						}
 					}
 					if (newASI != null)
 						newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
@@ -1245,6 +1273,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
 					PO.copyValues(oldASI, newASI);
 					newASI.saveEx();
+
+					List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
+							"M_AttributeSetInstance_ID = ?", null).setParameters(oldASI.getM_AttributeSetInstance_ID())
+							.list();
+
+					for (MAttributeInstance AI : oldAI)
+					{
+						MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, null);
+						PO.copyValues(AI, newAI);
+						newAI.setM_Attribute_ID(AI.getM_Attribute_ID());
+						newAI.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
+						newAI.saveEx();
+					}
 				}
 				if (newASI != null)
 					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
@@ -1284,7 +1325,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				{
 					if (oldDMSContent.getParentURL().startsWith(baseURL))
 					{
-						oldDMSContent.setParentURL(renamedURL);
+						newDMSContent.setParentURL(renamedURL);
 					}
 				}
 				else
@@ -1885,10 +1926,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y'",
 					recordID + "");
-			
-			if(currDMSContent == null)
+
+			if (currDMSContent == null)
 				currDMSContent = selectedDMSContent.peek();
-			
+
 			if (currDMSContent.getDMS_Content_ID() == id)
 			{
 				btnBack.setDisabled(true);
@@ -2352,12 +2393,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				{
 					int displayType = editor.getGridField().getDisplayType();
 					String compName = null;
-					
-					if(displayType == DisplayType.Search)
+
+					if (displayType == DisplayType.Search)
 						compName = "ASI_" + editor.getColumnName();// .replaceAll("(?i)[^a-z0-9-_/]",
 					else
 						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
-					
+
 					compName = compName.replaceAll("/", "");
 
 					if (displayType == DisplayType.Number)
