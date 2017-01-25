@@ -103,7 +103,7 @@ public class ImageThumbnailGenerator implements IThumbnailGenerator
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Image thumbnail creation failure:", e);
-			throw new AdempiereException("Image thumbnail creation failure:" + e.getLocalizedMessage());
+			//throw new AdempiereException("Image thumbnail creation failure:" + e.getLocalizedMessage());
 		}
 	}
 }

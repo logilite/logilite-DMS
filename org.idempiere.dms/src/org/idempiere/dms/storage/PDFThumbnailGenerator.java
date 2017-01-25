@@ -124,7 +124,7 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "PDF thumbnail creation failure:", e);
-			throw new AdempiereException("PDF thumbnail creation failure:" + e.getLocalizedMessage());
+			//throw new AdempiereException("PDF thumbnail creation failure:" + e.getLocalizedMessage());
 		}
 	}
 }
