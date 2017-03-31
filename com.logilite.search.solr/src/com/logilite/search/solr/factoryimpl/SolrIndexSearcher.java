@@ -292,14 +292,21 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 			if (value.size() == 2)
 			{
-				if (value.get(1).equals("*"))
-					query.append(" AND ").append(key + ":[\"" + value.get(0) + "\" TO " + value.get(1) + " ]");
+				if (value.get(0) instanceof String || value.get(1) instanceof String)
+				{
+					query.append(" AND (").append(key + ":[" + value.get(0) + " TO " + value.get(1) + " ])");
+				}
+				else if (value.get(1).equals("*"))
+					query.append(" AND (").append(key + ":[\"" + value.get(0) + "\" TO " + value.get(1) + " ])");
 				else
-					query.append(" AND ").append(key + ":[\"" + value.get(0) + "\" TO \"" + value.get(1) + "\" ]");
+					query.append(" AND (").append(key + ":[\"" + value.get(0) + "\" TO \"" + value.get(1) + "\" ])");
 			}
 			else
 			{
-				query.append(" AND ").append(key + ":\"" + value.get(0) + "\"");
+				if (value.get(0) instanceof String)
+					query.append(" AND (").append(key + ":*" + value.get(0) + "*)");
+				else
+					query.append(" AND (").append(key + ":\"" + value.get(0) + "\")");
 			}
 		}
 

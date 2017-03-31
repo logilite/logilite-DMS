@@ -65,15 +65,20 @@ public class WDAssociationType extends Window implements EventListener<Event>
 	private Row						associationTypeRow	= new Row();
 	private MDMSContent				copyDMSContent		= null;
 	private MDMSContent				associateContent	= null;
+	
+	private int						AD_Table_ID			= 0;
+	private int						Record_ID			= 0;
 
 	/**
 	 * @param copyDMSContent
 	 * @param associateContent
 	 */
-	public WDAssociationType(MDMSContent copyDMSContent, MDMSContent associateContent)
+	public WDAssociationType(MDMSContent copyDMSContent, MDMSContent associateContent, int AD_Table_ID, int Record_ID)
 	{
 		this.copyDMSContent = copyDMSContent;
 		this.associateContent = associateContent;
+		this.AD_Table_ID = AD_Table_ID;
+		this.Record_ID = Record_ID;
 
 		try
 		{
@@ -196,6 +201,8 @@ public class WDAssociationType extends Window implements EventListener<Event>
 				DMSassociation.setDMS_Content_ID(associateContent.getDMS_Content_ID());
 				DMSassociation.setDMS_Content_Related_ID(copyDMSContent.getDMS_Content_ID());
 				DMSassociation.setDMS_AssociationType_ID((Integer) associationType.getValue());
+				DMSassociation.setAD_Table_ID(AD_Table_ID);
+				DMSassociation.setRecord_ID(Record_ID);
 				DMSassociation.saveEx();
 			}
 			else

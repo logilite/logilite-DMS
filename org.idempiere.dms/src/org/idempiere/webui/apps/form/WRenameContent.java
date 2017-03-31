@@ -65,12 +65,15 @@ public class WRenameContent extends Window implements EventListener<Event>
 	private static final String		spFileSeprator		= Utils.getStorageProviderFileSeparator();
 
 	private MDMSContent				DMSContent			= null;
+	private MDMSContent				parent_Content 		= null;
 
 	private Grid					gridView			= null;
 
 	private Textbox					txtName				= null;
+	private Textbox					txtDesc				= null;
 
 	private Label					lblName				= null;
+	private Label					lblDesc				= null;
 
 	private ConfirmPanel			confirmpanel		= null;
 
@@ -114,14 +117,14 @@ public class WRenameContent extends Window implements EventListener<Event>
 	{
 		gridView = GridFactory.newGridLayout();
 
-		this.setHeight("22%");
+		this.setHeight("32%");
 		this.setWidth("30%");
 		this.setTitle("Rename");
 		this.appendChild(gridView);
 		this.setClosable(true);
 		this.addEventListener(Events.ON_OK, this);
 
-		gridView.setStyle("position:relative;");
+		gridView.setStyle("position:relative;overflow:auto;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
 		gridView.setZclass("none");
@@ -133,18 +136,25 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		lblName = new Label("Please enter a new name for the item:");
 		txtName = new Textbox();
+		
+		lblDesc = new Label("Description");
+		txtDesc = new Textbox();
+		txtDesc.setMultiline(true);
+		txtDesc.setRows(2);
+		
 
 		if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 		{
-			MDMSContent content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
-			txtName.setValue(content.getName().substring(0, content.getName().lastIndexOf(".")));
+			parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
+			txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
 		}
-		else
-			txtName.setValue(DMSContent.getName());
+
+		txtDesc.setValue(DMSContent.getDescription());
 
 		txtName.setFocus(true);
 		txtName.setSelectionRange(0, txtName.getValue().length() - 1);
-		txtName.setWidth("100%");
+		txtName.setWidth("98%");
+		txtDesc.setWidth("98%");
 
 		confirmpanel = new ConfirmPanel();
 
@@ -163,6 +173,14 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		row = new Row();
 		row.appendChild(txtName);
+		rows.appendChild(row);
+
+		row = new Row();
+		row.appendChild(lblDesc);
+		rows.appendChild(row);
+		
+		row = new Row();
+		row.appendChild(txtDesc);
 		rows.appendChild(row);
 
 		row = new Row();
@@ -221,7 +239,22 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private void renameContent()
 	{
-		if (!txtName.getValue().equals(DMSContent.getName()))
+		if(!txtDesc.getValue().equals(DMSContent.getDescription()))
+		{
+			DMSContent.setDescription(txtDesc.getValue());
+			DMSContent.save();
+
+			int DMS_Association_ID = DB.getSQLValue(null,
+					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?", DMSContent.getDMS_Content_ID());
+
+			MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+
+			Map<String, Object> solrValue = Utils.createIndexMap(DMSContent, DMSAssociation);
+			indexSeracher.deleteIndex(DMSContent.getDMS_Content_ID());
+			indexSeracher.indexContent(solrValue);
+		}
+		
+		if (!txtName.getValue().equals(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 		{
 			ValidateName();
 

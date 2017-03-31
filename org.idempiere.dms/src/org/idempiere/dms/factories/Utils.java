@@ -87,7 +87,7 @@ public class Utils
 
 	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
 
-	private static final String					SQL_GETASI						= "SELECT a.Name,ai.value,ai.valuetimestamp FROM M_AttributeInstance ai "
+	private static final String					SQL_GETASI						= "SELECT replace(a.Name,' ','_') as name,ai.value,ai.valuetimestamp FROM M_AttributeInstance ai "
 																						+ " INNER JOIN  M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
 																						+ " WHERE ai.M_AttributeSetInstance_Id = ?";
 
@@ -567,7 +567,8 @@ public class Utils
 		solrValue.put(CREATEDBY, DMSContent.getCreatedBy());
 		solrValue.put(UPDATED, DMSContent.getUpdated());
 		solrValue.put(UPDATEDBY, DMSContent.getUpdatedBy());
-		solrValue.put(DESCRIPTION, DMSContent.getDescription());
+		solrValue.put(DESCRIPTION, (!Util.isEmpty(DMSContent.getDescription(), true) ? DMSContent.getDescription()
+				.toLowerCase() : null));
 		solrValue.put(CONTENTTYPE, DMSContent.getDMS_ContentType_ID());
 		solrValue.put(DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
 		solrValue.put(AD_Table_ID, DMSAssociation.getAD_Table_ID());
@@ -595,7 +596,7 @@ public class Utils
 							}
 							else
 							{
-								solrValue.put("ASI_" + rs.getString("Name"), rs.getObject("value"));
+								solrValue.put("ASI_" + rs.getString("Name").replace(" ", "_"), rs.getObject("value"));
 							}
 						}
 					}
@@ -723,10 +724,17 @@ public class Utils
 
 			File file = fileStorageProvider.getFile(contentManager.getPath(content));
 
-			if (!Util.isEmpty(msg))
-				msg = msg + "Size: " + readableFileSize(file.length()) + "\n";
+			if(file != null)
+			{
+				if (!Util.isEmpty(msg))
+					msg = msg + "Size: " + readableFileSize(file.length()) + "\n";
+				else
+					msg = "Size: " + readableFileSize(file.length()) + "\n";
+			}
 			else
-				msg = "Size: " + readableFileSize(file.length()) + "\n";
+			{
+				msg = null;
+			}
 		}
 		else
 		{

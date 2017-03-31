@@ -27,6 +27,7 @@ import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Grid;
+import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
@@ -36,6 +37,7 @@ import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
+import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.theme.ThemeManager;
@@ -56,11 +58,11 @@ import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zhtml.Filedownload;
 import org.zkoss.zk.ui.Components;
+import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -79,6 +81,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	 */
 	private static final long		serialVersionUID		= 5200959427619624094L;
 	private static CLogger			log						= CLogger.getCLogger(WDAttributePanel.class);
+
+	private static final String		spFileSeprator			= Utils.getStorageProviderFileSeparator();
 
 	private Panel					panelAttribute			= new Panel();
 	private Panel					panelFooterButtons		= new Panel();
@@ -110,11 +114,18 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private Button					btnSave					= null;
 	private Button					btnVersionUpload		= null;
 
+	private Label					lblName					= null;
+	private Label					lblDesc					= null;
+
+	private Textbox					txtName					= null;
+	private Textbox					txtDesc					= null;
+
 	private AImage					imageVersion			= null;
 
 	private ConfirmPanel			confirmPanel			= null;
 
 	private MDMSContent				DMS_Content				= null;
+	private MDMSContent				parent_Content			= null;
 
 	private DMSViewerComponent		viewerComponenet		= null;
 
@@ -215,7 +226,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		tabsAttribute.appendChild(tabAttribute);
 		tabsAttribute.appendChild(tabVersionHistory);
 
-		tabAttribute.setLabel("Attribute Set");
+		tabAttribute.setLabel("Attributes");
 		tabAttribute.setWidth("100%");
 		tabVersionHistory.setLabel("Version History");
 
@@ -423,6 +434,51 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private void initAttributes()
 	{
 		Components.removeAllChildren(tabpanelAttribute);
+		Grid commGrid = GridFactory.newGridLayout();
+
+		Columns columns = new Columns();
+
+		Column column = new Column();
+		column.setWidth("30%");
+		columns.appendChild(column);
+
+		column = new Column();
+		column.setWidth("70%");
+		columns.appendChild(column);
+
+		Rows rows = new Rows();
+
+		commGrid.appendChild(columns);
+		commGrid.appendChild(rows);
+
+		txtName = new Textbox();
+		txtDesc = new Textbox();
+
+		lblName = new Label("Name");
+		lblDesc = new Label("Description");
+
+		txtName.setWidth("100%");
+		txtDesc.setWidth("100%");
+
+		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMS_Content), null);
+		txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
+
+		txtDesc.setValue(DMS_Content.getDescription());
+
+		txtName.setEnabled(false);
+		txtDesc.setEnabled(false);
+
+		Row row = new Row();
+		row.appendChild(lblName);
+		row.appendChild(txtName);
+		rows.appendChild(row);
+
+		row = new Row();
+		row.appendChild(lblDesc);
+		row.appendChild(txtDesc);
+		rows.appendChild(row);
+		tabpanelAttribute.appendChild(commGrid);
+
 		ASIPanel = new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(), m_M_AttributeSetInstance_ID);
 		ASIPanel.setEditableAttribute(false);
 		tabpanelAttribute.appendChild(ASIPanel);
@@ -441,6 +497,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		if (event.getTarget().equals(btnEdit))
 		{
+			txtName.setEnabled(true);
+			txtDesc.setEnabled(true);
 			ASIPanel.setEditableAttribute(true);
 			btnSave.setVisible(true);
 		}
@@ -451,34 +509,42 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			if (indexSeracher == null)
 				throw new AdempiereException("Index server is not found.");
 
+			if (Util.isEmpty(txtName.getValue()))
+				throw new WrongValueException(txtName, "Fill mandatory field");
+
 			ASIPanel.saveAttributes();
 			btnSave.setVisible(false);
 			ASIPanel.setEditableAttribute(false);
+			txtName.setEnabled(false);
+			txtDesc.setEnabled(false);
 
-			int DMS_Content_ID = DB.getSQLValue(null,
-					"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
-					DMS_Content.getDMS_Content_ID());
-
-			if (DMS_Content_ID <= 0)
-				DMS_Content_ID = DMS_Content.getDMS_Content_ID();
-			else
+			if (!txtName.getValue().equals(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 			{
-				MDMSContent dirContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-				if (dirContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-				{
-					DMS_Content_ID = DMS_Content.getDMS_Content_ID();
-				}
+				updateContent();
 			}
-
+			
+			if ((Util.isEmpty(DMS_Content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
+					|| (!Util.isEmpty(DMS_Content.getDescription()) && !DMS_Content.getDescription().equals(
+							txtDesc.getValue())))
+			{
+				DMS_Content.setDescription(txtDesc.getValue());
+				DMS_Content.save();
+			}
+			
 			int DMS_Association_ID = DB.getSQLValue(null,
-					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?", DMS_Content_ID);
+					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID());
 
-			MDMSContent DMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+			MDMSContent DMSContent = new MDMSContent(Env.getCtx(), DMS_Content.getDMS_Content_ID(), null);
 			MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
 
 			Map<String, Object> solrValue = Utils.createIndexMap(DMSContent, DMSAssociation);
-			indexSeracher.deleteIndex(DMS_Content_ID);
+			indexSeracher.deleteIndex(DMS_Content.getDMS_Content_ID());
 			indexSeracher.indexContent(solrValue);
+			Events.sendEvent(new Event("onRenameComplete", this));
+			tabBox.setSelectedTab((Tab) tabBox.getSelectedTab());
+			tabBox.getSelectedTab().setLabel(DMSContent.getName());
+			initAttributes();
+			initVersionHistory();
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
@@ -561,6 +627,70 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		else
 		{
 			FDialog.warn(0, "Docuement is not available to download.");
+		}
+	}
+
+	private void updateContent()
+	{
+		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(DMS_Content);
+		MDMSContent content = null;
+		MDMSAssociation association = null;
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_CONTENT, null);
+			pstmt.setInt(1, DMS_Content_ID);
+			pstmt.setInt(2, DMS_Content_ID);
+
+			rs = pstmt.executeQuery();
+
+			while (rs.next())
+			{
+				content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+				renameFile(content, association);
+			}
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Rename content failure.", e);
+			throw new AdempiereException("Rename content failure: " + e.getLocalizedMessage());
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+	}
+
+	private void renameFile(MDMSContent content, MDMSAssociation association)
+	{
+		String newPath = fileStorageProvider.getFile(contentManager.getPath(content)).getAbsolutePath();
+		String fileExt = newPath.substring(newPath.lastIndexOf("."), newPath.length());
+		newPath = newPath.substring(0, newPath.lastIndexOf(spFileSeprator));
+		newPath = newPath + spFileSeprator + txtName.getValue() + fileExt;
+		newPath = Utils.getUniqueFilename(newPath);
+
+		File oldFile = new File(fileStorageProvider.getFile(contentManager.getPath(content)).getAbsolutePath());
+		File newFile = new File(newPath);
+		oldFile.renameTo(newFile);
+
+		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf("/") + 1,
+				newFile.getAbsolutePath().length()));
+		content.saveEx();
+
+		try
+		{
+			Map<String, Object> solrValue = Utils.createIndexMap(content, association);
+			indexSeracher.deleteIndex(content.getDMS_Content_ID());
+			indexSeracher.indexContent(solrValue);
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "RE-Indexing of Content Failure :", e);
+			throw new AdempiereException("RE-Indexing of Content Failure :" + e);
 		}
 	}
 }

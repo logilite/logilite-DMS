@@ -666,7 +666,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		boxViewSeparator.appendChild(splitter);
 
 		cell = new Cell();
-		cell.setWidth("30%");
+		cell.setWidth("32%");
 		cell.setHeight("100%");
 		// cell.setStyle("height: 100%; overflow: hidden;");
 		cell.appendChild(btngrid);
@@ -908,7 +908,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
-			new WDAssociationType(copyDMSContent, DMSViewerComp.getDMSContent());
+			new WDAssociationType(copyDMSContent, DMSViewerComp.getDMSContent(), getTable_ID(), getRecord_ID());
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
@@ -918,6 +918,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			renderViewer();
 		}
+		else if (event.getName().equals("onRenameComplete"))
+		{
+			Tab tab = (Tab) tabBox.getSelectedTab();
+			renderViewer();
+			tabBox.setSelectedTab(tab);
+		}
 		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(BreadCrumbLink.class))
 		{
 			renderBreadCrumb(event);
@@ -926,16 +932,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				|| (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass()
 						.equals(vsearchBox.getButton().getClass())))
 		{
-			if (!Util.isEmpty(vsearchBox.getTextbox().getValue()))
-			{
-				breadRow.getChildren().clear();
-				btnBack.setEnabled(true);
-				btnNext.setEnabled(false);
-				lblPositionInfo.setValue(null);
-				isGenericSearch = true;
-				isSearch = false;
-				renderViewer();
-			}
+			breadRow.getChildren().clear();
+			btnBack.setEnabled(true);
+			btnNext.setEnabled(false);
+			lblPositionInfo.setValue(null);
+			isGenericSearch = true;
+			isSearch = false;
+			renderViewer();
 		}
 
 	}
@@ -1654,7 +1657,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent()
 	{
-		StringBuffer query = new StringBuffer("*" + vsearchBox.getTextbox().getValue() + "*");
+		StringBuffer query = new StringBuffer();
+		if (!Util.isEmpty(vsearchBox.getTextbox().getValue(), true))
+		{
+			String inputParam = vsearchBox.getTextbox().getValue();
+			query.append("(").append(Utils.NAME).append(":*").append(inputParam).append("*").append(" OR ")
+					.append(Utils.DESCRIPTION).append(":*").append(inputParam).append("*)");
+		}
+		else
+		{
+			query.append("*:*");
+		}
 
 		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
 
@@ -1814,6 +1827,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					Tabpanel tabPanel = documentViewer.initForm();
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
+					documentViewer.getAttributePanel().addEventListener("onRenameComplete", this);
 
 					this.appendChild(tabBox);
 				}
@@ -2171,6 +2185,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
+		if (currDMSContent != null)
+		{
+			if (currDMSContent.isMounting() && !currDMSContent.getName().equals(String.valueOf(getRecord_ID())))
+			{
+				mnu_canvasCreateLink.setDisabled(true);
+				mnu_canvasPaste.setDisabled(true);
+			}
+		}
+
 		canvasContextMenu.open(this, "at_pointer");
 	}
 
@@ -2301,17 +2324,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
 		List<Object> value = new ArrayList<Object>();
 
-		if (!Util.isEmpty(txtDocumentName.getValue()))
+		if (!Util.isEmpty(txtDocumentName.getValue(), true))
 		{
-			value.add(txtDocumentName.getValue());
+			value.add("*" + txtDocumentName.getValue().toLowerCase() + "*");
 			params.put(Utils.NAME, value);
 
 		}
 
-		if (!Util.isEmpty(txtDescription.getValue()))
+		if (!Util.isEmpty(txtDescription.getValue(), true))
 		{
 			value = new ArrayList<Object>();
-			value.add("*" + txtDescription.getValue() + "*");
+			value.add("*" + txtDescription.getValue().toLowerCase() + "*");
 			params.put(Utils.DESCRIPTION, value);
 		}
 
@@ -2387,21 +2410,27 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (lstboxContentType.getValue() != null)
 		{
 
+			value = new ArrayList<Object>();
+			value.add(lstboxContentType.getValue());
+			params.put(Utils.CONTENTTYPE, value);
+
 			for (WEditor editor : m_editors)
 			{
-				if (editor.getValue() != null && editor.getValue() != "")
-				{
+				//if (editor.getValue() != null && editor.getValue() != "")
+				//{
 					int displayType = editor.getGridField().getDisplayType();
 					String compName = null;
 
-					if (displayType == DisplayType.Search)
-						compName = "ASI_" + editor.getColumnName();// .replaceAll("(?i)[^a-z0-9-_/]",
+					if (displayType == DisplayType.Search || displayType == DisplayType.Table)
+						compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
 					else
 						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
 
 					compName = compName.replaceAll("/", "");
 
-					if (displayType == DisplayType.Number)
+					if (displayType == DisplayType.Number || displayType == DisplayType.Integer
+							|| displayType == DisplayType.Quantity || displayType == DisplayType.Amount
+							|| displayType == DisplayType.CostPrice)
 					{
 						NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName);
 						NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to");
@@ -2417,6 +2446,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						{
 							value = new ArrayList<Object>();
 							value.add(fromNumBox.getValue());
+							value.add("*");
 							params.put(compName, value);
 						}
 						else if (fromNumBox.getValue() == null && toNumBox.getValue() != null)
@@ -2544,16 +2574,22 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 						params.put(compName, value);
 					}
-					else
+					else if (displayType == DisplayType.String || displayType == DisplayType.Text)
 					{
-						if (!Util.isEmpty(editor.getDisplay()))
+						if(!Util.isEmpty(editor.getValue().toString(), true))
 						{
-							value = new ArrayList<Object>();
-							value.add(editor.getDisplay());
-							params.put(compName, value);
+						value = new ArrayList<Object>();
+						value.add(editor.getValue().toString().toLowerCase());
+						params.put(compName, value);
 						}
 					}
-				}
+					else if (!Util.isEmpty(editor.getDisplay()))
+					{
+						value = new ArrayList<Object>();
+						value.add(editor.getDisplay());
+						params.put(compName, value);
+					}
+				//}
 			}
 		}
 
@@ -2651,11 +2687,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					rows.appendChild(row);
 
 					int displayType = editor.getGridField().getDisplayType();
-					String compName = "ASI_" + editor.getColumnName();// getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]",
-																		// "_");
+					String compName = null;
+
+					if (displayType == DisplayType.Search || displayType == DisplayType.Table)
+						compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
+					else
+						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
+
 					compName = compName.replaceAll("/", "");
 
-					if (displayType == DisplayType.Number)
+					if (displayType == DisplayType.Number || displayType == DisplayType.Integer
+							|| displayType == DisplayType.Quantity || displayType == DisplayType.Amount
+							|| displayType == DisplayType.CostPrice)
 					{
 						NumberBox numBox = new NumberBox(false);
 
@@ -2809,6 +2852,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
 							null);
 					hierarchicalContent.append(association.getDMS_Content_ID() + " OR ");
+
+					if (association.getDMS_Content_ID() != dmsContent.getDMS_Content_ID())
+						hierarchicalContent.append(dmsContent.getDMS_Content_ID() + " OR ");
 				}
 			}
 

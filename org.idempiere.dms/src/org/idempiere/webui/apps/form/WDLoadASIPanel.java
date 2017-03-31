@@ -66,10 +66,13 @@ public class WDLoadASIPanel extends Panel
 	private Columns				columns						= new Columns();
 	private Column				column						= new Column();
 	private Rows				rows						= new Rows();
+	private Label				lblAttribute				= new Label();
 
 	MAttributeSet				mAttributeSet				= null;
 
 	private boolean				m_changed					= false;
+	
+	private MDMSContentType		contentType;
 
 	/** List of Editors */
 	public ArrayList<WEditor>	m_editors					= new ArrayList<WEditor>();
@@ -79,6 +82,7 @@ public class WDLoadASIPanel extends Panel
 		m_WindowNo = SessionManager.getAppDesktop().registerWindow(this);
 		this.DMS_ContentType_ID = DMS_ContentType_ID;
 		this.m_M_AttributeSetInstance_ID = m_M_AttributeSetInstance_ID;
+		contentType = new MDMSContentType(Env.getCtx(), DMS_ContentType_ID, null);
 		initPanel();
 	}
 
@@ -97,14 +101,21 @@ public class WDLoadASIPanel extends Panel
 
 		attributeGrid.appendChild(columns);
 		attributeGrid.appendChild(rows);
+		
+		if(contentType != null && !Util.isEmpty(contentType.getName(), true))
+		{
+			Row row = rows.newRow();
+			lblAttribute.setText("Content Type : " + contentType.getName());
+			lblAttribute.setStyle("font-weight: bold;");
+			row.appendCellChild(lblAttribute, 2);
+		}
+		
 
 		initAttribute();
 	}
 
 	public void initAttribute()
 	{
-
-		MDMSContentType contentType = new MDMSContentType(Env.getCtx(), DMS_ContentType_ID, null);
 
 		M_AttributeSet_ID = contentType.getM_AttributeSet_ID();
 

@@ -432,18 +432,15 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				thumbnailGenerator.addThumbnail(uploadedDMSContent,
 						fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
 
-			if (!isVersion)
+			try
 			{
-				try
-				{
-					Map<String, Object> solrValue = Utils.createIndexMap(uploadedDMSContent, dmsAssociation);
-					indexSeracher.indexContent(solrValue);
-				}
-				catch (Exception e)
-				{
-					log.log(Level.SEVERE, "Indexing of Content Failure :", e);
-					throw new AdempiereException("Indexing of Content Failure :" + e);
-				}
+				Map<String, Object> solrValue = Utils.createIndexMap(uploadedDMSContent, dmsAssociation);
+				indexSeracher.indexContent(solrValue);
+			}
+			catch (Exception e)
+			{
+				log.log(Level.SEVERE, "Indexing of Content Failure :", e);
+				throw new AdempiereException("Indexing of Content Failure :" + e);
 			}
 
 		}
