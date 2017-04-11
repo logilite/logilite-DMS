@@ -87,7 +87,7 @@ public class Utils
 
 	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
 
-	private static final String					SQL_GETASI						= "SELECT replace(a.Name,' ','_') as name,ai.value,ai.valuetimestamp FROM M_AttributeInstance ai "
+	private static final String					SQL_GETASI						= "SELECT replace(a.Name,' ','_') as name,ai.value,ai.valuetimestamp,ai.ValueNumber,ai.valueint FROM M_AttributeInstance ai "
 																						+ " INNER JOIN  M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
 																						+ " WHERE ai.M_AttributeSetInstance_Id = ?";
 
@@ -588,17 +588,16 @@ public class Utils
 				{
 					while (rs.next())
 					{
-						if (rs.getObject("value") != null)
-						{
-							if (rs.getObject("valuetimestamp") != null)
-							{
-								solrValue.put("ASI_" + rs.getString("Name"), rs.getObject("valuetimestamp"));
-							}
-							else
-							{
-								solrValue.put("ASI_" + rs.getString("Name").replace(" ", "_"), rs.getObject("value"));
-							}
-						}
+						String fieldName = "ASI_" + rs.getString("Name");
+
+						if (rs.getTimestamp("valuetimestamp") != null)
+							solrValue.put(fieldName, rs.getTimestamp("valuetimestamp"));
+						else if (rs.getDouble("ValueNumber") > 0)
+							solrValue.put(fieldName, rs.getDouble("ValueNumber"));
+						else if (rs.getInt("ValueInt") > 0)
+							solrValue.put(fieldName, rs.getInt("ValueInt"));
+						else if (!Util.isEmpty(rs.getString("Value"), true))
+							solrValue.put(fieldName, rs.getString("value"));
 					}
 				}
 			}

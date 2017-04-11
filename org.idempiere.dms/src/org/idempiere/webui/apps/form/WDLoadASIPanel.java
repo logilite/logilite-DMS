@@ -265,6 +265,10 @@ public class WDLoadASIPanel extends Panel
 					if (instance.getValueInt() > 0)
 						editor.setValue(instance.getValueInt());
 				}
+				else if (displayType == DisplayType.Number)
+				{
+					editor.setValue(instance.getValueNumber().doubleValue());
+				}
 				else if (displayType == DisplayType.Integer)
 				{
 					editor.setValue(instance.getValueInt());
@@ -310,7 +314,8 @@ public class WDLoadASIPanel extends Panel
 					Clients.scrollIntoView(editor.getComponent());
 					throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
 				}
-				attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
+				if(value != null)
+					attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attributes[i].getAttributeValueType()))
 			{
@@ -326,7 +331,8 @@ public class WDLoadASIPanel extends Panel
 				} // setMAttributeInstance doesn't work without decimal point
 				if (value != null && value.scale() == 0)
 					value = value.setScale(1, BigDecimal.ROUND_HALF_UP);
-				attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
+				if(value != null)
+					attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attributes[i].getAttributeValueType()))
 			{
@@ -343,7 +349,8 @@ public class WDLoadASIPanel extends Panel
 					mandatory += " - " + attributes[i].getName();
 					throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
 				}
-				attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
+				if(value != null)
+					attributes[i].setMAttributeInstance(m_M_AttributeSetInstance_ID, value);
 			}
 			m_changed = true;
 		} // for all attributes
@@ -385,8 +392,8 @@ public class WDLoadASIPanel extends Panel
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
 			}
-
-			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, valueTimeStamp);
+			if(valueTimeStamp != null)
+				attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, valueTimeStamp);
 		}
 		else if (DisplayType.isNumeric(displayType))
 		{
@@ -397,11 +404,14 @@ public class WDLoadASIPanel extends Panel
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
 			}
-			if (displayType == DisplayType.Integer)
-				attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID,
-						value == null ? 0 : ((Number) value).intValue(), null);
-			else
-				attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, (BigDecimal) value);
+			if(value != null)
+			{
+				if (displayType == DisplayType.Integer)
+					attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID,
+							value == null ? 0 : ((Number) value).intValue(), null);
+				else
+					attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, (BigDecimal) value);
+			}
 		}
 		else if (displayType == DisplayType.Image || displayType == DisplayType.Assignment
 				|| displayType == DisplayType.Locator || displayType == DisplayType.Payment
@@ -422,9 +432,9 @@ public class WDLoadASIPanel extends Panel
 			{
 				valueLable = editor.getDisplay();
 			}
-
-			attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, value == null ? 0 : value.intValue(),
-					valueLable);
+			if (!Util.isEmpty(valueLable, true) && value.intValue() > 0)
+				attributes.setMAttributeInstance(m_M_AttributeSetInstance_ID, value == null ? 0 : value.intValue(),
+						valueLable);
 		}
 		else
 		{

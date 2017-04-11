@@ -2442,14 +2442,31 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						if (fromNumBox.getValue() != null && toNumBox.getValue() != null)
 						{
 							value = new ArrayList<Object>();
-							value.add(fromNumBox.getValue());
-							value.add(toNumBox.getValue());
+							
+							if(displayType == DisplayType.Number)
+							{
+								value.add(fromNumBox.getValue().doubleValue());
+								value.add(toNumBox.getValue().doubleValue());	
+							}
+							else
+							{
+								value.add(fromNumBox.getValue());
+								value.add(toNumBox.getValue());
+							}
 							params.put(compName, value);
 						}
 						else if (fromNumBox.getValue() != null && toNumBox.getValue() == null)
 						{
 							value = new ArrayList<Object>();
-							value.add(fromNumBox.getValue());
+							
+							if(displayType == DisplayType.Number)
+							{
+								value.add(fromNumBox.getValue().doubleValue());
+							}
+							else
+							{
+								value.add(fromNumBox.getValue());
+							}
 							value.add("*");
 							params.put(compName, value);
 						}
@@ -2457,7 +2474,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						{
 							value = new ArrayList<Object>();
 							value.add("*");
-							value.add(toNumBox.getValue());
+							if(displayType == DisplayType.Number)
+							{
+								value.add(toNumBox.getValue().doubleValue());
+							}
+							else
+							{
+								value.add(toNumBox.getValue());
+							}
 							params.put(compName, value);
 						}
 					}
@@ -2590,7 +2614,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					else if (!Util.isEmpty(editor.getDisplay()))
 					{
 						value = new ArrayList<Object>();
-						value.add(editor.getDisplay());
+						value.add(editor.getValue());
 						params.put(compName, value);
 					}
 				//}
