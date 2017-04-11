@@ -20,11 +20,15 @@ import org.adempiere.webui.action.IAction;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.session.SessionManager;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.webui.apps.form.WDMSPanel;
+import org.zkoss.zk.ui.event.Event;
+import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zul.Window.Mode;
 
 public class CustomToolbarFactory implements IAction
@@ -46,7 +50,7 @@ public class CustomToolbarFactory implements IAction
 		if (record_ID == -1 || table_ID == -1)
 			return;
 
-		dmsPanel = new WDMSPanel(table_ID, record_ID);
+		dmsPanel = new WDMSPanel(table_ID, record_ID, winContent);
 
 		dmsWindow = new Window();
 		dmsWindow.setHeight("80%");
@@ -57,6 +61,20 @@ public class CustomToolbarFactory implements IAction
 		dmsWindow.setTitle("Document Explorer");
 		dmsWindow.setParent(window.getComponent());
 		dmsWindow.appendChild(dmsPanel);
+		dmsWindow.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+
+			@Override
+			public void onEvent(Event arg0) throws Exception
+			{
+				int associateRecords = DB.getSQLValue(null,
+						"SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
+								+ " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
+						winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
+						winContent.getADTab().getSelectedGridTab().getRecord_ID());
+
+				winContent.getToolbar().getButton("Document Explorer").setPressed((associateRecords > 0));
+			}
+		});
 
 		Utils.initiateMountingContent(winContent.getADTab().getSelectedGridTab().getTableName(), record_ID, table_ID);
 

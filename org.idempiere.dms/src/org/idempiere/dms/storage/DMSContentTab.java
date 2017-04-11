@@ -84,7 +84,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 
 
 		documentViewerPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab()
-				.getRecord_ID());
+				.getRecord_ID(), adWindowContent);
 		renderViewer();
 		this.appendChild(documentViewerPanel);
 		gridTab.addDataStatusListener(this);

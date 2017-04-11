@@ -16,6 +16,7 @@ package org.idempiere.webui.apps.form;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
@@ -68,17 +69,20 @@ public class WDAssociationType extends Window implements EventListener<Event>
 	
 	private int						AD_Table_ID			= 0;
 	private int						Record_ID			= 0;
+	
+	private AbstractADWindowContent	winContent;
 
 	/**
 	 * @param copyDMSContent
 	 * @param associateContent
 	 */
-	public WDAssociationType(MDMSContent copyDMSContent, MDMSContent associateContent, int AD_Table_ID, int Record_ID)
+	public WDAssociationType(MDMSContent copyDMSContent, MDMSContent associateContent, int AD_Table_ID, int Record_ID, AbstractADWindowContent winContent)
 	{
 		this.copyDMSContent = copyDMSContent;
 		this.associateContent = associateContent;
 		this.AD_Table_ID = AD_Table_ID;
 		this.Record_ID = Record_ID;
+		this.winContent = winContent;
 
 		try
 		{
@@ -204,6 +208,9 @@ public class WDAssociationType extends Window implements EventListener<Event>
 				DMSassociation.setAD_Table_ID(AD_Table_ID);
 				DMSassociation.setRecord_ID(Record_ID);
 				DMSassociation.saveEx();
+
+				if (AD_Table_ID > 0 && Record_ID > 0)
+					winContent.getToolbar().getButton("Document Explorer").setPressed(true);
 			}
 			else
 			{

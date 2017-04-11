@@ -33,6 +33,7 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.adwindow.BreadCrumbLink;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
@@ -273,6 +274,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Map<String, Component>			ASI_Value					= new HashMap<String, Component>();
 	private DateFormat						dateFormat					= new SimpleDateFormat(
 																				"yyyy-MM-dd'T'HH:mm:ss'Z'");
+	
+	private AbstractADWindowContent			winContent;
 
 	/**
 	 * Constructor initialize
@@ -316,9 +319,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 	}
 
-	public WDMSPanel(int Table_ID, int Record_ID)
+	public WDMSPanel(int Table_ID, int Record_ID, AbstractADWindowContent winContent)
 	{
 		this();
+		this.winContent = winContent;
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
 		mountingStrategy = Utils.getMountingStrategy(null);
@@ -908,7 +912,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
-			new WDAssociationType(copyDMSContent, DMSViewerComp.getDMSContent(), getTable_ID(), getRecord_ID());
+			new WDAssociationType(copyDMSContent, DMSViewerComp.getDMSContent(), getTable_ID(), getRecord_ID(), winContent);
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
