@@ -22,3 +22,5 @@ Bundle-ClassPath: .,
  lib/pdf-renderer-1.0.5.jar,
  lib/imgscalr-lib-4.2.jar
 Service-Component: OSGI-INF/*.xml
+Export-Package: org.idempiere.dms.factories,
+ org.idempiere.model
