@@ -538,7 +538,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
 
 			Map<String, Object> solrValue = Utils.createIndexMap(DMSContent, DMSAssociation);
-			indexSeracher.deleteIndex(DMS_Content.getDMS_Content_ID());
+			indexSeracher.deleteIndexByID("DMS_Content_ID:",String.valueOf(DMS_Content.getDMS_Content_ID()));
 			indexSeracher.indexContent(solrValue);
 			Events.sendEvent(new Event("onRenameComplete", this));
 			tabBox.setSelectedTab((Tab) tabBox.getSelectedTab());
@@ -684,7 +684,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		try
 		{
 			Map<String, Object> solrValue = Utils.createIndexMap(content, association);
-			indexSeracher.deleteIndex(content.getDMS_Content_ID());
+			indexSeracher.deleteIndexByID("DMS_Content_ID:",String.valueOf(content.getDMS_Content_ID()));
 			indexSeracher.indexContent(solrValue);
 		}
 		catch (Exception e)

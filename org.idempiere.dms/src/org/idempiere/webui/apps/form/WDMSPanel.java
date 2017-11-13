@@ -23,10 +23,12 @@ import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Stack;
 import java.util.TimeZone;
@@ -67,6 +69,7 @@ import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.solr.common.SolrDocument;
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MColumn;
@@ -116,8 +119,8 @@ import org.zkoss.zul.Space;
 import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
 
-import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
+import com.logilite.search.solr.factoryimpl.SolrIndexSearcher;
 
 public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
@@ -219,7 +222,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public IThumbnailProvider				thumbnailProvider			= null;
 	public IContentManager					contentManager				= null;
 	public IFileStorageProvider				thumbnailStorageProvider	= null;
-	private IIndexSearcher					indexSeracher				= null;
+	private SolrIndexSearcher				indexSeracher				= null;
 	private IMountingStrategy				mountingStrategy			= null;
 
 	private Menupopup						contentContextMenu			= new Menupopup();
@@ -302,7 +305,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
-		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+		indexSeracher = (SolrIndexSearcher)ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
 
 		if (indexSeracher == null)
 			throw new AdempiereException("Index server is not found.");
@@ -1353,7 +1356,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				newPath = newPath + spFileSeprator + oldDMSContent.getName();
 
 				Map<String, Object> solrValue = Utils.createIndexMap(newDMSContent, newDMSAssociation);
-				indexSeracher.deleteIndex(newDMSContent.getDMS_Content_ID());
+				indexSeracher.deleteIndexByID("DMS_Content_ID:",String.valueOf(newDMSContent.getDMS_Content_ID()));
 				indexSeracher.indexContent(solrValue);
 			}
 		}
@@ -1478,7 +1481,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					try
 					{
 						Map<String, Object> solrValue = Utils.createIndexMap(dmsContent, dmsAssociation);
-						indexSeracher.deleteIndex(dmsContent.getDMS_Content_ID());
+						indexSeracher.deleteIndexByID("DMS_Content_ID:",String.valueOf(dmsContent.getDMS_Content_ID()));
 						indexSeracher.indexContent(solrValue);
 					}
 					catch (Exception e)
@@ -1697,7 +1700,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (tableID > 0)
 			query.append(" AND AD_Table_ID:" + tableID);
 
-		List<Integer> documentList = indexSeracher.searchIndex(query.toString());
+		List<Integer> documentList = GetSolrSerachIndex(query.toString());
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
 
 		for (Integer entry : documentList)
@@ -2664,7 +2667,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		documentList = indexSeracher.searchIndex(query);
+		documentList = GetSolrSerachIndex(query);
 
 		for (Integer entry : documentList)
 		{
@@ -2898,5 +2901,44 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			pstmt = null;
 			rs = null;
 		}
+	}
+	
+	private List<Integer> GetSolrSerachIndex(String query) {
+		List<Integer> documentList = new ArrayList<Integer>();
+
+		try {
+			List<SolrDocument> docList = indexSeracher.searchIndexDocument(query);
+			ListIterator<SolrDocument> iterator = docList.listIterator();
+
+			while (iterator.hasNext()) {
+
+				SolrDocument document = iterator.next();
+
+				Map<String, Collection<Object>> searchedContent = document.getFieldValuesMap();
+
+				Iterator<String> fields = document.getFieldNames().iterator();
+
+				while (fields.hasNext()) {
+					String field = fields.next();
+
+					if (field.equalsIgnoreCase("DMS_Content_ID")) {
+						Collection<Object> values = searchedContent.get(field);
+						Iterator<Object> value = values.iterator();
+
+						while (value.hasNext()) {
+							Long obj = (Long) value.next();
+
+							if (field.equalsIgnoreCase("DMS_Content_ID")) {
+								documentList.add(obj.intValue());
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Searching file failure:", e);
+			throw new AdempiereException("Searching file failure:" + e);
+		}
+		return documentList;
 	}
 }
