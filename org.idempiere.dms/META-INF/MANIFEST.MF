@@ -8,6 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: org.apache.commons.io.filefilter;version="2.2.0",
  org.osgi.framework;version="1.3.0",
  org.osgi.service.event;version="1.3.0",
+ org.zkoss.image,
  org.zkoss.util.media,
  org.zkoss.zhtml,
  org.zkoss.zul
