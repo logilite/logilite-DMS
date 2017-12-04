@@ -349,4 +349,10 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 
 		return null;
 	}
+
+	@Override
+	public boolean isEnableQuickFormButton()
+	{
+		return false;
+	}
 }
