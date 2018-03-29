@@ -64,9 +64,13 @@ public class FileSizeFixProcess extends SvrProcess{
 		List<I_DMS_Content> contentList = getDMSContents();
 		for (I_DMS_Content DMSContent : contentList){
 			
-			if(DMSContent.getName().lastIndexOf(".") <= 0){
+	//		if(DMSContent.getName().lastIndexOf(".") <= 0){
 				I_DMS_MimeType mimytype = DMSContent.getDMS_MimeType();
 				if(mimytype.getFileExtension() == ".def"){
+					continue;
+				}
+				
+				if(DMSContent.getName().endsWith(mimytype.getFileExtension())){
 					continue;
 				}
 
@@ -101,7 +105,7 @@ public class FileSizeFixProcess extends SvrProcess{
 					pstmt = null;
 				}
 
-			}
+		//	}
 			
 		}
 		return "Process Completed. ("+cntMigrated+") file renamed..";
@@ -116,7 +120,7 @@ public class FileSizeFixProcess extends SvrProcess{
 		ResultSet rs = null;
 		try
 		{
-			String sql = "SELECT * FROM dms_content WHERE contentbasetype = ?";
+			String sql = "SELECT * FROM dms_content WHERE contentbasetype = ? AND length(name) >= 60";
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setString(1, X_DMS_Content.CONTENTBASETYPE_Content);
 			rs = pstmt.executeQuery();
