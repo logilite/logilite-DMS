@@ -354,7 +354,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 		File newFile = new File(newPath);
 		oldFile.renameTo(newFile);
 
-		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf("/") + 1,
+		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf(spFileSeprator) + 1,
 				newFile.getAbsolutePath().length()));
 		content.saveEx();
 
