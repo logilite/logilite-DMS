@@ -17,4 +17,12 @@
             class="org.idempiere.dms.process.MigrateAttachmentToDMS">
       </process>
    </extension>
+   <extension
+         id="org.idempiere.dms.process.FileSizeFixProcess"
+         name="org.idempiere.dms.process.FileSizeFixProcess"
+         point="org.adempiere.base.Process">
+      <process
+            class="org.idempiere.dms.process.FileSizeFixProcess">
+      </process>
+   </extension>
 </plugin>
