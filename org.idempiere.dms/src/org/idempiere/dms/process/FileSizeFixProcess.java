@@ -141,6 +141,7 @@ public class FileSizeFixProcess extends SvrProcess
 			String sql = "SELECT a.DMS_Content_ID, a.DMS_Association_ID "
 					+ "     FROM dms_association a INNER JOIN dms_content c ON a.dms_content_id = c.dms_content_id "
 					+ "     WHERE c.contentbasetype = ? AND length(c.name) >= 60 AND a.dms_associationtype_id <> 1000000";
+			
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setString(1, X_DMS_Content.CONTENTBASETYPE_Content);
 			rs = pstmt.executeQuery();
@@ -185,7 +186,7 @@ public class FileSizeFixProcess extends SvrProcess
 			File newFile = new File(newPath);
 			oldFile.renameTo(newFile);
 
-			content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf("/") + 1,
+			content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf(spFileSeprator) + 1,
 					newFile.getAbsolutePath().length()));
 		}
 		else
