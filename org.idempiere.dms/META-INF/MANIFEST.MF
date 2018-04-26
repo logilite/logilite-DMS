@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS
 Bundle-SymbolicName: org.idempiere.dms;singleton:=true
-Bundle-Version: 1.0.32.qualifier
+Bundle-Version: 1.0.33.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: org.osgi.framework;version="1.3.0",
@@ -15,12 +15,26 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="3.1.0",
  org.apache.commons.net,
  com.logilite.search;bundle-version="1.0.0",
  org.eclipse.osgi;bundle-version="3.10.2",
- org.eclipse.osgi.services;bundle-version="3.4.0"
+ org.eclipse.osgi.services;bundle-version="3.4.0",
+ org.apache.poi;bundle-version="3.9.0"
 Bundle-Vendor: Logilite
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  lib/pdf-renderer-1.0.5.jar,
- lib/imgscalr-lib-4.2.jar
+ lib/imgscalr-lib-4.2.jar,
+ lib/poi-ooxml-3.9.jar,
+ lib/poi-ooxml-schemas-3.9.jar,
+ lib/stax-api-1.0.1.jar,
+ lib/xml-apis-1.0.b2.jar,
+ lib/xmlbeans-2.3.0.jar,
+ lib/dom4j-1.6.1.jar,
+ lib/fr.opensagres.xdocreport.itext.extension-1.0.3.jar,
+ lib/itext-2.1.7.jar,
+ lib/ooxml-schemas-1.1.jar,
+ lib/org.apache.poi.xwpf.converter.core-1.0.3.jar,
+ lib/org.apache.poi.xwpf.converter.pdf-1.0.3.jar,
+ lib/commons-codec-1.5.jar,
+ lib/poi-scratchpad-3.9.jar
 Service-Component: OSGI-INF/*.xml
 Export-Package: org.idempiere.dms.factories,
  org.idempiere.model

@@ -13,6 +13,7 @@
 
 package org.idempiere.webui.apps.form;
 
+import java.io.File;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -415,6 +416,14 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 					dmsAssociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
 
 				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
+				
+				// Display an error when trying to upload same name file
+				String path = fileStorgProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent));
+				File file = new File(path);
+				if (file.exists())
+				{
+					throw new WrongValueException("File already exists. Please upload as version ");
+				}
 			}
 
 			dmsAssociation.setAD_Table_ID(tableID);

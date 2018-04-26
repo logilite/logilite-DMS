@@ -13,16 +13,28 @@
 
 package org.idempiere.dms.storage;
 
+import java.util.ArrayList;
+
 import org.idempiere.dms.factories.IContentEditor;
 import org.idempiere.dms.factories.IContentEditorFactory;
 
 public class DefaultContentEditorFactory implements IContentEditorFactory
 {
+    private static ArrayList<String> listMimeType = new ArrayList<String>();
+
+	static
+	{
+		// Supported mime type for PDF content editor.
+		listMimeType.add("application/pdf");
+		listMimeType.add("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+		listMimeType.add("application/msword");
+	}
+
 
 	@Override
 	public IContentEditor get(String mimeType)
 	{
-		if (mimeType.equalsIgnoreCase("application/pdf"))
+		if (listMimeType.contains(mimeType))
 		{
 			return new PDFContentEditor();
 		}

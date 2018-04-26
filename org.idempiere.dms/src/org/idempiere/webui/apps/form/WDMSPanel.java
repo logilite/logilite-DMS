@@ -14,7 +14,11 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.sql.PreparedStatement;
@@ -36,6 +40,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.adwindow.BreadCrumbLink;
 import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
@@ -67,8 +72,14 @@ import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
+import org.apache.poi.hwpf.HWPFDocument;
+import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.xwpf.converter.pdf.PdfConverter;
+import org.apache.poi.xwpf.converter.pdf.PdfOptions;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MAttributeSetInstance;
+import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
@@ -118,6 +129,10 @@ import org.zkoss.zul.Timebox;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfWriter;
 
 public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
@@ -196,6 +211,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private WTableDirEditor					lstboxContentType			= null;
 	private WTableDirEditor					lstboxCreatedBy				= null;
 	private WTableDirEditor					lstboxUpdatedBy				= null;
+	private Checkbox						chkInActive					= new Checkbox();
 
 	// create Directory
 	private Button							btnCreateDir				= new Button();
@@ -253,6 +269,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private boolean							isSearch					= false;
 	private boolean							isGenericSearch				= false;
+	private boolean 						isAllowCreateDirectory		= true;
 
 	private static final int				COMPONENT_HEIGHT			= 120;
 	private static final int				COMPONENT_WIDTH				= 120;
@@ -327,6 +344,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		setRecord_ID(Record_ID);
 		mountingStrategy = Utils.getMountingStrategy(null);
 		currDMSContent = mountingStrategy.getMountingParent(MTable.getTableName(Env.getCtx(), Table_ID), Record_ID);
+		
+		/*
+		 * Navigation and createDir buttons are disabled based on
+		 * "IsAllowCreateDirectory" check on client info.
+		 */
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()));
+		isAllowCreateDirectory = clientInfo.get_ValueAsBoolean("IsAllowCreateDirectory");
+		if (isTabViewer() && !isAllowCreateDirectory)
+		{
+			btnBack.setEnabled(false);
+			btnNext.setEnabled(false);
+			btnCreateDir.setEnabled(false);
+		}
 	}
 
 	public int getRecord_ID()
@@ -601,6 +631,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		lstboxContentType.addValueChangeListener(this);
 		row.appendChild(contentTypeListCell);
 
+		// Active
+		chkInActive.setLabel("Show InActive");
+		chkInActive.setChecked(false);
+		row = new Row();
+		rows.appendChild(row);
+		Cell activeCell = new Cell();
+		activeCell.setColspan(2);
+//		row.setAlign("center");
+		row.setStyle("padding-left : 109px");
+		activeCell.appendChild(chkInActive);
+		chkInActive.addEventListener(Events.ON_CLICK, this);
+		row.appendChild(activeCell);
+		
+		
 		row = new Row();
 		rows.appendChild(row);
 		row.appendChild(lblContentMeta);
@@ -783,8 +827,40 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_RESET))
 		{
+			isGenericSearch = true; // For solve navigation issue After search and reset button pressed.
 			isSearch = false;
 			clearComponenets();
+		}
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
+		{
+			breadRow.getChildren().clear();
+			if (isTabViewer())
+			{
+				isSearch = false;
+				addRootBreadCrumb();
+				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ?",
+						String.valueOf(recordID));
+				setCurrDMSContent(new MDMSContent(Env.getCtx(), DMS_Content_ID, null));
+		
+				if (currDMSContent != null)
+					lblPositionInfo.setText(currDMSContent.getName());
+				else
+					lblPositionInfo.setText(String.valueOf(recordID));
+				btnBack.setEnabled(false);
+				btnNext.setEnabled(false);
+			}
+			else
+			{
+				isSearch = false;
+				currDMSContent = null;
+				lblPositionInfo.setText(null);
+				btnBack.setEnabled(false);
+				btnNext.setEnabled(false);
+				breadRow.getChildren().clear();
+				addRootBreadCrumb();
+			}
+			renderViewer();
+
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH) || event.getTarget().equals(btnSearch))
 		{
@@ -943,6 +1019,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			isGenericSearch = true;
 			isSearch = false;
 			renderViewer();
+		}
+		
+		// Disable navigation button based on "isAllowCreateDirectory" check on
+		// client info window
+		if (isTabViewer() && !isAllowCreateDirectory)
+		{
+			btnBack.setEnabled(false);
+			btnNext.setEnabled(false);
 		}
 
 	}
@@ -1143,7 +1227,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		try
 		{
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT, null);
+			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
 
 			pstmt.setInt(1, copiedContent.getDMS_Content_ID());
 			pstmt.setInt(2, copiedContent.getDMS_Content_ID());
@@ -1594,8 +1678,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		HashMap<I_DMS_Content, I_DMS_Association> dmsContent = null;
 
+		// Setting current dms content value on label
 		if (isTabViewer())
-			lblPositionInfo.setValue(String.valueOf(recordID));
+		{
+			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;  
+			lblPositionInfo.setValue(currContentValue);
+		}
 
 		if (isSearch)
 			dmsContent = renderSearchedContent();
@@ -1726,8 +1814,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		ResultSet rs = null;
 		try
 		{
-
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT, null);
+			// select only active records
+			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE, null);
 
 			pstmt.setInt(1, contentID);
 			pstmt.setInt(2, contentID);
@@ -1773,6 +1861,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		dbCreatedTo.setValue(null);
 		dbUpdatedFrom.setValue(null);
 		dbUpdatedTo.setValue(null);
+		chkInActive.setChecked(false);
+		
 
 		if (m_editors != null)
 		{
@@ -1788,8 +1878,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @param DMSViewerComp
 	 * @throws IOException
 	 * @throws URISyntaxException
+	 * @throws DocumentException 
 	 */
-	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException
+	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException, DocumentException
 	{
 		selectedDMSContent.push(DMSViewerComp.getDMSContent());
 
@@ -1819,6 +1910,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (name.contains("(") && name.contains(")"))
 					name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
 
+				documentToPreview = convertToPDF(documentToPreview, mimeType);
+				
 				if (Utils.getContentEditor(mimeType.getMimeType()) != null)
 				{
 					Tab tabData = new Tab(name);
@@ -1846,6 +1939,47 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				FDialog.error(0, contentManager.getPath(currDMSContent) + " Content missing in storage,");
 			}
 		}
+	}
+
+	/**
+	 * Convert .docx to .pdf
+	 * convert .doc to .pdf
+	 * 
+	 * @param documentToPreview
+	 * @param mimeType
+	 * @return
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 * @throws DocumentException
+	 */
+	private File convertToPDF(File documentToPreview, MDMSMimeType mimeType)
+			throws IOException, FileNotFoundException, DocumentException
+	{
+		if (mimeType.getMimeType()
+				.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+		{
+			XWPFDocument document = new XWPFDocument(new FileInputStream(documentToPreview));
+			File newDocPDF = File.createTempFile("Zito", "DocxToPDF");
+			OutputStream pdfFile = new FileOutputStream(newDocPDF);
+			PdfOptions options = PdfOptions.create();
+			PdfConverter.getInstance().convert(document, pdfFile, options);
+			return newDocPDF;
+		}
+		else if (mimeType.getMimeType().equals("application/msword"))
+		{
+			HWPFDocument doc = new HWPFDocument(new FileInputStream(documentToPreview));
+			WordExtractor we = new WordExtractor(doc);
+			File newDocPDF   = File.createTempFile("Zito", "DocToPDF");
+			OutputStream pdfFile = new FileOutputStream(newDocPDF);
+			String k = we.getText();
+			Document document = new Document();
+			PdfWriter.getInstance(document, pdfFile);
+			document.open();
+			document.add(new Paragraph(k));
+			document.close();
+			return newDocPDF;
+		}
+		return documentToPreview;
 	}
 
 	/**
@@ -1885,6 +2019,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				breadRows.appendChild(breadRow);
 				gridBreadCrumb.appendChild(breadRows);
+			}
+			
+			if (currDMSContent == null)
+			{
+				addRootBreadCrumb();
 			}
 		}
 		else
@@ -1942,7 +2081,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (recordID > 0 && tableID > 0)
 		{
-			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y'",
+			// Getting latest record if multiple dms content available
+			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y' ORDER BY created desc",
 					recordID + "");
 
 			if (currDMSContent == null)
@@ -2411,6 +2551,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			params.put(Utils.UPDATEDBY, value);
 		}
 
+		// if chkInActive = true, display all files
+		// if chkInActive = false, display only active files
+		if (chkInActive != null)
+		{
+			value = new ArrayList<Object>();
+			value.add(chkInActive.isChecked());
+			if (chkInActive.isChecked())
+			{
+				value.add(!chkInActive.isChecked());
+			}
+			params.put(Utils.SHOW_INACTIVE, value);
+		}
+		
 		if (lstboxContentType.getValue() != null)
 		{
 
@@ -2861,7 +3014,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID)
 	{
-		PreparedStatement pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT, null);
+		PreparedStatement pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
 		ResultSet rs = null;
 		try
 		{

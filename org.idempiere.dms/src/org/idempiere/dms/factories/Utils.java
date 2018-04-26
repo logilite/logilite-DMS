@@ -84,6 +84,7 @@ public class Utils
 	public static final String					DMS_CONTENT_ID					= "DMS_Content_ID";
 	public static final String					AD_Table_ID						= "AD_Table_ID";
 	public static final String					RECORD_ID						= "Record_ID";
+	public static final String 					SHOW_INACTIVE					= "Show_InActive";
 
 	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
 
@@ -96,7 +97,7 @@ public class Utils
 																						+ " SELECT	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, "
 																						+ " a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																						+ " FROM DMS_Association a "
-																						+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID) "
+															    							+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) "
 																						+ " ) "
 																						+ " SELECT "
 																						+ " COALESCE((SELECT a.DMS_Content_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_ID) AS DMS_Content_ID, "
@@ -105,6 +106,11 @@ public class Utils
 																						+ " WHERE "
 																						+ " (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0)) OR "
 																						+ " (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND ContentBaseType = 'DIR') ";
+	
+	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_ALL	=  SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "");
+	
+	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE	=  SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "AND c.IsActive='Y'");
+	
 
 	public static final String					SQL_GET_RELATED_CONTENT			= "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID";
 
@@ -573,7 +579,8 @@ public class Utils
 		solrValue.put(DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
 		solrValue.put(AD_Table_ID, DMSAssociation.getAD_Table_ID());
 		solrValue.put(RECORD_ID, DMSAssociation.getRecord_ID());
-
+		solrValue.put(SHOW_INACTIVE, !DMSContent.isActive());
+ 
 		if (DMSContent.getM_AttributeSetInstance_ID() > 0)
 		{
 			PreparedStatement stmt = null;
@@ -619,7 +626,7 @@ public class Utils
 
 		try
 		{
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT, null);
+			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
 			pstmt.setInt(1, content.getDMS_Content_ID());
 			pstmt.setInt(2, content.getDMS_Content_ID());
 

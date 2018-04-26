@@ -25,4 +25,12 @@
             class="org.idempiere.dms.process.FileSizeFixProcess">
       </process>
    </extension>
+   <extension
+         id="org.idempiere.model.DMSModelValidator"
+         name="org.idempiere.model.DMSModelValidator"
+         point="org.adempiere.base.ModelValidator">
+      <listener
+            class="org.idempiere.model.DMSModelValidator">
+      </listener>
+   </extension>
 </plugin>

@@ -18,6 +18,7 @@ import java.sql.ResultSet;
 import org.adempiere.base.IModelFactory;
 import org.compiere.model.PO;
 import org.compiere.util.Env;
+import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 
 public class ModelFactory implements IModelFactory
@@ -28,6 +29,9 @@ public class ModelFactory implements IModelFactory
 	{
 		if (tableName.equals(MDMSMimeType.Table_Name))
 			return MDMSMimeType.class;
+		if (tableName.equals(MDMSContent.Table_Name))
+			return MDMSContent.class;
+		
 		return null;
 	}
 
@@ -36,6 +40,9 @@ public class ModelFactory implements IModelFactory
 	{
 		if (tableName.equals(MDMSMimeType.Table_Name))
 			return new MDMSMimeType(Env.getCtx(), Record_ID, trxName);
+		if (tableName.equals(MDMSContent.Table_Name))
+			return new MDMSContent(Env.getCtx(), Record_ID, trxName);
+		
 		return null;
 	}
 
@@ -44,6 +51,9 @@ public class ModelFactory implements IModelFactory
 	{
 		if (tableName.equals(MDMSMimeType.Table_Name))
 			return new MDMSMimeType(Env.getCtx(), rs, trxName);
+		if (tableName.equals(MDMSContent.Table_Name))
+			return new MDMSContent(Env.getCtx(), rs, trxName);
+		
 		return null;
 	}
 
