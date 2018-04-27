@@ -838,7 +838,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				isSearch = false;
 				addRootBreadCrumb();
-				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ?",
+				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? ORDER BY Created desc",
 						String.valueOf(recordID));
 				setCurrDMSContent(new MDMSContent(Env.getCtx(), DMS_Content_ID, null));
 		
@@ -1603,7 +1603,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			if (breadCrumbEvent.getPathId().equals("0"))
 			{
-				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ?",
+				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? ORDER BY Created desc",
 						String.valueOf(recordID));
 				breadCrumbEvent.setPathId(String.valueOf(DMS_Content_ID));
 
@@ -1624,7 +1624,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnBack.setEnabled(false);
 		}
 
-		int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ? ",
+		int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ? ORDER BY Created desc ",
 				Integer.valueOf(breadCrumbEvent.getPathId()));
 
 		currDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
