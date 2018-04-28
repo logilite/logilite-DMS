@@ -1883,7 +1883,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException, DocumentException
 	{
 		selectedDMSContent.push(DMSViewerComp.getDMSContent());
-
+		
 		selectedDMSAssociation.push(DMSViewerComp.getDMSAssociation());
 
 		if (selectedDMSContent.peek().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
@@ -1933,6 +1933,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					AMedia media = new AMedia(documentToPreview, "application/octet-stream", null);
 					Filedownload.save(media);
 				}
+				// Fix for search --> download content --> back (which was navigate to home/root folder)
+				selectedDMSContent.pop();
 			}
 			else
 			{
