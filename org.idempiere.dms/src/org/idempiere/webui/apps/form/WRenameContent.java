@@ -143,10 +143,14 @@ public class WRenameContent extends Window implements EventListener<Event>
 		txtDesc.setRows(2);
 		
 
+		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
 		if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 		{
-			parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
 			txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
+		}
+		else
+		{
+			txtName.setText(DMSContent.getName());
 		}
 
 		txtDesc.setValue(DMSContent.getDescription());
@@ -254,8 +258,6 @@ public class WRenameContent extends Window implements EventListener<Event>
 			indexSeracher.indexContent(solrValue);
 		}
 		
-		if (!txtName.getValue().equals(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
-		{
 			ValidateName();
 
 			PreparedStatement pstmt = null;
@@ -263,74 +265,79 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 			if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			{
-				baseURL = contentManager.getPath(DMSContent);
+				if (!txtName.getValue().equalsIgnoreCase(parent_Content.getName())){
+					baseURL = contentManager.getPath(DMSContent);
 
-				File dirPath = new File(fileStorgProvider.getBaseDirectory(contentManager.getPath(DMSContent)));
-				String newFileName = fileStorgProvider.getBaseDirectory(contentManager.getPath(DMSContent));
-				newFileName = newFileName.substring(0, newFileName.lastIndexOf(spFileSeprator));
+					File dirPath = new File(fileStorgProvider.getBaseDirectory(contentManager.getPath(DMSContent)));
+					String newFileName = fileStorgProvider.getBaseDirectory(contentManager.getPath(DMSContent));
+					newFileName = newFileName.substring(0, newFileName.lastIndexOf(spFileSeprator));
 
-				File files[] = new File(newFileName).listFiles();
+					File files[] = new File(newFileName).listFiles();
 
-				if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
-					newFileName = newFileName + txtName.getValue();
-				else
-					newFileName = newFileName + spFileSeprator + txtName.getValue();
+					if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+						newFileName = newFileName + txtName.getValue();
+					else
+						newFileName = newFileName + spFileSeprator + txtName.getValue();
 
-				File newFile = new File(newFileName);
+					File newFile = new File(newFileName);
 
-				for (int i = 0; i < files.length; i++)
-				{
-					if (newFile.getName().equalsIgnoreCase(files[i].getName()))
+					for (int i = 0; i < files.length; i++)
 					{
-						throw new AdempiereException("Directory already exists.");
+						if (newFile.getName().equalsIgnoreCase(files[i].getName()))
+						{
+							throw new AdempiereException("Directory already exists.");
+						}
 					}
+
+					if (!Util.isEmpty(DMSContent.getParentURL()))
+						renamedURL = DMSContent.getParentURL() + spFileSeprator + txtName.getValue();
+					else
+						renamedURL = spFileSeprator + txtName.getValue();
+
+					Utils.renameFolder(DMSContent, baseURL, renamedURL);
+					dirPath.renameTo(newFile);
+
+					DMSContent.setName(txtName.getValue());
+					DMSContent.saveEx();
 				}
-
-				if (!Util.isEmpty(DMSContent.getParentURL()))
-					renamedURL = DMSContent.getParentURL() + spFileSeprator + txtName.getValue();
-				else
-					renamedURL = spFileSeprator + txtName.getValue();
-
-				Utils.renameFolder(DMSContent, baseURL, renamedURL);
-				dirPath.renameTo(newFile);
-
-				DMSContent.setName(txtName.getValue());
-				DMSContent.saveEx();
+				
 			}
 			else
 			{
-				int DMS_Content_ID = Utils.getDMS_Content_Related_ID(DMSContent);
-				MDMSContent content = null;
-				MDMSAssociation association = null;
-				try
+				if (!txtName.getValue().equalsIgnoreCase(
+						parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 				{
-					pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_CONTENT, null);
-					pstmt.setInt(1, DMS_Content_ID);
-					pstmt.setInt(2, DMS_Content_ID);
-
-					rs = pstmt.executeQuery();
-
-					while (rs.next())
+					int DMS_Content_ID = Utils.getDMS_Content_Related_ID(DMSContent);
+					MDMSContent content = null;
+					MDMSAssociation association = null;
+					try
 					{
-						content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-						association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-						renameFile(content, association);
+						pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_CONTENT, null);
+						pstmt.setInt(1, DMS_Content_ID);
+						pstmt.setInt(2, DMS_Content_ID);
+
+						rs = pstmt.executeQuery();
+
+						while (rs.next())
+						{
+							content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+							association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+							renameFile(content, association);
+						}
+					}
+					catch (Exception e)
+					{
+						log.log(Level.SEVERE, "Rename content failure.", e);
+						throw new AdempiereException("Rename content failure: " + e.getLocalizedMessage());
+					}
+					finally
+					{
+						DB.close(rs, pstmt);
+						rs = null;
+						pstmt = null;
 					}
 				}
-				catch (Exception e)
-				{
-					log.log(Level.SEVERE, "Rename content failure.", e);
-					throw new AdempiereException("Rename content failure: " + e.getLocalizedMessage());
-				}
-				finally
-				{
-					DB.close(rs, pstmt);
-					rs = null;
-					pstmt = null;
-				}
-
 			}
-		}
 		this.detach();
 	}
 
