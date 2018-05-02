@@ -227,8 +227,9 @@ public class WRenameContent extends Window implements EventListener<Event>
 		}
 		else if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 		{
-			if (txtName.getValue().contains("."))
-				throw new WrongValueException(txtName, "Invalid Directory Name");
+			String fileSeprator = Utils.getStorageProviderFileSeparator();
+			if (txtName.getValue().contains(fileSeprator))
+				throw new WrongValueException(txtName, "Invalid Directory Name.");
 		}
 		else if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 		{
@@ -237,6 +238,10 @@ public class WRenameContent extends Window implements EventListener<Event>
 			if (!txtName.getValue().matches(regExp))
 			{
 				throw new WrongValueException(txtName, "Invalid File Name.");
+			}
+			
+			if(!Utils.isValidFileName(txtName.getValue())){
+				throw new WrongValueException(txtName, "Invalid File Name. not support end with ()");
 			}
 		}
 	}
@@ -294,9 +299,11 @@ public class WRenameContent extends Window implements EventListener<Event>
 					else
 						renamedURL = spFileSeprator + txtName.getValue();
 
-					Utils.renameFolder(DMSContent, baseURL, renamedURL);
-					dirPath.renameTo(newFile);
+					
+					if(!dirPath.renameTo(newFile))
+						throw new AdempiereException("Invalid File Name.");
 
+					Utils.renameFolder(DMSContent, baseURL, renamedURL);
 					DMSContent.setName(txtName.getValue());
 					DMSContent.saveEx();
 				}

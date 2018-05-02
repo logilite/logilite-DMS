@@ -343,6 +343,10 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			{
 				throw new WrongValueException(txtName, "Invalid File Name.");
 			}
+			
+			if(!Utils.isValidFileName(newFilename)){
+				throw new WrongValueException(txtName, "Invalid File Name. not support end with ()");
+			}
 
 		}
 
@@ -506,5 +510,5 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	{
 		return cancel;
 	}
-
+	
 }

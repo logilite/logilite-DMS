@@ -833,4 +833,35 @@ public class Utils
 		DMSAssociation.setRecord_ID(Record_ID);
 		DMSAssociation.saveEx();
 	}
+	
+	public static boolean isValidFileName(String fileName)
+	{
+		boolean isvalidFName = false;
+		int indexofClosingP = fileName.lastIndexOf(')');
+		if (indexofClosingP > 0)
+		{
+			if ((indexofClosingP + 1) == fileName.length())
+			{
+				int indexofOpeningP = fileName.lastIndexOf('(');
+				if (indexofOpeningP > 0)
+				{
+					isvalidFName = false;
+				}
+				else
+				{
+					isvalidFName = true;
+				}
+			}
+			else
+			{
+				isvalidFName = true;
+			}
+		}
+		else
+		{
+			isvalidFName = true;
+		}
+
+		return isvalidFName;
+	}
 }

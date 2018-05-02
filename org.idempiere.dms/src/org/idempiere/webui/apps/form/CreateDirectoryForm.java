@@ -163,7 +163,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	public void onEvent(Event event) throws Exception
 	{
 		log.info(event.getName());
-
+		
 		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
 			this.detach();
@@ -175,6 +175,9 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 
 			if (Util.isEmpty(dirName) || dirName.equals(""))
 				throw new WrongValueException(txtboxDirectory, fillMandatory);
+			
+			if (dirName.contains(fileSeprator))
+				throw new WrongValueException(txtboxDirectory, "Invalid Directory Name.");
 
 			try
 			{
@@ -195,10 +198,15 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 					}
 				}
 
-				if (!file.exists())
-					file.mkdir();
-				else
+				if (!file.exists()){
+					if(!file.mkdir()){
+						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Invalid Directory Name."));
+					}
+				}
+				else{
 					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists."));
+				}
+					
 
 				MDMSContent content = new MDMSContent(Env.getCtx(), 0, null);
 				content.setDMS_MimeType_ID(Utils.getMimeTypeID(null));
