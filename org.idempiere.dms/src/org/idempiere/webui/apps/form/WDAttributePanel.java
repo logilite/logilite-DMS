@@ -48,6 +48,7 @@ import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.idempiere.componenet.DMSViewerComponent;
 import org.idempiere.dms.factories.IContentManager;
@@ -520,6 +521,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 			if (!txtName.getValue().equals(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 			{
+				String validationMsg = Utils.isValidFileName(txtName.getValue());			
+				if(validationMsg != null){
+					String validationResponse = Msg.translate(Env.getCtx(), validationMsg);
+					throw new WrongValueException(txtName, validationResponse);
+				}
 				updateContent();
 			}
 			

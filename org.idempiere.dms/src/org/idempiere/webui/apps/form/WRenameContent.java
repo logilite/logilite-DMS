@@ -233,15 +233,10 @@ public class WRenameContent extends Window implements EventListener<Event>
 		}
 		else if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
 		{
-			String regExp = "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
-
-			if (!txtName.getValue().matches(regExp))
-			{
-				throw new WrongValueException(txtName, "Invalid File Name.");
-			}
-			
-			if(!Utils.isValidFileName(txtName.getValue())){
-				throw new WrongValueException(txtName, "Invalid File Name. not support end with ()");
+			String validationMsg = Utils.isValidFileName(txtName.getValue());			
+			if(validationMsg != null){
+				String validationResponse = Msg.translate(Env.getCtx(), validationMsg);
+				throw new WrongValueException(txtName, validationResponse);
 			}
 		}
 	}

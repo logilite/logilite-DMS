@@ -124,6 +124,8 @@ public class Utils
 																						"DirThumbnail", 2);
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail			= new CCache<Integer, MImage>(
 																						"MimetypeThumbnail", 2);
+	public static final String 					regExp 							= "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
+	public static final String					regSpace						= "\\S+";
 
 	public static IContentEditor getContentEditor(String mimeType)
 	{
@@ -834,8 +836,21 @@ public class Utils
 		DMSAssociation.saveEx();
 	}
 	
-	public static boolean isValidFileName(String fileName)
+	public static String isValidFileName(String fileName)
 	{
+		if (fileName.equals("") || fileName.equals(null))
+			return "FillMandatory";
+
+		if (!fileName.matches(regExp))
+			return "Invalid File Name.";
+		
+		if(!Utils.isFilaNameEndWithNotBracket(fileName))
+			return "Invalid File Name. not support end with ()";
+		
+		return null;
+	}
+	
+	public static boolean isFilaNameEndWithNotBracket(String fileName){
 		boolean isvalidFName = false;
 		int indexofClosingP = fileName.lastIndexOf(')');
 		if (indexofClosingP > 0)
@@ -854,7 +869,12 @@ public class Utils
 			}
 			else
 			{
-				isvalidFName = true;
+				String s = fileName.substring(indexofClosingP + 1, fileName.length());
+				if (!s.matches(regSpace)){
+					isvalidFName = false;
+				}else{
+					isvalidFName = true;
+				}
 			}
 		}
 		else

@@ -318,7 +318,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	private void saveUploadedDcoument()
 	{
-		String regExp = "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
 		int ASI_ID = 0;
 
 		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
@@ -332,20 +331,14 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		if (btnFileUpload.getLabel().equalsIgnoreCase("-"))
 			throw new WrongValueException(btnFileUpload, fillMandatory);
 
+		String newFilename = txtName.getValue();
+		
 		if (nameRow.isVisible())
 		{
-			if (txtName.getValue().equals("") || txtName.getValue().equals(null))
-				throw new WrongValueException(txtName, fillMandatory);
-
-			String newFilename = txtName.getValue();
-
-			if (!newFilename.matches(regExp))
-			{
-				throw new WrongValueException(txtName, "Invalid File Name.");
-			}
-			
-			if(!Utils.isValidFileName(newFilename)){
-				throw new WrongValueException(txtName, "Invalid File Name. not support end with ()");
+			String validationMsg = Utils.isValidFileName(newFilename);			
+			if(validationMsg != null){
+				String validationResponse = Msg.translate(Env.getCtx(), validationMsg);
+				throw new WrongValueException(txtName, validationResponse);
 			}
 
 		}
