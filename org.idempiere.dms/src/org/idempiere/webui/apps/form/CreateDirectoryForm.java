@@ -176,6 +176,9 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 			if (Util.isEmpty(dirName) || dirName.equals(""))
 				throw new WrongValueException(txtboxDirectory, fillMandatory);
 			
+			if (dirName.length() > Utils.filaNameLength)
+				throw new WrongValueException(txtboxDirectory, "Invalid Directory Name. Directory name less than 250 character");
+			
 			if (dirName.contains(fileSeprator))
 				throw new WrongValueException(txtboxDirectory, "Invalid Directory Name.");
 

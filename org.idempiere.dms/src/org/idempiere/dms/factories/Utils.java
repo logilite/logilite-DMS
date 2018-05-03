@@ -126,6 +126,7 @@ public class Utils
 																						"MimetypeThumbnail", 2);
 	public static final String 					regExp 							= "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
 	public static final String					regSpace						= "\\S+";
+	public static final int						filaNameLength					= 250;
 
 	public static IContentEditor getContentEditor(String mimeType)
 	{
@@ -840,6 +841,9 @@ public class Utils
 	{
 		if (fileName.equals("") || fileName.equals(null))
 			return "FillMandatory";
+		
+		if (fileName.length() > filaNameLength)
+			return "Invalid File Name. file name less than 250 character";
 
 		if (!fileName.matches(regExp))
 			return "Invalid File Name.";

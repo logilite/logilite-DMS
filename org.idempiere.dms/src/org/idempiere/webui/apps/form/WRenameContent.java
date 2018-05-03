@@ -227,6 +227,9 @@ public class WRenameContent extends Window implements EventListener<Event>
 		}
 		else if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 		{
+			if (txtName.getValue().length() > Utils.filaNameLength)
+				throw new WrongValueException(txtName, "Invalid Directory Name. Directory name less than 250 character");
+			
 			String fileSeprator = Utils.getStorageProviderFileSeparator();
 			if (txtName.getValue().contains(fileSeprator))
 				throw new WrongValueException(txtName, "Invalid Directory Name.");
