@@ -950,20 +950,27 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			if (DMSClipboard.get() != null)
 			{
-				if (DMSClipboard.getIsCopy())
-				{
-					MDMSContent copiedContent = DMSClipboard.get();
-					MDMSContent destPasteContent = dirContent;
-					pasteCopyContent(copiedContent, destPasteContent);
-					renderViewer();
+				String destinationParentPath = dirContent.getParentURL()+ spFileSeprator + dirContent.getName();
+				if(destinationParentPath.contains(DMSClipboard.get().getParentURL() + spFileSeprator + DMSClipboard.get().getName())){
+					FDialog.warn(0, "You cannot Paste into itself");
+					return;
+				}else{
+					if (DMSClipboard.getIsCopy())
+					{
+						MDMSContent copiedContent = DMSClipboard.get();
+						MDMSContent destPasteContent = dirContent;
+						pasteCopyContent(copiedContent, destPasteContent);
+						renderViewer();
+					}
+					else
+					{
+						MDMSContent cutDMSContent = DMSClipboard.get();
+						MDMSContent destPasteContent = dirContent;
+						pasteCutContent(cutDMSContent, destPasteContent);
+						renderViewer();
+					}
 				}
-				else
-				{
-					MDMSContent cutDMSContent = DMSClipboard.get();
-					MDMSContent destPasteContent = dirContent;
-					pasteCutContent(cutDMSContent, destPasteContent);
-					renderViewer();
-				}
+				
 			}
 		}
 		else if (event.getTarget().equals(mnu_rename))
@@ -2349,6 +2356,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (DMSClipboard.get() == null)
 		{
+			return;
+		}
+		
+		String destinationParentPath = DMSContent.getParentURL()+ spFileSeprator + DMSContent.getName();
+		if(destinationParentPath.contains(DMSClipboard.get().getParentURL() + spFileSeprator + DMSClipboard.get().getName())){
+			FDialog.warn(0, "You cannot Link into itself");
 			return;
 		}
 
