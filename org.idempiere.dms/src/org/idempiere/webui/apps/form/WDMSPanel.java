@@ -1289,7 +1289,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					if (oldDMSContent.getParentURL().startsWith(baseURL))
 					{
-						newDMSContent.setParentURL(oldDMSContent.getParentURL().replaceFirst(baseURL, renamedURL));
+						newDMSContent.setParentURL(destPasteContent.getParentURL() + spFileSeprator + copiedContent.getName());
 						newDMSContent.saveEx();
 					}
 					copyContent(oldDMSContent, baseURL, renamedURL, newDMSContent);
