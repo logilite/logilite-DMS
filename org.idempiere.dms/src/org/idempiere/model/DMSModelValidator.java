@@ -61,10 +61,11 @@ public class DMSModelValidator implements ModelValidator
 		 * Before Save event Set isIndexed flag false for eligible for create
 		 * index again
 		 */
-		if (type == TYPE_BEFORE_CHANGE && (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)))
+		if (MDMSContent.Table_Name.equals(po.get_TableName()) && type == TYPE_BEFORE_CHANGE
+				&& (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
+						|| po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
+						|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
+						|| po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)))
 		{
 			MDMSContent dmsContent = (MDMSContent) po;
 			dmsContent.setIsIndexed(false);
@@ -73,7 +74,7 @@ public class DMSModelValidator implements ModelValidator
 		/*
 		 * After Save event Create Indexing after commit transaction.
 		 */
-		if (MDMSContent.Table_Name.equals(po.get_TableName()) && type == TYPE_AFTER_CHANGE)
+		if (MDMSContent.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE))
 		{
 			final MDMSContent dmsContent = (MDMSContent) po;
 
