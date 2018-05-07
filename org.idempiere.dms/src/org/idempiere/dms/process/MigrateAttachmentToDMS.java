@@ -128,16 +128,6 @@ public class MigrateAttachmentToDMS extends SvrProcess
 					thumbnailGenerator.addThumbnail(DMSContent,
 							fileStorgProvider.getFile(contentManager.getPath(DMSContent)), null);
 
-				try
-				{
-					Map<String, Object> solrValue = Utils.createIndexMap(DMSContent, DMSAssociation);
-					indexSeracher.indexContent(solrValue);
-				}
-				catch (Exception e)
-				{
-					log.log(Level.SEVERE, "Indexing of Content Failure :", e);
-					throw new AdempiereException("Indexing of Content Failure :" + e);
-				}
 				cntMigrated++;
 
 			}

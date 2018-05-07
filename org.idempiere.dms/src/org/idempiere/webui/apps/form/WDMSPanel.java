@@ -1443,9 +1443,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
 				newPath = newPath + spFileSeprator + oldDMSContent.getName();
 
-				Map<String, Object> solrValue = Utils.createIndexMap(newDMSContent, newDMSAssociation);
-				indexSeracher.deleteIndex(newDMSContent.getDMS_Content_ID());
-				indexSeracher.indexContent(solrValue);
 			}
 		}
 		catch (Exception e)
@@ -1566,17 +1563,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					dmsContent.setParentURL(contentManager.getPath(destPasteContent));
 					dmsContent.saveEx();
 
-					try
-					{
-						Map<String, Object> solrValue = Utils.createIndexMap(dmsContent, dmsAssociation);
-						indexSeracher.deleteIndex(dmsContent.getDMS_Content_ID());
-						indexSeracher.indexContent(solrValue);
-					}
-					catch (Exception e)
-					{
-						log.log(Level.SEVERE, "RE-Indexing of Content Failure :", e);
-						throw new AdempiereException("RE-Indexing of Content Failure :" + e);
-					}
 
 				}
 			}
@@ -2104,6 +2090,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			return;
 		}
+		btnClear.setEnabled(false);
 
 	}
 
@@ -2417,6 +2404,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 
+					// Here currently we can not able to move index creation logic in model validator
+					// TODO : In future, will find approaches for move index creation logic
 					indexSeracher.indexContent(Utils.createIndexMap(dmsContent, DMSassociation));
 				}
 				catch (Exception e)

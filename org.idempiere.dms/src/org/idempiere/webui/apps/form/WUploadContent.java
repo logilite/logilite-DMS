@@ -49,6 +49,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Trx;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.Utils;
@@ -124,6 +125,10 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	private boolean					isVersion				= false;
 	private WDLoadASIPanel			asiPanel				= null;
 	private boolean					cancel					= false;
+	
+	//trx
+	private Trx						trx						= null;
+	private String 					trxName 				= null;
 
 	/**
 	 * Constructor initialize
@@ -159,6 +164,9 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			this.setHeight("26%");
 			this.setWidth("40%");
 		}
+		
+		trx = Trx.get("UploadFiles", true);
+		trxName = trx.getTrxName();
 	}
 
 	/**
@@ -357,7 +365,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 		try
 		{
-			uploadedDMSContent = new MDMSContent(Env.getCtx(), 0, null);
+			uploadedDMSContent = new MDMSContent(Env.getCtx(), 0, trxName);
 
 			if (!isVersion)
 			{
@@ -392,7 +400,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			uploadedDMSContent.saveEx();
 
-			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
+			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, trxName);
 
 			dmsAssociation.setDMS_Content_ID(uploadedDMSContent.getDMS_Content_ID());
 
@@ -438,22 +446,20 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				thumbnailGenerator.addThumbnail(uploadedDMSContent,
 						fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
 
-			try
-			{
-				Map<String, Object> solrValue = Utils.createIndexMap(uploadedDMSContent, dmsAssociation);
-				indexSeracher.indexContent(solrValue);
-			}
-			catch (Exception e)
-			{
-				log.log(Level.SEVERE, "Indexing of Content Failure :", e);
-				throw new AdempiereException("Indexing of Content Failure :" + e);
-			}
+			// Transaction commit
+			trx.commit();
 
 		}
 		catch (Exception e)
 		{
+			trx.rollback();
 			log.log(Level.SEVERE, "Upload Content Failure :", e);
 			throw new AdempiereException("Upload Content Failure :" + e);
+		}
+		finally
+		{
+			// Close transaction - "UploadFiles"
+			trx.close();
 		}
 
 		this.detach();

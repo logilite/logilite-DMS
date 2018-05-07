@@ -378,4 +378,23 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}
+
+	@Override
+	public void setIsIndexed(boolean IsIndexed)
+	{
+		set_Value (COLUMNNAME_IsIndexed, Boolean.valueOf(IsIndexed));
+	}
+
+	@Override
+	public boolean isIndexed()
+	{
+		Object oo = get_Value(COLUMNNAME_IsIndexed);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
+	}
 }

@@ -251,14 +251,6 @@ public class WRenameContent extends Window implements EventListener<Event>
 			DMSContent.setDescription(txtDesc.getValue());
 			DMSContent.save();
 
-			int DMS_Association_ID = DB.getSQLValue(null,
-					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?", DMSContent.getDMS_Content_ID());
-
-			MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
-
-			Map<String, Object> solrValue = Utils.createIndexMap(DMSContent, DMSAssociation);
-			indexSeracher.deleteIndex(DMSContent.getDMS_Content_ID());
-			indexSeracher.indexContent(solrValue);
 		}
 		
 			ValidateName();
@@ -370,16 +362,5 @@ public class WRenameContent extends Window implements EventListener<Event>
 				newFile.getAbsolutePath().length()));
 		content.saveEx();
 
-		try
-		{
-			Map<String, Object> solrValue = Utils.createIndexMap(content, association);
-			indexSeracher.deleteIndex(content.getDMS_Content_ID());
-			indexSeracher.indexContent(solrValue);
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "RE-Indexing of Content Failure :", e);
-			throw new AdempiereException("RE-Indexing of Content Failure :" + e);
-		}
 	}
 }

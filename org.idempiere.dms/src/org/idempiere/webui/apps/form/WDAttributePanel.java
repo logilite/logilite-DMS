@@ -537,15 +537,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				DMS_Content.save();
 			}
 			
-			int DMS_Association_ID = DB.getSQLValue(null,
-					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID());
-
 			MDMSContent DMSContent = new MDMSContent(Env.getCtx(), DMS_Content.getDMS_Content_ID(), null);
-			MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
-
-			Map<String, Object> solrValue = Utils.createIndexMap(DMSContent, DMSAssociation);
-			indexSeracher.deleteIndex(DMS_Content.getDMS_Content_ID());
-			indexSeracher.indexContent(solrValue);
 			Events.sendEvent(new Event("onRenameComplete", this));
 			tabBox.setSelectedTab((Tab) tabBox.getSelectedTab());
 			tabBox.getSelectedTab().setLabel(DMSContent.getName());
@@ -687,16 +679,5 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				newFile.getAbsolutePath().length()));
 		content.saveEx();
 
-		try
-		{
-			Map<String, Object> solrValue = Utils.createIndexMap(content, association);
-			indexSeracher.deleteIndex(content.getDMS_Content_ID());
-			indexSeracher.indexContent(solrValue);
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "RE-Indexing of Content Failure :", e);
-			throw new AdempiereException("RE-Indexing of Content Failure :" + e);
-		}
 	}
 }

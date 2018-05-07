@@ -206,18 +206,6 @@ public class FileSizeFixProcess extends SvrProcess
 			
 			//addLog("File available  : dms_content_id[" + content.getDMS_Content_ID() + "]");
 			content.saveEx();
-			try
-			{
-				Map<String, Object> solrValue = Utils.createIndexMap(content, association);
-				indexSeracher.deleteIndex(content.getDMS_Content_ID());
-				indexSeracher.indexContent(solrValue);
-			}
-			catch (Exception e)
-			{
-				log.log(Level.SEVERE, "RE-Indexing of Content Failure :", e);
-				addLog("RE-Indexing of Content Failure : dms_content_id[" + content.getDMS_Content_ID() + "]");
-				throw new AdempiereException("RE-Indexing of Content Failure :" + e);
-			}
 			flag =  true;
 			
 		}

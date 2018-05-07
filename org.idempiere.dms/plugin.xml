@@ -33,4 +33,12 @@
             class="org.idempiere.model.DMSModelValidator">
       </listener>
    </extension>
+   <extension
+         id="org.idempiere.dms.process.ResetIndexingProcess"
+         name="org.idempiere.dms.process.ResetIndexingProcess"
+         point="org.adempiere.base.Process">
+      <process
+            class="org.idempiere.dms.process.ResetIndexingProcess">
+      </process>
+   </extension>
 </plugin>

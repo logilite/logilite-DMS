@@ -288,4 +288,13 @@ public interface I_DMS_Content
 	  * Search key for the record in the format required - must be unique
 	  */
 	public String getValue();
+	
+	 /** Column name IsIndexed */
+    public static final String COLUMNNAME_IsIndexed = "IsIndexed";
+
+	/** Set IsMounting	  */
+	public void setIsIndexed (boolean IsIndexed);
+
+	/** Get IsMounting	  */
+	public boolean isIndexed();
 }
