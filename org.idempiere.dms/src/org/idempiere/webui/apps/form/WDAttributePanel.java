@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -72,7 +71,6 @@ import org.zkoss.zul.Cell;
 import org.zkoss.zul.South;
 
 import com.logilite.search.factory.IIndexSearcher;
-import com.logilite.search.factory.ServiceUtils;
 
 public class WDAttributePanel extends Panel implements EventListener<Event>
 {
@@ -505,11 +503,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
-			indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-
-			if (indexSeracher == null)
-				throw new AdempiereException("Index server is not found.");
-
 			if (Util.isEmpty(txtName.getValue()))
 				throw new WrongValueException(txtName, "Fill mandatory field");
 

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MClient;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.ModelValidator;
@@ -36,6 +37,7 @@ public class DMSModelValidator implements ModelValidator
 		}
 
 		engine.addModelChange(MDMSContent.Table_Name, this);
+		engine.addModelChange(MAttributeInstance.Table_Name, this);
 
 	}
 
@@ -56,6 +58,32 @@ public class DMSModelValidator implements ModelValidator
 	@Override
 	public String modelChange(PO po, int type) throws Exception
 	{
+		
+		/*
+		 * Before save event of attributeInstance table
+		 * Set indexed flag on change of attribute value
+		 * 
+		 */
+		if (MAttributeInstance.Table_Name.equals(po.get_TableName()) && type == TYPE_BEFORE_CHANGE
+				&& (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value)
+						|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueTimeStamp)
+						|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber)
+						|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueInt)))
+		{
+			MAttributeInstance attributeInstance = (MAttributeInstance) po;
+
+			int dmsContentID = DB.getSQLValue(po.get_TrxName(),
+					"SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ",
+					attributeInstance.getM_AttributeSetInstance_ID());
+
+			if (dmsContentID > 0)
+			{
+				MDMSContent content = new MDMSContent(po.getCtx(), dmsContentID, po.get_TrxName());
+				content.setIsIndexed(false);
+				content.saveEx();
+			}
+
+		}
 
 		/*
 		 * Before Save event Set isIndexed flag false for eligible for create

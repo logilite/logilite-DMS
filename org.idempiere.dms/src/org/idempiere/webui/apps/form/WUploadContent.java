@@ -165,8 +165,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			this.setWidth("40%");
 		}
 		
-		trx = Trx.get("UploadFiles", true);
-		trxName = trx.getTrxName();
+		trxName = Trx.createTrxName("UploadFiles");
+		trx = Trx.get(trxName, true);
 	}
 
 	/**
