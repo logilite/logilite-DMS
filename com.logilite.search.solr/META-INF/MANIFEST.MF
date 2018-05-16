@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Solr
 Bundle-SymbolicName: com.logilite.search.solr
-Bundle-Version: 1.0.1.qualifier
+Bundle-Version: 1.0.2.qualifier
 Bundle-Activator: com.logilite.search.solr.Activator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
@@ -19,5 +19,13 @@ Bundle-ClassPath: .,
  lib/httpmime-4.4.1.jar,
  lib/slf4j-api-1.7.7.jar,
  lib/noggit-0.5.jar,
- lib/commons-io-2.4.jar
+ lib/commons-io-2.4.jar,
+ lib/fontbox-2.0.5.jar,
+ lib/jempbox-1.8.9.jar,
+ lib/pdfbox-app-2.0.5.jar,
+ lib/siren-solr-1.4.jar,
+ lib/tika-app-1.14.jar
 Service-Component: OSGI-INF/*.xml
+Export-Package: org.apache.solr.client.solrj,
+ org.apache.solr.client.solrj.response,
+ org.apache.solr.common

@@ -14,6 +14,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.TrxEventListener;
+import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
 
 import com.logilite.search.factory.IIndexSearcher;
@@ -137,9 +138,20 @@ public class DMSModelValidator implements ModelValidator
 									throw new AdempiereException("Index Server not found");
 								}
 
+								IFileStorageProvider fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
+								
+								if (fileStorgProvider == null)
+									throw new AdempiereException("Storage provider is not define on clientInfo.");
+								
+								IContentManager contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
+
+								if (contentManager == null)
+									throw new AdempiereException("Content manager is not found.");
+								
+								
 								// Delete and Create Index
 								indexSeracher.deleteIndex(dmsContent.getDMS_Content_ID());
-								indexSeracher.indexContent(solrValue);
+								indexSeracher.indexContent(solrValue,fileStorgProvider.getFile(contentManager.getPath(dmsContent)));
 							}
 							catch (Exception e)
 							{

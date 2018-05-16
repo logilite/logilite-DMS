@@ -13,7 +13,10 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
+import org.idempiere.model.FileStorageUtil;
+import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
@@ -79,9 +82,19 @@ public class ResetIndexingProcess extends SvrProcess
 			{
 				if (MDMSContent.CONTENTBASETYPE_Content.equals(contentType))
 				{
+					IFileStorageProvider fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
+					
+					if (fileStorgProvider == null)
+						throw new AdempiereException("Storage provider is not define on clientInfo.");
+					
+					IContentManager contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
+
+					if (contentManager == null)
+						throw new AdempiereException("Content manager is not found.");
+					
 					Map<String, Object> solrValue = Utils.createIndexMap(mdmsContent, mdmsAssociation);
 					indexSeracher.deleteIndex(mdmsContent.getDMS_Content_ID());
-					indexSeracher.indexContent(solrValue);
+					indexSeracher.indexContent(solrValue, fileStorgProvider.getFile(contentManager.getPath(mdmsContent)));
 					cntSuccess++;
 
 					// Update the value of IsIndexed flag in dmsContent

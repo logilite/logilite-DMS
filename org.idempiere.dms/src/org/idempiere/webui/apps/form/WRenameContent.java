@@ -150,6 +150,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 		}
 		else
 		{
+			parent_Content = DMSContent;
 			txtName.setText(DMSContent.getName());
 		}
 
@@ -258,7 +259,8 @@ public class WRenameContent extends Window implements EventListener<Event>
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
 
-			if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory)
+				&& !DMSContent.getName().equals(txtName.getValue()))
 			{
 				if (!txtName.getValue().equalsIgnoreCase(parent_Content.getName())){
 					baseURL = contentManager.getPath(DMSContent);

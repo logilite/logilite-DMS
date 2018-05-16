@@ -14,7 +14,6 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
-import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -218,6 +217,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		txtName.setWidth("100%");
 		txtName.addEventListener(Events.ON_CHANGE, this);
 		LayoutUtils.addSclass("txt-btn", btnFileUpload);
+		btnFileUpload.setUpload(AdempiereWebUI.getUploadSetting());
 
 		Columns columns = new Columns();
 		gridView.appendChild(columns);

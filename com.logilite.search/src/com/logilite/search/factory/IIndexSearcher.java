@@ -13,6 +13,7 @@
 
 package com.logilite.search.factory;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,4 +31,8 @@ public interface IIndexSearcher
 	public void indexContent(Map<String, Object> solrValue);
 	
 	public String buildSolrSearchQuery(HashMap<String, List<Object>> params);
+	
+	public void indexContent(Map<String, Object> solrValue, File file);
+	
+	public Object getColumnValue(String query, String columnName);
 }

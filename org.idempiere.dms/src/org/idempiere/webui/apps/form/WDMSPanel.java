@@ -1017,15 +1017,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (Events.ON_OK.equals(event.getName())
 				|| (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass()
-						.equals(vsearchBox.getButton().getClass())))
+						.equals(vsearchBox.getButton().getClass()) && event.getTarget().equals(vsearchBox.getButton())))
 		{
-			breadRow.getChildren().clear();
-			btnBack.setEnabled(true);
-			btnNext.setEnabled(false);
-			lblPositionInfo.setValue(null);
-			isGenericSearch = true;
-			isSearch = false;
-			renderViewer();
+			if(!Util.isEmpty(vsearchBox.getTextbox().getValue(), true))
+			{
+				breadRow.getChildren().clear();
+				btnBack.setEnabled(true);
+				btnNext.setEnabled(false);
+				lblPositionInfo.setValue(null);
+				isGenericSearch = true;
+				isSearch = false;
+				renderViewer();
+			}
 		}
 		
 		// Disable navigation button based on "isAllowCreateDirectory" check on
@@ -1745,9 +1748,31 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(vsearchBox.getTextbox().getValue(), true))
 		{
-			String inputParam = vsearchBox.getTextbox().getValue();
-			query.append("(").append(Utils.NAME).append(":*").append(inputParam).append("*").append(" OR ")
-					.append(Utils.DESCRIPTION).append(":*").append(inputParam).append("*)");
+			String inputParam = vsearchBox.getTextbox().getValue().toLowerCase().trim().replaceAll(" +", " ");
+			vsearchBox.getTextbox().setValue(inputParam);
+			if (inputParam.charAt(0) == '\"' && inputParam.charAt(inputParam.length() - 1) == '\"')
+			{
+				inputParam = inputParam.substring(1, inputParam.length()-1);
+				inputParam = inputParam.trim();
+				query.append("(").append(Utils.NAME).append(":\"").append(inputParam).append("\"").append(" OR ")
+						.append(Utils.DESCRIPTION).append(":\"").append(inputParam).append("\"").append(" OR ")
+						.append(Utils.FILE_CONTENT).append(":\"").append(inputParam).append("\")");
+			}
+			else
+			{
+				String []arr = inputParam.split(" ");
+				inputParam = "";
+				for(int i = 0 ;i< arr.length;i++)
+				{
+					if(inputParam.length() > 0)
+						inputParam += " OR ";
+
+					inputParam += "*" + arr[i] + "*";
+				}
+				query.append("(").append(Utils.NAME).append(":").append(inputParam).append("").append(" OR ")
+						.append(Utils.DESCRIPTION).append(":").append(inputParam).append("").append(" OR ")
+						.append(Utils.FILE_CONTENT).append(":").append(inputParam).append(")");
+			}
 		}
 		else
 		{
@@ -1785,8 +1810,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
 
-			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
-					new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
+			if(latestversion != null)
+			{
+				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
+						new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
+			}
 		}
 		return map;
 	}
@@ -2366,7 +2394,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
 				DMSassociation.setDMS_Content_ID(DMSClipboard.get().getDMS_Content_ID());
-
+				/*
 				int DMS_Content_Related_ID = DB
 						.getSQLValue(
 								null,
@@ -2377,9 +2405,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (DMS_Content_Related_ID != 0)
 					DMSassociation.setDMS_Content_Related_ID(DMS_Content_Related_ID);
 				else
-					DMSassociation.setDMS_Content_Related_ID(currDMSContent.getDMS_Content_ID());
+					DMSassociation.setDMS_Content_Related_ID(currDMSContent.getDMS_Content_ID());*/
 
-				DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Record_ID());
+				DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
+				DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
 				DMSassociation.setRecord_ID(recordID);
 				DMSassociation.setAD_Table_ID(tableID);
 				DMSassociation.saveEx();
@@ -2407,6 +2436,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					// Here currently we can not able to move index creation logic in model validator
 					// TODO : In future, will find approaches for move index creation logic
 					indexSeracher.indexContent(Utils.createIndexMap(dmsContent, DMSassociation));
+					
+					/*indexSeracher.indexContent(Utils.createIndexMap(dmsContent, DMSassociation),
+					fileStorageProvider.getFile(contentManager.getPath(dmsContent)));*/
 				}
 				catch (Exception e)
 				{

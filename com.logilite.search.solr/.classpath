@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="lib/fontbox-2.0.5.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jempbox-1.8.9.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/pdfbox-app-2.0.5.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/siren-solr-1.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/tika-app-1.14.jar" sourcepath="/tmp/.org.sf.feeling.decompiler1525666627150/source/tika-app-1.14-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-io-2.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/noggit-0.5.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/slf4j-api-1.7.7.jar"/>
@@ -8,7 +13,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/httpclient-4.4.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-codec-1.6.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/solr-solrj-5.5.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/solr-solrj-5.5.0.jar" sourcepath="/tmp/.org.sf.feeling.decompiler1526446043518/source/solr-solrj-5.5.0-sources-1526477748873.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>

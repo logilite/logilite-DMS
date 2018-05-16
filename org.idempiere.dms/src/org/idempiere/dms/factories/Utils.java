@@ -57,6 +57,9 @@ import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 
+import com.logilite.search.factory.IIndexSearcher;
+import com.logilite.search.factory.ServiceUtils;
+
 /**
  * @author deepak@logilite.com
  */
@@ -85,6 +88,7 @@ public class Utils
 	public static final String					AD_Table_ID						= "AD_Table_ID";
 	public static final String					RECORD_ID						= "Record_ID";
 	public static final String 					SHOW_INACTIVE					= "Show_InActive";
+	public static final String					FILE_CONTENT					= "fileContent";
 
 	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
 
@@ -96,7 +100,7 @@ public class Utils
 																						+ " ( "
 																						+ " SELECT	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, "
 																						+ " a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
-																						+ " FROM DMS_Association a "
+									 													+ " FROM DMS_Association a "
 															    							+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) "
 																						+ " ) "
 																						+ " SELECT "
@@ -617,6 +621,17 @@ public class Utils
 				log.log(Level.SEVERE, "ASI fetching failure.", e);
 				throw new AdempiereException("ASI fetching failure." + e.getLocalizedMessage());
 			}
+		}
+		
+		// File Content
+		IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+		StringBuffer query = new StringBuffer();
+		query.append("(").append(Utils.DMS_CONTENT_ID).append(":\"").append(DMSContent.get_ID()).append("\")");
+		
+		if (DMSContent.get_ID() > 0)
+		{
+			String fileContent = (String) indexSeracher.getColumnValue(query.toString(), "fileContent");
+			solrValue.put(FILE_CONTENT, fileContent);			
 		}
 
 		return solrValue;

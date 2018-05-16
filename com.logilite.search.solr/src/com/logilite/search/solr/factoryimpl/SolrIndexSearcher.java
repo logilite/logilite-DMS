@@ -12,11 +12,15 @@
 
 package com.logilite.search.solr.factoryimpl;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -44,11 +48,22 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.request.schema.SchemaRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.BodyContentHandler;
 import org.compiere.util.CLogger;
+import org.compiere.util.Util;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 import com.idempiere.model.MIndexingConfig;
 import com.logilite.search.factory.IIndexSearcher;
@@ -104,6 +119,75 @@ public class SolrIndexSearcher implements IIndexSearcher
 		}
 	}
 
+	@Override
+	public String getColumnValue(String query, String columnName)
+	{
+		String content = "";
+		
+		try
+		{
+			if (server.ping() == null)
+				init(indexingConfig);
+		}
+		catch (SolrServerException | IOException e)
+		{
+			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
+			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
+		}
+
+		SolrQuery solrQuery = new SolrQuery();
+		QueryResponse response = new QueryResponse();
+		SolrDocumentList documentList = null;
+
+		try
+		{
+			solrQuery.setQuery(query);
+			response = server.query(solrQuery);
+			documentList = response.getResults();
+
+				ListIterator<SolrDocument> iterator = documentList.listIterator();
+
+				while (iterator.hasNext())
+				{
+
+					SolrDocument document = iterator.next();
+
+					Map<String, Collection<Object>> searchedContent = document.getFieldValuesMap();
+
+					Iterator<String> fields = document.getFieldNames().iterator();
+
+					while (fields.hasNext())
+					{
+						String field = fields.next();
+
+						if (field.equalsIgnoreCase(columnName))
+						{
+							Collection<Object> values = searchedContent.get(field);
+							Iterator<Object> value = values.iterator();
+
+							while (value.hasNext())
+							{
+								String obj = (String) value.next();
+
+								if (field.equalsIgnoreCase(columnName))
+								{
+									content = obj.toString();
+								}
+							}
+						}
+					}
+				}
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Searching content failure:", e);
+			//throw new AdempiereException("Searching content failure:" + e);
+		}
+
+		return content;
+	}
+	
+	
 	@Override
 	public List<Integer> searchIndex(String query)
 	{
@@ -219,6 +303,99 @@ public class SolrIndexSearcher implements IIndexSearcher
 			throw new AdempiereException("Indexing failure: " + e.getLocalizedMessage());
 		}
 	}
+	
+	@Override
+	public void indexContent(Map<String, Object> indexValue, File file)
+	{
+		try
+		{
+			try
+			{
+				if (server.ping() == null)
+					init(indexingConfig);
+			}
+			catch (SolrServerException | IOException e)
+			{
+				log.log(Level.SEVERE, "Fail to ping solr Server ", e);
+				throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
+			}
+
+			String content = (String) indexValue.get("fileContent");
+			SolrInputDocument document = new SolrInputDocument();
+			
+			for (Entry<String, Object> row : indexValue.entrySet())
+			{
+				if (row.getKey() != null && row.getValue() != null)
+				{
+					document.addField(row.getKey(), row.getValue());
+				}
+			}
+			
+			if (Util.isEmpty(content))
+			{
+				content = processDocument(file);
+
+				Map<String, Object> fieldAttribute = new LinkedHashMap<>();
+				fieldAttribute.put("name", "fileContent");
+				fieldAttribute.put("type", "text_general");
+				fieldAttribute.put("indexed", true);
+				fieldAttribute.put("stored", false);
+				fieldAttribute.put("multiValued", true);
+
+				SchemaRequest.AddField schemaRequest = new SchemaRequest.AddField(fieldAttribute);
+				schemaRequest.process(server);
+
+				document.addField("fileContent", content);
+			}
+			
+			server.add(document);
+			server.commit();
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Indexing failure: ", e);
+			throw new AdempiereException("Indexing failure: " + e.getLocalizedMessage());
+		}
+	}
+
+	private String processDocument(File file)
+	{
+		try
+		{
+			TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
+			Metadata metadata = new Metadata();
+			AutoDetectParser parser = new AutoDetectParser(tikaConfig);
+			ContentHandler handler = new BodyContentHandler(-1);
+			TikaInputStream stream = TikaInputStream.get(new FileInputStream(file));
+
+			parser.parse(stream, handler, metadata, new ParseContext());
+			stream.close();
+
+			return handler.toString();
+		}
+		catch (FileNotFoundException e)
+		{
+			log.log(Level.SEVERE, "File Not Found: ", e);
+			throw new AdempiereException("File Not Found: " + e.getLocalizedMessage());
+		}
+		catch (IOException e)
+		{
+			log.log(Level.SEVERE, "Fail to read file: ", e);
+			throw new AdempiereException("Fail to read file: " + e.getLocalizedMessage());
+		}
+		catch (SAXException e)
+		{
+			log.log(Level.SEVERE, "Can not parse file content: ", e);
+			throw new AdempiereException("Can not parse file content: " + e.getLocalizedMessage());
+		}
+		catch (TikaException e)
+		{
+			log.log(Level.SEVERE, "Can not parse file content: ", e);
+			throw new AdempiereException("Can not parse file content: " + e.getLocalizedMessage());
+		}
+	}
+
+
 
 	@Override
 	public void deleteIndex(int id)
