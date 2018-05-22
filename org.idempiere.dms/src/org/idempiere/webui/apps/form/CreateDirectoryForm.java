@@ -197,7 +197,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 				{
 					if (file.getName().equalsIgnoreCase(files[i].getName()))
 					{
-						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists."));
+						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists. \n (Either same file name content exist in inActive mode)"));
 					}
 				}
 
@@ -207,7 +207,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 					}
 				}
 				else{
-					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists."));
+					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists. \n (Either same file name content exist in inActive mode)"));
 				}
 					
 
@@ -234,8 +234,8 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 			}
 			catch (AdempiereException e)
 			{
-				log.log(Level.SEVERE, "Directory is allready created", e);
-				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is allready created"));
+				log.log(Level.SEVERE, "Directory is allready created (Either same file name content exist in inActive mode)", e);
+				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is allready created \n (Either same file name content exist in inActive mode)"));
 			}
 			catch (Exception e)
 			{

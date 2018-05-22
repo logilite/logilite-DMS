@@ -427,7 +427,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				File file = new File(path);
 				if (file.exists())
 				{
-					throw new WrongValueException("File already exists. Please upload as version ");
+					throw new WrongValueException("File already exists, either rename or upload as a version. \n (Either same file name content exist in inActive mode)");
 				}
 			}
 

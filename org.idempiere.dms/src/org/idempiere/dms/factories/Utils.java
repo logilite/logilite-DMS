@@ -101,7 +101,8 @@ public class Utils
 																						+ " ) "
 																						+ " SELECT "
 																						+ " COALESCE((SELECT a.DMS_Content_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_ID) AS DMS_Content_ID, "
-																						+ " COALESCE((SELECT a.DMS_Content_Related_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_Related_ID) AS DMS_Content_Related_ID, DMS_Association_ID "
+																						+ " COALESCE((SELECT a.DMS_Content_Related_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_Related_ID) AS DMS_Content_Related_ID, "
+																						+ " COALESCE((SELECT a.DMS_Association_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_Association_ID = 1000000 ORDER  BY seqno desc FETCH first ROW only), DMS_Association_ID) AS DMS_Association_ID "
 																						+ " FROM ContentAssociation ca "
 																						+ " WHERE "
 																						+ " (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0)) OR "
@@ -109,7 +110,7 @@ public class Utils
 	
 	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_ALL	=  SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "");
 	
-	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE	=  SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "AND c.IsActive='Y'");
+	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE	=  SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "AND c.IsActive='Y' AND a.IsActive='Y'");
 	
 
 	public static final String					SQL_GET_RELATED_CONTENT			= "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID";

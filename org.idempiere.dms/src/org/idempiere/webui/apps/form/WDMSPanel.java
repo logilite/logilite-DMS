@@ -36,6 +36,8 @@ import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
 
+import javax.swing.JOptionPane;
+
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.adwindow.BreadCrumbLink;
@@ -784,7 +786,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_delete.addEventListener(Events.ON_CLICK, this);
 		mnu_associate.addEventListener(Events.ON_CLICK, this);
 
-		mnu_delete.setDisabled(true);
+		//mnu_delete.setDisabled(true);
 
 		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		addRootBreadCrumb();
@@ -953,7 +955,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				String destinationParentPath = dirContent.getParentURL()+ spFileSeprator + dirContent.getName();
 				if(destinationParentPath.contains(DMSClipboard.get().getParentURL() + spFileSeprator + DMSClipboard.get().getName())){
 					FDialog.warn(0, "You cannot Paste into itself");
-					return;
 				}else{
 					if (DMSClipboard.getIsCopy())
 					{
@@ -991,7 +992,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_delete))
 		{
-
+			//TODO inactive DMS_content and same change in solr index
+			int response = JOptionPane.showConfirmDialog(null, "Are you sure to delete "+ DMSViewerComp.getDMSContent().getName() + "?",
+					"Delete File", JOptionPane.YES_NO_OPTION);
+			if (response == JOptionPane.NO_OPTION)
+				return;
+			deleteContent(DMSViewerComp.getDMSContent(),DMSViewerComp.getDMSAssociation());
+			renderViewer();
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
@@ -1036,6 +1043,117 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnNext.setEnabled(false);
 		}
 
+	}
+
+	/**
+	 * This will be a soft deletion. System will only inactive the files.
+	 * @param dmsContent
+	 */
+	private void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
+	{
+		// first delete if it is link
+		if (dmsAssociation.getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+		{
+			inActiveContentAndAssociation(null, dmsAssociation);
+		}
+		else if (dmsContent.getContentBaseType().equalsIgnoreCase(X_DMS_Content.CONTENTBASETYPE_Content))
+		{
+			if (dmsAssociation.getDMS_AssociationType_ID() == 1000000)
+			{
+				// TODO get parent dms_content
+				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(),
+						null);
+				int DMS_Association_ID = DB
+						.getSQLValue(
+								null,
+								"SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created FETCH FIRST ROW ONLY",
+								parentContent.getDMS_Content_ID());
+
+				MDMSAssociation parentAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+				inActiveContentAndAssociation(parentContent, parentAssociation);
+				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(parentContent);
+				for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
+				{
+					MDMSContent content = (MDMSContent) entry.getKey();
+					MDMSAssociation association = (MDMSAssociation) entry.getValue();
+					inActiveContentAndAssociation(content, association);
+				}
+			}
+			else
+			{
+				inActiveContentAndAssociation(dmsContent, dmsAssociation);
+				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(dmsContent);
+				for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
+				{
+					MDMSContent content = (MDMSContent) entry.getKey();
+					MDMSAssociation association = (MDMSAssociation) entry.getValue();
+					inActiveContentAndAssociation(content, association);
+				}
+			}
+		}
+		else if (dmsContent.getContentBaseType().equalsIgnoreCase(X_DMS_Content.CONTENTBASETYPE_Directory))
+		{
+			// Inactive Directory content and its child recursively
+			inActiveContentAndAssociation(dmsContent, dmsAssociation);
+			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(dmsContent);
+			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
+			{
+				MDMSContent content = (MDMSContent) entry.getKey();
+				MDMSAssociation association = (MDMSAssociation) entry.getValue();
+				//recursive call
+				deleteContent(content, association);
+			}
+		}
+	}
+	
+	private void inActiveContentAndAssociation(MDMSContent dmsContent, MDMSAssociation dmsAssociation){
+		if(dmsAssociation != null){
+			dmsAssociation.setIsActive(false);
+			dmsAssociation.saveEx();
+		}
+		if(dmsContent != null){
+			dmsContent.setIsActive(false);
+			dmsContent.saveEx();
+		}
+	}
+	
+	private HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent)
+	{
+
+		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
+		String sql = "SELECT c.DMS_Content_ID, a.DMS_Association_ID FROM DMS_Content c"
+				+ " INNER JOIN DMS_Association a ON c.DMS_Content_ID = a.DMS_Content_ID "
+				+ " WHERE a.DMS_Content_Related_ID = ? AND c.IsActive='Y' AND a.IsActive='Y' ";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement(sql, null);
+			pstmt.setInt(1, dmsContent.getDMS_Content_ID());
+			rs = pstmt.executeQuery();
+
+			if (rs != null)
+			{
+				while (rs.next())
+				{
+					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)), (new MDMSAssociation(
+							Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, "getRelatedContents fetching failure: ", e);
+			throw new AdempiereException("getRelatedContents fetching failure: " + e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+
+		return map;
 	}
 
 	private String pastePhysicalCopiedFolder(MDMSContent copiedContent, MDMSContent destPasteContent)
