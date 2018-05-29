@@ -18,7 +18,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.sql.PreparedStatement;
@@ -37,6 +40,8 @@ import java.util.TimeZone;
 import java.util.logging.Level;
 
 import javax.swing.JOptionPane;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
@@ -76,6 +81,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xwpf.converter.pdf.PdfConverter;
 import org.apache.poi.xwpf.converter.pdf.PdfOptions;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -103,6 +109,8 @@ import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.pdfpreview.ConvertXlsToPdf;
+import org.idempiere.dms.pdfpreview.ConvertXlsxToPdf;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
@@ -112,6 +120,7 @@ import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.X_DMS_Content;
 import org.idempiere.model.X_DMS_ContentType;
+import org.w3c.tidy.Tidy;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zhtml.Filedownload;
@@ -129,11 +138,15 @@ import org.zkoss.zul.Space;
 import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
 
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.tool.xml.XMLWorkerHelper;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
+import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
+import com.lowagie.text.html.simpleparser.HTMLWorker;
 import com.lowagie.text.pdf.PdfWriter;
 
 public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
@@ -1990,8 +2003,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 * @throws DocumentException 
+	 * @throws com.itextpdf.text.DocumentException 
 	 */
-	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException, DocumentException
+	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException, DocumentException, com.itextpdf.text.DocumentException
 	{
 		selectedDMSContent.push(DMSViewerComp.getDMSContent());
 		
@@ -2064,9 +2078,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 * @throws DocumentException
+	 * @throws com.itextpdf.text.DocumentException 
 	 */
 	private File convertToPDF(File documentToPreview, MDMSMimeType mimeType)
-			throws IOException, FileNotFoundException, DocumentException
+			throws IOException, FileNotFoundException, DocumentException, com.itextpdf.text.DocumentException
 	{
 		if (mimeType.getMimeType()
 				.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
@@ -2092,7 +2107,110 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			document.close();
 			return newDocPDF;
 		}
+		else if (mimeType.getMimeType().equals("application/vnd.ms-excel")
+				|| mimeType.getMimeType().equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+		{
+			String fileName = documentToPreview.getName();
+			if (fileName != null && fileName.length() > 0)
+			{
+				String extension = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
+				if ("xls".equalsIgnoreCase(extension))
+				{
+					return convertXlsToPDF(documentToPreview);
+				}
+				else if ("xlsx".equalsIgnoreCase(extension))
+				{
+					return convertXlsxToPdf(documentToPreview);
+				}
+			}
+		}
+		
 		return documentToPreview;
+	}
+
+	
+	/**
+	 * Convert xlsx file to pdf file
+	 * 
+	 * @param documentToPreview
+	 * @return
+	 * @throws IOException
+	 * @throws FileNotFoundException
+	 * @throws com.itextpdf.text.DocumentException
+	 */
+	private File convertXlsxToPdf(File documentToPreview)
+			throws IOException, FileNotFoundException, com.itextpdf.text.DocumentException
+	{
+		File newXlsxToHTML = File.createTempFile("Zito", "XlsxToHTML");
+		try
+		{
+			float pdfWidth = 1050;
+			float pdfheight = 900;
+			String sourcePath = documentToPreview.getAbsolutePath();
+			String destinationPath = newXlsxToHTML.getAbsolutePath();
+
+			// Convert .xlsx file to html
+			ConvertXlsxToPdf.convert(sourcePath, destinationPath);
+			InputStream in = new FileInputStream(new File(destinationPath));
+
+			// Convert html to xhtml
+			Tidy tidy = new Tidy();
+			File newHtmlToXhtml = File.createTempFile("Zito", "HtmlToXHtml");
+			tidy.setShowWarnings(false);
+			// tidy.setXmlTags(true);
+			tidy.setXHTML(true);
+			tidy.setMakeClean(true);
+			org.w3c.dom.Document d = tidy.parseDOM(in, null);
+			tidy.pprint(d, new FileOutputStream(newHtmlToXhtml));
+
+			// Convert xhtml to pdf
+			File newXhtmlToPdf = File.createTempFile("Zito", "XHtmlToPdf");
+			com.itextpdf.text.Document document = new com.itextpdf.text.Document();
+			Rectangle size = new Rectangle(pdfWidth, pdfheight);
+			document.setPageSize(size);
+			com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(document,
+					new FileOutputStream(newXhtmlToPdf));
+			document.open();
+
+			XMLWorkerHelper.getInstance().parseXHtml(writer, document, new FileInputStream(newHtmlToXhtml));
+			document.close();
+
+			return newXhtmlToPdf;
+		}
+		catch (InvalidFormatException | ParserConfigurationException | TransformerException e)
+		{
+			throw new AdempiereException(e);
+		}
+	}
+
+	/**
+	 * Convert xls file to pdf
+	 * 
+	 * @param documentToPreview
+	 * @return pdf file
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 * @throws DocumentException
+	 */
+	private File convertXlsToPDF(File documentToPreview) throws FileNotFoundException, IOException, DocumentException
+	{
+		InputStream in = new FileInputStream(documentToPreview);
+		ConvertXlsToPdf test = new ConvertXlsToPdf(in);
+		String html = test.getHTML();
+
+		File newXlsToPdf = File.createTempFile("zito", "XlsToPDF");
+		
+		Document document = new Document(PageSize.A4,20,20,20,20);
+		PdfWriter.getInstance(document,
+				new FileOutputStream(newXlsToPdf));
+		document.open();
+		document.addCreationDate();
+
+		HTMLWorker htmlWorker = new HTMLWorker(document);
+		htmlWorker.parse(new StringReader(html));
+		document.close();
+		
+		return newXlsToPdf;
 	}
 
 	/**

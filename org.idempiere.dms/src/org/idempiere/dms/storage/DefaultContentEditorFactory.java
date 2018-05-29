@@ -28,6 +28,8 @@ public class DefaultContentEditorFactory implements IContentEditorFactory
 		listMimeType.add("application/pdf");
 		listMimeType.add("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 		listMimeType.add("application/msword");
+		listMimeType.add("application/vnd.ms-excel");
+		listMimeType.add("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 	}
 
 
