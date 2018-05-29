@@ -19,7 +19,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.math.BigDecimal;
@@ -39,11 +38,11 @@ import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
 
-import javax.swing.JOptionPane;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.util.Callback;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.adwindow.BreadCrumbLink;
 import org.adempiere.webui.component.Button;
@@ -1005,13 +1004,33 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_delete))
 		{
-			//TODO inactive DMS_content and same change in solr index
-			int response = JOptionPane.showConfirmDialog(null, "Are you sure to delete "+ DMSViewerComp.getDMSContent().getName() + "?",
-					"Delete File", JOptionPane.YES_NO_OPTION);
-			if (response == JOptionPane.NO_OPTION)
-				return;
-			deleteContent(DMSViewerComp.getDMSContent(),DMSViewerComp.getDMSAssociation());
-			renderViewer();
+			// TODO inactive DMS_content and same change in solr index
+			
+			Callback<Boolean> callback = new Callback<Boolean>() {
+				@Override
+				public void onCallback(Boolean result)
+				{
+					if (result)
+					{
+						deleteContent(DMSViewerComp.getDMSContent(), DMSViewerComp.getDMSAssociation());
+						try
+						{
+							renderViewer();
+						}
+						catch (Exception e)
+						{
+							throw new AdempiereException(e);
+						}
+					}
+					else
+					{
+						return;
+					}
+				}
+			};
+			
+			FDialog.ask(0, this, "Are you sure to delete " + DMSViewerComp.getDMSContent().getName() + "?", callback);
+			
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
