@@ -264,6 +264,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem						mnu_rename					= null;
 	private Menuitem						mnu_cut						= null;
 	private Menuitem						mnu_paste					= null;
+	private Menuitem						mnu_download				= null;
 
 	private Menuitem						mnu_canvasCreateLink		= null;
 	private Menuitem						mnu_canvasPaste				= null;
@@ -294,6 +295,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private static final String				MENUITEM_CUT				= "Cut";
 	private static final String				MENUITEM_COPY				= "Copy";
 	private static final String				MENUITEM_PASTE				= "Paste";
+	private static final String				MENUITEM_DOWNLOAD			= "Download";
 	private static final String				MENUITEM_CREATELINK			= "Create Link";
 	private static final String				MENUITEM_DELETE				= "Delete";
 	private static final String				MENUITEM_ASSOCIATE			= "Associate";
@@ -752,6 +754,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_cut = new Menuitem(MENUITEM_CUT);
 		mnu_copy = new Menuitem(MENUITEM_COPY);
 		mnu_paste = new Menuitem(MENUITEM_PASTE);
+		mnu_download = new Menuitem(MENUITEM_DOWNLOAD);
 		mnu_createLink = new Menuitem(MENUITEM_CREATELINK);
 		mnu_delete = new Menuitem(MENUITEM_DELETE);
 		mnu_associate = new Menuitem(MENUITEM_ASSOCIATE);
@@ -771,6 +774,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.appendChild(mnu_cut);
 		contentContextMenu.appendChild(mnu_copy);
 		contentContextMenu.appendChild(mnu_paste);
+		contentContextMenu.appendChild(mnu_download);
 		contentContextMenu.appendChild(mnu_createLink);
 		contentContextMenu.appendChild(mnu_rename);
 		contentContextMenu.appendChild(mnu_delete);
@@ -781,6 +785,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_createLink.setImageContent(Utils.getImage("Link24.png"));
 		mnu_uploadVersion.setImageContent(Utils.getImage("uploadversion24.png"));
 		mnu_paste.setImageContent(Utils.getImage("Paste24.png"));
+		mnu_download.setImageContent(Utils.getImage("Downloads24.png"));
 		mnu_rename.setImageContent(Utils.getImage("Rename24.png"));
 		mnu_cut.setImageContent(Utils.getImage("Cut24.png"));
 		mnu_versionList.setImageContent(Utils.getImage("Versions24.png"));
@@ -792,6 +797,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_versionList.addEventListener(Events.ON_CLICK, this);
 		mnu_cut.addEventListener(Events.ON_CLICK, this);
 		mnu_paste.addEventListener(Events.ON_CLICK, this);
+		mnu_download.addEventListener(Events.ON_CLICK, this);
 		mnu_rename.addEventListener(Events.ON_CLICK, this);
 		mnu_createLink.addEventListener(Events.ON_CLICK, this);
 		mnu_copy.addEventListener(Events.ON_CLICK, this);
@@ -985,6 +991,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				
 			}
+		}
+		else if (event.getTarget().equals(mnu_download))
+		{
+			File file = null;
+			file = fileStorageProvider.getFile(contentManager.getPath(dirContent));
+
+			AMedia media = new AMedia(file, "application/octet-stream", null);
+			Filedownload.save(media);
+
 		}
 		else if (event.getTarget().equals(mnu_rename))
 		{
@@ -2436,12 +2451,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_rename.setDisabled(true);
 			mnu_uploadVersion.setDisabled(true);
 			mnu_versionList.setDisabled(true);
+			mnu_download.setDisabled(true);
 			DMSViewerCom.setContext(contentContextMenu);
 			contentContextMenu.open(this, "at_pointer");
 			return;
 		}
 		else
 		{
+			mnu_delete.setDisabled(false);
 			mnu_associate.setDisabled(false);
 			mnu_copy.setDisabled(false);
 			mnu_createLink.setDisabled(false);
@@ -2450,6 +2467,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_rename.setDisabled(false);
 			mnu_uploadVersion.setDisabled(false);
 			mnu_versionList.setDisabled(false);
+			mnu_download.setDisabled(false);
 		}
 
 		if (copyDMSContent == null)
@@ -2489,6 +2507,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_canvasPaste.setDisabled(true);
 			mnu_uploadVersion.setDisabled(false);
 			mnu_createLink.setDisabled(true);
+			mnu_download.setDisabled(false);
 
 			if (copyDMSContent != null && copyDMSContent != DMSViewerCom.getDMSContent())
 				mnu_associate.setDisabled(false);
@@ -2506,6 +2525,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_paste.setDisabled(false);
 				mnu_canvasPaste.setDisabled(false);
 			}
+			mnu_download.setDisabled(true);
 		}
 
 		mnu_copy.setDisabled(false);
