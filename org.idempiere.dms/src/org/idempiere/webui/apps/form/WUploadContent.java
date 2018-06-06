@@ -14,7 +14,6 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
-import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -126,10 +125,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	private WDLoadASIPanel			asiPanel				= null;
 	private boolean					cancel					= false;
 	
-	//trx
-	private Trx						trx						= null;
-	private String 					trxName 				= null;
-
 	/**
 	 * Constructor initialize
 	 * 
@@ -165,8 +160,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			this.setWidth("40%");
 		}
 		
-		trxName = Trx.createTrxName("UploadFiles");
-		trx = Trx.get(trxName, true);
 	}
 
 	/**
@@ -326,11 +319,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	private void saveUploadedDcoument()
 	{
+		Trx trx = null;
+		MDMSContent uploadedDMSContent = null;
 		int ASI_ID = 0;
 
 		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
-		MDMSContent uploadedDMSContent = null;
-
 		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
 
 		if (indexSeracher == null)
@@ -348,7 +341,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				String validationResponse = Msg.translate(Env.getCtx(), validationMsg);
 				throw new WrongValueException(txtName, validationResponse);
 			}
-
 		}
 
 		if (isVersion)
@@ -362,10 +354,12 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		{
 			ASI_ID = asiPanel.saveAttributes();
 		}
-
+		
 		try
 		{
-			uploadedDMSContent = new MDMSContent(Env.getCtx(), 0, trxName);
+			String trxName = Trx.createTrxName("UploadFiles");
+			trx = Trx.get(trxName, true);
+			uploadedDMSContent = new MDMSContent(Env.getCtx(), 0, trx.getTrxName());
 
 			if (!isVersion)
 			{
@@ -400,7 +394,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			uploadedDMSContent.saveEx();
 
-			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, trxName);
+			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, trx.getTrxName());
 
 			dmsAssociation.setDMS_Content_ID(uploadedDMSContent.getDMS_Content_ID());
 
@@ -452,14 +446,16 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 		catch (Exception e)
 		{
-			trx.rollback();
+			if (trx != null)
+				trx.rollback();
 			log.log(Level.SEVERE, "Upload Content Failure :", e);
 			throw new AdempiereException("Upload Content Failure :" + e);
 		}
 		finally
 		{
 			// Close transaction - "UploadFiles"
-			trx.close();
+			if (trx != null)
+				trx.close();
 		}
 
 		this.detach();

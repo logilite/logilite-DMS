@@ -109,7 +109,7 @@ public class ConvertXlsToPdf {
                         pix.get(anchor.getRow1())
                                 .get(anchor.getCol1())
                                 .add(book.getAllPictures().get(
-                                        ((HSSFPicture) pic).getPictureIndex()));
+                                        ((HSSFPicture) pic).getPictureIndex()-1));
                     } catch (final Exception e) {
                         throw new RuntimeException(e);
                     }
