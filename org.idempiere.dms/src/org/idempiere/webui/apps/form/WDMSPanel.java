@@ -2069,7 +2069,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (name.contains("(") && name.contains(")"))
 					name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
 
-				documentToPreview = convertToPDF(documentToPreview, mimeType);
+				try
+				{
+					documentToPreview = convertToPDF(documentToPreview, mimeType);
+				}
+				catch(Exception e)
+				{
+					selectedDMSContent.pop();
+					throw new AdempiereException(e);
+				}
 				
 				if (Utils.getContentEditor(mimeType.getMimeType()) != null)
 				{
