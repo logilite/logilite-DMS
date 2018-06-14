@@ -77,9 +77,9 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	private static final int				COMPONENT_HEIGHT		= 120;
 	private static final int				COMPONENT_WIDTH			= 120;
 
-	private static final String				SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
+	private static final String				SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID, seqno FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
 																			+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "
-																			+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
+																			+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID, null FROM DMS_Content WHERE DMS_Content_ID = ?"
 																			+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID DESC";
 
 	public WDMSVersion(MDMSContent mDMSContent)
@@ -169,7 +169,9 @@ public class WDMSVersion extends Window implements EventListener<Event>
 				image = new AImage(thumbFile);
 			}
 
-			DMSViewerComponent viewerComponent = new DMSViewerComponent(dmsContent.get(i), image, false,null);
+			// Getting version number of version
+			String seqNo = ((MDMSContent) dmsContent.get(i)).getSeqNo();
+			DMSViewerComponent viewerComponent = new DMSViewerComponent(dmsContent.get(i), image, false,null, seqNo);
 
 			viewerComponent.setDheight(COMPONENT_HEIGHT);
 			viewerComponent.setDwidth(COMPONENT_WIDTH);
@@ -252,7 +254,10 @@ public class WDMSVersion extends Window implements EventListener<Event>
 			{
 				while (rs.next())
 				{
-					dmsContent.add(new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null));
+					MDMSContent content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+					// Set version number
+					content.setSeqNo(rs.getString("seqno")); 
+					dmsContent.add(content);
 				}
 			}
 

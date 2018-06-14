@@ -23,6 +23,8 @@ public class MDMSContent extends X_DMS_Content
 	 * 
 	 */
 	private static final long	serialVersionUID	= -6250555517481249806L;
+	
+	private String seqNo = null;
 
 	public MDMSContent(Properties ctx, int DMS_Content_ID, String trxName)
 	{
@@ -32,5 +34,15 @@ public class MDMSContent extends X_DMS_Content
 	public MDMSContent(Properties ctx, ResultSet rs, String trxName)
 	{
 		super(ctx, rs, trxName);
+	}
+	
+	public String getSeqNo()
+	{
+		return seqNo;
+	}
+
+	public void setSeqNo(String seqNo)
+	{
+		this.seqNo = seqNo;
 	}
 }

@@ -139,16 +139,48 @@ public class DMSViewerComponent extends Div
 	{
 		this.fName = fName;
 	}
+	
+	/**
+	 * Constructor for dmsContent is not a version
+	 * 
+	 * @param content
+	 * @param image
+	 * @param isLink
+	 * @param DMSAssociation
+	 */
+	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation)
+	{
+		this(content, image, isLink, DMSAssociation, null);
+	}
+	
 
-	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink,I_DMS_Association DMSAssociation)
+	/**
+	 * Constructor for dmsContent is a version 
+	 * 
+	 * @param content
+	 * @param image
+	 * @param isLink
+	 * @param DMSAssociation
+	 * @param version
+	 */
+	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation, String version)
 	{
 		String name = content.getName();
 		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 			name = name.replace("\\(.*\\d\\)", "");
-		else
+
+		if (name.contains("(") && name.contains(")"))
 		{
-			if (name.contains("(") && name.contains(")"))
-				name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
+			name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
+		}
+		
+		/*
+		 * Append version number if exist
+		 */
+		
+		if (version != null)
+		{
+			name = name + " (V" + version + ")";
 		}
 
 		this.contentBaseType = content.getContentBaseType();
