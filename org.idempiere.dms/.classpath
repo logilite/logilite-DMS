@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="lib/itextpdf-5.4.1.jar"/>
+	<classpathentry kind="lib" path="lib/xmlworker-5.4.1.1_LLP.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="lib" path="lib/itextpdf-5.4.1.jar" sourcepath="/tmp/.org.sf.feeling.decompiler1527481904484/source/itextpdf-5.4.1-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/tidy.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xmlworker-5.4.1.jar" sourcepath="/tmp/.org.sf.feeling.decompiler1527481904484/source/xmlworker-5.4.1-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/poi-scratchpad-3.9.jar" sourcepath="/tmp/.org.sf.feeling.decompiler1524479205911/source/poi-scratchpad-3.9-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-codec-1.5.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/dom4j-1.6.1.jar"/>
