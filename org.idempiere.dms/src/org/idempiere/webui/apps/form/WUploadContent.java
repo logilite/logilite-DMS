@@ -363,9 +363,15 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			if (!isVersion)
 			{
-				if (!txtName.getValue().contains(uploadedMedia.getFormat()))
+				String format = uploadedMedia.getFormat();
+				if (format == null)
 				{
-					uploadedDMSContent.setName(txtName.getValue() + "." + uploadedMedia.getFormat());
+					throw new AdempiereException("Invalid File format");
+				}
+				
+				if (!txtName.getValue().contains(format))
+				{
+					uploadedDMSContent.setName(txtName.getValue() + "." + format);
 				}
 				else
 				{
