@@ -86,7 +86,7 @@ public class Utils
 	public static final String					RECORD_ID						= "Record_ID";
 	public static final String 					SHOW_INACTIVE					= "Show_InActive";
 
-	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
+	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(name) like UPPER(?)";
 
 	private static final String					SQL_GETASI						= "SELECT replace(a.Name,' ','_') as name,ai.value,ai.valuetimestamp,ai.ValueNumber,ai.valueint FROM M_AttributeInstance ai "
 																						+ " INNER JOIN  M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
@@ -97,16 +97,22 @@ public class Utils
 																						+ " SELECT	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, "
 																						+ " a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																						+ " FROM DMS_Association a "
-															    							+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) "
+																						+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID  #IsActive#) "
+																						+ " ), "
+																						+ "  VersionRelatedIDs AS ( "
+																						+ "  SELECT DMS_Content_Related_ID, MAX(SeqNo) AS SeqNo FROM DMS_Association a WHERE a.DMS_AssociationType_ID = 1000000 GROUP  BY DMS_Content_Related_ID "
 																						+ " ) "
 																						+ " SELECT "
-																						+ " COALESCE((SELECT a.DMS_Content_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_ID) AS DMS_Content_ID, "
-																						+ " COALESCE((SELECT a.DMS_Content_Related_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 ORDER BY SeqNo DESC FETCH FIRST ROW ONLY), DMS_Content_Related_ID) AS DMS_Content_Related_ID, "
-																						+ " COALESCE((SELECT a.DMS_Association_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_Association_ID = 1000000 ORDER  BY seqno desc FETCH first ROW only), DMS_Association_ID) AS DMS_Association_ID "
+																						+ " NVL(( SELECT a.DMS_Content_ID FROM  DMS_Association a INNER JOIN VersionRelatedIDs x ON (x.DMS_Content_Related_ID = a.DMS_Content_Related_ID AND x.SeqNo = a.SeqNo ) WHERE  a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 "
+																						+ "  ) , DMS_Content_ID ) AS DMS_Content_ID, "
+																						+ " NVL(ca.DMS_Content_Related_ID,DMS_Content_Related_ID) AS DMS_Content_Related_ID ,"
+																						+ " NVL(ca.DMS_Association_ID,DMS_Association_ID) AS DMS_Association_ID "
 																						+ " FROM ContentAssociation ca "
 																						+ " WHERE "
-																						+ " (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0)) OR "
-																						+ " (COALESCE(DMS_Content_Related_ID,0) = COALESCE(?,0) AND ContentBaseType = 'DIR') ";
+																						+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0)) OR "
+																						+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0) AND ContentBaseType = 'DIR') ";
+					
+	
 	
 	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_ALL	=  SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "");
 	
@@ -327,14 +333,14 @@ public class Utils
 		int dmsMimeType_ID = -1;
 
 		if (media != null)
-			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE mimetype ilike '"
-					+ media.getContentType() + "'");
+			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE UPPER(mimetype) = '"
+					+ media.getContentType().toUpperCase() + "'");
 
 		if (dmsMimeType_ID != -1)
 			return dmsMimeType_ID;
 		else
 		{
-			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE name ilike ?",
+			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE name = ?",
 					DEFAULT);
 		}
 
@@ -468,7 +474,7 @@ public class Utils
 			return mImage;
 		}
 
-		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE name ilike ?", DIRECTORY);
+		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE Upper(name) =  UPPER(?) ", DIRECTORY);
 		mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
 		cache_dirThumbnail.put(DIRECTORY, mImage);
 		return mImage;
@@ -493,10 +499,11 @@ public class Utils
 
 		if (Icon_ID <= 0)
 		{
-			Icon_ID = DB.getSQLValue(null, "SELECT Icon_ID FROM DMS_MimeType WHERE Name ilike ?", DEFAULT);
+			Icon_ID = DB.getSQLValue(null, "SELECT Icon_ID FROM DMS_MimeType WHERE UPPER(Name) = UPPER(?) ", DEFAULT);
 			if (Icon_ID <= 0)
 			{
-				Icon_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE name ilike ?", DOWNLOAD);
+				Icon_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE UPPER(Name) = UPPER(?) ",
+						DOWNLOAD);
 			}
 		}
 
