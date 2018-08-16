@@ -106,7 +106,7 @@ public class Utils
 																						+ " NVL(( SELECT a.DMS_Content_ID FROM  DMS_Association a INNER JOIN VersionRelatedIDs x ON (x.DMS_Content_Related_ID = a.DMS_Content_Related_ID AND x.SeqNo = a.SeqNo ) WHERE  a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 "
 																						+ "  ) , DMS_Content_ID ) AS DMS_Content_ID, "
 																						+ " NVL(ca.DMS_Content_Related_ID,DMS_Content_Related_ID) AS DMS_Content_Related_ID ,"
-																						+ " NVL(ca.DMS_Association_ID,DMS_Association_ID) AS DMS_Association_ID "
+																						+ "  NVL((SELECT DMS_Association_ID FROM (SELECT a.DMS_Association_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = DMS_Content_ID AND a.DMS_Association_ID = 1000000 ORDER  BY seqno desc) WHERE rownum <= 1), DMS_Association_ID) AS DMS_Association_ID "
 																						+ " FROM ContentAssociation ca "
 																						+ " WHERE "
 																						+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0)) OR "
