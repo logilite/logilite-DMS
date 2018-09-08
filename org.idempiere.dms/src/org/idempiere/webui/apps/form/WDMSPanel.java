@@ -154,7 +154,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private static final long				serialVersionUID			= -6813481516566180243L;
 	public static CLogger					log							= CLogger.getCLogger(WDMSPanel.class);
 
-	private String							SQL_LATEST_VERSION;
+	private static String					SQL_LATEST_VERSION			= ""
+																				+ "SELECT DMS_Content_ID, DMS_Association_ID "
+																				+ "FROM DMS_Association "
+																				+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID= ? "
+																				+ "GROUP BY DMS_Content_ID,DMS_Association_ID "
+																				+ "ORDER BY Max(seqNo) DESC ";
 
 	private static final String				spFileSeprator				= Utils.getStorageProviderFileSeparator();
 
@@ -414,7 +419,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void initForm()
 	{
-		latestVersion();
 		tabBox.setWidth("100%");
 		tabBox.setHeight("100%");
 		tabBox.appendChild(tabs);
@@ -1109,7 +1113,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				int DMS_Association_ID = DB
 						.getSQLValue(
 								null,
-								"SELECT * FROM (SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created) WHERE rownum <= 1",
+								"SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
 								parentContent.getDMS_Content_ID());
 
 				MDMSAssociation parentAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
@@ -1304,7 +1308,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			int DMS_Association_ID = DB
 					.getSQLValue(
 							null,
-							"SELECT * FROM (SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created) WHERE rownum <= 1",
+							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
 							copiedContent.getDMS_Content_ID());
 
 			String baseURL = null;
@@ -1625,7 +1629,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			int DMS_Association_ID = DB
 					.getSQLValue(
 							null,
-							"SELECT * FROM (SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created) WHERE rownum <= 1",
+							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created ",
 							sourceCutContent.getDMS_Content_ID());
 
 			String baseURL = null;
@@ -3334,24 +3338,5 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			pstmt = null;
 			rs = null;
 		}
-	}
-
-	public void latestVersion()
-	{
-		if (DB.isPostgreSQL())
-		{
-			SQL_LATEST_VERSION = "SELECT DMS_Content_ID, DMS_Association_ID " + "FROM DMS_Association "
-					+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID= ? "
-					+ "GROUP BY DMS_Content_ID,DMS_Association_ID "
-					+ "ORDER BY Max(seqNo) DESC FETCH FIRST ROW ONLY";
-		}
-		else
-		{
-			SQL_LATEST_VERSION = " SELECT * FROM (SELECT DMS_Content_ID, DMS_Association_ID "
-					+ "FROM DMS_Association WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID= ? "
-					+ "GROUP BY DMS_Content_ID,DMS_Association_ID "
-					+ " ORDER BY Max(seqNo) DESC) WHERE rownum <= 1 ";
-		}
-
 	}
 }

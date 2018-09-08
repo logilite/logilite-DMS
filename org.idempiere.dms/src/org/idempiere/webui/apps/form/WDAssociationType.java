@@ -121,7 +121,7 @@ public class WDAssociationType extends Window implements EventListener<Event>
 			lookup = MLookupFactory
 					.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
 							X_DMS_AssociationType.COLUMNNAME_DMS_AssociationType_ID, 0, true,
-							"DMS_AssociationType.DMS_AssociationType_ID NOT IN (SELECT DMS_AssociationType_ID WHERE EntityType = 'D')");
+							"DMS_AssociationType.DMS_AssociationType_ID NOT IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE EntityType = 'D')");
 
 			associationType = new WTableDirEditor(X_DMS_AssociationType.COLUMNNAME_DMS_AssociationType_ID, true, false,
 					true, lookup);

@@ -92,7 +92,7 @@ public class Utils
 																						+ " INNER JOIN  M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
 																						+ " WHERE ai.M_AttributeSetInstance_Id = ?";
 
-	public static final String					SQL_GET_RELATED_FOLDER_CONTENT	= "WITH ContentAssociation AS "
+	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_COMMON	= "WITH ContentAssociation AS "
 																						+ " ( "
 																						+ " SELECT	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, "
 																						+ " a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
@@ -106,18 +106,30 @@ public class Utils
 																						+ " NVL(( SELECT a.DMS_Content_ID FROM  DMS_Association a INNER JOIN VersionRelatedIDs x ON (x.DMS_Content_Related_ID = a.DMS_Content_Related_ID AND x.SeqNo = a.SeqNo ) WHERE  a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 "
 																						+ "  ) , DMS_Content_ID ) AS DMS_Content_ID, "
 																						+ " NVL(ca.DMS_Content_Related_ID,DMS_Content_Related_ID) AS DMS_Content_Related_ID ,"
-																						+ "  NVL((SELECT DMS_Association_ID FROM (SELECT a.DMS_Association_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = DMS_Content_ID AND a.DMS_Association_ID = 1000000 ORDER  BY seqno desc) WHERE rownum <= 1), DMS_Association_ID) AS DMS_Association_ID "
+																						+ " NVL((SELECT DMS_Association_ID FROM (SELECT a.DMS_Association_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = DMS_Content_ID AND a.DMS_Association_ID = 1000000 ORDER BY seqno DESC) b #DB_SPECIFIC_CONDITION#), DMS_Association_ID) AS DMS_Association_ID "
 																						+ " FROM ContentAssociation ca "
 																						+ " WHERE "
 																						+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0)) OR "
 																						+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0) AND ContentBaseType = 'DIR') ";
 					
 	
+	public static String						SQL_GET_RELATED_FOLDER_CONTENT			= null;
+	public static String						SQL_GET_RELATED_FOLDER_CONTENT_ALL		= null;
+	public static String						SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE	= null;
 	
-	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_ALL	=  SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "");
-	
-	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE	=  SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "AND c.IsActive='Y' AND a.IsActive='Y'");
-	
+	// Oracle Database Comfortable 
+	static
+	{
+
+		SQL_GET_RELATED_FOLDER_CONTENT = SQL_GET_RELATED_FOLDER_CONTENT_COMMON.replace("#DB_SPECIFIC_CONDITION#",
+				DB.isPostgreSQL() == true ? "FETCH FIRST ROW ONLY" : " WHERE rownum <= 1");
+
+		SQL_GET_RELATED_FOLDER_CONTENT_ALL = SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "");
+
+		SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE = SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#",
+				"AND c.IsActive='Y' AND a.IsActive='Y'");
+
+	}
 
 	public static final String					SQL_GET_RELATED_CONTENT			= "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID";
 
