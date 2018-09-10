@@ -661,9 +661,10 @@ public class Utils
 
 				if (dmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 				{
-					if (dmsContent.getParentURL().startsWith(baseURL))
+					String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
+					if (parentURL.startsWith(baseURL))
 					{
-						dmsContent.setParentURL(dmsContent.getParentURL().replaceFirst(baseURL, renamedURL));
+						dmsContent.setParentURL(parentURL.replaceFirst(baseURL, renamedURL));
 						dmsContent.saveEx();
 					}
 					renameFolder(dmsContent, baseURL, renamedURL);

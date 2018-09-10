@@ -970,26 +970,26 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			if (DMSClipboard.get() != null)
 			{
-				String destinationParentPath = dirContent.getParentURL()+ spFileSeprator + dirContent.getName();
-				if(destinationParentPath.contains(DMSClipboard.get().getParentURL() + spFileSeprator + DMSClipboard.get().getName())){
+				MDMSContent sourceContent = DMSClipboard.get();
+				MDMSContent destPasteContent = dirContent;
+				if (sourceContent.get_ID() == destPasteContent.get_ID())
+				{
 					FDialog.warn(0, "You cannot Paste into itself");
-				}else{
+				}
+				else
+				{
 					if (DMSClipboard.getIsCopy())
 					{
-						MDMSContent copiedContent = DMSClipboard.get();
-						MDMSContent destPasteContent = dirContent;
-						pasteCopyContent(copiedContent, destPasteContent);
+						pasteCopyContent(sourceContent, destPasteContent);
 						renderViewer();
 					}
 					else
 					{
-						MDMSContent cutDMSContent = DMSClipboard.get();
-						MDMSContent destPasteContent = dirContent;
-						pasteCutContent(cutDMSContent, destPasteContent);
+						pasteCutContent(sourceContent, destPasteContent);
 						renderViewer();
 					}
 				}
-				
+
 			}
 		}
 		else if (event.getTarget().equals(mnu_download))
@@ -1217,19 +1217,22 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		File newFile = new File(newFileName);
 
-		for (int i = 0; i < files.length; i++)
+		if (files.length > 0)
 		{
-			if (newFile.getName().equalsIgnoreCase(files[i].getName()))
+			for (int i = 0; i < files.length; i++)
 			{
-				if (!newFileName.contains(" - copy "))
-					newFileName = newFileName + " - copy ";
-
-				newFile = new File(newFileName);
-
-				if (newFile.exists())
+				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
 				{
-					newFileName = Utils.getUniqueFoldername(newFile.getAbsolutePath());
+					if (!newFileName.contains(" - copy "))
+						newFileName = newFileName + " - copy ";
+
 					newFile = new File(newFileName);
+
+					if (newFile.exists())
+					{
+						newFileName = Utils.getUniqueFoldername(newFile.getAbsolutePath());
+						newFile = new File(newFileName);
+					}
 				}
 			}
 		}
@@ -1459,12 +1462,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					}
 					newDMSAssociation.saveEx();
 
-					if (oldDMSContent.getParentURL().startsWith(baseURL))
+					if (!Util.isEmpty(oldDMSContent.getParentURL()))
 					{
-						newDMSContent.setParentURL(destPasteContent.getParentURL() + spFileSeprator + copiedContent.getName());
-						newDMSContent.saveEx();
+						if (oldDMSContent.getParentURL().startsWith(baseURL))
+						{
+							newDMSContent.setParentURL(
+									destPasteContent.getParentURL() + spFileSeprator + copiedContent.getName());
+							newDMSContent.saveEx();
+						}
+						copyContent(oldDMSContent, baseURL, renamedURL, newDMSContent);
 					}
-					copyContent(oldDMSContent, baseURL, renamedURL, newDMSContent);
 				}
 				else
 				{
@@ -2629,8 +2636,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			return;
 		}
 		
-		String destinationParentPath = DMSContent.getParentURL()+ spFileSeprator + DMSContent.getName();
-		if(destinationParentPath.contains(DMSClipboard.get().getParentURL() + spFileSeprator + DMSClipboard.get().getName())){
+		if (DMSContent.get_ID() == DMSClipboard.get().get_ID())
+		{
 			FDialog.warn(0, "You cannot Link into itself");
 			return;
 		}
@@ -3109,9 +3116,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		for (Integer entry : documentList)
 		{
 			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
-
-			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
-					new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
+			
+			if (latestversion != null)
+			{
+				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
+						new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
+			}
 		}
 		return map;
 	}
