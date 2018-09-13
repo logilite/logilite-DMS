@@ -34,7 +34,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -160,7 +159,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 																				+ "FROM DMS_Association "
 																				+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID= ? "
 																				+ "GROUP BY DMS_Content_ID,DMS_Association_ID "
-																				+ "ORDER BY Max(seqNo) DESC FETCH FIRST ROW ONLY";
+																				+ "ORDER BY Max(seqNo) DESC ";
 
 	private static final String				spFileSeprator				= Utils.getStorageProviderFileSeparator();
 
@@ -1114,7 +1113,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				int DMS_Association_ID = DB
 						.getSQLValue(
 								null,
-								"SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created FETCH FIRST ROW ONLY",
+								"SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
 								parentContent.getDMS_Content_ID());
 
 				MDMSAssociation parentAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
@@ -1309,7 +1308,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			int DMS_Association_ID = DB
 					.getSQLValue(
 							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created FETCH FIRST ROW ONLY",
+							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
 							copiedContent.getDMS_Content_ID());
 
 			String baseURL = null;
@@ -1630,7 +1629,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			int DMS_Association_ID = DB
 					.getSQLValue(
 							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created FETCH FIRST ROW ONLY",
+							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created ",
 							sourceCutContent.getDMS_Content_ID());
 
 			String baseURL = null;
@@ -2655,7 +2654,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						.getSQLValue(
 								null,
 								"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? "
-										+ "AND DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE Name ilike 'Parent')",
+										+ "AND DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(Name) = UPPER('Parent')",
 								DMSClipboard.get().getDMS_Content_ID());
 
 				if (DMS_Content_Related_ID != 0)

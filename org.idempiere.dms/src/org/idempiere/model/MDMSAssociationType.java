@@ -27,7 +27,7 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 
 	private static final String	ASSOCIATIONTYPE_VERSION	= "Version";
 	private static final String	ASSOCIATIONTYPE_PARENT	= "Parent";
-	private static final String	SQL_GETASSOCIATIONTYPE	= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE name ilike ?";
+	private static final String	SQL_GETASSOCIATIONTYPE	= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE Upper(name) =  UPPER(?)";
 
 	public MDMSAssociationType(Properties ctx, int DMS_AssociationType_ID, String trxName)
 	{

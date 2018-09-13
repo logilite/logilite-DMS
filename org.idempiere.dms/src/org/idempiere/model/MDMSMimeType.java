@@ -38,8 +38,8 @@ public class MDMSMimeType extends X_DMS_MimeType
 
 	public boolean beforeSave(boolean newRecord)
 	{
-		int count = DB.getSQLValue(null, "SELECT count(*) FROM DMS_MimeType WHERE MimeType ilike '" + getMimeType()
-				+ "' OR FileExtension ilike '" + getFileExtension() + "'");
+		int count = DB.getSQLValue(null, "SELECT count(*) FROM DMS_MimeType WHERE UPPER(MimeType) = UPPER('" + getMimeType()
+				+ "') OR UPPER(FileExtension) = UPPER ('" + getFileExtension() + "')");
 		if (count != 0 && getDMS_MimeType_ID() == 0)
 		{
 			throw new AdempiereException("MimeType and File Extension must be unique.");
