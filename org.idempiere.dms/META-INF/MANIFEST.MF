@@ -39,5 +39,7 @@ Bundle-ClassPath: .,
  lib/itextpdf-5.4.1.jar,
  lib/xmlworker-5.4.1.1_LLP.jar
 Service-Component: OSGI-INF/*.xml
-Export-Package: org.idempiere.dms.factories,
+Export-Package: com.lowagie.text,
+ com.lowagie.text.pdf,
+ org.idempiere.dms.factories,
  org.idempiere.model

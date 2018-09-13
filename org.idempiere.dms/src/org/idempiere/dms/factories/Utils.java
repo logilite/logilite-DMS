@@ -85,6 +85,7 @@ public class Utils
 	public static final String					AD_Table_ID						= "AD_Table_ID";
 	public static final String					RECORD_ID						= "Record_ID";
 	public static final String 					SHOW_INACTIVE					= "Show_InActive";
+	public static final String					AD_CLIENT_ID					= "AD_Client_ID";
 
 	private static final String					SQL_GETASSOCIATIONTYPE			= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(name) like UPPER(?)";
 
@@ -98,7 +99,7 @@ public class Utils
 																						+ " a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																						+ " FROM DMS_Association a "
 																						+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID  #IsActive#) "
-																						+ " ), "
+																						+ " WHERE c.AD_Client_ID=?), "
 																						+ "  VersionRelatedIDs AS ( "
 																						+ "  SELECT DMS_Content_Related_ID, MAX(SeqNo) AS SeqNo FROM DMS_Association a WHERE a.DMS_AssociationType_ID = 1000000 GROUP  BY DMS_Content_Related_ID "
 																						+ " ) "
@@ -117,7 +118,7 @@ public class Utils
 	public static String						SQL_GET_RELATED_FOLDER_CONTENT_ALL		= null;
 	public static String						SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE	= null;
 	
-	// Oracle Database Comfortable 
+	// Oracle Database compatible
 	static
 	{
 
@@ -172,7 +173,9 @@ public class Utils
 	 */
 	public static IThumbnailGenerator getThumbnailGenerator(String mimeType)
 	{
-		IThumbnailGenerator thumbnailGenerator = cache_thumbnailGenerator.get(mimeType);
+		String key = (Env.getAD_Client_ID(Env.getCtx()) + "_" + mimeType);
+
+		IThumbnailGenerator thumbnailGenerator = cache_thumbnailGenerator.get(key);
 
 		if (thumbnailGenerator != null)
 			return thumbnailGenerator;
@@ -185,7 +188,7 @@ public class Utils
 			if (thumbnailGenerator != null)
 			{
 				thumbnailGenerator.init();
-				cache_thumbnailGenerator.put(mimeType, thumbnailGenerator);
+				cache_thumbnailGenerator.put(key, thumbnailGenerator);
 				break;
 			}
 		}
@@ -590,7 +593,7 @@ public class Utils
 	public static Map<String, Object> createIndexMap(MDMSContent DMSContent, MDMSAssociation DMSAssociation)
 	{
 		Map<String, Object> solrValue = new HashMap<String, Object>();
-
+		solrValue.put(AD_CLIENT_ID, DMSContent.getAD_Client_ID());
 		solrValue.put(NAME, DMSContent.getName().toLowerCase());
 		solrValue.put(CREATED, DMSContent.getCreated());
 		solrValue.put(CREATEDBY, DMSContent.getCreatedBy());
@@ -650,8 +653,9 @@ public class Utils
 		try
 		{
 			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
-			pstmt.setInt(1, content.getDMS_Content_ID());
+			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(2, content.getDMS_Content_ID());
+			pstmt.setInt(3, content.getDMS_Content_ID());
 
 			rs = pstmt.executeQuery();
 
@@ -661,9 +665,10 @@ public class Utils
 
 				if (dmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 				{
-					if (dmsContent.getParentURL().startsWith(baseURL))
+					String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
+					if (parentURL.startsWith(baseURL))
 					{
-						dmsContent.setParentURL(dmsContent.getParentURL().replaceFirst(baseURL, renamedURL));
+						dmsContent.setParentURL(parentURL.replaceFirst(baseURL, renamedURL));
 						dmsContent.saveEx();
 					}
 					renameFolder(dmsContent, baseURL, renamedURL);
@@ -804,8 +809,9 @@ public class Utils
 		}
 		else
 		{
-			mountingContent_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ?",
-					mountingBaseName);
+			mountingContent_ID = DB.getSQLValue(null,
+					"SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND AD_Client_ID= ?", mountingBaseName,
+					Env.getAD_Client_ID(Env.getCtx()));
 		}
 
 		file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name);
@@ -818,8 +824,9 @@ public class Utils
 		}
 		else
 		{
-			tableNameContentID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ?",
-					table_Name);
+			tableNameContentID = DB.getSQLValue(null,
+					"SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND AD_Client_ID= ?", table_Name,
+					Env.getAD_Client_ID(Env.getCtx()));
 		}
 
 		file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name + fileSeprator
