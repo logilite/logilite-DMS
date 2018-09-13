@@ -1403,9 +1403,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		try
 		{
 			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
-
-			pstmt.setInt(1, copiedContent.getDMS_Content_ID());
+			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(2, copiedContent.getDMS_Content_ID());
+			pstmt.setInt(3, copiedContent.getDMS_Content_ID());
 
 			rs = pstmt.executeQuery();
 
@@ -1943,6 +1943,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				query.append(hirachicalContent.toString());
 			}
 		}
+		
+		// AD_Client_id append for search client wise 
+		if (!Util.isEmpty(query.toString()))
+			query.append(" AND ");
+		
+		query.append(" AD_Client_ID:(").append(Env.getAD_Client_ID(Env.getCtx())).append(")");
 
 		if (recordID > 0)
 			query.append(" AND Record_ID:" + recordID);
@@ -1981,9 +1987,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			// select only active records
 			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE, null);
-
-			pstmt.setInt(1, contentID);
+			pstmt.setInt(1,Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(2, contentID);
+			pstmt.setInt(3, contentID);
 
 			rs = pstmt.executeQuery();
 
@@ -3093,6 +3099,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		HashMap<String, List<Object>> params = getQueryParamas();
 		String query = indexSeracher.buildSolrSearchQuery(params);
 
+		// AD_Client_id append for search client wise
+		if (!Util.isEmpty(query))
+			query += " AND ";
+
+		query += "AD_Client_ID :(" + (Env.getAD_Client_ID(Env.getCtx()) + ")");
+
 		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
 
 		getHierarchicalContent(hirachicalContent, currDMSContent != null ? currDMSContent.getDMS_Content_ID() : 0);
@@ -3315,8 +3327,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		ResultSet rs = null;
 		try
 		{
-			pstmt.setInt(1, DMS_Content_ID);
+			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(2, DMS_Content_ID);
+			pstmt.setInt(3, DMS_Content_ID);
 			rs = pstmt.executeQuery();
 
 			while (rs.next())
