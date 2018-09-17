@@ -21,12 +21,18 @@
       <import plugin="org.adempiere.plugin.utils" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.base" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.ui.zk" version="3.1.0" match="greaterOrEqual"/>
-      <import plugin="org.zkoss.zk.library" version="7.0.7" match="greaterOrEqual"/>
       <import plugin="org.adempiere.ui" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.apache.commons.net"/>
       <import plugin="org.eclipse.osgi" version="3.10.2" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi.services" version="3.4.0" match="greaterOrEqual"/>
       <import plugin="com.logilite.search" version="1.0.2" match="greaterOrEqual"/>
+      <import plugin="org.apache.poi" version="3.9.0" match="greaterOrEqual"/>
+      <import plugin="zhtml" version="8.0.1" match="greaterOrEqual"/>
+      <import plugin="zel" version="8.0.1" match="greaterOrEqual"/>
+      <import plugin="zk" version="8.0.1" match="greaterOrEqual"/>
+      <import plugin="zul" version="8.0.1" match="greaterOrEqual"/>
+      <import plugin="org.apache.commons.io"/>
+      <import plugin="zcommon"/>
    </requires>
 
    <plugin
