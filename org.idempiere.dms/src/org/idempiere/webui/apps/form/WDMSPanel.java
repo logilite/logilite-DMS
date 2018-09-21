@@ -1948,7 +1948,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (!Util.isEmpty(query.toString()))
 			query.append(" AND ");
 		
-		query.append(" AD_Client_ID:(").append(Env.getAD_Client_ID(Env.getCtx())).append(")");
+		query.append(" AD_Client_ID:(").append(Env.getAD_Client_ID(Env.getCtx())).append(")")
+				.append(" AND Show_InActive : 'false'");
 
 		if (recordID > 0)
 			query.append(" AND Record_ID:" + recordID);
