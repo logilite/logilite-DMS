@@ -347,7 +347,7 @@ public class Utils
 	{
 		int dmsMimeType_ID = -1;
 
-		if (media != null)
+		if (media != null && media.getContentType() != null)
 			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE UPPER(mimetype) = '"
 					+ media.getContentType().toUpperCase() + "'");
 
