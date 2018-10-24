@@ -24,6 +24,9 @@ import org.apache.poi.hwpf.converter.HtmlDocumentFacade;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
@@ -124,6 +127,13 @@ public class ConvertXlsxToPdf
 		for (int i = 0; i < row_num; i++)
 		{
 			Row row = sheet.getRow(i);
+
+			// to skip hidden row
+			if (row != null && row.getZeroHeight())
+			{
+				continue;
+			}
+
 			processRow(table, (XSSFRow) row, sheet, col_num, sID, i);
 		}
 
@@ -283,13 +293,32 @@ public class ConvertXlsxToPdf
 					value = "\u00a0";
 					break;
 				case Cell.CELL_TYPE_NUMERIC:
-					value = cell.getNumericCellValue();
+					if (DateUtil.isCellDateFormatted(cell))
+					{
+						// to display date format
+						DataFormatter dateFormatter = new DataFormatter();
+						value = dateFormatter.formatCellValue(cell);
+					}
+					else
+					{
+						value = cell.getNumericCellValue();
+					}
 					break;
 				case Cell.CELL_TYPE_BOOLEAN:
 					value = cell.getBooleanCellValue();
 					break;
 				case Cell.CELL_TYPE_FORMULA:
-					value = cell.getCellFormula();
+					if (cell.getCachedFormulaResultType() == Cell.CELL_TYPE_ERROR)
+					{
+						value = cell.getCellFormula();
+					}
+					else
+					{
+						// To eveluate formula
+						FormulaEvaluator formulaEvalutor = x.getCreationHelper().createFormulaEvaluator();
+						DataFormatter fmt = new DataFormatter();
+						value = fmt.formatCellValue(cell, formulaEvalutor);
+					}
 					break;
 				default:
 					value = cell.getRichStringCellValue();
