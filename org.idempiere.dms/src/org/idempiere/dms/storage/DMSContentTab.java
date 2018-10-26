@@ -314,7 +314,10 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 			renderViewer();
 		}
 		
-		documentViewerPanel.breadRow.getChildren().clear();
+		// Fix NPE - while navigate records.
+		if (documentViewerPanel.breadRow.getChildren().size() > 0)
+			documentViewerPanel.breadRow.getChildren().clear();
+		
 		documentViewerPanel.addRootBreadCrumb();
 	}
 
