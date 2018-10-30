@@ -2078,6 +2078,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			if (documentToPreview != null)
 			{
+				boolean isPreviewError = false;
 				String name = selectedDMSContent.peek().getName();
 
 				if (name.contains("(") && name.contains(")"))
@@ -2090,7 +2091,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				catch(Exception e)
 				{
 					selectedDMSContent.pop();
-					throw new AdempiereException(e);
+					isPreviewError = true;
+					log.log(Level.SEVERE, e.getMessage() + e, e);
+				}
+				
+				if (isPreviewError)
+				{
+					FDialog.warn(0, "Can't preview, please download.");
+					return;
+
 				}
 				
 				if (Utils.getContentEditor(mimeType.getMimeType()) != null)
