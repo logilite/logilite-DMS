@@ -140,14 +140,17 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private int						m_M_AttributeSetInstance_ID;
 	private int						tableId					= 0;
 	private int						recordId				= 0;
+	
+	private boolean 				isWindowAccess			= true;
 
 	private static final String		SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
 																	+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "
 																	+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
 																	+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID DESC";
 
-	public WDAttributePanel(I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID)
+	public WDAttributePanel(I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess)
 	{
+		this.isWindowAccess = isWindowAccess;
 		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 
 		if (fileStorageProvider == null)
@@ -310,6 +313,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
+		
+		btnVersionUpload.setDisabled(!isWindowAccess);
+		btnEdit.setDisabled(!isWindowAccess);
 
 	}
 

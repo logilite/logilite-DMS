@@ -91,6 +91,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
+import org.compiere.model.MRole;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
@@ -281,10 +282,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	public int								recordID					= 0;
 	public int								tableID						= 0;
+	public int								windowID					= 0;
 
 	private boolean							isSearch					= false;
 	private boolean							isGenericSearch				= false;
 	private boolean 						isAllowCreateDirectory		= true;
+	private boolean							isWindowAccess				= true;
 
 	private static final int				COMPONENT_HEIGHT			= 120;
 	private static final int				COMPONENT_WIDTH				= 120;
@@ -356,6 +359,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		this();
 		this.winContent = winContent;
+		this.windowID = winContent.getADWindow().getAD_Window_ID(); 
+		isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
+		
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
 		mountingStrategy = Utils.getMountingStrategy(null);
@@ -373,6 +379,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnNext.setEnabled(false);
 			btnCreateDir.setEnabled(false);
 		}
+		
+		btnCreateDir.setEnabled(isWindowAccess);
+		btnUploadContent.setEnabled(isWindowAccess);
 	}
 
 	public int getRecord_ID()
@@ -388,6 +397,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public int getTable_ID()
 	{
 		return tableID;
+	}
+	
+	public void setWindow_ID (int AD_Window_ID)
+	{
+		this.windowID = AD_Window_ID;
+	}
+	
+	public int getWindow_ID()
+	{
+		return windowID;
 	}
 
 	public void setTable_ID(int table_ID)
@@ -824,11 +843,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(btnCreateDir))
 		{
-			createDirectory();
+			if (isWindowAccess)
+				createDirectory();
 		}
 		else if (event.getTarget().equals(btnUploadContent))
 		{
-			uploadContent();
+			if (isWindowAccess)
+				uploadContent();
 		}
 		else if (event.getTarget().equals(btnBack))
 		{
@@ -932,6 +953,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			DMSViewerComp = (DMSViewerComponent) event.getTarget();
 			openContentContextMenu(DMSViewerComp);
+			
+			// show only download option on menu context if access are read-only.
+			if (!isWindowAccess)
+				mnu_download.setDisabled(false);
 		}
 		else if (event.getTarget().equals(mnu_versionList))
 		{
@@ -2102,7 +2127,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					WDocumentViewer documentViewer = new WDocumentViewer(tabBox, documentToPreview,
 							selectedDMSContent.peek(), tableID, recordID);
-					Tabpanel tabPanel = documentViewer.initForm();
+					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess);
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
 					documentViewer.getAttributePanel().addEventListener("onRenameComplete", this);
@@ -2462,7 +2487,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.setPage(DMSViewerCom.getPage());
 		copyDMSContent = DMSClipboard.get();
 
-		if (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+		if (!isWindowAccess || (dirContent.isMounting()
+				&& dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)))
 		{
 			mnu_associate.setDisabled(true);
 			mnu_copy.setDisabled(true);
