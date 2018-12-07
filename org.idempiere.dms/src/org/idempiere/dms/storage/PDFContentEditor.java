@@ -63,6 +63,7 @@ public class PDFContentEditor extends Panel implements IContentEditor
 	{
 		this.setHeight("100%");
 		this.setWidth("100%");
+		this.setStyle("overflow: auto; -webkit-overflow-scrolling: touch;");
 
 		Iframe iframeContentPriview = new Iframe();
 
@@ -80,7 +81,6 @@ public class PDFContentEditor extends Panel implements IContentEditor
 		iframeContentPriview.setContent(media);
 		iframeContentPriview.setWidth("100%");
 		iframeContentPriview.setHeight("100%");
-		iframeContentPriview.setStyle("overflow: auto;");
 		
 		this.appendChild(iframeContentPriview);
 

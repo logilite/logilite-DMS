@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Storageprovider
+Bundle-SymbolicName: com.logilite.dms.storageprovider;singleton:=true
+Bundle-Version: 1.0.3.qualifier
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
+Bundle-Vendor: LOGILITE
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Import-Package: org.osgi.framework;version="1.3.0"
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.adempiere.base;bundle-version="3.1.0",
+ org.idempiere.dms;bundle-version="1.0.52",
+ org.adempiere.plugin.utils;bundle-version="3.1.0",
+ com.logilite.search;bundle-version="1.0.2",
+ org.zkoss.zk.library;bundle-version="7.0.7"
+Service-Component: OSGI-INF/archivedms.xml

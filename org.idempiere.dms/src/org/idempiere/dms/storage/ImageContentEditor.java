@@ -65,6 +65,7 @@ public class ImageContentEditor extends Panel implements IContentEditor
 	{
 		this.setHeight("99%");
 		this.setWidth("99%");
+		this.setStyle("overflow: auto; -webkit-overflow-scrolling: touch;");
 
 		Iframe iframeContentPriview = new Iframe();
 
@@ -83,7 +84,6 @@ public class ImageContentEditor extends Panel implements IContentEditor
 		iframeContentPriview.setContent(media);
 		iframeContentPriview.setWidth("100%");
 		iframeContentPriview.setHeight("100%");
-		iframeContentPriview.setStyle("overflow: auto;");
 
 		this.appendChild(iframeContentPriview);
 
