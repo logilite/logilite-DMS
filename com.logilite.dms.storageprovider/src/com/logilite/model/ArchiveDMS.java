@@ -47,7 +47,6 @@ import org.zkoss.util.media.AMedia;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
-import com.sun.corba.se.impl.orbutil.graph.Node;
 
 public class ArchiveDMS implements IArchiveStore
 {
@@ -60,6 +59,9 @@ public class ArchiveDMS implements IArchiveStore
 	private String							DMS_ATTRIBUTE_DOCUMENT_TYPE		= "C_DocType_ID";
 	private String							DMS_ATTRIBUTE_SET_NAME			= "Archive Document";
 	private String							DMS_ATTRIBUTE_DOCUMENT_STATUS	= "DocStatus";
+	private String							DMS_ATTRIBUTE_PROCESS			= "AD_Process_ID";
+	private String							DMS_ATTRIBUTE_CREATED_DATE		= "Created";
+
 	private static CCache<String, Integer>	cTypeCache						= new CCache<String, Integer>(
 			"ArchiveCache", 100);
 	private static final CLogger			log								= CLogger.getCLogger(ArchiveDMS.class);
@@ -93,8 +95,9 @@ public class ArchiveDMS implements IArchiveStore
 			String tableName = MTable.getTableName(Env.getCtx(), tableID);
 			int recordID = archive.getRecord_ID();
 
-			if (Util.isEmpty(tableName))
+			if (tableName == null)
 				tableName = "";
+
 			// Generate Mounting Parent
 			Utils.initiateMountingContent(tableName, recordID, tableID);
 			IMountingStrategy mountingStrategy = Utils.getMountingStrategy(tableName);
@@ -117,7 +120,7 @@ public class ArchiveDMS implements IArchiveStore
 			dmsContent.saveEx();
 
 			// Create Attributes
-			addAttributes(tableID, recordID, dmsContent);
+			addAttributes(tableID, recordID, dmsContent, archive);
 
 			// Create DMS Association
 			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, archive.get_TrxName());
@@ -176,11 +179,11 @@ public class ArchiveDMS implements IArchiveStore
 			Element content = document.createElement("DMS_Content_ID");
 			content.appendChild(document.createTextNode(String.valueOf(dmsContent.get_ID())));
 			root.appendChild(content);
-			
+
 			Element association = document.createElement("DMS_Association_ID");
 			association.appendChild(document.createTextNode(String.valueOf(dmsAssociation.get_ID())));
 			root.appendChild(association);
-			
+
 			final Source source = new DOMSource(document);
 			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			final Result result = new StreamResult(bos);
@@ -198,7 +201,7 @@ public class ArchiveDMS implements IArchiveStore
 
 	public File generateFile(MArchive archive, byte[] inflatedData) throws Exception
 	{
-		String timeStamp = new SimpleDateFormat("yyyyMMdd-HHmm").format(new Date());
+		String timeStamp = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
 		String archiveName = archive.getName();
 		int recordID = archive.getRecord_ID();
 		if (Util.isEmpty(archiveName))
@@ -248,66 +251,86 @@ public class ArchiveDMS implements IArchiveStore
 		return cTypeID;
 	}
 
-	public void addAttributes(int tableID, int recordID, MDMSContent dmsContent)
+	public void addAttributes(int tableID, int recordID, MDMSContent dmsContent, MArchive archive)
 	{
-		if (tableID > 0 && recordID > 0 && dmsContent != null)
+		if (dmsContent != null)
 		{
-			PO po = MTable.get(Env.getCtx(), tableID).getPO(recordID, null);
-			boolean attributeFlag = false;
+			PO po = null;
+			if (tableID > 0 && recordID > 0)
+				po = MTable.get(Env.getCtx(), tableID).getPO(recordID, null);
 
 			int attributeSetID = getAttributeSetID(DMS_ATTRIBUTE_SET_NAME);
 			int bpartnerAttributeID = getAttributeID(DMS_ATTRIBUTE_BUSINESS_PARTNER);
 			int docStatusAttributeID = getAttributeID(DMS_ATTRIBUTE_DOCUMENT_STATUS);
 			int docTypeAttributeID = getAttributeID(DMS_ATTRIBUTE_DOCUMENT_TYPE);
+			int createdAttributeID = getAttributeID(DMS_ATTRIBUTE_CREATED_DATE);
+			int processAttributeID = getAttributeID(DMS_ATTRIBUTE_PROCESS);
 
 			int bPartnerValue = 0;
-			String docStatusValue = "";
+			int docStatusValue = 0;
 			int docTypeValue = 0;
 
-			if (bpartnerAttributeID >= 0)
+			if (po != null)
 			{
-				bPartnerValue = po.get_ValueAsInt(DMS_ATTRIBUTE_BUSINESS_PARTNER);
-				if (bPartnerValue > 0)
-					attributeFlag = true;
-			}
+				if (bpartnerAttributeID >= 0)
+					bPartnerValue = po.get_ValueAsInt(DMS_ATTRIBUTE_BUSINESS_PARTNER);
 
-			if (docStatusAttributeID >= 0)
-			{
-				docStatusValue = po.get_ValueAsString(DMS_ATTRIBUTE_DOCUMENT_STATUS);
-				if (!Util.isEmpty(docStatusValue))
-					attributeFlag = true;
-			}
-
-			if (docTypeAttributeID >= 0)
-			{
-				docTypeValue = po.get_ValueAsInt(DMS_ATTRIBUTE_DOCUMENT_TYPE);
-				if (docTypeValue > 0)
-					attributeFlag = true;
-			}
-
-			if (attributeFlag)
-			{
-				MAttributeSetInstance asi = new MAttributeSetInstance(Env.getCtx(), 0, attributeSetID, null);
-				asi.save();
-
-				MAttributeInstance attributeInstance = null;
-				if (bPartnerValue > 0)
+				if (docStatusAttributeID >= 0)
 				{
-					attributeInstance = new MAttributeInstance(Env.getCtx(), bpartnerAttributeID, asi.get_ID(),
-							bPartnerValue, null);
-					attributeInstance.save();
+					String docStatus = po.get_ValueAsString(DMS_ATTRIBUTE_DOCUMENT_STATUS);
+					if (!Util.isEmpty(docStatus))
+						docStatusValue = getAttributeValueID(docStatus);
 				}
 
-				if (docTypeValue > 0)
+				if (docTypeAttributeID >= 0)
+					docTypeValue = po.get_ValueAsInt(DMS_ATTRIBUTE_DOCUMENT_TYPE);
+			}
+
+			MAttributeSetInstance asi = new MAttributeSetInstance(Env.getCtx(), 0, attributeSetID, null);
+			asi.save();
+
+			MAttributeInstance attributeInstance = null;
+			if (bPartnerValue > 0)
+			{
+				attributeInstance = new MAttributeInstance(Env.getCtx(), bpartnerAttributeID, asi.get_ID(),
+						bPartnerValue, null);
+				attributeInstance.save();
+			}
+
+			if (docTypeValue > 0)
+			{
+				attributeInstance = new MAttributeInstance(Env.getCtx(), docTypeAttributeID, asi.get_ID(), docTypeValue,
+						null);
+				attributeInstance.save();
+			}
+
+			if (docStatusValue > 0)
+			{
+				attributeInstance = new MAttributeInstance(Env.getCtx(), docStatusAttributeID, asi.get_ID(),
+						docStatusValue, null);
+				attributeInstance.setM_AttributeValue_ID(docStatusValue);
+				attributeInstance.save();
+			}
+
+			if (createdAttributeID > 0)
+			{
+				attributeInstance = new MAttributeInstance(Env.getCtx(), createdAttributeID, asi.get_ID(),
+						archive.getCreated(), null);
+				attributeInstance.save();
+			}
+
+			if (processAttributeID > 0)
+			{
+				if (archive.getAD_Process_ID() > 0)
 				{
-					attributeInstance = new MAttributeInstance(Env.getCtx(), docTypeAttributeID, asi.get_ID(),
-							docTypeValue, null);
+					attributeInstance = new MAttributeInstance(Env.getCtx(), processAttributeID, asi.get_ID(),
+							archive.getAD_Process_ID(), null);
 					attributeInstance.save();
 				}
-
-				dmsContent.setM_AttributeSetInstance_ID(asi.get_ID());
-				dmsContent.save();
 			}
+
+			dmsContent.setM_AttributeSetInstance_ID(asi.get_ID());
+			dmsContent.save();
 		}
 	}
 
@@ -341,6 +364,19 @@ public class ArchiveDMS implements IArchiveStore
 				cTypeCache.put(AttributeSetName, attributeSetID);
 		}
 		return attributeSetID;
+	}
+
+	public int getAttributeValueID(String AttributeValue)
+	{
+		Integer attributeValueID = cTypeCache.get(AttributeValue);
+		if (attributeValueID == null || attributeValueID <= 0)
+		{
+			String sql = "SELECT M_AttributeValue_ID FROM M_AttributeValue WHERE IsActive='Y' AND Value = ? AND AD_Client_ID = 0";
+			attributeValueID = DB.getSQLValue(null, sql, AttributeValue);
+			if (attributeValueID > 0)
+				cTypeCache.put(AttributeValue, attributeValueID);
+		}
+		return attributeValueID;
 	}
 
 }
