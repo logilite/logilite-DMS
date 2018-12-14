@@ -40,6 +40,9 @@ import org.idempiere.model.I_DMS_Content;
 import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
 
+import sun.misc.Cleaner;
+import sun.nio.ch.DirectBuffer;
+
 public class PDFThumbnailGenerator implements IThumbnailGenerator
 {
 
@@ -119,7 +122,16 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 
 				thumbnailStorageProvider.writeBLOB(path, baos.toByteArray(), content);
 			}
-
+			// Window OS Issue - Rename of file is not working after immediate upload.
+			if (mbBuffer != null)
+			{
+				Cleaner cleaner = ((DirectBuffer) mbBuffer).cleaner();
+				cleaner.clean();
+			}
+			if (fileChannel != null)
+				fileChannel.close();
+			if (raf != null)
+				raf.close();
 		}
 		catch (Exception e)
 		{
