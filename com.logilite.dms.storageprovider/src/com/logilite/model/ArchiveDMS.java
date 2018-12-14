@@ -267,7 +267,7 @@ public class ArchiveDMS implements IArchiveStore
 			int processAttributeID = getAttributeID(DMS_ATTRIBUTE_PROCESS);
 
 			int bPartnerValue = 0;
-			int docStatusValue = 0;
+			String docStatusValue = "";
 			int docTypeValue = 0;
 
 			if (po != null)
@@ -277,9 +277,7 @@ public class ArchiveDMS implements IArchiveStore
 
 				if (docStatusAttributeID >= 0)
 				{
-					String docStatus = po.get_ValueAsString(DMS_ATTRIBUTE_DOCUMENT_STATUS);
-					if (!Util.isEmpty(docStatus))
-						docStatusValue = getAttributeValueID(docStatus);
+					docStatusValue = po.get_ValueAsString(DMS_ATTRIBUTE_DOCUMENT_STATUS);
 				}
 
 				if (docTypeAttributeID >= 0)
@@ -304,11 +302,10 @@ public class ArchiveDMS implements IArchiveStore
 				attributeInstance.save();
 			}
 
-			if (docStatusValue > 0)
+			if (!Util.isEmpty(docStatusValue))
 			{
 				attributeInstance = new MAttributeInstance(Env.getCtx(), docStatusAttributeID, asi.get_ID(),
 						docStatusValue, null);
-				attributeInstance.setM_AttributeValue_ID(docStatusValue);
 				attributeInstance.save();
 			}
 
