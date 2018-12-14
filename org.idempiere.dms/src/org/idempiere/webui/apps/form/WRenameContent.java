@@ -123,14 +123,18 @@ public class WRenameContent extends Window implements EventListener<Event>
 		this.appendChild(gridView);
 		this.setClosable(true);
 		this.addEventListener(Events.ON_OK, this);
-
+		this.setStyle("max-widht:230px; max-height:230px;");
+		this.setStyle("min-widht:230px; min-height:230px;");
+		
 		gridView.setStyle("position:relative;overflow:auto;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
 		gridView.setZclass("none");
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
-
+		gridView.setStyle("max-widht:230px; max-height:230px;");
+		gridView.setStyle("min-widht:230px; min-height:230px;");
+		
 		Columns columns = new Columns();
 		Rows rows = new Rows();
 
