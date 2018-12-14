@@ -1,11 +1,14 @@
 package com.logilite.model;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Map;
 import java.util.logging.Level;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -44,6 +47,8 @@ import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.X_DMS_Content;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.zkoss.util.media.AMedia;
 
 import com.logilite.search.factory.IIndexSearcher;
@@ -70,6 +75,91 @@ public class ArchiveDMS implements IArchiveStore
 	@Override
 	public byte[] loadLOBData(MArchive archive, MStorageProvider prov)
 	{
+		byte[] data = archive.getByteData();
+		if (data == null)
+		{
+			return null;
+		}
+
+		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
+		if (fileStorgProvider == null)
+			throw new AdempiereException("Storage provider is not define on clientInfo.");
+
+		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
+		if (contentManager == null)
+			throw new AdempiereException("Content manager is not found.");
+
+		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+
+		try
+		{
+			final DocumentBuilder builder = factory.newDocumentBuilder();
+			final Document document = builder.parse(new ByteArrayInputStream(data));
+			final NodeList entries = document.getElementsByTagName("archive");
+			if (entries.getLength() != 1)
+			{
+				log.severe("no archive entry found");
+				return null;
+			}
+
+			final Node archiveNode = entries.item(0);
+			NodeList list = archiveNode.getChildNodes();
+			if (list.getLength() > 0)
+			{
+				Node dmsContentNode = list.item(0);
+				if (dmsContentNode != null)
+				{
+					String dmsContentID = dmsContentNode.getFirstChild().getNodeValue();
+					if (!Util.isEmpty(dmsContentID))
+					{
+						int contentID = 0;
+						try
+						{
+							contentID = Integer.parseInt(dmsContentID);
+						}
+						catch (Exception e)
+						{
+							return null;
+						}
+						MDMSContent mdmsContent = new MDMSContent(Env.getCtx(), contentID, null);
+						File file = fileStorgProvider.getFile(contentManager.getPath(mdmsContent));
+						if (file.exists())
+						{
+							// read files into byte[]
+							final byte[] dataEntry = new byte[(int) file.length()];
+							try
+							{
+								final FileInputStream fileInputStream = new FileInputStream(file);
+								fileInputStream.read(dataEntry);
+								fileInputStream.close();
+							}
+							catch (FileNotFoundException e)
+							{
+								log.severe("File Not Found.");
+								e.printStackTrace();
+							}
+							catch (IOException e1)
+							{
+								log.severe("Error Reading The File.");
+								e1.printStackTrace();
+							}
+							return dataEntry;
+						}
+						else
+						{
+							log.severe("file not found: " + file.getAbsolutePath());
+							return null;
+						}
+
+					}
+				}
+
+			}
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, e.getMessage(), e);
+		}
 		return null;
 	}
 
@@ -95,7 +185,7 @@ public class ArchiveDMS implements IArchiveStore
 			Integer tableID = archive.getAD_Table_ID();
 			String tableName = MTable.getTableName(Env.getCtx(), tableID);
 			int recordID = archive.getRecord_ID();
-			
+
 			IMountingStrategy mountingStrategy = null;
 			MDMSContent mountingParent = null;
 			if (Util.isEmpty(tableName) || recordID <= 0)
@@ -155,19 +245,6 @@ public class ArchiveDMS implements IArchiveStore
 			thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
 			if (thumbnailGenerator != null)
 				thumbnailGenerator.addThumbnail(dmsContent, file, null);
-
-			try
-			{
-				Map<String, Object> solrValue = Utils.createIndexMap(dmsContent, dmsAssociation);
-				indexSeracher.indexContent(solrValue);
-			}
-			catch (Exception e)
-			{
-				file = new File(fileStorgProvider.getBaseDirectory(contentManager.getPath(dmsContent)));
-				if (file.exists())
-					file.delete();
-				throw new AdempiereException("Indexing of Content Failure :" + e);
-			}
 
 			archive.setByteData(generateEntry(dmsContent, dmsAssociation));
 		}
