@@ -789,9 +789,13 @@ public class Utils
 
 	public static void initiateMountingContent(String table_Name, int Record_ID, int AD_Table_ID)
 	{
-		IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
 		String mountingBaseName = MSysConfig.getValue("DMS_MOUNTING_BASE", "Attachment");
+		initiateMountingContent(mountingBaseName, table_Name, Record_ID, AD_Table_ID);
+	}
+	
+	public static void initiateMountingContent(String mountingBaseName, String table_Name, int Record_ID, int AD_Table_ID)
+	{
+		IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 		String baseDir = fileStorageProvider.getBaseDirectory(null);
 		String fileSeprator = Utils.getStorageProviderFileSeparator();
 
@@ -810,34 +814,37 @@ public class Utils
 		else
 		{
 			mountingContent_ID = DB.getSQLValue(null,
-					"SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND AD_Client_ID= ?", mountingBaseName,
+					"SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND AD_Client_ID= ? AND ContentBaseType ='DIR' AND ParentUrl IS NULL", mountingBaseName,
 					Env.getAD_Client_ID(Env.getCtx()));
 		}
 
-		file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name);
-
-		if (!file.exists())
+		if (!Util.isEmpty(table_Name) && Record_ID > 0)
 		{
-			file.mkdirs();
-			tableNameContentID = createDMSContent(table_Name, fileSeprator + mountingBaseName);
-			createAssociation(tableNameContentID, mountingContent_ID, Record_ID, AD_Table_ID);
-		}
-		else
-		{
-			tableNameContentID = DB.getSQLValue(null,
-					"SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND AD_Client_ID= ?", table_Name,
-					Env.getAD_Client_ID(Env.getCtx()));
-		}
+			file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name);
 
-		file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name + fileSeprator
-				+ Record_ID);
+			if (!file.exists())
+			{
+				file.mkdirs();
+				tableNameContentID = createDMSContent(table_Name, fileSeprator + mountingBaseName);
+				createAssociation(tableNameContentID, mountingContent_ID, Record_ID, AD_Table_ID);
+			}
+			else
+			{
+				tableNameContentID = DB.getSQLValue(null,
+						"SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND AD_Client_ID= ?", table_Name,
+						Env.getAD_Client_ID(Env.getCtx()));
+			}
 
-		if (!file.exists())
-		{
-			file.mkdirs();
-			recordContentID = createDMSContent(String.valueOf(Record_ID), fileSeprator + mountingBaseName
-					+ fileSeprator + table_Name);
-			createAssociation(recordContentID, tableNameContentID, Record_ID, AD_Table_ID);
+			file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name + fileSeprator
+					+ Record_ID);
+
+			if (!file.exists())
+			{
+				file.mkdirs();
+				recordContentID = createDMSContent(String.valueOf(Record_ID), fileSeprator + mountingBaseName
+						+ fileSeprator + table_Name);
+				createAssociation(recordContentID, tableNameContentID, Record_ID, AD_Table_ID);
+			}
 		}
 	}
 

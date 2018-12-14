@@ -23,6 +23,7 @@ import org.compiere.model.MArchive;
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MStorageProvider;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CCache;
@@ -94,15 +95,26 @@ public class ArchiveDMS implements IArchiveStore
 			Integer tableID = archive.getAD_Table_ID();
 			String tableName = MTable.getTableName(Env.getCtx(), tableID);
 			int recordID = archive.getRecord_ID();
-
-			if (tableName == null)
-				tableName = "";
-
-			// Generate Mounting Parent
-			Utils.initiateMountingContent(tableName, recordID, tableID);
-			IMountingStrategy mountingStrategy = Utils.getMountingStrategy(tableName);
-			MDMSContent mountingParent = mountingStrategy.getMountingParent(tableName, recordID);
-
+			
+			IMountingStrategy mountingStrategy = null;
+			MDMSContent mountingParent = null;
+			if (Util.isEmpty(tableName) || recordID <= 0)
+			{
+				if (tableName == null)
+					tableName = "";
+				// Generate Mounting Parent
+				String mountingArchiveBaseName = MSysConfig.getValue("DMS_MOUNTING_ARCHIVE_BASE", "Archive");
+				Utils.initiateMountingContent(mountingArchiveBaseName, tableName, recordID, tableID);
+				mountingStrategy = Utils.getMountingStrategy(tableName);
+				mountingParent = mountingStrategy.getMountingParentForArchive();
+			}
+			else
+			{
+				// Generate Mounting Parent
+				Utils.initiateMountingContent(tableName, recordID, tableID);
+				mountingStrategy = Utils.getMountingStrategy(tableName);
+				mountingParent = mountingStrategy.getMountingParent(tableName, recordID);
+			}
 			// Generate File
 			File file = generateFile(archive, inflatedData);
 
