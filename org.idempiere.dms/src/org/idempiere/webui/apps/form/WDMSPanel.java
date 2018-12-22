@@ -956,7 +956,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			
 			// show only download option on menu context if access are read-only.
 			if (!isWindowAccess)
+			{
 				mnu_download.setDisabled(false);
+				mnu_copy.setDisabled(false);
+			}
 		}
 		else if (event.getTarget().equals(mnu_versionList))
 		{
