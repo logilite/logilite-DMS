@@ -33,6 +33,7 @@ import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IMountingStrategy;
@@ -168,6 +169,7 @@ public class ArchiveDMS implements IArchiveStore
 	{
 		try
 		{
+			Trx trx = null;
 			fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 			if (fileStorgProvider == null)
 				throw new AdempiereException("Storage provider is not define on clientInfo.");
@@ -208,45 +210,68 @@ public class ArchiveDMS implements IArchiveStore
 			// Generate File
 			File file = generateFile(archive, inflatedData);
 
-			// Create DMS Content
-			MDMSContent dmsContent = new MDMSContent(Env.getCtx(), 0, archive.get_TrxName());
-			dmsContent.setName(file.getName());
-			dmsContent.setValue(file.getName());
-			dmsContent.setDMS_MimeType_ID(Utils.getMimeTypeID(new AMedia(file, "application/pdf", null)));
-			dmsContent.setParentURL(contentManager.getPath(mountingParent));
-			dmsContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
-			dmsContent.setIsMounting(true);
-			dmsContent.setDMS_FileSize(Utils.readableFileSize(file.length()));
-			if (cTypeID > 0)
-				dmsContent.setDMS_ContentType_ID(cTypeID);
-			dmsContent.saveEx();
+			try
+			{
+				String trxName = Trx.createTrxName("UploadFiles");
+				trx = Trx.get(trxName, true);
+				
+				// Create DMS Content
+				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), 0, trxName);
+				dmsContent.setName(file.getName());
+				dmsContent.setValue(file.getName());
+				dmsContent.setDMS_MimeType_ID(Utils.getMimeTypeID(new AMedia(file, "application/pdf", null)));
+				dmsContent.setParentURL(contentManager.getPath(mountingParent));
+				dmsContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
+				dmsContent.setIsMounting(true);
+				dmsContent.setDMS_FileSize(Utils.readableFileSize(file.length()));
+				if (cTypeID > 0)
+					dmsContent.setDMS_ContentType_ID(cTypeID);
+				dmsContent.saveEx();
 
-			// Create Attributes
-			addAttributes(tableID, recordID, dmsContent, archive);
+				// Create Attributes
+				addAttributes(tableID, recordID, dmsContent, archive);
 
-			// Create DMS Association
-			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, archive.get_TrxName());
-			dmsAssociation.setDMS_Content_ID(dmsContent.getDMS_Content_ID());
-			dmsAssociation.setAD_Table_ID(tableID);
-			dmsAssociation.setRecord_ID(recordID);
-			dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
-			if (mountingParent != null)
-				dmsAssociation.setDMS_Content_Related_ID(mountingParent.getDMS_Content_ID());
-			dmsAssociation.saveEx();
+				// Create DMS Association
+				MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, trxName);
+				dmsAssociation.setDMS_Content_ID(dmsContent.getDMS_Content_ID());
+				dmsAssociation.setAD_Table_ID(tableID);
+				dmsAssociation.setRecord_ID(recordID);
+				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
+				if (mountingParent != null)
+					dmsAssociation.setDMS_Content_Related_ID(mountingParent.getDMS_Content_ID());
+				dmsAssociation.saveEx();
 
-			// Upload file to DMS
-			fileStorgProvider.writeBLOB(fileStorgProvider.getBaseDirectory(contentManager.getPath(dmsContent)),
-					inflatedData, dmsContent);
+				// Upload file to DMS
+				fileStorgProvider.writeBLOB(fileStorgProvider.getBaseDirectory(contentManager.getPath(dmsContent)),
+						inflatedData, dmsContent);
 
-			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), dmsContent.getDMS_MimeType_ID(),
-					archive.get_TrxName());
+				MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), dmsContent.getDMS_MimeType_ID(),
+						trxName);
 
-			// Generate Thumbnail Image
-			thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
-			if (thumbnailGenerator != null)
-				thumbnailGenerator.addThumbnail(dmsContent, file, null);
+				// Generate Thumbnail Image
+				thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
+				if (thumbnailGenerator != null)
+					thumbnailGenerator.addThumbnail(dmsContent, file, null);
 
-			archive.setByteData(generateEntry(dmsContent, dmsAssociation));
+				archive.setByteData(generateEntry(dmsContent, dmsAssociation));
+
+				trx.commit();
+				
+			}
+			catch (Exception e)
+			{
+				if (trx != null)
+					trx.rollback();
+				log.log(Level.SEVERE, "Upload Content Failure :", e);
+				throw new AdempiereException("Upload Content Failure :" + e);
+			}
+			finally
+			{
+				// Close transaction - "UploadFiles"
+				if (trx != null)
+					trx.close();
+			}
+
 		}
 		catch (Exception e)
 		{

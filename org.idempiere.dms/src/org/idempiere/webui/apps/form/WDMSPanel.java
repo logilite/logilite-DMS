@@ -2908,7 +2908,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					int displayType = editor.getGridField().getDisplayType();
 					String compName = null;
 
-					if (displayType == DisplayType.Search || displayType == DisplayType.Table)
+					if (displayType == DisplayType.Search || displayType == DisplayType.Table || displayType == DisplayType.List)
 						compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
 					else
 						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
