@@ -13,7 +13,6 @@
 
 package org.idempiere.webui.apps.form;
 
-import java.io.File;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -26,15 +25,12 @@ import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.compiere.util.Util;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
-import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.X_DMS_Content;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -59,10 +55,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private ConfirmPanel			confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
 	private Label					lblDir				= new Label(Msg.translate(Env.getCtx(), "Directory Name"));
 	private Textbox					txtboxDirectory		= new Textbox();
-	private File					file				= null;
 	private MDMSContent				mDMSContent			= null;
-
-	private String					fileSeprator		= null;
 
 	private IFileStorageProvider	fileStorageProvider	= null;
 	private IContentManager			contentManager		= null;
@@ -93,7 +86,6 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 			if (contentManager == null)
 				throw new AdempiereException("Content manager is not found");
 
-			fileSeprator = Utils.getStorageProviderFileSeparator();
 			init();
 		}
 		catch (Exception e)
@@ -163,87 +155,26 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	public void onEvent(Event event) throws Exception
 	{
 		log.info(event.getName());
-		
+
 		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
 			this.detach();
 		}
 		if (event.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(event.getName()))
 		{
-			String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
 			String dirName = txtboxDirectory.getValue();
-
-			if (Util.isEmpty(dirName) || dirName.equals(""))
-				throw new WrongValueException(txtboxDirectory, fillMandatory);
-			
-			if (dirName.length() > Utils.filaNameLength)
-				throw new WrongValueException(txtboxDirectory, "Invalid Directory Name. Directory name less than 250 character");
-			
-			if (dirName.contains(fileSeprator))
-				throw new WrongValueException(txtboxDirectory, "Invalid Directory Name.");
 
 			try
 			{
-				File rootFolder = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(mDMSContent)));
-
-				if (!rootFolder.exists())
-					rootFolder.mkdirs();
-
-				file = new File(rootFolder + fileSeprator + dirName);
-
-				File files[] = rootFolder.listFiles();
-
-				for (int i = 0; i < files.length; i++)
-				{
-					if (file.getName().equalsIgnoreCase(files[i].getName()))
-					{
-						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists. \n (Either same file name content exist in inActive mode)"));
-					}
-				}
-
-				if (!file.exists()){
-					if(!file.mkdir()){
-						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Invalid Directory Name."));
-					}
-				}
-				else{
-					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists. \n (Either same file name content exist in inActive mode)"));
-				}
-					
-
-				MDMSContent content = new MDMSContent(Env.getCtx(), 0, null);
-				content.setDMS_MimeType_ID(Utils.getMimeTypeID(null));
-				content.setName(dirName);
-
-				content.setParentURL(contentManager.getPath(mDMSContent));
-
-				content.setValue(dirName);
-				content.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
-				content.saveEx();
-
-				MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
-				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
-				if (mDMSContent != null)
-					dmsAssociation.setDMS_Content_Related_ID(mDMSContent.getDMS_Content_ID());
-				dmsAssociation.setAD_Table_ID(tableID);
-				dmsAssociation.setRecord_ID(recordID);
-				// dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
-				dmsAssociation.saveEx();
-				this.detach();
-
+				Utils.createDirectory(dirName, mDMSContent, tableID, recordID, fileStorageProvider, contentManager, true, null);
 			}
-			catch (AdempiereException e)
+			catch (WrongValueException e)
 			{
-				log.log(Level.SEVERE, "Directory is allready created (Either same file name content exist in inActive mode)", e);
-				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is allready created \n (Either same file name content exist in inActive mode)"));
+				throw new WrongValueException(txtboxDirectory, e.getLocalizedMessage(), e);
 			}
-			catch (Exception e)
-			{
 
-				log.log(Level.SEVERE, "Directory is not created", e);
-				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is not created"));
-
-			}
+			this.detach();
 		}
 	}
+
 }

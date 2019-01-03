@@ -104,7 +104,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 	private AMedia					uploadedMedia			= null;
 
-	private IFileStorageProvider	fileStorgProvider		= null;
+	private IFileStorageProvider	fileStorageProvider		= null;
 	private IThumbnailGenerator		thumbnailGenerator		= null;
 	private IContentManager			contentManager			= null;
 	private IIndexSearcher			indexSeracher			= null;
@@ -138,9 +138,9 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		this.tableID = tableID;
 		this.recordID = recordID;
 
-		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
+		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 
-		if (fileStorgProvider == null)
+		if (fileStorageProvider == null)
 			throw new AdempiereException("Storage provider is not define on clientInfo.");
 
 		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
@@ -423,7 +423,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
 				
 				// Display an error when trying to upload same name file
-				String path = fileStorgProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent));
+				String path = fileStorageProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent));
 				File file = new File(path);
 				if (file.exists())
 				{
@@ -435,7 +435,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			dmsAssociation.setRecord_ID(recordID);
 			dmsAssociation.saveEx();
 
-			fileStorgProvider.writeBLOB(fileStorgProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent)),
+			fileStorageProvider.writeBLOB(fileStorageProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent)),
 					uploadedMedia.getByteData(), uploadedDMSContent);
 
 			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), uploadedDMSContent.getDMS_MimeType_ID(), null);
@@ -444,7 +444,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			if (thumbnailGenerator != null)
 				thumbnailGenerator.addThumbnail(uploadedDMSContent,
-						fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
+						fileStorageProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
 
 			// Transaction commit
 			trx.commit();
