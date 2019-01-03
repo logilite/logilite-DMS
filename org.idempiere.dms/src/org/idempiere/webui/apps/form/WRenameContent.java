@@ -16,7 +16,6 @@ package org.idempiere.webui.apps.form;
 import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -37,6 +36,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.FileStorageUtil;
@@ -145,7 +145,6 @@ public class WRenameContent extends Window implements EventListener<Event>
 		txtDesc = new Textbox();
 		txtDesc.setMultiline(true);
 		txtDesc.setRows(2);
-		
 
 		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
 		if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
@@ -223,15 +222,13 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private void ValidateName()
 	{
-		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
-
 		if (Util.isEmpty(txtName.getValue()))
 		{
-			throw new WrongValueException(txtName, fillMandatory);
+			throw new WrongValueException(txtName, DMSConstant.MSG_FILL_MANDATORY);
 		}
 		else if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
 		{
-			if (txtName.getValue().length() > Utils.filaNameLength)
+			if (txtName.getValue().length() > DMSConstant.MAX_FILENAME_LENGTH)
 				throw new WrongValueException(txtName, "Invalid Directory Name. Directory name less than 250 character");
 			
 			String fileSeprator = Utils.getStorageProviderFileSeparator();
@@ -301,7 +298,6 @@ public class WRenameContent extends Window implements EventListener<Event>
 					DMSContent.setName(txtName.getValue());
 					DMSContent.saveEx();
 				}
-				
 			}
 			else
 			{
@@ -365,6 +361,5 @@ public class WRenameContent extends Window implements EventListener<Event>
 		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf(spFileSeprator) + 1,
 				newFile.getAbsolutePath().length()));
 		content.saveEx();
-
 	}
 }
