@@ -101,6 +101,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.componenet.DMSViewerComponent;
 import org.idempiere.dms.factories.DMSClipboard;
@@ -1000,7 +1001,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				MDMSContent sourceContent = DMSClipboard.get();
 				MDMSContent destPasteContent = dirContent;
-				if (sourceContent.get_ID() == destPasteContent.get_ID())
+				if (destPasteContent !=null && sourceContent.get_ID() == destPasteContent.get_ID())
 				{
 					FDialog.warn(0, "You cannot Paste into itself");
 				}
@@ -1305,11 +1306,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					String ext = FilenameUtils.getExtension(newFile.getName());
 					newFile = new File(parent.getAbsolutePath() + spFileSeprator + uniqueName + "." + ext);
 				}
-				else
-				{
-					newFile = new File(parent.getAbsolutePath() + spFileSeprator + parentName);
-				}
-
+				
 				if (newFile.exists())
 				{
 					uniqueName = Utils.getCopiedUniqueFilename(newFile.getAbsolutePath());
@@ -1495,7 +1492,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						if (oldDMSContent.getParentURL().startsWith(baseURL))
 						{
 							newDMSContent.setParentURL(
-									destPasteContent.getParentURL() + spFileSeprator + copiedContent.getName());
+									contentManager.getPath(destPasteContent));
 							newDMSContent.saveEx();
 						}
 						copyContent(oldDMSContent, baseURL, renamedURL, newDMSContent);
@@ -1533,7 +1530,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				.getDMS_Content_ID(), null));
 
 		String sqlGetAssociation = "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association "
-				+ " WHERE DMS_Content_Related_ID=? AND DMS_AssociationType_ID=1000000 OR DMS_Content_ID=? "
+				+ " WHERE DMS_Content_Related_ID=? AND DMS_AssociationType_ID=1000000 OR DMS_Content_ID=? AND DMS_AssociationType_ID !=1000003"
 				+ " Order By DMS_Association_ID";
 		try
 		{
@@ -1541,13 +1538,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			pstmt.setInt(1, DMS_Content_ID);
 			pstmt.setInt(2, DMS_Content_ID);
 			rs = pstmt.executeQuery();
-
-			while (rs.next())
+			String trxName = Trx.createTrxName("copy-paste");
+			Trx trx = null;
+			trx = Trx.get(trxName, true);
+			
+			while (rs.next() )
 			{
 				String baseURL = null;
 				String renamedURL = null;
-
-				oldDMSContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				oldDMSContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), trx.getTrxName());
 
 				if (!Util.isEmpty(oldDMSContent.getParentURL()))
 					baseURL = contentManager.getPath(oldDMSContent);
@@ -1559,7 +1558,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				fileName = pastePhysicalCopiedContent(oldDMSContent, destPasteContent, fileName);
 				renamedURL = contentManager.getPath(destPasteContent);
 
-				MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
+				MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, trx.getTrxName());
 
 				PO.copyValues(oldDMSContent, newDMSContent);
 
@@ -1567,8 +1566,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				MAttributeSetInstance newASI = null;
 				if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
 				{
-					oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), null);
-					newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
+					oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), trx.getTrxName());
+					newASI = new MAttributeSetInstance(Env.getCtx(), 0, trx.getTrxName());
 					PO.copyValues(oldASI, newASI);
 					newASI.saveEx();
 
@@ -1578,7 +1577,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					for (MAttributeInstance AI : oldAI)
 					{
-						MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, null);
+						MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, trx.getTrxName());
 						PO.copyValues(AI, newAI);
 						newAI.setM_Attribute_ID(AI.getM_Attribute_ID());
 						newAI.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
@@ -1593,7 +1592,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
 						null);
-				MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
+				MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, trx.getTrxName());
 
 				PO.copyValues(oldDMSAssociation, newDMSAssociation);
 
@@ -1632,6 +1631,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 
 				newDMSContent.saveEx();
+				trx.commit();
 				MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), newDMSContent.getDMS_MimeType_ID(), null);
 
 				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
@@ -1785,6 +1785,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (!newFile.exists())
 		{
 			oldFile.renameTo(newFile);
+		}
+		else
+		{
+			throw new AdempiereException("File is already exist.");
 		}
 	}
 
@@ -2582,7 +2586,40 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_copy.setDisabled(false);
 		DMSViewerCom.setContext(contentContextMenu);
 		contentContextMenu.open(this, "at_pointer");
+
+		if (X_DMS_Content.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType())
+				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+		{
+			mnu_versionList.setDisabled(false);
+			mnu_paste.setDisabled(true);
+			mnu_canvasPaste.setDisabled(true);
+			mnu_uploadVersion.setDisabled(false);
+			mnu_createLink.setDisabled(true);
+			mnu_download.setDisabled(false);
+			mnu_copy.setDisabled(true);
+			mnu_associate.setDisabled(true);
+			mnu_rename.setDisabled(true);
+			mnu_delete.setDisabled(false);
+			mnu_cut.setDisabled(true);
+		}
+		
+		if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType())
+				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+		{
+			mnu_versionList.setDisabled(true);
+			mnu_paste.setDisabled(true);
+			mnu_canvasPaste.setDisabled(true);
+			mnu_uploadVersion.setDisabled(true);
+			mnu_createLink.setDisabled(true);
+			mnu_download.setDisabled(true);
+			mnu_copy.setDisabled(true);
+			mnu_associate.setDisabled(true);
+			mnu_rename.setDisabled(true);
+			mnu_delete.setDisabled(true);
+			mnu_cut.setDisabled(true);
+		}
 	}
+	
 
 	/**
 	 * select the directory or content
@@ -2666,15 +2703,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private void linkCopyDocument(MDMSContent DMSContent, boolean isDir)
 	{
 		boolean isDocPresent = false;
-
+		isDocPresent = isDoumentPresent(DMSContent, isDir);
 		if (DMSClipboard.get() == null)
 		{
 			return;
 		}
-		
-		if (DMSContent.get_ID() == DMSClipboard.get().get_ID())
+
+		if (DMSContent != null && DMSContent.get_ID() == DMSClipboard.get().get_ID())
 		{
 			FDialog.warn(0, "You cannot Link into itself");
+			return;
+		}
+		if (isDocPresent)
+		{
+			FDialog.warn(0, "Document already exists.");
 			return;
 		}
 
@@ -2697,15 +2739,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						.getSQLValue(
 								null,
 								"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? "
-										+ "AND DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(Name) = UPPER('Parent')",
+										+ "AND DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(Name) = UPPER('Parent'))",
 								DMSClipboard.get().getDMS_Content_ID());
 
 				if (DMS_Content_Related_ID != 0)
-					DMSassociation.setDMS_Content_Related_ID(DMS_Content_Related_ID);
-				else
-					DMSassociation.setDMS_Content_Related_ID(currDMSContent.getDMS_Content_ID());
-
-				DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Record_ID());
+					DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
+	
+				DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
 				DMSassociation.setRecord_ID(recordID);
 				DMSassociation.setAD_Table_ID(tableID);
 				DMSassociation.saveEx();
@@ -2748,7 +2788,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			return;
 		}
 
-		isDocPresent = isDoumentPresent(DMSContent, isDir);
 		if (!isDocPresent)
 		{
 			MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
@@ -2756,9 +2795,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (DMSContent != null)
 				DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
 			DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
-
 			DMSassociation.saveEx();
-
+			
 			try
 			{
 				renderViewer();
@@ -2768,10 +2806,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				log.log(Level.SEVERE, "Render content problem.", e);
 				throw new AdempiereException("Render content problem: " + e);
 			}
-		}
-		else
-		{
-			FDialog.warn(0, "Document already exists.");
 		}
 	}
 
@@ -2808,7 +2842,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (!Util.isEmpty(txtDescription.getValue(), true))
 		{
 			value = new ArrayList<Object>();
-			value.add("*" + txtDescription.getValue().toLowerCase() + "*");
+			value.add("*" + txtDescription.getValue().toLowerCase().trim() + "*");
 			params.put(Utils.DESCRIPTION, value);
 		}
 

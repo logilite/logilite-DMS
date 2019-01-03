@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 
@@ -668,7 +669,7 @@ public class Utils
 					String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
 					if (parentURL.startsWith(baseURL))
 					{
-						dmsContent.setParentURL(parentURL.replaceFirst(baseURL, renamedURL));
+						dmsContent.setParentURL(parentURL.replaceFirst(Pattern.quote(baseURL), renamedURL));
 						dmsContent.saveEx();
 					}
 					renameFolder(dmsContent, baseURL, renamedURL);
@@ -687,7 +688,7 @@ public class Utils
 
 						if (content_file.getParentURL().startsWith(baseURL))
 						{
-							content_file.setParentURL(content_file.getParentURL().replaceFirst(baseURL, renamedURL));
+							content_file.setParentURL(content_file.getParentURL().replaceFirst(Pattern.quote(baseURL), renamedURL));
 							content_file.saveEx();
 						}
 					}
