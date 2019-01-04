@@ -26,8 +26,6 @@ import java.net.URISyntaxException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -92,35 +90,34 @@ import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
-import org.compiere.model.MTable;
+import org.compiere.model.MUser;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
-import org.compiere.model.X_AD_User;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Language;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.componenet.DMSViewerComponent;
+import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.dms.pdfpreview.ConvertXlsToPdf;
 import org.idempiere.dms.pdfpreview.ConvertXlsxToPdf;
-import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
-import org.idempiere.model.X_DMS_Content;
-import org.idempiere.model.X_DMS_ContentType;
 import org.w3c.tidy.Tidy;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
@@ -142,7 +139,6 @@ import org.zkoss.zul.Timebox;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
 import com.logilite.search.factory.IIndexSearcher;
-import com.logilite.search.factory.ServiceUtils;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.PageSize;
@@ -156,14 +152,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private static final long				serialVersionUID			= -6813481516566180243L;
 	public static CLogger					log							= CLogger.getCLogger(WDMSPanel.class);
 
-	private static String					SQL_LATEST_VERSION			= ""
-																				+ "SELECT DMS_Content_ID, DMS_Association_ID "
-																				+ "FROM DMS_Association "
+	private static String					SQL_LATEST_VERSION			= "" + "SELECT DMS_Content_ID, DMS_Association_ID " + "FROM DMS_Association "
 																				+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID= ? "
-																				+ "GROUP BY DMS_Content_ID,DMS_Association_ID "
-																				+ "ORDER BY Max(seqNo) DESC ";
-
-	private static final String				spFileSeprator				= Utils.getStorageProviderFileSeparator();
+																				+ "GROUP BY DMS_Content_ID,DMS_Association_ID " + "ORDER BY Max(seqNo) DESC ";
 
 	public Tabbox							tabBox						= new Tabbox();
 	private Tabs							tabs						= new Tabs();
@@ -182,27 +173,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	// View Result Tab
 	private Searchbox						vsearchBox					= new Searchbox();
-	private Label							lblAdvanceSearch			= new Label(Msg.translate(Env.getCtx(),
-																				"Advance Search"));
+
+	private Label							lblAdvanceSearch			= new Label(Msg.translate(Env.getCtx(), "Advance Search"));
 	private Label							lblDocumentName				= new Label(Msg.translate(Env.getCtx(), "Name"));
-	private Label							lblContentType				= new Label(Msg.translate(Env.getCtx(),
-																				"Content Type"));
-	private Label							lblCreated					= new Label(Msg.translate(Env.getCtx(),
-																				"Created"));
-	private Label							lblUpdated					= new Label(Msg.translate(Env.getCtx(),
-																				"Updated"));
-	private Label							lblContentMeta				= new Label(Msg.translate(Env.getCtx(),
-																				"Content Meta"));
-
-	private Label							lblDescription				= new Label(Msg.translate(Env.getCtx(),
-																				"Description"));
-
-	private Label							lblCreatedBy				= new Label(Msg.translate(Env.getCtx(),
-																				"CreatedBy"));
-
-	private Label							lblUpdatedBy				= new Label(Msg.translate(Env.getCtx(),
-																				"UpdatedBy"));
-
+	private Label							lblContentType				= new Label(Msg.translate(Env.getCtx(), "Content Type"));
+	private Label							lblCreated					= new Label(Msg.translate(Env.getCtx(), "Created"));
+	private Label							lblUpdated					= new Label(Msg.translate(Env.getCtx(), "Updated"));
+	private Label							lblContentMeta				= new Label(Msg.translate(Env.getCtx(), "Content Meta"));
+	private Label							lblDescription				= new Label(Msg.translate(Env.getCtx(), "Description"));
+	private Label							lblCreatedBy				= new Label(Msg.translate(Env.getCtx(), "CreatedBy"));
+	private Label							lblUpdatedBy				= new Label(Msg.translate(Env.getCtx(), "UpdatedBy"));
 	private Label							lblShowBreadCrumb			= null;
 
 	private Datebox							dbCreatedTo					= new Datebox();
@@ -212,14 +192,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private ConfirmPanel					confirmPanel				= new ConfirmPanel();
 
-	private Button							btnClear					= confirmPanel
-																				.createButton(ConfirmPanel.A_RESET);
-	private Button							btnRefresh					= confirmPanel
-																				.createButton(ConfirmPanel.A_REFRESH);
-	private Button							btnCloseTab					= confirmPanel
-																				.createButton(ConfirmPanel.A_CANCEL);
-
+	private Button							btnClear					= confirmPanel.createButton(ConfirmPanel.A_RESET);
+	private Button							btnRefresh					= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
+	private Button							btnCloseTab					= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 	private Button							btnSearch					= new Button();
+	private Button							btnCreateDir				= new Button();
+	private Button							btnUploadContent			= new Button();
+	private Button							btnBack						= new Button();
+	private Button							btnNext						= new Button();
 
 	private Textbox							txtDocumentName				= new Textbox();
 	private Textbox							txtDescription				= new Textbox();
@@ -228,12 +208,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private WTableDirEditor					lstboxCreatedBy				= null;
 	private WTableDirEditor					lstboxUpdatedBy				= null;
 	private Checkbox						chkInActive					= new Checkbox();
-
-	// create Directory
-	private Button							btnCreateDir				= new Button();
-	private Button							btnUploadContent			= new Button();
-	private Button							btnBack						= new Button();
-	private Button							btnNext						= new Button();
 
 	private Label							lblPositionInfo				= new Label();
 
@@ -252,7 +226,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public IContentManager					contentManager				= null;
 	public IFileStorageProvider				thumbnailStorageProvider	= null;
 	private IIndexSearcher					indexSeracher				= null;
-	private IMountingStrategy				mountingStrategy			= null;
+
+	public DMS								dms							= null;
 
 	private Menupopup						contentContextMenu			= new Menupopup();
 	private Menupopup						canvasContextMenu			= new Menupopup();
@@ -272,14 +247,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem						mnu_canvasPaste				= null;
 
 	private DMSViewerComponent				DMSViewerComp				= null;
+	private DMSViewerComponent				prevComponent				= null;
 	private MDMSContent						copyDMSContent				= null;
 	private MDMSContent						dirContent					= null;
 
 	private WUploadContent					uploadContent				= null;
 	private CreateDirectoryForm				createDirectoryForm			= null;
+	private WDLoadASIPanel					asiPanel					= null;
 
 	private Panel							panelAttribute				= new Panel();
-	private WDLoadASIPanel					asiPanel					= null;
 
 	public int								recordID					= 0;
 	public int								tableID						= 0;
@@ -287,31 +263,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private boolean							isSearch					= false;
 	private boolean							isGenericSearch				= false;
-	private boolean 						isAllowCreateDirectory		= true;
+	private boolean							isAllowCreateDirectory		= true;
 	private boolean							isWindowAccess				= true;
-
-	private static final int				COMPONENT_HEIGHT			= 120;
-	private static final int				COMPONENT_WIDTH				= 120;
-
-	private static final String				MENUITEM_UPLOADVERSION		= "Upload Version";
-	private static final String				MENUITEM_VERSIONlIST		= "Version List";
-	private static final String				MENUITEM_RENAME				= "Rename";
-	private static final String				MENUITEM_CUT				= "Cut";
-	private static final String				MENUITEM_COPY				= "Copy";
-	private static final String				MENUITEM_PASTE				= "Paste";
-	private static final String				MENUITEM_DOWNLOAD			= "Download";
-	private static final String				MENUITEM_CREATELINK			= "Create Link";
-	private static final String				MENUITEM_DELETE				= "Delete";
-	private static final String				MENUITEM_ASSOCIATE			= "Associate";
-
-	private DMSViewerComponent				prevComponent				= null;
 
 	private ArrayList<WEditor>				m_editors					= new ArrayList<WEditor>();
 
 	private Map<String, Component>			ASI_Value					= new HashMap<String, Component>();
-	private DateFormat						dateFormat					= new SimpleDateFormat(
-																				"yyyy-MM-dd'T'HH:mm:ss'Z'");
-	
+
 	private AbstractADWindowContent			winContent;
 
 	/**
@@ -319,30 +277,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public WDMSPanel()
 	{
-		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-		if (fileStorageProvider == null)
-			throw new AdempiereException("Storage provider is not found.");
-
-		thumbnailStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), true);
-
-		if (thumbnailStorageProvider == null)
-			throw new AdempiereException("Thumbnail Storage provider is not found.");
-
-		thumbnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (thumbnailProvider == null)
-			throw new AdempiereException("Thumbnail provider is not found.");
-
-		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (contentManager == null)
-			throw new AdempiereException("Content manager is not found.");
-
-		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (indexSeracher == null)
-			throw new AdempiereException("Index server is not found.");
+		dms = new DMS(Env.getAD_Client_ID(Env.getCtx()), null);
 
 		try
 		{
@@ -360,14 +295,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		this();
 		this.winContent = winContent;
-		this.windowID = winContent.getADWindow().getAD_Window_ID(); 
+		this.windowID = winContent.getADWindow().getAD_Window_ID();
 		isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
-		
+
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
-		mountingStrategy = Utils.getMountingStrategy(null);
-		currDMSContent = mountingStrategy.getMountingParent(MTable.getTableName(Env.getCtx(), Table_ID), Record_ID);
-		
+
+		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
+
 		/*
 		 * Navigation and createDir buttons are disabled based on
 		 * "IsAllowCreateDirectory" check on client info.
@@ -380,7 +315,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnNext.setEnabled(false);
 			btnCreateDir.setEnabled(false);
 		}
-		
+
 		btnCreateDir.setEnabled(isWindowAccess);
 		btnUploadContent.setEnabled(isWindowAccess);
 	}
@@ -399,12 +334,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		return tableID;
 	}
-	
-	public void setWindow_ID (int AD_Window_ID)
+
+	public void setWindow_ID(int AD_Window_ID)
 	{
 		this.windowID = AD_Window_ID;
 	}
-	
+
 	public int getWindow_ID()
 	{
 		return windowID;
@@ -562,13 +497,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendChild(nameCell);
 		txtDescription.setWidth("100%");
 
-		int Column_ID = MColumn.getColumn_ID(X_AD_User.Table_Name, X_AD_User.COLUMNNAME_AD_User_ID);
+		Language lang = Env.getLanguage(Env.getCtx());
+		int Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		MLookup lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
-					Env.getLanguage(Env.getCtx()), X_AD_User.COLUMNNAME_AD_User_ID, 0, true, "");
-			lstboxCreatedBy = new WTableDirEditor(X_AD_User.COLUMNNAME_AD_User_ID, false, false, true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MUser.COLUMNNAME_AD_User_ID, 0, true, "");
+			lstboxCreatedBy = new WTableDirEditor(MUser.COLUMNNAME_AD_User_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -587,13 +522,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		createdByCell.appendChild(lstboxCreatedBy.getComponent());
 		row.appendChild(createdByCell);
 
-		Column_ID = MColumn.getColumn_ID(X_AD_User.Table_Name, X_AD_User.COLUMNNAME_AD_User_ID);
+		Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
-					Env.getLanguage(Env.getCtx()), X_AD_User.COLUMNNAME_AD_User_ID, 0, true, "");
-			lstboxUpdatedBy = new WTableDirEditor(X_AD_User.COLUMNNAME_AD_User_ID, false, false, true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MUser.COLUMNNAME_AD_User_ID, 0, true, "");
+			lstboxUpdatedBy = new WTableDirEditor(MUser.COLUMNNAME_AD_User_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -640,14 +574,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		updatedCell.appendChild(hbox);
 		row.appendChild(updatedCell);
 
-		Column_ID = MColumn.getColumn_ID(X_DMS_ContentType.Table_Name, X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID);
+		Column_ID = MColumn.getColumn_ID(MDMSContentType.Table_Name, MDMSContentType.COLUMNNAME_DMS_ContentType_ID);
 		lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
-					Env.getLanguage(Env.getCtx()), X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			lstboxContentType = new WTableDirEditor(X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, false, false,
-					true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
+			lstboxContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -674,13 +606,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		rows.appendChild(row);
 		Cell activeCell = new Cell();
 		activeCell.setColspan(2);
-//		row.setAlign("center");
+		// row.setAlign("center");
 		row.setStyle("padding-left : 109px");
 		activeCell.appendChild(chkInActive);
 		chkInActive.addEventListener(Events.ON_CLICK, this);
 		row.appendChild(activeCell);
-		
-		
+
 		row = new Row();
 		rows.appendChild(row);
 		row.appendChild(lblContentMeta);
@@ -740,7 +671,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		boxViewSeparator.appendChild(cell);
 
 		gridBreadCrumb
-				.setStyle("width: 100%; position:relative; overflow: auto; background-color: rgba(0,0,0,.2); background-clip: padding-box; color: #222; background: transparent;font-family: Roboto,sans-serif; border: solid transparent; border-width: 1px 1px 1px 6px;min-height: 28px; padding: 100px 0 0;box-shadow: inset 1px 1px 0 rgba(0,0,0,.1),inset 0 -1px 0 rgba(0,0,0,.07);");
+				.setStyle("width: 100%; position:relative; overflow: auto; background-color: rgba(0,0,0,.2); background-clip: padding-box; color: #222; background: transparent; "
+						+ "font-family: Roboto,sans-serif; border: solid transparent; border-width: 1px 1px 1px 6px;min-height: 28px; padding: 100px 0 0;"
+						+ "box-shadow: inset 1px 1px 0 rgba(0,0,0,.1),inset 0 -1px 0 rgba(0,0,0,.07);");
 
 		breadRow.setZclass("none");
 		breadRow.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%;");
@@ -770,19 +703,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
 
-		mnu_versionList = new Menuitem(MENUITEM_VERSIONlIST);
-		mnu_cut = new Menuitem(MENUITEM_CUT);
-		mnu_copy = new Menuitem(MENUITEM_COPY);
-		mnu_paste = new Menuitem(MENUITEM_PASTE);
-		mnu_download = new Menuitem(MENUITEM_DOWNLOAD);
-		mnu_createLink = new Menuitem(MENUITEM_CREATELINK);
-		mnu_delete = new Menuitem(MENUITEM_DELETE);
-		mnu_associate = new Menuitem(MENUITEM_ASSOCIATE);
-		mnu_uploadVersion = new Menuitem(MENUITEM_UPLOADVERSION);
-		mnu_rename = new Menuitem(MENUITEM_RENAME);
+		mnu_versionList = new Menuitem(DMSConstant.MENUITEM_VERSIONlIST);
+		mnu_cut = new Menuitem(DMSConstant.MENUITEM_CUT);
+		mnu_copy = new Menuitem(DMSConstant.MENUITEM_COPY);
+		mnu_paste = new Menuitem(DMSConstant.MENUITEM_PASTE);
+		mnu_download = new Menuitem(DMSConstant.MENUITEM_DOWNLOAD);
+		mnu_createLink = new Menuitem(DMSConstant.MENUITEM_CREATELINK);
+		mnu_delete = new Menuitem(DMSConstant.MENUITEM_DELETE);
+		mnu_associate = new Menuitem(DMSConstant.MENUITEM_ASSOCIATE);
+		mnu_uploadVersion = new Menuitem(DMSConstant.MENUITEM_UPLOADVERSION);
+		mnu_rename = new Menuitem(DMSConstant.MENUITEM_RENAME);
 
-		mnu_canvasCreateLink = new Menuitem(MENUITEM_CREATELINK);
-		mnu_canvasPaste = new Menuitem(MENUITEM_PASTE);
+		mnu_canvasCreateLink = new Menuitem(DMSConstant.MENUITEM_CREATELINK);
+		mnu_canvasPaste = new Menuitem(DMSConstant.MENUITEM_PASTE);
 
 		canvasContextMenu.appendChild(mnu_canvasPaste);
 		canvasContextMenu.appendChild(mnu_canvasCreateLink);
@@ -824,9 +757,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_delete.addEventListener(Events.ON_CLICK, this);
 		mnu_associate.addEventListener(Events.ON_CLICK, this);
 
-		//mnu_delete.setDisabled(true);
+		// mnu_delete.setDisabled(true);
 
-		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		DMSConstant.dateFormatWithTime.setTimeZone(TimeZone.getTimeZone("UTC"));
 		addRootBreadCrumb();
 		SessionManager.getAppDesktop();
 	}
@@ -836,8 +769,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		log.info(event.getName());
 
-		if (Events.ON_DOUBLE_CLICK.equals(event.getName())
-				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
+		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
 			openDirectoryORContent(DMSViewerComp);
@@ -869,7 +801,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_RESET))
 		{
-			isGenericSearch = true; // For solve navigation issue After search and reset button pressed.
+			// For solve navigation issue After search and reset button pressed.
+			isGenericSearch = true;
+
 			isSearch = false;
 			clearComponenets();
 		}
@@ -883,7 +817,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? ORDER BY Created desc",
 						String.valueOf(recordID));
 				setCurrDMSContent(new MDMSContent(Env.getCtx(), DMS_Content_ID, null));
-		
+
 				if (currDMSContent != null)
 					lblPositionInfo.setText(currDMSContent.getName());
 				else
@@ -930,8 +864,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			renderViewer();
 		}
-		else if (Events.ON_CLICK.equals(event.getName())
-				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
+		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
 			currentCompSelection(DMSViewerComp);
@@ -940,8 +873,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			if (prevComponent != null)
 			{
-				ZkCssHelper.appendStyle(prevComponent.getfLabel(),
-						"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+				ZkCssHelper.appendStyle(prevComponent.getfLabel(), "background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
 			}
 		}
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Cell.class))
@@ -949,13 +881,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			openCanvasContextMenu(event);
 		}
 
-		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
-				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
+		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
 			DMSViewerComp = (DMSViewerComponent) event.getTarget();
 			openContentContextMenu(DMSViewerComp);
-			
-			// show only download option on menu context if access are read-only.
+
+			// show only download option on menu context if access are
+			// read-only.
 			if (!isWindowAccess)
 			{
 				mnu_download.setDisabled(false);
@@ -968,8 +900,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
-			final WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(),
-					this.getRecord_ID());
+			final WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(), this.getRecord_ID());
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -1001,7 +932,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				MDMSContent sourceContent = DMSClipboard.get();
 				MDMSContent destPasteContent = dirContent;
-				if (destPasteContent !=null && sourceContent.get_ID() == destPasteContent.get_ID())
+				if (destPasteContent != null && sourceContent.get_ID() == destPasteContent.get_ID())
 				{
 					FDialog.warn(0, "You cannot Paste into itself");
 				}
@@ -1049,7 +980,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(mnu_delete))
 		{
 			// TODO inactive DMS_content and same change in solr index
-			
+
 			Callback<Boolean> callback = new Callback<Boolean>() {
 				@Override
 				public void onCallback(Boolean result)
@@ -1072,9 +1003,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					}
 				}
 			};
-			
+
 			FDialog.ask(0, this, "Are you sure to delete " + DMSViewerComp.getDMSContent().getName() + "?", callback);
-			
+
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
@@ -1099,8 +1030,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderBreadCrumb(event);
 		}
 		else if (Events.ON_OK.equals(event.getName())
-				|| (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass()
-						.equals(vsearchBox.getButton().getClass())))
+				|| (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(vsearchBox.getButton().getClass())))
 		{
 			breadRow.getChildren().clear();
 			btnBack.setEnabled(true);
@@ -1110,7 +1040,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			isSearch = false;
 			renderViewer();
 		}
-		
+
 		// Disable navigation button based on "isAllowCreateDirectory" check on
 		// client info window
 		if (isTabViewer() && !isAllowCreateDirectory)
@@ -1123,6 +1053,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	/**
 	 * This will be a soft deletion. System will only inactive the files.
+	 * 
 	 * @param dmsContent
 	 */
 	private void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
@@ -1132,18 +1063,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			inActiveContentAndAssociation(null, dmsAssociation);
 		}
-		else if (dmsContent.getContentBaseType().equalsIgnoreCase(X_DMS_Content.CONTENTBASETYPE_Content))
+		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Content))
 		{
 			if (dmsAssociation.getDMS_AssociationType_ID() == 1000000)
 			{
 				// TODO get parent dms_content
-				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(),
-						null);
-				int DMS_Association_ID = DB
-						.getSQLValue(
-								null,
-								"SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
-								parentContent.getDMS_Content_ID());
+				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
+				int DMS_Association_ID = DB.getSQLValue(null, "SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
+						parentContent.getDMS_Content_ID());
 
 				MDMSAssociation parentAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
 				inActiveContentAndAssociation(parentContent, parentAssociation);
@@ -1167,7 +1094,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			}
 		}
-		else if (dmsContent.getContentBaseType().equalsIgnoreCase(X_DMS_Content.CONTENTBASETYPE_Directory))
+		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			// Inactive Directory content and its child recursively
 			inActiveContentAndAssociation(dmsContent, dmsAssociation);
@@ -1176,23 +1103,26 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				MDMSContent content = (MDMSContent) entry.getKey();
 				MDMSAssociation association = (MDMSAssociation) entry.getValue();
-				//recursive call
+				// recursive call
 				deleteContent(content, association);
 			}
 		}
 	}
-	
-	private void inActiveContentAndAssociation(MDMSContent dmsContent, MDMSAssociation dmsAssociation){
-		if(dmsAssociation != null){
+
+	private void inActiveContentAndAssociation(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
+	{
+		if (dmsAssociation != null)
+		{
 			dmsAssociation.setIsActive(false);
 			dmsAssociation.saveEx();
 		}
-		if(dmsContent != null){
+		if (dmsContent != null)
+		{
 			dmsContent.setIsActive(false);
 			dmsContent.saveEx();
 		}
 	}
-	
+
 	private HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent)
 	{
 
@@ -1212,8 +1142,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				while (rs.next())
 				{
-					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)), (new MDMSAssociation(
-							Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
+					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)),
+							(new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
 				}
 			}
 		}
@@ -1239,10 +1169,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		File files[] = new File(newFileName).listFiles();
 
-		if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+		if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
 			newFileName = newFileName + copiedContent.getName();
 		else
-			newFileName = newFileName + spFileSeprator + copiedContent.getName();
+			newFileName = newFileName + DMSConstant.FILE_SEPARATOR + copiedContent.getName();
 
 		File newFile = new File(newFileName);
 
@@ -1284,10 +1214,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		File oldFile = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
 		String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
 
-		if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+		if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
 			newFileName = newFileName + copiedContent.getName();
 		else
-			newFileName = newFileName + spFileSeprator + copiedContent.getName();
+			newFileName = newFileName + DMSConstant.FILE_SEPARATOR + copiedContent.getName();
 
 		File newFile = new File(newFileName);
 		File parent = new File(newFile.getParent());
@@ -1304,9 +1234,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				{
 					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy ";
 					String ext = FilenameUtils.getExtension(newFile.getName());
-					newFile = new File(parent.getAbsolutePath() + spFileSeprator + uniqueName + "." + ext);
+					newFile = new File(parent.getAbsolutePath() + DMSConstant.FILE_SEPARATOR + uniqueName + "." + ext);
 				}
-				
+
 				if (newFile.exists())
 				{
 					uniqueName = Utils.getCopiedUniqueFilename(newFile.getAbsolutePath());
@@ -1328,16 +1258,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return newFile.getName();
 	} // pastePhysicalCopiedContent
 
-	private void pasteCopyContent(MDMSContent copiedContent, MDMSContent destPasteContent) throws IOException,
-			SQLException
+	private void pasteCopyContent(MDMSContent copiedContent, MDMSContent destPasteContent) throws IOException, SQLException
 	{
-		if (copiedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
-			int DMS_Association_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
-							copiedContent.getDMS_Content_ID());
+			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
+					copiedContent.getDMS_Content_ID());
 
 			String baseURL = null;
 			String renamedURL = null;
@@ -1346,13 +1272,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (!Util.isEmpty(copiedContent.getParentURL()))
 				baseURL = contentManager.getPath(copiedContent);
 			else
-				baseURL = spFileSeprator + copiedContent.getName();
+				baseURL = DMSConstant.FILE_SEPARATOR + copiedContent.getName();
 
-			if (copiedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+			if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
 				contentname = pastePhysicalCopiedFolder(copiedContent, destPasteContent);
 			}
-			renamedURL = contentManager.getPath(destPasteContent) + spFileSeprator + copiedContent.getName();
+			renamedURL = contentManager.getPath(destPasteContent) + DMSConstant.FILE_SEPARATOR + copiedContent.getName();
 
 			MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), copiedContent.getDMS_Content_ID(), null);
 
@@ -1368,9 +1294,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
 				PO.copyValues(oldASI, newASI);
 				newASI.saveEx();
-				
-				List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
-						"M_AttributeSetInstance_ID = ?", null).setParameters(
+
+				List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name, "M_AttributeSetInstance_ID = ?", null).setParameters(
 						oldASI.getM_AttributeSetInstance_ID()).list();
 
 				for (MAttributeInstance AI : oldAI)
@@ -1419,15 +1344,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 	}
 
-	private void copyContent(MDMSContent copiedContent, String baseURL, String renamedURL, MDMSContent destPasteContent)
-			throws IOException
+	private void copyContent(MDMSContent copiedContent, String baseURL, String renamedURL, MDMSContent destPasteContent) throws IOException
 	{
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 
 		try
 		{
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
+			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE, null);
 			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(2, copiedContent.getDMS_Content_ID());
 			pstmt.setInt(3, copiedContent.getDMS_Content_ID());
@@ -1437,7 +1361,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			while (rs.next())
 			{
 				MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-				if (oldDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+				if (oldDMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 				{
 					MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
 
@@ -1447,15 +1371,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					MAttributeSetInstance newASI = null;
 					if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
 					{
-						oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(),
-								null);
+						oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), null);
 						newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
 						PO.copyValues(oldASI, newASI);
 						newASI.saveEx();
 
-						List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
-								"M_AttributeSetInstance_ID = ?", null).setParameters(
-								oldASI.getM_AttributeSetInstance_ID()).list();
+						List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name, "M_AttributeSetInstance_ID = ?", null)
+								.setParameters(oldASI.getM_AttributeSetInstance_ID()).list();
 
 						for (MAttributeInstance AI : oldAI)
 						{
@@ -1471,8 +1393,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					newDMSContent.saveEx();
 
-					MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(),
-							rs.getInt("DMS_Association_ID"), null);
+					MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 					MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 
 					PO.copyValues(oldDMSAssociation, newDMSAssociation);
@@ -1491,8 +1412,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					{
 						if (oldDMSContent.getParentURL().startsWith(baseURL))
 						{
-							newDMSContent.setParentURL(
-									contentManager.getPath(destPasteContent));
+							newDMSContent.setParentURL(contentManager.getPath(destPasteContent));
 							newDMSContent.saveEx();
 						}
 						copyContent(oldDMSContent, baseURL, renamedURL, newDMSContent);
@@ -1518,16 +1438,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	}
 
-	private void pasteCopyFileContent(MDMSContent oldDMSContent, MDMSContent destPasteContent) throws SQLException,
-			IOException
+	private void pasteCopyFileContent(MDMSContent oldDMSContent, MDMSContent destPasteContent) throws SQLException, IOException
 	{
 		int crID = 0;
 		String fileName = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 
-		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(new MDMSContent(Env.getCtx(), oldDMSContent
-				.getDMS_Content_ID(), null));
+		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(new MDMSContent(Env.getCtx(), oldDMSContent.getDMS_Content_ID(), null));
 
 		String sqlGetAssociation = "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association "
 				+ " WHERE DMS_Content_Related_ID=? AND DMS_AssociationType_ID=1000000 OR DMS_Content_ID=? AND DMS_AssociationType_ID !=1000003"
@@ -1541,8 +1459,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			String trxName = Trx.createTrxName("copy-paste");
 			Trx trx = null;
 			trx = Trx.get(trxName, true);
-			
-			while (rs.next() )
+
+			while (rs.next())
 			{
 				String baseURL = null;
 				String renamedURL = null;
@@ -1551,9 +1469,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (!Util.isEmpty(oldDMSContent.getParentURL()))
 					baseURL = contentManager.getPath(oldDMSContent);
 				else
-					baseURL = spFileSeprator + oldDMSContent.getName();
+					baseURL = DMSConstant.FILE_SEPARATOR + oldDMSContent.getName();
 
-				baseURL = baseURL.substring(0, baseURL.lastIndexOf(spFileSeprator));
+				baseURL = baseURL.substring(0, baseURL.lastIndexOf(DMSConstant.FILE_SEPARATOR));
 
 				fileName = pastePhysicalCopiedContent(oldDMSContent, destPasteContent, fileName);
 				renamedURL = contentManager.getPath(destPasteContent);
@@ -1571,9 +1489,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					PO.copyValues(oldASI, newASI);
 					newASI.saveEx();
 
-					List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
-							"M_AttributeSetInstance_ID = ?", null).setParameters(oldASI.getM_AttributeSetInstance_ID())
-							.list();
+					List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name, "M_AttributeSetInstance_ID = ?", null)
+							.setParameters(oldASI.getM_AttributeSetInstance_ID()).list();
 
 					for (MAttributeInstance AI : oldAI)
 					{
@@ -1590,8 +1507,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				newDMSContent.setName(fileName);
 				newDMSContent.saveEx();
 
-				MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-						null);
+				MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 				MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, trx.getTrxName());
 
 				PO.copyValues(oldDMSAssociation, newDMSAssociation);
@@ -1637,11 +1553,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
 
 				if (thumbnailGenerator != null)
-					thumbnailGenerator.addThumbnail(newDMSContent,
-							fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
+					thumbnailGenerator.addThumbnail(newDMSContent, fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
 
 				String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-				newPath = newPath + spFileSeprator + oldDMSContent.getName();
+				newPath = newPath + DMSConstant.FILE_SEPARATOR + oldDMSContent.getName();
 
 			}
 		}
@@ -1659,13 +1574,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private void pasteCutContent(MDMSContent sourceCutContent, MDMSContent destPasteContent)
 	{
-		if (sourceCutContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (sourceCutContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
-			int DMS_Association_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created ",
-							sourceCutContent.getDMS_Content_ID());
+			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created ",
+					sourceCutContent.getDMS_Content_ID());
 
 			String baseURL = null;
 			String renamedURL = null;
@@ -1673,17 +1585,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (!Util.isEmpty(sourceCutContent.getParentURL()))
 				baseURL = contentManager.getPath(sourceCutContent);
 			else
-				baseURL = spFileSeprator + sourceCutContent.getName();
+				baseURL = DMSConstant.FILE_SEPARATOR + sourceCutContent.getName();
 
 			File dirPath = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(sourceCutContent)));
 			String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
 
 			File files[] = new File(newFileName).listFiles();
 
-			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
+			if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
 				newFileName = newFileName + sourceCutContent.getName();
 			else
-				newFileName = newFileName + spFileSeprator + sourceCutContent.getName();
+				newFileName = newFileName + DMSConstant.FILE_SEPARATOR + sourceCutContent.getName();
 
 			File newFile = new File(newFileName);
 
@@ -1695,7 +1607,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			}
 
-			renamedURL = contentManager.getPath(destPasteContent) + spFileSeprator + sourceCutContent.getName();
+			renamedURL = contentManager.getPath(destPasteContent) + DMSConstant.FILE_SEPARATOR + sourceCutContent.getName();
 
 			Utils.renameFolder(sourceCutContent, baseURL, renamedURL);
 			dirPath.renameTo(newFile);
@@ -1737,8 +1649,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				while (rs.next())
 				{
 					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-					MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-							null);
+					MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 
 					moveFile(dmsContent, destPasteContent);
 					if (dmsAssociation.getDMS_AssociationType_ID() == 1000001)
@@ -1763,7 +1674,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					dmsContent.setParentURL(contentManager.getPath(destPasteContent));
 					dmsContent.saveEx();
 
-
 				}
 			}
 			catch (SQLException e)
@@ -1777,7 +1687,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private void moveFile(MDMSContent dmsContent, MDMSContent destContent)
 	{
 		String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destContent));
-		newPath = newPath + spFileSeprator + dmsContent.getName();
+		newPath = newPath + DMSConstant.FILE_SEPARATOR + dmsContent.getName();
 
 		File oldFile = new File(fileStorageProvider.getFile(contentManager.getPath(dmsContent)).getAbsolutePath());
 		File newFile = new File(newPath);
@@ -1878,7 +1788,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// Setting current dms content value on label
 		if (isTabViewer())
 		{
-			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;  
+			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;
 			lblPositionInfo.setValue(currContentValue);
 		}
 
@@ -1893,17 +1803,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : dmsContent.entrySet())
 		{
 
-			thumbFile = thumbnailProvider.getFile(entry.getKey(), "150");
+			thumbFile = dms.getThumbnail(entry.getKey(), "150");
 
 			if (thumbFile == null)
 			{
-				if (entry.getKey().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+				if (entry.getKey().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 				{
-					mImage = Utils.getDirThumbnail();
+					mImage = dms.getDirThumbnail();
 				}
 				else
 				{
-					mImage = Utils.getMimetypeThumbnail(entry.getKey().getDMS_MimeType_ID());
+					mImage = dms.getMimetypeThumbnail(entry.getKey().getDMS_MimeType_ID());
 				}
 				imgByteData = mImage.getData();
 				if (imgByteData != null)
@@ -1914,29 +1824,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				image = new AImage(thumbFile);
 			}
 
-			DMSViewerComponent viewerComponent = null;
-			if (entry.getValue().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
-			{
-				viewerComponent = new DMSViewerComponent(entry.getKey(), image, true, entry.getValue());
-			}
-			else
-			{
-				viewerComponent = new DMSViewerComponent(entry.getKey(), image, false, entry.getValue());
-			}
-
-			viewerComponent.addEventListener(Events.ON_DOUBLE_CLICK, this);
-			viewerComponent.addEventListener(Events.ON_CLICK, this);
-			viewerComponent.addEventListener(Events.ON_RIGHT_CLICK, this);
-
-			viewerComponents.add(viewerComponent);
-
-			viewerComponent.setDheight(COMPONENT_HEIGHT);
-			viewerComponent.setDwidth(COMPONENT_WIDTH);
-
-			row.appendChild(viewerComponent);
+			boolean isLink = entry.getValue().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID();
+			DMSViewerComponent viewerComp = new DMSViewerComponent(entry.getKey(), image, isLink, entry.getValue());
+			viewerComp.setDwidth(DMSConstant.CONTENT_COMPONENT_WIDTH);
+			viewerComp.setDheight(DMSConstant.CONTENT_COMPONENT_HEIGHT);
+			viewerComp.addEventListener(Events.ON_CLICK, this);
+			viewerComp.addEventListener(Events.ON_RIGHT_CLICK, this);
+			viewerComp.addEventListener(Events.ON_DOUBLE_CLICK, this);
+			viewerComponents.add(viewerComp);
+			row.appendChild(viewerComp);
 		}
 		row.setZclass("none");
-		// row.setWidth(row.getWidth());
 		row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%; overflow: hidden;");
 		rows.appendChild(row);
 
@@ -1950,8 +1848,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (!Util.isEmpty(vsearchBox.getTextbox().getValue(), true))
 		{
 			String inputParam = vsearchBox.getTextbox().getValue();
-			query.append("(").append(Utils.NAME).append(":*").append(inputParam).append("*").append(" OR ")
-					.append(Utils.DESCRIPTION).append(":*").append(inputParam).append("*)");
+			query.append("(").append(Utils.NAME).append(":*").append(inputParam).append("*").append(" OR ").append(Utils.DESCRIPTION).append(":*")
+					.append(inputParam).append("*)");
 		}
 		else
 		{
@@ -1975,13 +1873,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				query.append(hirachicalContent.toString());
 			}
 		}
-		
-		// AD_Client_id append for search client wise 
+
+		// AD_Client_id append for search client wise
 		if (!Util.isEmpty(query.toString()))
 			query.append(" AND ");
-		
-		query.append(" AD_Client_ID:(").append(Env.getAD_Client_ID(Env.getCtx())).append(")")
-				.append(" AND Show_InActive : 'false'");
+
+		query.append(" AD_Client_ID:(").append(Env.getAD_Client_ID(Env.getCtx())).append(")").append(" AND Show_InActive : 'false'");
 
 		if (recordID > 0)
 			query.append(" AND Record_ID:" + recordID);
@@ -1989,15 +1886,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (tableID > 0)
 			query.append(" AND AD_Table_ID:" + tableID);
 
-		List<Integer> documentList = indexSeracher.searchIndex(query.toString());
+		List<Integer> documentList = dms.searchIndex(query.toString());
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
 
 		for (Integer entry : documentList)
 		{
 			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
 
-			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
-					new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
+			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null), new MDMSAssociation(Env.getCtx(),
+					((BigDecimal) latestversion.get(1)).intValue(), null));
 		}
 		return map;
 	}
@@ -2020,7 +1917,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			// select only active records
 			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE, null);
-			pstmt.setInt(1,Env.getAD_Client_ID(Env.getCtx()));
+			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(2, contentID);
 			pstmt.setInt(3, contentID);
 
@@ -2030,8 +1927,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				while (rs.next())
 				{
-					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)), (new MDMSAssociation(
-							Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
+					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)),
+							(new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
 				}
 			}
 		}
@@ -2066,7 +1963,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		dbUpdatedFrom.setValue(null);
 		dbUpdatedTo.setValue(null);
 		chkInActive.setChecked(false);
-		
 
 		if (m_editors != null)
 		{
@@ -2082,16 +1978,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @param DMSViewerComp
 	 * @throws IOException
 	 * @throws URISyntaxException
-	 * @throws DocumentException 
-	 * @throws com.itextpdf.text.DocumentException 
+	 * @throws DocumentException
+	 * @throws com.itextpdf.text.DocumentException
 	 */
-	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException, DocumentException, com.itextpdf.text.DocumentException
+	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException, DocumentException,
+			com.itextpdf.text.DocumentException
 	{
 		selectedDMSContent.push(DMSViewerComp.getDMSContent());
-		
+
 		selectedDMSAssociation.push(DMSViewerComp.getDMSAssociation());
 
-		if (selectedDMSContent.peek().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			currDMSContent = selectedDMSContent.pop();
 			showBreadcumb(currDMSContent);
@@ -2100,13 +1997,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);
 		}
-		else if (selectedDMSContent.peek().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
+		else if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
 			File documentToPreview = null;
 
 			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), selectedDMSContent.peek().getDMS_MimeType_ID(), null);
 
-			documentToPreview = fileStorageProvider.getFile(contentManager.getPath(selectedDMSContent.peek()));
+			documentToPreview = dms.getFileFromContent(selectedDMSContent.peek());
 
 			if (documentToPreview != null)
 			{
@@ -2119,12 +2016,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				{
 					documentToPreview = convertToPDF(documentToPreview, mimeType);
 				}
-				catch(Exception e)
+				catch (Exception e)
 				{
 					selectedDMSContent.pop();
 					throw new AdempiereException(e);
 				}
-				
+
 				if (Utils.getContentEditor(mimeType.getMimeType()) != null)
 				{
 					Tab tabData = new Tab(name);
@@ -2132,8 +2029,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					tabs.appendChild(tabData);
 					tabBox.setSelectedTab(tabData);
 
-					WDocumentViewer documentViewer = new WDocumentViewer(tabBox, documentToPreview,
-							selectedDMSContent.peek(), tableID, recordID);
+					WDocumentViewer documentViewer = new WDocumentViewer(tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID);
 					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess);
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
@@ -2146,7 +2042,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					AMedia media = new AMedia(documentToPreview, "application/octet-stream", null);
 					Filedownload.save(media);
 				}
-				// Fix for search --> download content --> back (which was navigate to home/root folder)
+				// Fix for search --> download content --> back (which was
+				// navigate to home/root folder)
 				selectedDMSContent.pop();
 			}
 			else
@@ -2157,8 +2054,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	}
 
 	/**
-	 * Convert .docx to .pdf
-	 * convert .doc to .pdf
+	 * Convert .docx to .pdf convert .doc to .pdf
 	 * 
 	 * @param documentToPreview
 	 * @param mimeType
@@ -2166,13 +2062,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @throws IOException
 	 * @throws FileNotFoundException
 	 * @throws DocumentException
-	 * @throws com.itextpdf.text.DocumentException 
+	 * @throws com.itextpdf.text.DocumentException
 	 */
-	private File convertToPDF(File documentToPreview, MDMSMimeType mimeType)
-			throws IOException, FileNotFoundException, DocumentException, com.itextpdf.text.DocumentException
+	private File convertToPDF(File documentToPreview, MDMSMimeType mimeType) throws IOException, FileNotFoundException, DocumentException,
+			com.itextpdf.text.DocumentException
 	{
-		if (mimeType.getMimeType()
-				.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+		if (mimeType.getMimeType().equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
 		{
 			XWPFDocument document = new XWPFDocument(new FileInputStream(documentToPreview));
 			File newDocPDF = File.createTempFile("Zito", "DocxToPDF");
@@ -2185,7 +2080,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			HWPFDocument doc = new HWPFDocument(new FileInputStream(documentToPreview));
 			WordExtractor we = new WordExtractor(doc);
-			File newDocPDF   = File.createTempFile("Zito", "DocToPDF");
+			File newDocPDF = File.createTempFile("Zito", "DocToPDF");
 			OutputStream pdfFile = new FileOutputStream(newDocPDF);
 			String k = we.getText();
 			Document document = new Document();
@@ -2212,11 +2107,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			}
 		}
-		
+
 		return documentToPreview;
 	}
 
-	
 	/**
 	 * Convert xlsx file to pdf file
 	 * 
@@ -2226,8 +2120,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @throws FileNotFoundException
 	 * @throws com.itextpdf.text.DocumentException
 	 */
-	private File convertXlsxToPdf(File documentToPreview)
-			throws IOException, FileNotFoundException, com.itextpdf.text.DocumentException
+	private File convertXlsxToPdf(File documentToPreview) throws IOException, FileNotFoundException, com.itextpdf.text.DocumentException
 	{
 		File newXlsxToHTML = File.createTempFile("Zito", "XlsxToHTML");
 		try
@@ -2256,8 +2149,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			com.itextpdf.text.Document document = new com.itextpdf.text.Document();
 			Rectangle size = new Rectangle(pdfWidth, pdfheight);
 			document.setPageSize(size);
-			com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(document,
-					new FileOutputStream(newXhtmlToPdf));
+			com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(document, new FileOutputStream(newXhtmlToPdf));
 			document.open();
 
 			XMLWorkerHelper.getInstance().parseXHtml(writer, document, new FileInputStream(newHtmlToXhtml));
@@ -2287,17 +2179,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		String html = test.getHTML();
 
 		File newXlsToPdf = File.createTempFile("zito", "XlsToPDF");
-		
-		Document document = new Document(PageSize.A4,20,20,20,20);
-		PdfWriter.getInstance(document,
-				new FileOutputStream(newXlsToPdf));
+
+		Document document = new Document(PageSize.A4, 20, 20, 20, 20);
+		PdfWriter.getInstance(document, new FileOutputStream(newXlsToPdf));
 		document.open();
 		document.addCreationDate();
 
 		HTMLWorker htmlWorker = new HTMLWorker(document);
 		htmlWorker.parse(new StringReader(html));
 		document.close();
-		
+
 		return newXlsToPdf;
 	}
 
@@ -2339,7 +2230,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				breadRows.appendChild(breadRow);
 				gridBreadCrumb.appendChild(breadRows);
 			}
-			
+
 			if (currDMSContent == null)
 			{
 				addRootBreadCrumb();
@@ -2353,12 +2244,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		nextDMSContent = currDMSContent;
 
 		if (selectedDMSAssociation != null && !selectedDMSAssociation.isEmpty()
-				&& selectedDMSAssociation.peek().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID()
-				&& currDMSContent != null
+				&& selectedDMSAssociation.peek().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID() && currDMSContent != null
 				&& currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.peek().getDMS_Content_ID())
 		{
-			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.peek().getDMS_Content_Related_ID(),
-					null);
+			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.peek().getDMS_Content_Related_ID(), null);
 			lblPositionInfo.setValue(currDMSContent.getName());
 			if (currDMSContent.getParentURL() == null)
 				btnBack.setEnabled(true);
@@ -2367,11 +2256,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (currDMSContent != null)
 		{
-			int DMS_Content_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID IS NULL",
-							currDMSContent.getDMS_Content_ID());
+			int DMS_Content_ID = DB.getSQLValue(null,
+					"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID IS NULL",
+					currDMSContent.getDMS_Content_ID());
 
 			if (DMS_Content_ID <= 0)
 			{
@@ -2401,8 +2288,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (recordID > 0 && tableID > 0)
 		{
 			// Getting latest record if multiple dms content available
-			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y' ORDER BY created desc",
-					recordID + "");
+			// TODO Need to Check sql purpose
+			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y' ORDER BY created desc", recordID + "");
 
 			if (currDMSContent == null)
 				currDMSContent = selectedDMSContent.peek();
@@ -2453,7 +2340,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void createDirectory()
 	{
-		createDirectoryForm = new CreateDirectoryForm(currDMSContent, tableID, recordID);
+		createDirectoryForm = new CreateDirectoryForm(dms, currDMSContent, tableID, recordID);
 
 		createDirectoryForm.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
@@ -2470,7 +2357,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void uploadContent()
 	{
-		uploadContent = new WUploadContent(currDMSContent, false, tableID, recordID);
+		uploadContent = new WUploadContent(dms, currDMSContent, false, tableID, recordID);
 
 		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
@@ -2494,8 +2381,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.setPage(DMSViewerCom.getPage());
 		copyDMSContent = DMSClipboard.get();
 
-		if (!isWindowAccess || (dirContent.isMounting()
-				&& dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)))
+		if (!isWindowAccess || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)))
 		{
 			mnu_associate.setDisabled(true);
 			mnu_copy.setDisabled(true);
@@ -2541,7 +2427,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_associate.setDisabled(true);
 			mnu_createLink.setDisabled(true);
 		}
-		else if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getDMSContent().getContentBaseType()))
+		else if (MDMSContent.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getDMSContent().getContentBaseType()))
 		{
 			mnu_paste.setDisabled(false);
 			mnu_canvasPaste.setDisabled(false);
@@ -2555,7 +2441,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_associate.setDisabled(false);
 		}
 
-		if (X_DMS_Content.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType()))
+		if (MDMSContent.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType()))
 		{
 			mnu_versionList.setDisabled(false);
 			mnu_paste.setDisabled(true);
@@ -2570,7 +2456,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_associate.setDisabled(true);
 		}
 
-		if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType()))
+		if (MDMSContent.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType()))
 		{
 			if (copyDMSContent != null)
 				mnu_createLink.setDisabled(false);
@@ -2587,7 +2473,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMSViewerCom.setContext(contentContextMenu);
 		contentContextMenu.open(this, "at_pointer");
 
-		if (X_DMS_Content.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType())
+		if (MDMSContent.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType())
 				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
 		{
 			mnu_versionList.setDisabled(false);
@@ -2602,8 +2488,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_delete.setDisabled(false);
 			mnu_cut.setDisabled(true);
 		}
-		
-		if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType())
+
+		if (MDMSContent.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType())
 				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
 		{
 			mnu_versionList.setDisabled(true);
@@ -2619,7 +2505,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_cut.setDisabled(true);
 		}
 	}
-	
 
 	/**
 	 * select the directory or content
@@ -2630,17 +2515,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		if (prevComponent != null)
 		{
-			ZkCssHelper.appendStyle(prevComponent.getfLabel(),
-					"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
+			ZkCssHelper.appendStyle(prevComponent.getfLabel(), "background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
 		}
 
 		for (DMSViewerComponent viewerComponent : viewerComponents)
 		{
-			if (viewerComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent()
-					.getDMS_Content_ID())
+			if (viewerComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent().getDMS_Content_ID())
 			{
-				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(),
-						"background-color:#99cbff; box-shadow: 7px 7px 7px #888888");
+				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(), "background-color:#99cbff; box-shadow: 7px 7px 7px #888888");
 
 				prevComponent = viewerComponent;
 				break;
@@ -2727,24 +2609,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					.getSQLValue(
 							null,
 							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID = ? AND AD_Table_ID = ? AND Record_ID = ?",
-							DMSClipboard.get().getDMS_Content_ID(), Utils.getDMS_Association_Record_ID(), tableID,
-							recordID);
+							DMSClipboard.get().getDMS_Content_ID(), Utils.getDMS_Association_Record_ID(), tableID, recordID);
 
 			if (DMS_Association_ID == -1)
 			{
 				MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
 				DMSassociation.setDMS_Content_ID(DMSClipboard.get().getDMS_Content_ID());
 
-				int DMS_Content_Related_ID = DB
-						.getSQLValue(
-								null,
-								"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? "
-										+ "AND DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(Name) = UPPER('Parent'))",
-								DMSClipboard.get().getDMS_Content_ID());
+				int DMS_Content_Related_ID = DB.getSQLValue(null, "SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? "
+						+ "AND DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(Name) = UPPER('Parent'))",
+						DMSClipboard.get().getDMS_Content_ID());
 
 				if (DMS_Content_Related_ID != 0)
 					DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
-	
+
 				DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
 				DMSassociation.setRecord_ID(recordID);
 				DMSassociation.setAD_Table_ID(tableID);
@@ -2762,7 +2640,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					{
 						MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 
-						if (dmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+						if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 							DMS_Content_ID = DMSassociation.getDMS_Content_ID();
 						else
 							DMS_Content_ID = DMSassociation.getDMS_Content_Related_ID();
@@ -2770,8 +2648,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 
-					// Here currently we can not able to move index creation logic in model validator
-					// TODO : In future, will find approaches for move index creation logic
+					// Here currently we can not able to move index creation
+					// logic in model validator
+					// TODO : In future, will find approaches for move index
+					// creation logic
 					indexSeracher.indexContent(Utils.createIndexMap(dmsContent, DMSassociation));
 				}
 				catch (Exception e)
@@ -2796,7 +2676,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
 			DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
 			DMSassociation.saveEx();
-			
+
 			try
 			{
 				renderViewer();
@@ -2853,15 +2733,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			else
 			{
 				value = new ArrayList<Object>();
-				value.add(dateFormat.format(dbCreatedFrom.getValue()));
-				value.add(dateFormat.format(dbCreatedTo.getValue()));
+				value.add(DMSConstant.dateFormatWithTime.format(dbCreatedFrom.getValue()));
+				value.add(DMSConstant.dateFormatWithTime.format(dbCreatedTo.getValue()));
 				params.put(Utils.CREATED, value);
 			}
 		}
 		else if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() == null)
 		{
 			value = new ArrayList<Object>();
-			value.add(dateFormat.format(dbCreatedFrom.getValue()));
+			value.add(DMSConstant.dateFormatWithTime.format(dbCreatedFrom.getValue()));
 			value.add("*");
 			params.put(Utils.CREATED, value);
 		}
@@ -2869,7 +2749,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			value = new ArrayList<Object>();
 			value.add("*");
-			value.add(dateFormat.format(dbCreatedTo.getValue()));
+			value.add(DMSConstant.dateFormatWithTime.format(dbCreatedTo.getValue()));
 			params.put(Utils.CREATED, value);
 		}
 
@@ -2880,8 +2760,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			else
 			{
 				value = new ArrayList<Object>();
-				value.add(dateFormat.format(dbUpdatedFrom.getValue()));
-				value.add(dateFormat.format(dbUpdatedTo.getValue()));
+				value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedFrom.getValue()));
+				value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedTo.getValue()));
 				params.put(Utils.UPDATED, value);
 			}
 
@@ -2889,7 +2769,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() == null)
 		{
 			value = new ArrayList<Object>();
-			value.add(dateFormat.format(dbUpdatedFrom.getValue()));
+			value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedFrom.getValue()));
 			value.add("*");
 			params.put(Utils.UPDATED, value);
 		}
@@ -2897,7 +2777,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			value = new ArrayList<Object>();
 			value.add("*");
-			value.add(dateFormat.format(dbUpdatedTo.getValue()));
+			value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedTo.getValue()));
 			params.put(Utils.UPDATED, value);
 		}
 
@@ -2927,7 +2807,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			params.put(Utils.SHOW_INACTIVE, value);
 		}
-		
+
 		if (lstboxContentType.getValue() != null)
 		{
 
@@ -2937,204 +2817,202 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			for (WEditor editor : m_editors)
 			{
-				//if (editor.getValue() != null && editor.getValue() != "")
-				//{
-					int displayType = editor.getGridField().getDisplayType();
-					String compName = null;
+				// if (editor.getValue() != null && editor.getValue() != "")
+				// {
+				int displayType = editor.getGridField().getDisplayType();
+				String compName = null;
 
-					if (displayType == DisplayType.Search || displayType == DisplayType.Table || displayType == DisplayType.List)
-						compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
-					else
-						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
+				if (displayType == DisplayType.Search || displayType == DisplayType.Table || displayType == DisplayType.List)
+					compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
+				else
+					compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
 
-					compName = compName.replaceAll("/", "");
+				compName = compName.replaceAll("/", "");
 
-					if (displayType == DisplayType.Number || displayType == DisplayType.Integer
-							|| displayType == DisplayType.Quantity || displayType == DisplayType.Amount
-							|| displayType == DisplayType.CostPrice)
-					{
-						NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName);
-						NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to");
+				if (displayType == DisplayType.Number || displayType == DisplayType.Integer || displayType == DisplayType.Quantity
+						|| displayType == DisplayType.Amount || displayType == DisplayType.CostPrice)
+				{
+					NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName);
+					NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to");
 
-						if (fromNumBox.getValue() != null && toNumBox.getValue() != null)
-						{
-							value = new ArrayList<Object>();
-							
-							if(displayType == DisplayType.Number)
-							{
-								value.add(fromNumBox.getValue().doubleValue());
-								value.add(toNumBox.getValue().doubleValue());	
-							}
-							else
-							{
-								value.add(fromNumBox.getValue());
-								value.add(toNumBox.getValue());
-							}
-							params.put(compName, value);
-						}
-						else if (fromNumBox.getValue() != null && toNumBox.getValue() == null)
-						{
-							value = new ArrayList<Object>();
-							
-							if(displayType == DisplayType.Number)
-							{
-								value.add(fromNumBox.getValue().doubleValue());
-							}
-							else
-							{
-								value.add(fromNumBox.getValue());
-							}
-							value.add("*");
-							params.put(compName, value);
-						}
-						else if (fromNumBox.getValue() == null && toNumBox.getValue() != null)
-						{
-							value = new ArrayList<Object>();
-							value.add("*");
-							if(displayType == DisplayType.Number)
-							{
-								value.add(toNumBox.getValue().doubleValue());
-							}
-							else
-							{
-								value.add(toNumBox.getValue());
-							}
-							params.put(compName, value);
-						}
-					}
-					else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime
-							|| displayType == DisplayType.Time)
-					{
-
-						if (displayType == DisplayType.Date)
-						{
-							Datebox fromDate = (Datebox) ASI_Value.get(compName);
-							Datebox toDate = (Datebox) ASI_Value.get(compName + "to");
-
-							if (fromDate.getValue() != null && toDate.getValue() != null)
-							{
-								if (fromDate.getValue().after(toDate.getValue()))
-								{
-									Clients.scrollIntoView(fromDate);
-									throw new WrongValueException(fromDate, "Invalid Date Range");
-								}
-								else
-								{
-									value = new ArrayList<Object>();
-									value.add(dateFormat.format(fromDate.getValue()));
-									value.add(dateFormat.format(toDate.getValue()));
-									params.put(compName, value);
-								}
-							}
-							else if (fromDate.getValue() != null && toDate.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add(dateFormat.format(fromDate.getValue()));
-								value.add("*");
-								params.put(compName, value);
-							}
-							else if (toDate.getValue() != null && fromDate.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add("*");
-								value.add(dateFormat.format(toDate.getValue()));
-								params.put(compName, value);
-							}
-						}
-						else if (displayType == DisplayType.DateTime)
-						{
-							DatetimeBox fromDatetime = (DatetimeBox) ASI_Value.get(compName);
-							DatetimeBox toDatetime = (DatetimeBox) ASI_Value.get(compName + "to");
-
-							if (fromDatetime.getValue() != null && toDatetime.getValue() != null)
-							{
-								if (fromDatetime.getValue().after(toDatetime.getValue()))
-									throw new WrongValueException(fromDatetime, "Invalid Date Range");
-								else
-								{
-									value = new ArrayList<Object>();
-									value.add(dateFormat.format(fromDatetime.getValue()));
-									value.add(dateFormat.format(toDatetime.getValue()));
-									params.put(compName, value);
-								}
-							}
-							else if (fromDatetime.getValue() != null && toDatetime.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add(dateFormat.format(fromDatetime.getValue()));
-								value.add("*");
-								params.put(compName, value);
-							}
-							else if (toDatetime.getValue() != null && fromDatetime.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add("*");
-								value.add(dateFormat.format(toDatetime.getValue()));
-								params.put(compName, value);
-							}
-
-						}
-						else if (displayType == DisplayType.Time)
-						{
-							Timebox timeboxFrom = (Timebox) ASI_Value.get(compName);
-							Timebox timeboxTo = (Timebox) ASI_Value.get(compName + "to");
-
-							if (timeboxFrom.getValue() != null && timeboxTo.getValue() != null)
-							{
-								if (timeboxFrom.getValue().after(timeboxTo.getValue()))
-									throw new WrongValueException(timeboxFrom, "Invalid Date Range");
-								else
-								{
-									value = new ArrayList<Object>();
-									value.add(dateFormat.format(timeboxFrom.getValue()));
-									value.add(dateFormat.format(timeboxTo.getValue()));
-									params.put(compName, value);
-								}
-							}
-							else if (timeboxFrom.getValue() != null && timeboxTo.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add(dateFormat.format(timeboxFrom.getValue()));
-								value.add("*");
-								params.put(compName, value);
-							}
-							else if (timeboxTo.getValue() != null && timeboxFrom.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add("*");
-								value.add(dateFormat.format(timeboxTo.getValue()));
-								params.put(compName, value);
-							}
-
-						}
-					}
-					else if (displayType == DisplayType.YesNo)
+					if (fromNumBox.getValue() != null && toNumBox.getValue() != null)
 					{
 						value = new ArrayList<Object>();
 
-						if ((boolean) editor.getValue())
-							value.add("Y");
+						if (displayType == DisplayType.Number)
+						{
+							value.add(fromNumBox.getValue().doubleValue());
+							value.add(toNumBox.getValue().doubleValue());
+						}
 						else
-							value.add("N");
-
+						{
+							value.add(fromNumBox.getValue());
+							value.add(toNumBox.getValue());
+						}
 						params.put(compName, value);
 					}
-					else if (displayType == DisplayType.String || displayType == DisplayType.Text)
+					else if (fromNumBox.getValue() != null && toNumBox.getValue() == null)
 					{
-						if(!Util.isEmpty(editor.getValue().toString(), true))
+						value = new ArrayList<Object>();
+
+						if (displayType == DisplayType.Number)
 						{
+							value.add(fromNumBox.getValue().doubleValue());
+						}
+						else
+						{
+							value.add(fromNumBox.getValue());
+						}
+						value.add("*");
+						params.put(compName, value);
+					}
+					else if (fromNumBox.getValue() == null && toNumBox.getValue() != null)
+					{
+						value = new ArrayList<Object>();
+						value.add("*");
+						if (displayType == DisplayType.Number)
+						{
+							value.add(toNumBox.getValue().doubleValue());
+						}
+						else
+						{
+							value.add(toNumBox.getValue());
+						}
+						params.put(compName, value);
+					}
+				}
+				else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime || displayType == DisplayType.Time)
+				{
+
+					if (displayType == DisplayType.Date)
+					{
+						Datebox fromDate = (Datebox) ASI_Value.get(compName);
+						Datebox toDate = (Datebox) ASI_Value.get(compName + "to");
+
+						if (fromDate.getValue() != null && toDate.getValue() != null)
+						{
+							if (fromDate.getValue().after(toDate.getValue()))
+							{
+								Clients.scrollIntoView(fromDate);
+								throw new WrongValueException(fromDate, "Invalid Date Range");
+							}
+							else
+							{
+								value = new ArrayList<Object>();
+								value.add(DMSConstant.dateFormatWithTime.format(fromDate.getValue()));
+								value.add(DMSConstant.dateFormatWithTime.format(toDate.getValue()));
+								params.put(compName, value);
+							}
+						}
+						else if (fromDate.getValue() != null && toDate.getValue() == null)
+						{
+							value = new ArrayList<Object>();
+							value.add(DMSConstant.dateFormatWithTime.format(fromDate.getValue()));
+							value.add("*");
+							params.put(compName, value);
+						}
+						else if (toDate.getValue() != null && fromDate.getValue() == null)
+						{
+							value = new ArrayList<Object>();
+							value.add("*");
+							value.add(DMSConstant.dateFormatWithTime.format(toDate.getValue()));
+							params.put(compName, value);
+						}
+					}
+					else if (displayType == DisplayType.DateTime)
+					{
+						DatetimeBox fromDatetime = (DatetimeBox) ASI_Value.get(compName);
+						DatetimeBox toDatetime = (DatetimeBox) ASI_Value.get(compName + "to");
+
+						if (fromDatetime.getValue() != null && toDatetime.getValue() != null)
+						{
+							if (fromDatetime.getValue().after(toDatetime.getValue()))
+								throw new WrongValueException(fromDatetime, "Invalid Date Range");
+							else
+							{
+								value = new ArrayList<Object>();
+								value.add(DMSConstant.dateFormatWithTime.format(fromDatetime.getValue()));
+								value.add(DMSConstant.dateFormatWithTime.format(toDatetime.getValue()));
+								params.put(compName, value);
+							}
+						}
+						else if (fromDatetime.getValue() != null && toDatetime.getValue() == null)
+						{
+							value = new ArrayList<Object>();
+							value.add(DMSConstant.dateFormatWithTime.format(fromDatetime.getValue()));
+							value.add("*");
+							params.put(compName, value);
+						}
+						else if (toDatetime.getValue() != null && fromDatetime.getValue() == null)
+						{
+							value = new ArrayList<Object>();
+							value.add("*");
+							value.add(DMSConstant.dateFormatWithTime.format(toDatetime.getValue()));
+							params.put(compName, value);
+						}
+
+					}
+					else if (displayType == DisplayType.Time)
+					{
+						Timebox timeboxFrom = (Timebox) ASI_Value.get(compName);
+						Timebox timeboxTo = (Timebox) ASI_Value.get(compName + "to");
+
+						if (timeboxFrom.getValue() != null && timeboxTo.getValue() != null)
+						{
+							if (timeboxFrom.getValue().after(timeboxTo.getValue()))
+								throw new WrongValueException(timeboxFrom, "Invalid Date Range");
+							else
+							{
+								value = new ArrayList<Object>();
+								value.add(DMSConstant.dateFormatWithTime.format(timeboxFrom.getValue()));
+								value.add(DMSConstant.dateFormatWithTime.format(timeboxTo.getValue()));
+								params.put(compName, value);
+							}
+						}
+						else if (timeboxFrom.getValue() != null && timeboxTo.getValue() == null)
+						{
+							value = new ArrayList<Object>();
+							value.add(DMSConstant.dateFormatWithTime.format(timeboxFrom.getValue()));
+							value.add("*");
+							params.put(compName, value);
+						}
+						else if (timeboxTo.getValue() != null && timeboxFrom.getValue() == null)
+						{
+							value = new ArrayList<Object>();
+							value.add("*");
+							value.add(DMSConstant.dateFormatWithTime.format(timeboxTo.getValue()));
+							params.put(compName, value);
+						}
+
+					}
+				}
+				else if (displayType == DisplayType.YesNo)
+				{
+					value = new ArrayList<Object>();
+
+					if ((boolean) editor.getValue())
+						value.add("Y");
+					else
+						value.add("N");
+
+					params.put(compName, value);
+				}
+				else if (displayType == DisplayType.String || displayType == DisplayType.Text)
+				{
+					if (!Util.isEmpty(editor.getValue().toString(), true))
+					{
 						value = new ArrayList<Object>();
 						value.add(editor.getValue().toString().toLowerCase());
 						params.put(compName, value);
-						}
 					}
-					else if (!Util.isEmpty(editor.getDisplay()))
-					{
-						value = new ArrayList<Object>();
-						value.add(editor.getValue());
-						params.put(compName, value);
-					}
-				//}
+				}
+				else if (!Util.isEmpty(editor.getDisplay()))
+				{
+					value = new ArrayList<Object>();
+					value.add(editor.getValue());
+					params.put(compName, value);
+				}
+				// }
 			}
 		}
 
@@ -3192,11 +3070,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		for (Integer entry : documentList)
 		{
 			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
-			
+
 			if (latestversion != null)
 			{
-				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
-						new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
+				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null), new MDMSAssociation(Env.getCtx(),
+						((BigDecimal) latestversion.get(1)).intValue(), null));
 			}
 		}
 		return map;
@@ -3250,9 +3128,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					compName = compName.replaceAll("/", "");
 
-					if (displayType == DisplayType.Number || displayType == DisplayType.Integer
-							|| displayType == DisplayType.Quantity || displayType == DisplayType.Amount
-							|| displayType == DisplayType.CostPrice)
+					if (displayType == DisplayType.Number || displayType == DisplayType.Integer || displayType == DisplayType.Quantity
+							|| displayType == DisplayType.Amount || displayType == DisplayType.CostPrice)
 					{
 						NumberBox numBox = new NumberBox(false);
 
@@ -3265,8 +3142,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					}
 
-					else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime
-							|| displayType == DisplayType.Time)
+					else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime || displayType == DisplayType.Time)
 					{
 
 						if (displayType == DisplayType.Date)
@@ -3404,8 +3280,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					getHierarchicalContent(hierarchicalContent, dmsContent.getDMS_Content_ID());
 				else
 				{
-					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-							null);
+					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 					hierarchicalContent.append(association.getDMS_Content_ID() + " OR ");
 
 					if (association.getDMS_Content_ID() != dmsContent.getDMS_Content_ID())

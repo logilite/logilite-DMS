@@ -11,14 +11,17 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package org.idempiere.dms.api;
+package org.idempiere.dms;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FileUtils;
+import org.compiere.model.MImage;
+import org.compiere.model.MTable;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -30,6 +33,7 @@ import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
+import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
@@ -44,7 +48,7 @@ import com.logilite.search.factory.ServiceUtils;
  * 
  * @author Sachin
  */
-public class DMSApi implements I_DMS_Api
+public class DMS
 {
 
 	private static final String	SQL_GET_ASSOCIATION_SEQ_NO	= "SELECT COALESCE(MAX(seqNo), 0) + 1  FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND AD_Client_ID = ?";
@@ -54,94 +58,85 @@ public class DMSApi implements I_DMS_Api
 	public IThumbnailProvider	thumbnailProvider			= null;
 	public IMountingStrategy	mountingStrategy			= null;
 	public IContentManager		contentManager				= null;
-	public IIndexSearcher		indexSeracher				= null;
+	public IIndexSearcher		indexSearcher				= null;
 
 	/**
 	 * Constructor for initialize provider
 	 */
-	public DMSApi()
+	public DMS(int AD_Client_ID, String Table_Name)
 	{
-		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
+		fileStorageProvider = FileStorageUtil.get(AD_Client_ID, false);
 
 		if (fileStorageProvider == null)
 			throw new AdempiereException("Storage provider is not found.");
 
-		thumbnailStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), true);
+		thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
 
 		if (thumbnailStorageProvider == null)
 			throw new AdempiereException("Thumbnail Storage provider is not found.");
 
-		thumbnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
+		thumbnailProvider = Utils.getThumbnailProvider(AD_Client_ID);
 
 		if (thumbnailProvider == null)
 			throw new AdempiereException("Thumbnail provider is not found.");
 
-		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
+		contentManager = Utils.getContentManager(AD_Client_ID);
 
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
-		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+		indexSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
 
-		if (indexSeracher == null)
+		if (indexSearcher == null)
 			throw new AdempiereException("Index server is not found.");
 
-		mountingStrategy = Utils.getMountingStrategy(null);
+		mountingStrategy = Utils.getMountingStrategy(Table_Name);
 	}
 
 	/*
 	 * Adding files and File Version
 	 */
 
-	@Override
 	public boolean addFile(File file)
 	{
 		return addFile(null, file);
 	}
 
-	@Override
 	public boolean addFile(String dirPath, File file)
 	{
 		return addFile(dirPath, file, file.getName());
 	}
 
-	@Override
 	public boolean addFile(String dirPath, File file, String fileName)
 	{
 		return addFile(dirPath, file, fileName, 0, 0);
 	}
 
-	@Override
 	public boolean addFile(String dirPath, File file, String fileName, int AD_Table_ID, int Record_ID)
 	{
 		return addFile(dirPath, file, fileName, null, null, AD_Table_ID, Record_ID);
 	}
 
-	@Override
 	public boolean addFile(String dirPath, File file, String fileName, String contentType, Map<String, String> attributeMap)
 	{
 		return addFile(dirPath, file, fileName, contentType, attributeMap, 0, 0);
 	}
 
-	@Override
 	public boolean addFile(String dirPath, File file, String fileName, String contentType, Map<String, String> attributeMap, int AD_Table_ID, int Record_ID)
 	{
 		return addFile(dirPath, file, fileName, contentType, attributeMap, AD_Table_ID, Record_ID, false);
 	}
 
-	// @Override
 	// public boolean addFileVersion(String dirPath, File file)
 	// {
 	// return addFileVersion(dirPath, file, file.getName());
 	// }
 	//
-	// @Override
 	// public boolean addFileVersion(String dirPath, File file, String fileName)
 	// {
 	// return addFileVersion(dirPath, file, fileName, 0, 0);
 	// }
 	//
-	// @Override
 	// public boolean addFileVersion(String dirPath, File file, String fileName,
 	// int AD_Table_ID, int Record_ID)
 	// {
@@ -149,7 +144,6 @@ public class DMSApi implements I_DMS_Api
 	// Record_ID, true);
 	// }
 
-	@Override
 	public boolean addFileVersion(int DMS_Content_ID, File file)
 	{
 		// TODO Auto-generated method stub
@@ -308,16 +302,49 @@ public class DMSApi implements I_DMS_Api
 	 * Select Content
 	 */
 
-	@Override
 	public MDMSContent[] selectContent(String dirPath)
 	{
 		return null;
 	} // selectContent
 
-	@Override
 	public MDMSContent[] selectContent(String dirPath, int AD_Table_ID, int Record_ID)
 	{
 		return null;
+	}
+
+	public MDMSContent getRootContent(int AD_Table_ID, int Record_ID)
+	{
+		return mountingStrategy.getMountingParent(MTable.getTableName(Env.getCtx(), AD_Table_ID), Record_ID);
+	}
+
+	public MDMSContent createDirectory(String dirName, MDMSContent mDMSContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)
+	{
+		return Utils.createDirectory(dirName, mDMSContent, tableID, recordID, fileStorageProvider, contentManager, errorIfDirExists, trxName);
+	}
+
+	public File getThumbnail(I_DMS_Content content, String size)
+	{
+		return thumbnailProvider.getFile(content, size);
+	}
+
+	public MImage getDirThumbnail()
+	{
+		return Utils.getDirThumbnail();
+	}
+
+	public MImage getMimetypeThumbnail(int dms_MimeType_ID)
+	{
+		return Utils.getMimetypeThumbnail(dms_MimeType_ID);
+	}
+
+	public List<Integer> searchIndex(String query)
+	{
+		return indexSearcher.searchIndex(query);
+	}
+
+	public File getFileFromContent(MDMSContent content)
+	{
+		return fileStorageProvider.getFile(contentManager.getPath(content));
 	}
 
 }

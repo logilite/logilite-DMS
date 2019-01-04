@@ -49,10 +49,10 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
+import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
@@ -82,6 +82,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	private static final long		serialVersionUID		= -6554158380274124479L;
 	private static CLogger			log						= CLogger.getCLogger(WUploadContent.class);
+
+	private DMS						dms;
 
 	private WTableDirEditor			contentType;
 
@@ -124,29 +126,23 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	private boolean					isVersion				= false;
 	private WDLoadASIPanel			asiPanel				= null;
 	private boolean					cancel					= false;
-	
+
 	/**
 	 * Constructor initialize
 	 * 
+	 * @param dms
 	 * @param mDMSContent
 	 * @param isVersion
+	 * @param tableID
+	 * @param recordID
 	 */
-	public WUploadContent(MDMSContent mDMSContent, boolean isVersion, int tableID, int recordID)
+	public WUploadContent(DMS dms, MDMSContent mDMSContent, boolean isVersion, int tableID, int recordID)
 	{
+		this.dms = dms;
 		this.DMSContent = (MDMSContent) mDMSContent;
 		this.isVersion = isVersion;
 		this.tableID = tableID;
 		this.recordID = recordID;
-
-		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-		if (fileStorageProvider == null)
-			throw new AdempiereException("Storage provider is not define on clientInfo.");
-
-		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (contentManager == null)
-			throw new AdempiereException("Content manager is not found.");
 
 		init();
 
@@ -159,7 +155,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			this.setHeight("26%");
 			this.setWidth("40%");
 		}
-		
+
 	}
 
 	/**
@@ -184,15 +180,13 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int Column_ID = MColumn.getColumn_ID(X_DMS_ContentType.Table_Name,
-				X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID);
+		int Column_ID = MColumn.getColumn_ID(X_DMS_ContentType.Table_Name, X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID);
 		MLookup lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
-					Env.getLanguage(Env.getCtx()), X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			contentType = new WTableDirEditor(X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true,
-					lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
+					X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
+			contentType = new WTableDirEditor(X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -319,6 +313,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	private void saveUploadedDcoument()
 	{
+		// TODO Need to refactoring whole method 
 		Trx trx = null;
 		MDMSContent uploadedDMSContent = null;
 		int ASI_ID = 0;
@@ -333,11 +328,12 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			throw new WrongValueException(btnFileUpload, fillMandatory);
 
 		String newFilename = txtName.getValue();
-		
+
 		if (nameRow.isVisible())
 		{
-			String validationMsg = Utils.isValidFileName(newFilename);			
-			if(validationMsg != null){
+			String validationMsg = Utils.isValidFileName(newFilename);
+			if (validationMsg != null)
+			{
 				String validationResponse = Msg.translate(Env.getCtx(), validationMsg);
 				throw new WrongValueException(txtName, validationResponse);
 			}
@@ -346,15 +342,14 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		if (isVersion)
 		{
 			if (Utils.getMimeTypeID(uploadedMedia) != DMSContent.getDMS_MimeType_ID())
-				throw new WrongValueException(btnFileUpload,
-						"Mime type not matched, please upload same mime type version document.");
+				throw new WrongValueException(btnFileUpload, "Mime type not matched, please upload same mime type version document.");
 		}
 
 		if (contentType.getValue() != null)
 		{
 			ASI_ID = asiPanel.saveAttributes();
 		}
-		
+
 		try
 		{
 			String trxName = Trx.createTrxName("UploadFiles");
@@ -368,7 +363,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				{
 					throw new AdempiereException("Invalid File format");
 				}
-				
+
 				if (!txtName.getValue().contains(format))
 				{
 					uploadedDMSContent.setName(txtName.getValue() + "." + format);
@@ -409,9 +404,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				dmsAssociation.setDMS_Content_Related_ID(DMS_Content_Related_ID);
 				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(false));
 
-				int seqNo = DB.getSQLValue(null,
-						"SELECT MAX(seqNo) FROM DMS_Association WHERE DMS_Content_Related_ID = ?",
-						DMS_Content_Related_ID);
+				int seqNo = DB.getSQLValue(null, "SELECT MAX(seqNo) FROM DMS_Association WHERE DMS_Content_Related_ID = ?", DMS_Content_Related_ID);
 				dmsAssociation.setSeqNo(seqNo + 1);
 
 			}
@@ -421,13 +414,14 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 					dmsAssociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
 
 				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
-				
+
 				// Display an error when trying to upload same name file
 				String path = fileStorageProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent));
 				File file = new File(path);
 				if (file.exists())
 				{
-					throw new WrongValueException("File already exists, either rename or upload as a version. \n (Either same file name content exist in inActive mode)");
+					throw new WrongValueException(
+							"File already exists, either rename or upload as a version. \n (Either same file name content exist in inActive mode)");
 				}
 			}
 
@@ -435,16 +429,15 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			dmsAssociation.setRecord_ID(recordID);
 			dmsAssociation.saveEx();
 
-			fileStorageProvider.writeBLOB(fileStorageProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent)),
-					uploadedMedia.getByteData(), uploadedDMSContent);
+			fileStorageProvider.writeBLOB(fileStorageProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent)), uploadedMedia.getByteData(),
+					uploadedDMSContent);
 
 			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), uploadedDMSContent.getDMS_MimeType_ID(), null);
 
 			thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
 
 			if (thumbnailGenerator != null)
-				thumbnailGenerator.addThumbnail(uploadedDMSContent,
-						fileStorageProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
+				thumbnailGenerator.addThumbnail(uploadedDMSContent, fileStorageProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
 
 			// Transaction commit
 			trx.commit();
@@ -511,5 +504,5 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	{
 		return cancel;
 	}
-	
+
 }

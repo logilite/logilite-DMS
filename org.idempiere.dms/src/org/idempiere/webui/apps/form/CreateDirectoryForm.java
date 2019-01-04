@@ -25,10 +25,8 @@ import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.idempiere.dms.factories.IContentManager;
+import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.WrongValueException;
@@ -50,6 +48,8 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private static final long		serialVersionUID	= 4397569198011705268L;
 	protected static final CLogger	log					= CLogger.getCLogger(CreateDirectoryForm.class);
 
+	private DMS						dms;
+
 	private Borderlayout			mainLayout			= new Borderlayout();
 	private Panel					parameterPanel		= new Panel();
 	private ConfirmPanel			confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
@@ -57,34 +57,24 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	private Textbox					txtboxDirectory		= new Textbox();
 	private MDMSContent				mDMSContent			= null;
 
-	private IFileStorageProvider	fileStorageProvider	= null;
-	private IContentManager			contentManager		= null;
-
 	private int						tableID				= 0;
 	private int						recordID			= 0;
 
 	/**
 	 * Constructor initialize
 	 * 
+	 * @param dms
 	 * @param DMSContent
 	 */
-	public CreateDirectoryForm(I_DMS_Content DMSContent, int tableID, int recordID)
+	public CreateDirectoryForm(DMS dms, I_DMS_Content DMSContent, int tableID, int recordID)
 	{
+		this.dms = dms;
+
 		try
 		{
 			this.mDMSContent = (MDMSContent) DMSContent;
 			this.tableID = tableID;
 			this.recordID = recordID;
-
-			fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-			if (fileStorageProvider == null)
-				throw new AdempiereException("Storage provider is not found");
-
-			contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-			if (contentManager == null)
-				throw new AdempiereException("Content manager is not found");
 
 			init();
 		}
@@ -166,7 +156,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 
 			try
 			{
-				Utils.createDirectory(dirName, mDMSContent, tableID, recordID, fileStorageProvider, contentManager, true, null);
+				dms.createDirectory(dirName, mDMSContent, tableID, recordID, true, null);
 			}
 			catch (WrongValueException e)
 			{
