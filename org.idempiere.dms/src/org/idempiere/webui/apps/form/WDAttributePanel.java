@@ -44,6 +44,7 @@ import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
 import org.compiere.model.MImage;
 import org.compiere.model.MUser;
+import org.compiere.model.PO;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -549,6 +550,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnDownload))
 		{
+			DMS_Content.load(DMS_Content.get_TrxName());
 			File document = fileStorageProvider.getFile(contentManager.getPath(DMS_Content));
 			if (document.exists())
 			{
