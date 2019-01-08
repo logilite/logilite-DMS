@@ -73,9 +73,6 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -900,7 +897,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
-			final WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(), this.getRecord_ID());
+			final WUploadContent uploadContent = new WUploadContent(dms, dirContent, true, this.getTable_ID(), this.getRecord_ID());
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -955,7 +952,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(mnu_download))
 		{
 			File file = null;
-			file = fileStorageProvider.getFile(contentManager.getPath(dirContent));
+			file = dms.getFile(contentManager.getPath(dirContent));
 
 			AMedia media = new AMedia(file, "application/octet-stream", null);
 			Filedownload.save(media);
@@ -1162,107 +1159,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return map;
 	}
 
-	private String pastePhysicalCopiedFolder(MDMSContent copiedContent, MDMSContent destPasteContent)
-	{
-		File dirPath = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
-		String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-
-		File files[] = new File(newFileName).listFiles();
-
-		if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
-			newFileName = newFileName + copiedContent.getName();
-		else
-			newFileName = newFileName + DMSConstant.FILE_SEPARATOR + copiedContent.getName();
-
-		File newFile = new File(newFileName);
-
-		if (files.length > 0)
-		{
-			for (int i = 0; i < files.length; i++)
-			{
-				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
-				{
-					if (!newFileName.contains(" - copy "))
-						newFileName = newFileName + " - copy ";
-
-					newFile = new File(newFileName);
-
-					if (newFile.exists())
-					{
-						newFileName = Utils.getUniqueFoldername(newFile.getAbsolutePath());
-						newFile = new File(newFileName);
-					}
-				}
-			}
-		}
-
-		try
-		{
-			FileUtils.copyDirectory(dirPath, newFile, DirectoryFileFilter.DIRECTORY);
-		}
-		catch (IOException e)
-		{
-			log.log(Level.SEVERE, "Copy Content Failure.", e);
-			throw new AdempiereException("Copy Content Failure." + e.getLocalizedMessage());
-		}
-
-		return newFile.getName();
-	}
-
-	private String pastePhysicalCopiedContent(MDMSContent copiedContent, MDMSContent destPasteContent, String parentName)
-	{
-		File oldFile = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
-		String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-
-		if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
-			newFileName = newFileName + copiedContent.getName();
-		else
-			newFileName = newFileName + DMSConstant.FILE_SEPARATOR + copiedContent.getName();
-
-		File newFile = new File(newFileName);
-		File parent = new File(newFile.getParent());
-
-		File files[] = parent.listFiles();
-
-		for (int i = 0; i < files.length; i++)
-		{
-			if (newFile.getName().equals(files[i].getName()))
-			{
-				String uniqueName = newFile.getName();
-
-				if (!newFile.getName().contains(" - copy "))
-				{
-					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy ";
-					String ext = FilenameUtils.getExtension(newFile.getName());
-					newFile = new File(parent.getAbsolutePath() + DMSConstant.FILE_SEPARATOR + uniqueName + "." + ext);
-				}
-
-				if (newFile.exists())
-				{
-					uniqueName = Utils.getCopiedUniqueFilename(newFile.getAbsolutePath());
-					newFile = new File(uniqueName);
-				}
-			}
-		}
-
-		try
-		{
-			FileUtils.copyFile(oldFile, newFile);
-		}
-		catch (IOException e)
-		{
-			log.log(Level.SEVERE, "Copy Content Failure.", e);
-			throw new AdempiereException("Copy Content Failure." + e.getLocalizedMessage());
-		}
-
-		return newFile.getName();
-	} // pastePhysicalCopiedContent
-
 	private void pasteCopyContent(MDMSContent copiedContent, MDMSContent destPasteContent) throws IOException, SQLException
 	{
 		if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
-			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
+			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? ORDER BY CREATED",
 					copiedContent.getDMS_Content_ID());
 
 			String baseURL = null;
@@ -1276,7 +1177,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
-				contentname = pastePhysicalCopiedFolder(copiedContent, destPasteContent);
+				contentname = dms.pastePhysicalCopiedFolder(copiedContent, destPasteContent);
 			}
 			renamedURL = contentManager.getPath(destPasteContent) + DMSConstant.FILE_SEPARATOR + copiedContent.getName();
 
@@ -1473,7 +1374,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				baseURL = baseURL.substring(0, baseURL.lastIndexOf(DMSConstant.FILE_SEPARATOR));
 
-				fileName = pastePhysicalCopiedContent(oldDMSContent, destPasteContent, fileName);
+				fileName = dms.pastePhysicalCopiedContent(oldDMSContent, destPasteContent, fileName);
 				renamedURL = contentManager.getPath(destPasteContent);
 
 				MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, trx.getTrxName());
@@ -1848,7 +1749,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (!Util.isEmpty(vsearchBox.getTextbox().getValue(), true))
 		{
 			String inputParam = vsearchBox.getTextbox().getValue();
-			query.append("(").append(Utils.NAME).append(":*").append(inputParam).append("*").append(" OR ").append(Utils.DESCRIPTION).append(":*")
+			query.append("(").append(DMSConstant.NAME).append(":*").append(inputParam).append("*").append(" OR ").append(DMSConstant.DESCRIPTION).append(":*")
 					.append(inputParam).append("*)");
 		}
 		else
@@ -2003,7 +1904,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), selectedDMSContent.peek().getDMS_MimeType_ID(), null);
 
-			documentToPreview = dms.getFileFromContent(selectedDMSContent.peek());
+			documentToPreview = dms.getFileFromStorage(selectedDMSContent.peek());
 
 			if (documentToPreview != null)
 			{
@@ -2715,7 +2616,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (!Util.isEmpty(txtDocumentName.getValue(), true))
 		{
 			value.add("*" + txtDocumentName.getValue().toLowerCase() + "*");
-			params.put(Utils.NAME, value);
+			params.put(DMSConstant.NAME, value);
 
 		}
 
@@ -2723,7 +2624,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			value = new ArrayList<Object>();
 			value.add("*" + txtDescription.getValue().toLowerCase().trim() + "*");
-			params.put(Utils.DESCRIPTION, value);
+			params.put(DMSConstant.DESCRIPTION, value);
 		}
 
 		if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() != null)
@@ -2735,7 +2636,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				value = new ArrayList<Object>();
 				value.add(DMSConstant.dateFormatWithTime.format(dbCreatedFrom.getValue()));
 				value.add(DMSConstant.dateFormatWithTime.format(dbCreatedTo.getValue()));
-				params.put(Utils.CREATED, value);
+				params.put(DMSConstant.CREATED, value);
 			}
 		}
 		else if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() == null)
@@ -2743,14 +2644,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			value = new ArrayList<Object>();
 			value.add(DMSConstant.dateFormatWithTime.format(dbCreatedFrom.getValue()));
 			value.add("*");
-			params.put(Utils.CREATED, value);
+			params.put(DMSConstant.CREATED, value);
 		}
 		else if (dbCreatedTo.getValue() != null && dbCreatedFrom.getValue() == null)
 		{
 			value = new ArrayList<Object>();
 			value.add("*");
 			value.add(DMSConstant.dateFormatWithTime.format(dbCreatedTo.getValue()));
-			params.put(Utils.CREATED, value);
+			params.put(DMSConstant.CREATED, value);
 		}
 
 		if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() != null)
@@ -2762,7 +2663,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				value = new ArrayList<Object>();
 				value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedFrom.getValue()));
 				value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedTo.getValue()));
-				params.put(Utils.UPDATED, value);
+				params.put(DMSConstant.UPDATED, value);
 			}
 
 		}
@@ -2771,28 +2672,28 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			value = new ArrayList<Object>();
 			value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedFrom.getValue()));
 			value.add("*");
-			params.put(Utils.UPDATED, value);
+			params.put(DMSConstant.UPDATED, value);
 		}
 		else if (dbUpdatedTo.getValue() != null && dbUpdatedFrom.getValue() == null)
 		{
 			value = new ArrayList<Object>();
 			value.add("*");
 			value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedTo.getValue()));
-			params.put(Utils.UPDATED, value);
+			params.put(DMSConstant.UPDATED, value);
 		}
 
 		if (lstboxCreatedBy.getValue() != null)
 		{
 			value = new ArrayList<Object>();
 			value.add(lstboxCreatedBy.getValue());
-			params.put(Utils.CREATEDBY, value);
+			params.put(DMSConstant.CREATEDBY, value);
 		}
 
 		if (lstboxUpdatedBy.getValue() != null)
 		{
 			value = new ArrayList<Object>();
 			value.add(lstboxUpdatedBy.getValue());
-			params.put(Utils.UPDATEDBY, value);
+			params.put(DMSConstant.UPDATEDBY, value);
 		}
 
 		// if chkInActive = true, display all files
@@ -2805,7 +2706,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				value.add(!chkInActive.isChecked());
 			}
-			params.put(Utils.SHOW_INACTIVE, value);
+			params.put(DMSConstant.SHOW_INACTIVE, value);
 		}
 
 		if (lstboxContentType.getValue() != null)
@@ -2813,7 +2714,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			value = new ArrayList<Object>();
 			value.add(lstboxContentType.getValue());
-			params.put(Utils.CONTENTTYPE, value);
+			params.put(DMSConstant.CONTENTTYPE, value);
 
 			for (WEditor editor : m_editors)
 			{
@@ -3020,14 +2921,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			value = new ArrayList<Object>();
 			value.add(tableID);
-			params.put(Utils.AD_Table_ID, value);
+			params.put(DMSConstant.AD_Table_ID, value);
 		}
 
 		if (recordID > 0)
 		{
 			value = new ArrayList<Object>();
 			value.add(recordID);
-			params.put(Utils.RECORD_ID, value);
+			params.put(DMSConstant.RECORD_ID, value);
 		}
 
 		return params;

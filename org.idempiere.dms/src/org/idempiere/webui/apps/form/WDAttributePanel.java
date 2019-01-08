@@ -1,4 +1,3 @@
-
 /******************************************************************************
  * Copyright (C) 2016 Logilite Technologies LLP								  *
  * This program is free software; you can redistribute it and/or modify it    *
@@ -100,7 +99,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private Tabpanel				tabpanelVersionHitory	= new Tabpanel();
 
 	private Grid					gridAttributeLayout		= new Grid();
-	
+
 	private Grid					grid					= new Grid();
 
 	private Label					lblStatus				= null;
@@ -140,8 +139,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private int						m_M_AttributeSetInstance_ID;
 	private int						tableId					= 0;
 	private int						recordId				= 0;
-	
-	private boolean 				isWindowAccess			= true;
+
+	private boolean					isWindowAccess			= true;
 
 	private static final String		SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
 																	+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "
@@ -202,16 +201,16 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		Columns columns = new Columns();
 		Rows rows = new Rows();
-		
+
 		Column column = new Column();
 		columns.appendChild(column);
-		
+
 		Row row = new Row();
 		row.appendChild(panelAttribute);
 		rows.appendChild(row);
 		grid.appendChild(columns);
 		grid.appendChild(rows);
-		
+
 		lblStatus = new Label();
 		ZkCssHelper.appendStyle(lblStatus, "font-weight: bold;");
 		ZkCssHelper.appendStyle(lblStatus, "align: center;");
@@ -304,7 +303,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
 		panelFooterButtons.setStyle("display: inline-flex; padding-top: 5px;");
-		
+
 		btnVersionUpload.setImageContent(Utils.getImage("uploadversion24.png"));
 		btnDelete.setImageContent(Utils.getImage("Delete24.png"));
 		btnRequery.setImageContent(Utils.getImage("Refresh24.png"));
@@ -313,7 +312,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
-		
+
 		btnVersionUpload.setDisabled(!isWindowAccess);
 		btnEdit.setDisabled(!isWindowAccess);
 
@@ -357,14 +356,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		{
 			MDMSContent versionContent = null;
 
-			int DMS_Association_ID = DB.getSQLValue(null,
-					"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
+			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
 					DMS_Content.getDMS_Content_ID());
 
 			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
 
-			PreparedStatement pstmt = DB.prepareStatement(SQL_FETCH_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE,
-					ResultSet.CONCUR_UPDATABLE, null);
+			PreparedStatement pstmt = DB.prepareStatement(SQL_FETCH_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
 
 			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());
 			pstmt.setInt(2, dmsAssociation.getDMS_Content_Related_ID());
@@ -392,26 +389,25 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 						imageVersion = new AImage(thumbnailProvider.getURL(versionContent, "150"));
 					}
 
-					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false,dmsAssociation);
+					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false, dmsAssociation);
 					viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
 
 					viewerComponenet.setDheight(100);
 					viewerComponenet.setDwidth(100);
 
-					viewerComponenet.getfLabel().setStyle(
-							"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
-					
+					viewerComponenet.getfLabel().setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
+
 					Cell cell = new Cell();
 					cell.setRowspan(1);
-					
+
 					Label created = new Label("Created: " + versionContent.getCreated());
 					Label createdby = new Label("Created By: " + MUser.getNameOfUser(versionContent.getCreatedBy()));
 					Label size = new Label("Size: " + versionContent.getDMS_FileSize());
-					
+
 					cell.appendChild(created);
 					cell.appendChild(createdby);
 					cell.appendChild(size);
-					
+
 					row = new Row();
 					row.appendChild(viewerComponenet);
 					row.appendChild(cell);
@@ -520,22 +516,24 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 			if (!txtName.getValue().equals(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 			{
-				String validationMsg = Utils.isValidFileName(txtName.getValue());			
-				if(validationMsg != null){
-					String validationResponse = Msg.translate(Env.getCtx(), validationMsg);
-					throw new WrongValueException(txtName, validationResponse);
+				try
+				{
+					Utils.isValidFileName(txtName.getValue(), true);
+				}
+				catch (WrongValueException e)
+				{
+					throw new WrongValueException(txtName, e.getMessage());
 				}
 				updateContent();
 			}
-			
+
 			if ((Util.isEmpty(DMS_Content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
-					|| (!Util.isEmpty(DMS_Content.getDescription()) && !DMS_Content.getDescription().equals(
-							txtDesc.getValue())))
+					|| (!Util.isEmpty(DMS_Content.getDescription()) && !DMS_Content.getDescription().equals(txtDesc.getValue())))
 			{
 				DMS_Content.setDescription(txtDesc.getValue());
 				DMS_Content.save();
 			}
-			
+
 			MDMSContent DMSContent = new MDMSContent(Env.getCtx(), DMS_Content.getDMS_Content_ID(), null);
 			Events.sendEvent(new Event("onRenameComplete", this));
 			tabBox.setSelectedTab((Tab) tabBox.getSelectedTab());
@@ -572,8 +570,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			if (thumbnails.exists())
 				FileUtils.deleteDirectory(thumbnails);
 
-			DB.executeUpdate("DELETE FROM DMS_Association WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID(),
-					null);
+			DB.executeUpdate("DELETE FROM DMS_Association WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID(), null);
 			DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID(), null);
 			tabBox.getSelectedTab().close();
 		}
@@ -582,7 +579,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			final Tab tab = (Tab) tabBox.getSelectedTab();
 			final WDAttributePanel panel = this;
 
-			WUploadContent uploadContent = new WUploadContent(DMS_Content, true, tableId, recordId);
+			WUploadContent uploadContent = new WUploadContent(dms, DMS_Content, true, tableId, recordId);
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -674,8 +671,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		File newFile = new File(newPath);
 		oldFile.renameTo(newFile);
 
-		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf(spFileSeprator) + 1,
-				newFile.getAbsolutePath().length()));
+		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf(spFileSeprator) + 1, newFile.getAbsolutePath().length()));
 		content.saveEx();
 
 	}

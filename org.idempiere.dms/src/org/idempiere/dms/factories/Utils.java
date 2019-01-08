@@ -42,6 +42,7 @@ import org.adempiere.base.Core;
 import org.adempiere.base.IResourceFinder;
 import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.model.MAttribute;
@@ -82,26 +83,7 @@ public class Utils
 
 	public static final String					STORAGE_PROVIDER_FILE_SEPARATOR			= "STORAGE_PROVIDER_FILE_SEPARATOR";
 
-	public static final String					DIRECTORY								= "Directory";
-	public static final String					DEFAULT									= "Default";
-	public static final String					DOWNLOAD								= "Download";
-	public static final String					LINK									= "Link";
-	public static final String					RECORD									= "Record";
 
-	// constant for index fields
-
-	public static final String					NAME									= "Name";
-	public static final String					CREATED									= "created";
-	public static final String					CREATEDBY								= "createdBy";
-	public static final String					UPDATED									= "updated";
-	public static final String					UPDATEDBY								= "updatedBy";
-	public static final String					DESCRIPTION								= "description";
-	public static final String					CONTENTTYPE								= "contentType";
-	public static final String					DMS_CONTENT_ID							= "DMS_Content_ID";
-	public static final String					AD_Table_ID								= "AD_Table_ID";
-	public static final String					RECORD_ID								= "Record_ID";
-	public static final String					SHOW_INACTIVE							= "Show_InActive";
-	public static final String					AD_CLIENT_ID							= "AD_Client_ID";
 
 	private static final String					SQL_GETASSOCIATIONTYPE					= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(name) like UPPER(?)";
 
@@ -359,7 +341,7 @@ public class Utils
 			return dmsMimeType_ID;
 		else
 		{
-			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE name = ?", DEFAULT);
+			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE name = ?", DMSConstant.DEFAULT);
 		}
 
 		return dmsMimeType_ID;
@@ -483,15 +465,15 @@ public class Utils
 	 */
 	public static MImage getDirThumbnail()
 	{
-		MImage mImage = cache_dirThumbnail.get(DIRECTORY);
+		MImage mImage = cache_dirThumbnail.get(DMSConstant.DIRECTORY);
 		if (mImage != null)
 		{
 			return mImage;
 		}
 
-		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE Upper(name) =  UPPER(?) ", DIRECTORY);
+		int AD_Image_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE Upper(name) =  UPPER(?) ", DMSConstant.DIRECTORY);
 		mImage = new MImage(Env.getCtx(), AD_Image_ID, null);
-		cache_dirThumbnail.put(DIRECTORY, mImage);
+		cache_dirThumbnail.put(DMSConstant.DIRECTORY, mImage);
 		return mImage;
 	}
 
@@ -514,10 +496,10 @@ public class Utils
 
 		if (Icon_ID <= 0)
 		{
-			Icon_ID = DB.getSQLValue(null, "SELECT Icon_ID FROM DMS_MimeType WHERE UPPER(Name) = UPPER(?) ", DEFAULT);
+			Icon_ID = DB.getSQLValue(null, "SELECT Icon_ID FROM DMS_MimeType WHERE UPPER(Name) = UPPER(?) ", DMSConstant.DEFAULT);
 			if (Icon_ID <= 0)
 			{
-				Icon_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE UPPER(Name) = UPPER(?) ", DOWNLOAD);
+				Icon_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE UPPER(Name) = UPPER(?) ", DMSConstant.DOWNLOAD);
 			}
 		}
 
@@ -564,7 +546,7 @@ public class Utils
 	public static int getDMS_Association_Link_ID()
 	{
 		int linkID = 0;
-		linkID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, LINK);
+		linkID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, DMSConstant.LINK);
 
 		if (linkID != -1)
 			return linkID;
@@ -580,7 +562,7 @@ public class Utils
 	public static int getDMS_Association_Record_ID()
 	{
 		int recordID = 0;
-		recordID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, RECORD);
+		recordID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, DMSConstant.RECORD);
 
 		if (recordID != -1)
 			return recordID;
@@ -591,18 +573,18 @@ public class Utils
 	public static Map<String, Object> createIndexMap(MDMSContent DMSContent, MDMSAssociation DMSAssociation)
 	{
 		Map<String, Object> solrValue = new HashMap<String, Object>();
-		solrValue.put(AD_CLIENT_ID, DMSContent.getAD_Client_ID());
-		solrValue.put(NAME, DMSContent.getName().toLowerCase());
-		solrValue.put(CREATED, DMSContent.getCreated());
-		solrValue.put(CREATEDBY, DMSContent.getCreatedBy());
-		solrValue.put(UPDATED, DMSContent.getUpdated());
-		solrValue.put(UPDATEDBY, DMSContent.getUpdatedBy());
-		solrValue.put(DESCRIPTION, (!Util.isEmpty(DMSContent.getDescription(), true) ? DMSContent.getDescription().toLowerCase() : null));
-		solrValue.put(CONTENTTYPE, DMSContent.getDMS_ContentType_ID());
-		solrValue.put(DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
-		solrValue.put(AD_Table_ID, DMSAssociation.getAD_Table_ID());
-		solrValue.put(RECORD_ID, DMSAssociation.getRecord_ID());
-		solrValue.put(SHOW_INACTIVE, !DMSContent.isActive());
+		solrValue.put(DMSConstant.AD_CLIENT_ID, DMSContent.getAD_Client_ID());
+		solrValue.put(DMSConstant.NAME, DMSContent.getName().toLowerCase());
+		solrValue.put(DMSConstant.CREATED, DMSContent.getCreated());
+		solrValue.put(DMSConstant.CREATEDBY, DMSContent.getCreatedBy());
+		solrValue.put(DMSConstant.UPDATED, DMSContent.getUpdated());
+		solrValue.put(DMSConstant.UPDATEDBY, DMSContent.getUpdatedBy());
+		solrValue.put(DMSConstant.DESCRIPTION, (!Util.isEmpty(DMSContent.getDescription(), true) ? DMSContent.getDescription().toLowerCase() : null));
+		solrValue.put(DMSConstant.CONTENTTYPE, DMSContent.getDMS_ContentType_ID());
+		solrValue.put(DMSConstant.DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
+		solrValue.put(DMSConstant.AD_Table_ID, DMSAssociation.getAD_Table_ID());
+		solrValue.put(DMSConstant.RECORD_ID, DMSAssociation.getRecord_ID());
+		solrValue.put(DMSConstant.SHOW_INACTIVE, !DMSContent.isActive());
 
 		if (DMSContent.getM_AttributeSetInstance_ID() > 0)
 		{
@@ -926,22 +908,33 @@ public class Utils
 		return association.getDMS_Association_ID();
 	} // createAssociation
 
-	public static String isValidFileName(String fileName)
+	/**
+	 * Check file name is valid
+	 * 
+	 * @param fileName
+	 * @param isThrowEx
+	 * @return
+	 */
+	public static String isValidFileName(String fileName, boolean isThrowEx)
 	{
+		String error = null;
 		if (fileName.equals("") || fileName.equals(null))
-			return "FillMandatory";
+			error = "FillMandatory";
 
 		if (fileName.length() > DMSConstant.MAX_FILENAME_LENGTH)
-			return "Invalid File Name. file name less than 250 character";
+			error = "Invalid File Name. file name less than 250 character";
 
 		if (!fileName.matches(DMSConstant.REG_EXP_FILENAME))
-			return "Invalid File Name.";
+			error = "Invalid File Name.";
 
 		if (!Utils.isFileNameEndWithNotBracket(fileName))
-			return "Invalid File Name. not support end with ()";
+			error = "Invalid File Name. not support end with ()";
 
-		return null;
-	}
+		if (!Util.isEmpty(error, true))
+			throw new WrongValueException(Msg.translate(Env.getCtx(), error));
+
+		return error;
+	} // isValidFileName
 
 	public static boolean isFileNameEndWithNotBracket(String fileName)
 	{
@@ -986,7 +979,6 @@ public class Utils
 	 * Create Directory
 	 * 
 	 * @param dirName - Directory Name
-	 * @param tbDir - ZK Component of DirName or Null
 	 * @param dmsContent - Root or Parent Directory or Null
 	 * @param AD_Table_ID - Table ID
 	 * @param Record_ID - Record ID
@@ -1254,4 +1246,15 @@ public class Utils
 			thumbnailGenerator.addThumbnail(content, fsProvider.getFile(contentMngr.getPath(content)), null);
 	} // writeFileOnStorageAndThumnail
 
+	public static AMedia getMediaFromFile(File file)
+	{
+		try
+		{
+			return new AMedia(file.getName(), null, null, FileUtils.readFileToByteArray(file));
+		}
+		catch (IOException e)
+		{
+			throw new AdempiereException("Issue while creating Media file.", e);
+		}
+	} // getMediaFromFile
 }
