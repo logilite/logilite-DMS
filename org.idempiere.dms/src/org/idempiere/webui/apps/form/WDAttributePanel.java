@@ -14,7 +14,6 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
@@ -39,16 +38,17 @@ import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.theme.ThemeManager;
-import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
 import org.compiere.model.MImage;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.idempiere.componenet.DMSViewerComponent;
+import org.idempiere.dms.DMS;
+import org.idempiere.dms.DMS_ZK_Util;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
@@ -58,8 +58,6 @@ import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.image.AImage;
-import org.zkoss.util.media.AMedia;
-import org.zkoss.zhtml.Filedownload;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -68,8 +66,6 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.South;
-
-import com.logilite.search.factory.IIndexSearcher;
 
 public class WDAttributePanel extends Panel implements EventListener<Event>
 {
@@ -80,29 +76,21 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private static final long		serialVersionUID		= 5200959427619624094L;
 	private static CLogger			log						= CLogger.getCLogger(WDAttributePanel.class);
 
-	private static final String		spFileSeprator			= Utils.getStorageProviderFileSeparator();
-
 	private Panel					panelAttribute			= new Panel();
 	private Panel					panelFooterButtons		= new Panel();
 	private Borderlayout			mainLayout				= new Borderlayout();
 
 	private Tabbox					tabBoxAttribute			= new Tabbox();
-
 	private Tabs					tabsAttribute			= new Tabs();
-
 	private Tab						tabAttribute			= new Tab();
 	private Tab						tabVersionHistory		= new Tab();
 
 	private Tabpanels				tabpanelsAttribute		= new Tabpanels();
-
 	private Tabpanel				tabpanelAttribute		= new Tabpanel();
 	private Tabpanel				tabpanelVersionHitory	= new Tabpanel();
 
 	private Grid					gridAttributeLayout		= new Grid();
-
 	private Grid					grid					= new Grid();
-
-	private Label					lblStatus				= null;
 
 	private Button					btnDelete				= null;
 	private Button					btnRequery				= null;
@@ -112,6 +100,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private Button					btnSave					= null;
 	private Button					btnVersionUpload		= null;
 
+	private Label					lblStatus				= null;
 	private Label					lblName					= null;
 	private Label					lblDesc					= null;
 
@@ -122,33 +111,28 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 	private ConfirmPanel			confirmPanel			= null;
 
+	private DMS						dms;
 	private MDMSContent				DMS_Content				= null;
 	private MDMSContent				parent_Content			= null;
-
 	private DMSViewerComponent		viewerComponenet		= null;
 
 	private IFileStorageProvider	fileStorageProvider		= null;
 	private IContentManager			contentManager			= null;
 	private IThumbnailProvider		thumbnailProvider		= null;
-	private IIndexSearcher			indexSeracher			= null;
 
 	private Tabbox					tabBox					= null;
 
 	private WDLoadASIPanel			ASIPanel				= null;
 
-	private int						m_M_AttributeSetInstance_ID;
 	private int						tableId					= 0;
 	private int						recordId				= 0;
 
 	private boolean					isWindowAccess			= true;
 
-	private static final String		SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID FROM DMS_Association a WHERE DMS_Content_Related_ID= ? "
-																	+ " AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType "
-																	+ " WHERE NAME='Version') UNION SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ?"
-																	+ " AND ContentBaseType <> 'DIR' order by DMS_Content_ID DESC";
-
-	public WDAttributePanel(I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess)
+	public WDAttributePanel(DMS dms, I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess)
 	{
+		this.dms = dms;
+
 		this.isWindowAccess = isWindowAccess;
 		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 
@@ -164,8 +148,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		if (thumbnailProvider == null)
 			throw new AdempiereException("thumbnailProvider is not found");
-
-		m_M_AttributeSetInstance_ID = DMS_Content.getM_AttributeSetInstance_ID();
 
 		this.DMS_Content = (MDMSContent) DMS_Content;
 		this.tabBox = tabBox;
@@ -352,6 +334,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		versionGrid.appendChild(rows);
 		versionGrid.setZclass("none");
 
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
 		try
 		{
 			MDMSContent versionContent = null;
@@ -361,12 +345,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
 
-			PreparedStatement pstmt = DB.prepareStatement(SQL_FETCH_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
+			pstmt = DB.prepareStatement(MDMSContent.SQL_FETCH_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
 
 			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());
 			pstmt.setInt(2, dmsAssociation.getDMS_Content_Related_ID());
 
-			ResultSet rs = pstmt.executeQuery();
+			rs = pstmt.executeQuery();
 
 			if (rs.isBeforeFirst())
 			{
@@ -429,6 +413,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		{
 			log.log(Level.SEVERE, "Version listing failure", e);
 		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
 
 	}
 
@@ -455,8 +445,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		txtName = new Textbox();
 		txtDesc = new Textbox();
 
-		lblName = new Label("Name");
-		lblDesc = new Label("Description");
+		lblName = new Label(DMSConstant.MSG_NAME);
+		lblDesc = new Label(DMSConstant.MSG_DESCRIPTION);
 
 		txtName.setWidth("100%");
 		txtDesc.setWidth("100%");
@@ -480,7 +470,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		rows.appendChild(row);
 		tabpanelAttribute.appendChild(commGrid);
 
-		ASIPanel = new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(), m_M_AttributeSetInstance_ID);
+		ASIPanel = new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(), DMS_Content.getM_AttributeSetInstance_ID());
 		ASIPanel.setEditableAttribute(false);
 		tabpanelAttribute.appendChild(ASIPanel);
 		ASIPanel.appendChild(btnEdit);
@@ -524,7 +514,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				{
 					throw new WrongValueException(txtName, e.getMessage());
 				}
-				updateContent();
+
+				dms.updateContent(txtName.getValue(), DMS_Content);
 			}
 
 			if ((Util.isEmpty(DMS_Content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
@@ -547,18 +538,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnDownload))
 		{
-			File document = fileStorageProvider.getFile(contentManager.getPath(DMS_Content));
-			if (document.exists())
-			{
-				AMedia media = new AMedia(document, "application/octet-stream", null);
-				Filedownload.save(media);
-			}
-			else
-				FDialog.warn(0, "Docuement is not available to download.");
+			DMS_ZK_Util.downloadContentDocument(dms, DMS_Content);
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
-			File document = fileStorageProvider.getFile(contentManager.getPath(DMS_Content));
+			File document = dms.getFileFromStorage(DMS_Content);
 
 			if (document.exists())
 			{
@@ -599,80 +583,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		else if (event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			downloadSelectedComponent(DMSViewerComp);
+			DMS_ZK_Util.downloadContentDocument(dms, DMSViewerComp.getDMSContent());
 		}
-
-	}
-
-	private void downloadSelectedComponent(DMSViewerComponent DMSViewerComp) throws FileNotFoundException
-	{
-		IFileStorageProvider fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-		if (fileStorgProvider == null)
-			throw new AdempiereException("Storage provider is not define on clientInfo.");
-
-		File document = fileStorgProvider.getFile(contentManager.getPath(DMSViewerComp.getDMSContent()));
-
-		if (document.exists())
-		{
-			AMedia media = new AMedia(document, "application/octet-stream", null);
-			Filedownload.save(media);
-		}
-		else
-		{
-			FDialog.warn(0, "Docuement is not available to download.");
-		}
-	}
-
-	private void updateContent()
-	{
-		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(DMS_Content);
-		MDMSContent content = null;
-		MDMSAssociation association = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_CONTENT, null);
-			pstmt.setInt(1, DMS_Content_ID);
-			pstmt.setInt(2, DMS_Content_ID);
-
-			rs = pstmt.executeQuery();
-
-			while (rs.next())
-			{
-				content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-				association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-				renameFile(content, association);
-			}
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "Rename content failure.", e);
-			throw new AdempiereException("Rename content failure: " + e.getLocalizedMessage());
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-	}
-
-	private void renameFile(MDMSContent content, MDMSAssociation association)
-	{
-		String newPath = fileStorageProvider.getFile(contentManager.getPath(content)).getAbsolutePath();
-		String fileExt = newPath.substring(newPath.lastIndexOf("."), newPath.length());
-		newPath = newPath.substring(0, newPath.lastIndexOf(spFileSeprator));
-		newPath = newPath + spFileSeprator + txtName.getValue() + fileExt;
-		newPath = Utils.getUniqueFilename(newPath);
-
-		File oldFile = new File(fileStorageProvider.getFile(contentManager.getPath(content)).getAbsolutePath());
-		File newFile = new File(newPath);
-		oldFile.renameTo(newFile);
-
-		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf(spFileSeprator) + 1, newFile.getAbsolutePath().length()));
-		content.saveEx();
 
 	}
 }

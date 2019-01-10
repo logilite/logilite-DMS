@@ -23,11 +23,19 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID		= 1L;
+	private static final long	serialVersionUID			= 1L;
 
-	private static final String	ASSOCIATIONTYPE_VERSION	= "Version";
-	private static final String	ASSOCIATIONTYPE_PARENT	= "Parent";
-	private static final String	SQL_GETASSOCIATIONTYPE	= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE Upper(name) =  UPPER(?)";
+	public static final String	SQL_GET_ASSOCIATION_TYPE	= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE Upper(name) = UPPER(?)";
+
+	public static final String	AssociationType_Version		= "Version";
+	public static final String	AssociationType_Parent		= "Parent";
+	public static final String	AssociationType_Record		= "Record";
+	public static final String	AssociationType_Link		= "Link";
+
+	public static final int		AssociationType_ID_Version	= 1000000;
+	public static final int		AssociationType_ID_Parent	= 1000001;
+	public static final int		AssociationType_ID_Record	= 1000002;
+	public static final int		AssociationType_ID_Link		= 1000003;
 
 	public MDMSAssociationType(Properties ctx, int DMS_AssociationType_ID, String trxName)
 	{
@@ -44,9 +52,9 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 		int versionTypeID = 0;
 
 		if (isParent)
-			versionTypeID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, ASSOCIATIONTYPE_PARENT);
+			versionTypeID = DB.getSQLValue(null, SQL_GET_ASSOCIATION_TYPE, AssociationType_Parent);
 		else
-			versionTypeID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, ASSOCIATIONTYPE_VERSION);
+			versionTypeID = DB.getSQLValue(null, SQL_GET_ASSOCIATION_TYPE, AssociationType_Version);
 
 		return versionTypeID;
 	}

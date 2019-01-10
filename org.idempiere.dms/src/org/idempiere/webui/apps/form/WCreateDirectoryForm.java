@@ -39,14 +39,14 @@ import org.zkoss.zul.North;
 import org.zkoss.zul.Separator;
 import org.zkoss.zul.South;
 
-public class CreateDirectoryForm extends Window implements EventListener<Event>
+public class WCreateDirectoryForm extends Window implements EventListener<Event>
 {
 
 	/**
 	 * 
 	 */
 	private static final long		serialVersionUID	= 4397569198011705268L;
-	protected static final CLogger	log					= CLogger.getCLogger(CreateDirectoryForm.class);
+	protected static final CLogger	log					= CLogger.getCLogger(WCreateDirectoryForm.class);
 
 	private DMS						dms;
 
@@ -66,7 +66,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	 * @param dms
 	 * @param DMSContent
 	 */
-	public CreateDirectoryForm(DMS dms, I_DMS_Content DMSContent, int tableID, int recordID)
+	public WCreateDirectoryForm(DMS dms, I_DMS_Content DMSContent, int tableID, int recordID)
 	{
 		this.dms = dms;
 
@@ -144,8 +144,6 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
-		log.info(event.getName());
-
 		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
 			this.detach();

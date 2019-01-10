@@ -19,10 +19,11 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.net.URLConnection;
+import java.nio.file.Files;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -46,6 +47,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.model.MAttribute;
+import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MAttributeSet;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MAttributeValue;
@@ -58,7 +60,6 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.MimeType;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
@@ -69,7 +70,6 @@ import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
-import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zk.ui.WrongValueException;
@@ -81,15 +81,9 @@ public class Utils
 {
 	private static CLogger						log										= CLogger.getCLogger(Utils.class);
 
-	public static final String					STORAGE_PROVIDER_FILE_SEPARATOR			= "STORAGE_PROVIDER_FILE_SEPARATOR";
-
-
-
-	private static final String					SQL_GETASSOCIATIONTYPE					= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(name) like UPPER(?)";
-
-	private static final String					SQL_GETASI								= "SELECT replace(a.Name,' ','_') as name,ai.value,ai.valuetimestamp,ai.ValueNumber,ai.valueint FROM M_AttributeInstance ai "
-																								+ " INNER JOIN  M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
-																								+ " WHERE ai.M_AttributeSetInstance_Id = ?";
+	private static final String					SQL_GET_ASI								= "SELECT REPLACE(a.Name,' ','_') AS Name, ai.Value, ai.ValueTimestamp, ai.ValueNumber, ai.ValueInt FROM M_AttributeInstance ai "
+																								+ " INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
+																								+ " WHERE ai.M_AttributeSetInstance_ID = ?";
 
 	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_COMMON	= "WITH ContentAssociation AS "
 																								+ " ( "
@@ -111,9 +105,19 @@ public class Utils
 																								+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0)) OR "
 																								+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0) AND ContentBaseType = 'DIR') ";
 
+	public static final String					SQL_GET_RELATED_CONTENT					= "SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association "
+																								+ " WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? "
+																								+ " ORDER BY DMS_Association_ID";
+
 	public static String						SQL_GET_RELATED_FOLDER_CONTENT			= null;
 	public static String						SQL_GET_RELATED_FOLDER_CONTENT_ALL		= null;
 	public static String						SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE	= null;
+
+	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider					= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
+	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator				= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
+	static CCache<Integer, IContentManager>		cache_contentManager					= new CCache<Integer, IContentManager>("ContentManager", 2);
+	static CCache<String, MImage>				cache_dirThumbnail						= new CCache<String, MImage>("DirThumbnail", 2);
+	static CCache<Integer, MImage>				cache_mimetypeThumbnail					= new CCache<Integer, MImage>("MimetypeThumbnail", 2);
 
 	// Oracle Database compatible
 	static
@@ -125,17 +129,14 @@ public class Utils
 		SQL_GET_RELATED_FOLDER_CONTENT_ALL = SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "");
 
 		SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE = SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "AND c.IsActive='Y' AND a.IsActive='Y'");
-
 	}
 
-	public static final String					SQL_GET_RELATED_CONTENT					= "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID";
-
-	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider					= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
-	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator				= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
-	static CCache<Integer, IContentManager>		cache_contentManager					= new CCache<Integer, IContentManager>("ContentManager", 2);
-	static CCache<String, MImage>				cache_dirThumbnail						= new CCache<String, MImage>("DirThumbnail", 2);
-	static CCache<Integer, MImage>				cache_mimetypeThumbnail					= new CCache<Integer, MImage>("MimetypeThumbnail", 2);
-
+	/**
+	 * Factory - Content Editor
+	 * 
+	 * @param mimeType
+	 * @return {@link IContentEditor}
+	 */
 	public static IContentEditor getContentEditor(String mimeType)
 	{
 		IContentEditor contentEditor = null;
@@ -154,10 +155,11 @@ public class Utils
 	}
 
 	/**
-	 * generate the thumbnail of content or directory
+	 * Factory - Thumbnail Generator. Generate the thumbnail of content or
+	 * directory
 	 * 
 	 * @param mimeType
-	 * @return
+	 * @return {@link IThumbnailGenerator}
 	 */
 	public static IThumbnailGenerator getThumbnailGenerator(String mimeType)
 	{
@@ -183,6 +185,12 @@ public class Utils
 		return thumbnailGenerator;
 	}
 
+	/**
+	 * Factory - Content Manager
+	 * 
+	 * @param AD_Client_ID
+	 * @return {@link IContentManager}
+	 */
 	public static IContentManager getContentManager(int AD_Client_ID)
 	{
 		IContentManager contentManager = cache_contentManager.get(AD_Client_ID);
@@ -214,10 +222,10 @@ public class Utils
 	}
 
 	/**
-	 * apply the thumbnail of content or directory
+	 * Factory - Thumbnail Provider. Apply the thumbnail of content or directory
 	 * 
 	 * @param Ad_Client_ID
-	 * @return
+	 * @return {@link IThumbnailProvider}
 	 */
 	public static IThumbnailProvider getThumbnailProvider(int Ad_Client_ID)
 	{
@@ -243,6 +251,12 @@ public class Utils
 		return thumbnailProvider;
 	}
 
+	/**
+	 * Factory - Mounting Strategy
+	 * 
+	 * @param Table_Name
+	 * @return {@link IMountingStrategy}
+	 */
 	public static IMountingStrategy getMountingStrategy(String Table_Name)
 	{
 		IMountingStrategy mounting = null;
@@ -263,11 +277,11 @@ public class Utils
 	/**
 	 * get File separator "/"
 	 * 
-	 * @return
+	 * @return "/" or "\" Depends on storage provider
 	 */
 	public static String getStorageProviderFileSeparator()
 	{
-		String fileSeparator = MSysConfig.getValue(STORAGE_PROVIDER_FILE_SEPARATOR, "0");
+		String fileSeparator = MSysConfig.getValue(DMSConstant.STORAGE_PROVIDER_FILE_SEPARATOR, "0");
 
 		if (fileSeparator.equals("0"))
 			fileSeparator = File.separator;
@@ -326,15 +340,15 @@ public class Utils
 	/**
 	 * get mimetypeID from media
 	 * 
-	 * @param media
+	 * @param file
 	 * @return
 	 */
-	public static int getMimeTypeID(AMedia media)
+	public static int getMimeTypeID(File file)
 	{
 		int dmsMimeType_ID = -1;
 
-		if (media != null && media.getContentType() != null)
-			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE UPPER(mimetype) = '" + media.getContentType().toUpperCase()
+		if (file != null && getFileMimeType(file) != null)
+			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE UPPER(mimetype) = '" + getFileMimeType(file).toUpperCase()
 					+ "'");
 
 		if (dmsMimeType_ID != -1)
@@ -345,6 +359,15 @@ public class Utils
 		}
 
 		return dmsMimeType_ID;
+	}
+
+	public static String getFileMimeType(File file)
+	{
+
+		// InputStream is = new BufferedInputStream(new FileInputStream(file));
+		// mimeType = URLConnection.guessContentTypeFromStream(is);
+
+		return URLConnection.guessContentTypeFromName(file.getName());
 	}
 
 	/**
@@ -517,7 +540,7 @@ public class Utils
 	 */
 	public static int getDMS_Content_Related_ID(I_DMS_Content DMS_Content)
 	{
-		if (DMS_Content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (DMS_Content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			return DMS_Content.getDMS_Content_ID();
 		else
 		{
@@ -528,7 +551,7 @@ public class Utils
 			if (DMSAssociation.getDMS_Content_Related_ID() > 0)
 			{
 				DMS_Content = new MDMSContent(Env.getCtx(), DMSAssociation.getDMS_Content_Related_ID(), null);
-				if (DMS_Content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+				if (DMS_Content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 					return DMSAssociation.getDMS_Content_ID();
 				else
 					return DMSAssociation.getDMS_Content_Related_ID();
@@ -546,7 +569,7 @@ public class Utils
 	public static int getDMS_Association_Link_ID()
 	{
 		int linkID = 0;
-		linkID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, DMSConstant.LINK);
+		linkID = DB.getSQLValue(null, MDMSAssociationType.SQL_GET_ASSOCIATION_TYPE, MDMSAssociationType.AssociationType_Link);
 
 		if (linkID != -1)
 			return linkID;
@@ -561,8 +584,7 @@ public class Utils
 	 */
 	public static int getDMS_Association_Record_ID()
 	{
-		int recordID = 0;
-		recordID = DB.getSQLValue(null, SQL_GETASSOCIATIONTYPE, DMSConstant.RECORD);
+		int recordID = DB.getSQLValue(null, MDMSAssociationType.SQL_GET_ASSOCIATION_TYPE, DMSConstant.RECORD);
 
 		if (recordID != -1)
 			return recordID;
@@ -570,6 +592,13 @@ public class Utils
 			return 0;
 	}
 
+	/**
+	 * Create Index Map for Solr
+	 * 
+	 * @param DMSContent
+	 * @param DMSAssociation
+	 * @return Map
+	 */
 	public static Map<String, Object> createIndexMap(MDMSContent DMSContent, MDMSAssociation DMSAssociation)
 	{
 		Map<String, Object> solrValue = new HashMap<String, Object>();
@@ -592,7 +621,7 @@ public class Utils
 			ResultSet rs = null;
 			try
 			{
-				stmt = DB.prepareStatement(SQL_GETASI, null);
+				stmt = DB.prepareStatement(SQL_GET_ASI, null);
 				stmt.setInt(1, DMSContent.getM_AttributeSetInstance_ID());
 				rs = stmt.executeQuery();
 
@@ -602,22 +631,27 @@ public class Utils
 					{
 						String fieldName = "ASI_" + rs.getString("Name");
 
-						if (rs.getTimestamp("valuetimestamp") != null)
-							solrValue.put(fieldName, rs.getTimestamp("valuetimestamp"));
-						else if (rs.getDouble("ValueNumber") > 0)
-							solrValue.put(fieldName, rs.getDouble("ValueNumber"));
-						else if (rs.getInt("ValueInt") > 0)
-							solrValue.put(fieldName, rs.getInt("ValueInt"));
-						else if (!Util.isEmpty(rs.getString("Value"), true))
-							solrValue.put(fieldName, rs.getString("value"));
+						if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueTimeStamp) != null)
+							solrValue.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueTimeStamp));
+						else if (rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber) > 0)
+							solrValue.put(fieldName, rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber));
+						else if (rs.getInt(MAttributeInstance.COLUMNNAME_ValueInt) > 0)
+							solrValue.put(fieldName, rs.getInt(MAttributeInstance.COLUMNNAME_ValueInt));
+						else if (!Util.isEmpty(rs.getString(MAttributeInstance.COLUMNNAME_Value), true))
+							solrValue.put(fieldName, rs.getString(MAttributeInstance.COLUMNNAME_Value));
 					}
 				}
 			}
-
 			catch (SQLException e)
 			{
 				log.log(Level.SEVERE, "ASI fetching failure.", e);
 				throw new AdempiereException("ASI fetching failure." + e.getLocalizedMessage());
+			}
+			finally
+			{
+				DB.close(rs, stmt);
+				rs = null;
+				stmt = null;
 			}
 		}
 
@@ -642,7 +676,7 @@ public class Utils
 			{
 				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
 
-				if (dmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 				{
 					String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
 					if (parentURL.startsWith(baseURL))
@@ -724,7 +758,7 @@ public class Utils
 			msg = "Content Type: " + mdmsContentType.getName() + "\n";
 		}
 
-		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 			IContentManager contentManager = getContentManager(Env.getAD_Client_ID(Env.getCtx()));
@@ -854,7 +888,7 @@ public class Utils
 	 * @param trxName
 	 * @return DMS_Content_ID
 	 */
-	public static int createDMSContent(String name, String value, String contentBaseType, String parentURL, String desc, AMedia media, int contentTypeID,
+	public static int createDMSContent(String name, String value, String contentBaseType, String parentURL, String desc, File file, int contentTypeID,
 			int asiID, boolean isMounting, String trxName)
 	{
 		MDMSContent content = new MDMSContent(Env.getCtx(), 0, trxName);
@@ -864,13 +898,13 @@ public class Utils
 		content.setParentURL(parentURL);
 		content.setIsMounting(isMounting);
 		content.setContentBaseType(contentBaseType);
-		content.setDMS_MimeType_ID(Utils.getMimeTypeID(media));
+		content.setDMS_MimeType_ID(Utils.getMimeTypeID(file));
 		if (asiID > 0)
 			content.setM_AttributeSetInstance_ID(asiID);
 		if (contentTypeID > 0)
 			content.setDMS_ContentType_ID(contentTypeID);
-		if (media != null)
-			content.setDMS_FileSize(Utils.readableFileSize(media.getByteData().length));
+		if (file != null)
+			content.setDMS_FileSize(Utils.readableFileSize(FileUtils.sizeOf(file)));
 		content.saveEx();
 
 		log.log(Level.INFO, "New DMS_Content_ID = " + content.getDMS_Content_ID() + " for " + name + " as (" + contentBaseType + ") at " + parentURL);
@@ -894,10 +928,12 @@ public class Utils
 	{
 		MDMSAssociation association = new MDMSAssociation(Env.getCtx(), 0, trxName);
 		association.setSeqNo(seqNo);
-		association.setRecord_ID(Record_ID);
-		association.setAD_Table_ID(AD_Table_ID);
 		association.setDMS_Content_ID(contentID);
 		association.setDMS_Content_Related_ID(contentRelatedID);
+		if (Record_ID > 0)
+			association.setRecord_ID(Record_ID);
+		if (AD_Table_ID > 0)
+			association.setAD_Table_ID(AD_Table_ID);
 		if (associationTypeID > 0)
 			association.setDMS_AssociationType_ID(associationTypeID);
 		association.saveEx();
@@ -1199,19 +1235,9 @@ public class Utils
 		if (file == null)
 			throw new AdempiereException(DMSConstant.MSG_FILL_MANDATORY + " file");
 
-		AMedia media;
-		try
-		{
-			media = new AMedia(file, MimeType.getMimeType(file.getName()), null);
-		}
-		catch (FileNotFoundException e)
-		{
-			throw new AdempiereException(DMSConstant.MSG_FILL_MANDATORY + " file", e);
-		}
-
 		// Create Content
 		int contentID = Utils.createDMSContent(file.getName(), file.getName(), MDMSContent.CONTENTBASETYPE_Content, contentManager.getPath(parentContent),
-				null, media, 0, 0, false, trxName);
+				null, file, 0, 0, false, trxName);
 
 		MDMSContent content = new MDMSContent(Env.getCtx(), contentID, trxName);
 
@@ -1223,7 +1249,7 @@ public class Utils
 		Utils.createAssociation(contentID, contentRelatedID, Record_ID, AD_Table_ID, MDMSAssociationType.getVersionType(true), 0, trxName);
 
 		// File write on Storage provider and create thumbnail
-		writeFileOnStorageAndThumnail(fileStorgProvider, contentManager, media, content);
+		writeFileOnStorageAndThumnail(fileStorgProvider, contentManager, file, content);
 
 		return true;
 	}
@@ -1236,9 +1262,19 @@ public class Utils
 	 * @param media
 	 * @param content
 	 */
-	public static void writeFileOnStorageAndThumnail(IFileStorageProvider fsProvider, IContentManager contentMngr, AMedia media, MDMSContent content)
+	public static void writeFileOnStorageAndThumnail(IFileStorageProvider fsProvider, IContentManager contentMngr, File file, MDMSContent content)
 	{
-		fsProvider.writeBLOB(fsProvider.getBaseDirectory(contentMngr.getPath(content)), media.getByteData(), content);
+		byte[] data = null;
+		try
+		{
+			data = Files.readAllBytes(file.toPath());
+		}
+		catch (IOException e)
+		{
+			throw new AdempiereException("Error while reading file", e);
+		}
+
+		fsProvider.writeBLOB(fsProvider.getBaseDirectory(contentMngr.getPath(content)), data, content);
 
 		IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(content.getDMS_MimeType().getMimeType());
 
@@ -1246,6 +1282,12 @@ public class Utils
 			thumbnailGenerator.addThumbnail(content, fsProvider.getFile(contentMngr.getPath(content)), null);
 	} // writeFileOnStorageAndThumnail
 
+	/**
+	 * Get Media from File
+	 * 
+	 * @param file
+	 * @return {@link AMedia}
+	 */
 	public static AMedia getMediaFromFile(File file)
 	{
 		try

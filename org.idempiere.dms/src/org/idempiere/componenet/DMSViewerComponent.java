@@ -24,7 +24,6 @@ import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.X_DMS_Content;
 import org.zkoss.image.AImage;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Image;
@@ -52,7 +51,7 @@ public class DMSViewerComponent extends Div
 	protected int				dWidth;
 
 	private MDMSContent			DMSContent			= null;
-	private MDMSAssociation 	DMSAssociation 		= null;
+	private MDMSAssociation		DMSAssociation		= null;
 
 	protected Menuitem			menuItem			= null;
 
@@ -139,7 +138,7 @@ public class DMSViewerComponent extends Div
 	{
 		this.fName = fName;
 	}
-	
+
 	/**
 	 * Constructor for dmsContent is not a version
 	 * 
@@ -152,10 +151,9 @@ public class DMSViewerComponent extends Div
 	{
 		this(content, image, isLink, DMSAssociation, null);
 	}
-	
 
 	/**
-	 * Constructor for dmsContent is a version 
+	 * Constructor for dmsContent is a version
 	 * 
 	 * @param content
 	 * @param image
@@ -166,18 +164,18 @@ public class DMSViewerComponent extends Div
 	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation, String version)
 	{
 		String name = content.getName();
-		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			name = name.replace("\\(.*\\d\\)", "");
 
 		if (name.contains("(") && name.contains(")"))
 		{
 			name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
 		}
-		
+
 		/*
 		 * Append version number if exist
 		 */
-		
+
 		if (version != null)
 		{
 			name = name + " (V" + version + ")";
@@ -228,7 +226,7 @@ public class DMSViewerComponent extends Div
 
 		ZkCssHelper.appendStyle(dImage, "text-align: center");
 
-		if (content.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			ZkCssHelper.appendStyle(fLabel, "text-align: center");
 		}
@@ -238,7 +236,7 @@ public class DMSViewerComponent extends Div
 
 		ZkCssHelper.appendStyle(this, "text-align: center");
 	}
-	
+
 	public MDMSAssociation getDMSAssociation()
 	{
 		return DMSAssociation;

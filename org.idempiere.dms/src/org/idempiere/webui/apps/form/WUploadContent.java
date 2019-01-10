@@ -13,6 +13,9 @@
 
 package org.idempiere.webui.apps.form;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -301,8 +304,33 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		if (contentType.getValue() != null)
 			ASI_ID = asiPanel.saveAttributes();
 
-		// Adding File
-		dms.addFile(DMSContent, uploadedMedia, txtName.getValue(), txtDesc.getValue(), (int) contentType.getValue(), ASI_ID, tableID, recordID, isVersion);
+		File file = null;
+		try
+		{
+			file = File.createTempFile(uploadedMedia.getName(), uploadedMedia.getFormat());
+			FileOutputStream os = new FileOutputStream(file);
+			os.write(uploadedMedia.getByteData());
+			os.flush();
+			os.close();
+
+			// Adding File
+			// TODO
+			if (isVersion)
+				dms.addFileVersion(DMSContent, file, txtDesc.getValue());
+			else
+				dms.addFile(DMSContent, file, txtName.getValue(), txtDesc.getValue(), (contentType.getValue() == null) ? 0 : (int) contentType.getValue(),
+						ASI_ID, tableID, recordID);
+
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			if (file != null)
+				file.delete();
+		}
 
 		this.detach();
 	}
