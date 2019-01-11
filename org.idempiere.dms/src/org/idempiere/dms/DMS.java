@@ -84,16 +84,8 @@ public class DMS
 	 */
 	public DMS(int AD_Client_ID)
 	{
-		this(AD_Client_ID, null);
-	}
-
-	/**
-	 * Constructor for initialize provider
-	 */
-	public DMS(int AD_Client_ID, String Table_Name)
-	{
 		this.AD_Client_ID = AD_Client_ID;
-
+		
 		fileStorageProvider = FileStorageUtil.get(AD_Client_ID, false);
 
 		if (fileStorageProvider == null)
@@ -118,6 +110,15 @@ public class DMS
 
 		if (indexSearcher == null)
 			throw new AdempiereException("Index server is not found.");
+	}
+
+	/**
+	 * Constructor for initialize provider
+	 */
+	public DMS(int AD_Client_ID, String Table_Name)
+	{
+		this(AD_Client_ID);
+		
 
 		createMountingStrategy(Table_Name);
 	}
