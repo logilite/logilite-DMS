@@ -13,12 +13,10 @@
 
 package org.idempiere.webui.apps.form;
 
-import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
@@ -38,7 +36,6 @@ import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.theme.ThemeManager;
-import org.apache.commons.io.FileUtils;
 import org.compiere.model.MImage;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
@@ -49,11 +46,7 @@ import org.idempiere.componenet.DMSViewerComponent;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
@@ -73,82 +66,63 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	/**
 	 * 
 	 */
-	private static final long		serialVersionUID		= 5200959427619624094L;
-	private static CLogger			log						= CLogger.getCLogger(WDAttributePanel.class);
+	private static final long	serialVersionUID		= 5200959427619624094L;
+	private static CLogger		log						= CLogger.getCLogger(WDAttributePanel.class);
 
-	private Panel					panelAttribute			= new Panel();
-	private Panel					panelFooterButtons		= new Panel();
-	private Borderlayout			mainLayout				= new Borderlayout();
+	private Panel				panelAttribute			= new Panel();
+	private Panel				panelFooterButtons		= new Panel();
+	private Borderlayout		mainLayout				= new Borderlayout();
 
-	private Tabbox					tabBoxAttribute			= new Tabbox();
-	private Tabs					tabsAttribute			= new Tabs();
-	private Tab						tabAttribute			= new Tab();
-	private Tab						tabVersionHistory		= new Tab();
+	private Tabbox				tabBoxAttribute			= new Tabbox();
+	private Tabs				tabsAttribute			= new Tabs();
+	private Tab					tabAttribute			= new Tab();
+	private Tab					tabVersionHistory		= new Tab();
 
-	private Tabpanels				tabpanelsAttribute		= new Tabpanels();
-	private Tabpanel				tabpanelAttribute		= new Tabpanel();
-	private Tabpanel				tabpanelVersionHitory	= new Tabpanel();
+	private Tabpanels			tabpanelsAttribute		= new Tabpanels();
+	private Tabpanel			tabpanelAttribute		= new Tabpanel();
+	private Tabpanel			tabpanelVersionHitory	= new Tabpanel();
 
-	private Grid					gridAttributeLayout		= new Grid();
-	private Grid					grid					= new Grid();
+	private Grid				gridAttributeLayout		= new Grid();
+	private Grid				grid					= new Grid();
 
-	private Button					btnDelete				= null;
-	private Button					btnRequery				= null;
-	private Button					btnClose				= null;
-	private Button					btnDownload				= null;
-	private Button					btnEdit					= null;
-	private Button					btnSave					= null;
-	private Button					btnVersionUpload		= null;
+	private Button				btnDelete				= null;
+	private Button				btnRequery				= null;
+	private Button				btnClose				= null;
+	private Button				btnDownload				= null;
+	private Button				btnEdit					= null;
+	private Button				btnSave					= null;
+	private Button				btnVersionUpload		= null;
 
-	private Label					lblStatus				= null;
-	private Label					lblName					= null;
-	private Label					lblDesc					= null;
+	private Label				lblStatus				= null;
+	private Label				lblName					= null;
+	private Label				lblDesc					= null;
 
-	private Textbox					txtName					= null;
-	private Textbox					txtDesc					= null;
+	private Textbox				txtName					= null;
+	private Textbox				txtDesc					= null;
 
-	private AImage					imageVersion			= null;
+	private AImage				imageVersion			= null;
 
-	private ConfirmPanel			confirmPanel			= null;
+	private ConfirmPanel		confirmPanel			= null;
 
-	private DMS						dms;
-	private MDMSContent				DMS_Content				= null;
-	private MDMSContent				parent_Content			= null;
-	private DMSViewerComponent		viewerComponenet		= null;
+	private DMS					dms;
+	private MDMSContent			DMS_Content				= null;
+	private MDMSContent			parent_Content			= null;
+	private DMSViewerComponent	viewerComponenet		= null;
 
-	private IFileStorageProvider	fileStorageProvider		= null;
-	private IContentManager			contentManager			= null;
-	private IThumbnailProvider		thumbnailProvider		= null;
+	private Tabbox				tabBox					= null;
 
-	private Tabbox					tabBox					= null;
+	private WDLoadASIPanel		ASIPanel				= null;
 
-	private WDLoadASIPanel			ASIPanel				= null;
+	private int					tableId					= 0;
+	private int					recordId				= 0;
 
-	private int						tableId					= 0;
-	private int						recordId				= 0;
-
-	private boolean					isWindowAccess			= true;
+	private boolean				isWindowAccess			= true;
 
 	public WDAttributePanel(DMS dms, I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess)
 	{
 		this.dms = dms;
 
 		this.isWindowAccess = isWindowAccess;
-		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-		if (fileStorageProvider == null)
-			throw new AdempiereException("Storage provider is not found");
-
-		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (contentManager == null)
-			throw new AdempiereException("Content manager is not found");
-
-		thumbnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (thumbnailProvider == null)
-			throw new AdempiereException("thumbnailProvider is not found");
-
 		this.DMS_Content = (MDMSContent) DMS_Content;
 		this.tabBox = tabBox;
 		this.tableId = tableID;
@@ -358,7 +332,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				{
 					versionContent = new MDMSContent(Env.getCtx(), rs.getInt(1), null);
 
-					if (Util.isEmpty(thumbnailProvider.getURL(versionContent, "150")))
+					String filename = dms.getThumbnailURL(versionContent, "150");
+					if (Util.isEmpty(filename))
 					{
 						MImage mImage = Utils.getMimetypeThumbnail(versionContent.getDMS_MimeType_ID());
 						byte[] imgByteData = mImage.getData();
@@ -370,7 +345,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 					}
 					else
 					{
-						imageVersion = new AImage(thumbnailProvider.getURL(versionContent, "150"));
+						imageVersion = new AImage(filename);
 					}
 
 					viewerComponenet = new DMSViewerComponent(versionContent, imageVersion, false, dmsAssociation);
@@ -542,20 +517,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
-			File document = dms.getFileFromStorage(DMS_Content);
+			dms.deleteContentWithDocument(DMS_Content);
 
-			if (document.exists())
-			{
-				document.delete();
-			}
-
-			File thumbnails = new File(thumbnailProvider.getURL(DMS_Content, null));
-
-			if (thumbnails.exists())
-				FileUtils.deleteDirectory(thumbnails);
-
-			DB.executeUpdate("DELETE FROM DMS_Association WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID(), null);
-			DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", DMS_Content.getDMS_Content_ID(), null);
 			tabBox.getSelectedTab().close();
 		}
 		else if (event.getTarget().equals(btnVersionUpload))
@@ -587,4 +550,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 
 	}
+
+	
 }

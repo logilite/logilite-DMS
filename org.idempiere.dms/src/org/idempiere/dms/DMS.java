@@ -66,18 +66,18 @@ import com.logilite.search.factory.ServiceUtils;
 public class DMS
 {
 
-	private static final String	SQL_GET_ASSOCIATION_SEQ_NO	= "SELECT COALESCE(MAX(seqNo), 0) + 1  FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND AD_Client_ID = ?";
+	private static final String		SQL_GET_ASSOCIATION_SEQ_NO	= "SELECT COALESCE(MAX(seqNo), 0) + 1  FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND AD_Client_ID = ?";
 
-	public static CLogger		log							= CLogger.getCLogger(DMS.class);
+	public static CLogger			log							= CLogger.getCLogger(DMS.class);
 
-	public IFileStorageProvider	thumbnailStorageProvider	= null;
-	public IFileStorageProvider	fileStorageProvider			= null;
-	public IThumbnailProvider	thumbnailProvider			= null;
-	public IMountingStrategy	mountingStrategy			= null;
-	public IContentManager		contentManager				= null;
-	public IIndexSearcher		indexSearcher				= null;
+	public IFileStorageProvider		thumbnailStorageProvider	= null;
+	private IFileStorageProvider	fileStorageProvider			= null;
+	private IThumbnailProvider		thumbnailProvider			= null;
+	private IMountingStrategy		mountingStrategy			= null;
+	private IContentManager			contentManager				= null;
+	private IIndexSearcher			indexSearcher				= null;
 
-	public int					AD_Client_ID				= 0;
+	public int						AD_Client_ID				= 0;
 
 	/**
 	 * Constructor for initialize provider
@@ -119,7 +119,43 @@ public class DMS
 		if (indexSearcher == null)
 			throw new AdempiereException("Index server is not found.");
 
+		createMountingStrategy(Table_Name);
+	}
+
+	public void createMountingStrategy(String Table_Name)
+	{
 		mountingStrategy = Utils.getMountingStrategy(Table_Name);
+	}
+
+	// Get Provider
+	public IFileStorageProvider getThumbnailStorageProvider()
+	{
+		return thumbnailStorageProvider;
+	}
+
+	public IThumbnailProvider getThumbnailProvider()
+	{
+		return thumbnailProvider;
+	}
+
+	public IFileStorageProvider getFileStorageProvider()
+	{
+		return fileStorageProvider;
+	}
+
+	public IMountingStrategy getMountingStrategy()
+	{
+		return mountingStrategy;
+	}
+
+	public IContentManager getContentManager()
+	{
+		return contentManager;
+	}
+
+	public IIndexSearcher getIndexSearcher()
+	{
+		return indexSearcher;
 	}
 
 	/*
@@ -378,7 +414,7 @@ public class DMS
 		Utils.createAssociation(contentID, DMS_Content_Related_ID, Record_ID, AD_Table_ID, DMS_AssociationType_ID, seqNo, trx.getTrxName());
 
 		// File write on Storage provider and create thumbnail
-		Utils.writeFileOnStorageAndThumnail(fileStorageProvider, contentManager, file, addedContent);
+		Utils.writeFileOnStorageAndThumnail(this, file, addedContent);
 
 		return true;
 	} // createContentAssociationFileStoreAndThumnail
@@ -406,6 +442,11 @@ public class DMS
 	public MDMSContent createDirectory(String dirName, MDMSContent mDMSContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)
 	{
 		return Utils.createDirectory(dirName, mDMSContent, tableID, recordID, fileStorageProvider, contentManager, errorIfDirExists, trxName);
+	}
+
+	public String getThumbnailURL(I_DMS_Content content, String size)
+	{
+		return thumbnailProvider.getURL(content, size);
 	}
 
 	public File getThumbnail(I_DMS_Content content, String size)
@@ -692,7 +733,7 @@ public class DMS
 
 				MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), newDMSContent.getDMS_MimeType_ID(), null);
 
-				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
+				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(this, mimeType.getMimeType());
 
 				if (thumbnailGenerator != null)
 					thumbnailGenerator.addThumbnail(newDMSContent, fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
@@ -1121,4 +1162,18 @@ public class DMS
 		content.saveEx();
 	}
 
+	public void deleteContentWithDocument(MDMSContent content) throws IOException
+	{
+		File document = this.getFileFromStorage(content);
+		if (document.exists())
+			document.delete();
+
+		File thumbnails = new File(this.getThumbnailURL(content, null));
+
+		if (thumbnails.exists())
+			FileUtils.deleteDirectory(thumbnails);
+
+		DB.executeUpdate("DELETE FROM DMS_Association WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
+		DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
+	}
 }

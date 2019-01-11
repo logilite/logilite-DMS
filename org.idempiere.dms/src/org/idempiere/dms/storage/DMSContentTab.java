@@ -82,9 +82,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		if (mountingStrategy == null)
 			throw new AdempiereException("Mounting Strategy not found.");
 
-
-		documentViewerPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab()
-				.getRecord_ID(), adWindowContent);
+		documentViewerPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab().getRecord_ID(), adWindowContent);
 		renderViewer();
 		this.appendChild(documentViewerPanel);
 		gridTab.addDataStatusListener(this);
@@ -129,12 +127,16 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void createUI()
 	{
+		reload();
+	}
+
+	public void reload()
+	{
 		documentViewerPanel.setTable_ID(gridTab.getParentTab().getAD_Table_ID());
 		documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
-		Utils.initiateMountingContent(gridTab.getParentTab().getTableName(), gridTab.getParentTab().getRecord_ID(),
-				gridTab.getParentTab().getAD_Table_ID());
-		documentViewerPanel.setCurrDMSContent(mountingStrategy.getMountingParent(gridTab.getParentTab().getTableName(),
-				gridTab.getParentTab().getRecord_ID()));
+		Utils.initiateMountingContent(gridTab.getParentTab().getTableName(), gridTab.getParentTab().getRecord_ID(), gridTab.getParentTab().getAD_Table_ID());
+		documentViewerPanel.setCurrDMSContent(mountingStrategy.getMountingParent(gridTab.getParentTab().getTableName(), gridTab.getParentTab().getRecord_ID()));
+
 		renderViewer();
 	}
 
@@ -305,15 +307,9 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	{
 		if (e.getAD_Message().equals(GridTab.DEFAULT_STATUS_MESSAGE))
 		{
-			documentViewerPanel.setTable_ID(gridTab.getParentTab().getAD_Table_ID());
-			documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
-			Utils.initiateMountingContent(gridTab.getParentTab().getTableName(), gridTab.getParentTab().getRecord_ID(),
-					gridTab.getParentTab().getAD_Table_ID());
-			documentViewerPanel.setCurrDMSContent(mountingStrategy.getMountingParent(gridTab.getParentTab()
-					.getTableName(), gridTab.getParentTab().getRecord_ID()));
-			renderViewer();
+			reload();
 		}
-		
+
 		documentViewerPanel.breadRow.getChildren().clear();
 		documentViewerPanel.addRootBreadCrumb();
 	}

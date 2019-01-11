@@ -296,40 +296,44 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	private void saveUploadedDocument()
 	{
-		int ASI_ID = 0;
-
 		if (btnFileUpload.getLabel().equalsIgnoreCase("-"))
 			throw new WrongValueException(btnFileUpload, DMSConstant.MSG_FILL_MANDATORY);
 
-		if (contentType.getValue() != null)
-			ASI_ID = asiPanel.saveAttributes();
-
-		File file = null;
+		File tmpFile = null;
 		try
 		{
-			file = File.createTempFile(uploadedMedia.getName(), uploadedMedia.getFormat());
-			FileOutputStream os = new FileOutputStream(file);
+			tmpFile = File.createTempFile(uploadedMedia.getName(), "." + uploadedMedia.getFormat());
+			FileOutputStream os = new FileOutputStream(tmpFile);
 			os.write(uploadedMedia.getByteData());
 			os.flush();
 			os.close();
 
 			// Adding File
-			// TODO
 			if (isVersion)
-				dms.addFileVersion(DMSContent, file, txtDesc.getValue());
+				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue());
 			else
-				dms.addFile(DMSContent, file, txtName.getValue(), txtDesc.getValue(), (contentType.getValue() == null) ? 0 : (int) contentType.getValue(),
-						ASI_ID, tableID, recordID);
+			{
+				int ASI_ID = 0;
+				int cTypeID = 0;
 
+				if (contentType.getValue() != null)
+				{
+					cTypeID = (int) contentType.getValue();
+					ASI_ID = asiPanel.saveAttributes();
+				}
+
+				dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
+			}
 		}
 		catch (IOException e)
 		{
-			e.printStackTrace();
+			log.log(Level.SEVERE, "Fail to convert Media to File.", e);
+			throw new AdempiereException("Fail to convert Media to File.", e);
 		}
 		finally
 		{
-			if (file != null)
-				file.delete();
+			if (tmpFile != null)
+				tmpFile.delete();
 		}
 
 		this.detach();

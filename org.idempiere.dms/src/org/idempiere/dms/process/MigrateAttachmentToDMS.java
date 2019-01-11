@@ -2,7 +2,6 @@ package org.idempiere.dms.process;
 
 import java.util.List;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
 import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MAttachment;
@@ -12,24 +11,15 @@ import org.compiere.model.Query;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
-import org.compiere.util.Env;
-import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.IMountingStrategy;
+import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.MDMSContent;
-
-import com.logilite.search.factory.IIndexSearcher;
-import com.logilite.search.factory.ServiceUtils;
 
 public class MigrateAttachmentToDMS extends SvrProcess
 {
 
-	private IFileStorageProvider	fileStorgProvider	= null;
-	private IContentManager			contentManager		= null;
-	private IIndexSearcher			indexSeracher		= null;
-	private Boolean					m_isDelete			= false;
+	private DMS		dms;
+	private Boolean	m_isDelete	= false;
 
 	@Override
 	protected void prepare()
@@ -46,21 +36,7 @@ public class MigrateAttachmentToDMS extends SvrProcess
 			}
 		}
 
-		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-		if (fileStorgProvider == null)
-			throw new AdempiereException("Storage provider is not define on clientInfo.");
-
-		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (contentManager == null)
-			throw new AdempiereException("Content manager is not found.");
-
-		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (indexSeracher == null)
-			throw new AdempiereException("Solr Index server is not found.");
-
+		dms = new DMS(getAD_Client_ID());
 	}
 
 	@Override
@@ -78,8 +54,8 @@ public class MigrateAttachmentToDMS extends SvrProcess
 
 			Utils.initiateMountingContent(table.getTableName(), attachment.getRecord_ID(), attachment.getAD_Table_ID());
 
-			IMountingStrategy mountingStrategy = Utils.getMountingStrategy(table.getTableName());
-			MDMSContent mountingParent = mountingStrategy.getMountingParent(table.getTableName(), attachment.getRecord_ID());
+			dms.createMountingStrategy(table.getTableName());
+			MDMSContent mountingParent = dms.getMountingStrategy().getMountingParent(table.getTableName(), attachment.getRecord_ID());
 
 			MAttachmentEntry[] attachmentEntries = attachment.getEntries();
 
@@ -87,8 +63,7 @@ public class MigrateAttachmentToDMS extends SvrProcess
 			{
 				statusUpdate("Backuping Attachment :" + entry.getName());
 
-				boolean inserted = Utils.addFile(fileStorgProvider, contentManager, mountingParent, entry.getFile(), attachment.getAD_Table_ID(),
-						attachment.getRecord_ID(), get_TrxName());
+				boolean inserted = Utils.addFile(dms, mountingParent, entry.getFile(), attachment.getAD_Table_ID(), attachment.getRecord_ID(), get_TrxName());
 				if (inserted)
 					cntMigrated++;
 			}
@@ -123,7 +98,6 @@ public class MigrateAttachmentToDMS extends SvrProcess
 				}
 			});
 		}
-
 		return "Process Completed.";
 	}
 

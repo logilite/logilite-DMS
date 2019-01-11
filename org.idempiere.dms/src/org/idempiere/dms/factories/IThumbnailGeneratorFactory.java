@@ -13,9 +13,12 @@
 
 package org.idempiere.dms.factories;
 
+import org.idempiere.dms.DMS;
+
 /**
  * @author deepak@logilite.com
  */
-public interface IThumbnailGeneratorFactory {
-	public IThumbnailGenerator get(String mimeType);
+public interface IThumbnailGeneratorFactory
+{
+	public IThumbnailGenerator get(DMS dms, String mimeType);
 }

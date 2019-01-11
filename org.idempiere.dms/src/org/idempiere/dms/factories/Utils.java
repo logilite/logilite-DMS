@@ -62,6 +62,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
@@ -158,10 +159,11 @@ public class Utils
 	 * Factory - Thumbnail Generator. Generate the thumbnail of content or
 	 * directory
 	 * 
+	 * @param dms
 	 * @param mimeType
 	 * @return {@link IThumbnailGenerator}
 	 */
-	public static IThumbnailGenerator getThumbnailGenerator(String mimeType)
+	public static IThumbnailGenerator getThumbnailGenerator(DMS dms, String mimeType)
 	{
 		String key = (Env.getAD_Client_ID(Env.getCtx()) + "_" + mimeType);
 
@@ -173,7 +175,7 @@ public class Utils
 		List<IThumbnailGeneratorFactory> factories = Service.locator().list(IThumbnailGeneratorFactory.class).getServices();
 		for (IThumbnailGeneratorFactory factory : factories)
 		{
-			thumbnailGenerator = factory.get(mimeType);
+			thumbnailGenerator = factory.get(dms, mimeType);
 			if (thumbnailGenerator != null)
 			{
 				thumbnailGenerator.init();
@@ -224,12 +226,13 @@ public class Utils
 	/**
 	 * Factory - Thumbnail Provider. Apply the thumbnail of content or directory
 	 * 
-	 * @param Ad_Client_ID
+	 * @param dms
+	 * @param AD_Client_ID
 	 * @return {@link IThumbnailProvider}
 	 */
-	public static IThumbnailProvider getThumbnailProvider(int Ad_Client_ID)
+	public static IThumbnailProvider getThumbnailProvider(int AD_Client_ID)
 	{
-		IThumbnailProvider thumbnailProvider = cache_thumbnailProvider.get(Ad_Client_ID);
+		IThumbnailProvider thumbnailProvider = cache_thumbnailProvider.get(AD_Client_ID);
 
 		if (thumbnailProvider != null)
 			return thumbnailProvider;
@@ -238,11 +241,11 @@ public class Utils
 
 		for (IThumbnailProviderFactory factory : factories)
 		{
-			thumbnailProvider = factory.get(Ad_Client_ID);
+			thumbnailProvider = factory.get(AD_Client_ID);
 
 			if (thumbnailProvider != null)
 			{
-				cache_thumbnailProvider.put(Ad_Client_ID, thumbnailProvider);
+				cache_thumbnailProvider.put(AD_Client_ID, thumbnailProvider);
 				thumbnailProvider.init();
 				break;
 			}
@@ -414,7 +417,7 @@ public class Utils
 		{
 			String fileName = document.getName();
 			String path = fullPath.substring(0, fullPath.length() - fileName.length());
-			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(getStorageProviderFileSeparator()) + 1, fullPath.lastIndexOf("."));
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(DMSConstant.FILE_SEPARATOR) + 1, fullPath.lastIndexOf("."));
 			if (fileNameWOExt.contains("(") && fileNameWOExt.contains(")"))
 			{
 				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.indexOf(0) + 1, fileNameWOExt.indexOf("("));
@@ -439,7 +442,7 @@ public class Utils
 		{
 			String fileName = document.getName();
 			String path = fullPath.substring(0, fullPath.length() - fileName.length());
-			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(getStorageProviderFileSeparator()) + 1, fullPath.lastIndexOf("."));
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(DMSConstant.FILE_SEPARATOR) + 1, fullPath.lastIndexOf("."));
 			if (fileNameWOExt.matches("\\(.*\\d\\)"))
 			{
 				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1, fileNameWOExt.lastIndexOf("("));
@@ -465,7 +468,7 @@ public class Utils
 		{
 			String fileName = document.getName();
 			String path = fullPath.substring(0, fullPath.length() - fileName.length());
-			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(getStorageProviderFileSeparator()) + 1, fullPath.length());
+			String fileNameWOExt = fullPath.substring(fullPath.lastIndexOf(DMSConstant.FILE_SEPARATOR) + 1, fullPath.length());
 			if (fileNameWOExt.matches("\\(.*\\d\\)"))
 			{
 				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1, fileNameWOExt.lastIndexOf("("));
@@ -810,9 +813,8 @@ public class Utils
 	{
 		IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 		String baseDir = fileStorageProvider.getBaseDirectory(null);
-		String fileSeprator = Utils.getStorageProviderFileSeparator();
 
-		File file = new File(baseDir + fileSeprator + mountingBaseName);
+		File file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName);
 
 		int mountingContent_ID = 0;
 		int tableNameContentID = 0;
@@ -833,12 +835,12 @@ public class Utils
 
 		if (!Util.isEmpty(table_Name) && Record_ID > 0)
 		{
-			file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name);
+			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name);
 
 			if (!file.exists())
 			{
 				file.mkdirs();
-				tableNameContentID = createDMSContent(table_Name, MDMSContent.CONTENTBASETYPE_Directory, fileSeprator + mountingBaseName, true);
+				tableNameContentID = createDMSContent(table_Name, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + mountingBaseName, true);
 				createAssociation(tableNameContentID, mountingContent_ID, Record_ID, AD_Table_ID, 0, 0, null);
 			}
 			else
@@ -847,13 +849,14 @@ public class Utils
 						Env.getAD_Client_ID(Env.getCtx()));
 			}
 
-			file = new File(baseDir + fileSeprator + mountingBaseName + fileSeprator + table_Name + fileSeprator + Record_ID);
+			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
+					+ Record_ID);
 
 			if (!file.exists())
 			{
 				file.mkdirs();
-				recordContentID = createDMSContent(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, fileSeprator + mountingBaseName
-						+ fileSeprator + table_Name, true);
+				recordContentID = createDMSContent(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR
+						+ mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name, true);
 				createAssociation(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, 0, 0, null);
 			}
 		}
@@ -1035,8 +1038,7 @@ public class Utils
 		if (dirName.length() > DMSConstant.MAX_FILENAME_LENGTH)
 			throw new WrongValueException("Invalid Directory Name. Directory name less than 250 character");
 
-		CharSequence fileSeprator = Utils.getStorageProviderFileSeparator();
-		if (dirName.contains(fileSeprator))
+		if (dirName.contains(DMSConstant.FILE_SEPARATOR))
 			throw new WrongValueException("Invalid Directory Name.");
 
 		try
@@ -1047,7 +1049,7 @@ public class Utils
 
 			File files[] = rootFolder.listFiles();
 
-			File newFile = new File(rootFolder.getPath() + fileSeprator + dirName);
+			File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirName);
 
 			for (int i = 0; i < files.length; i++)
 			{
@@ -1220,8 +1222,7 @@ public class Utils
 	} // createASI
 
 	/**
-	 * @param fileStorgProvider
-	 * @param contentManager
+	 * @param dms
 	 * @param parentContent
 	 * @param file
 	 * @param AD_Table_ID
@@ -1229,15 +1230,14 @@ public class Utils
 	 * @param trxName
 	 * @return TRUE is success
 	 */
-	public static boolean addFile(IFileStorageProvider fileStorgProvider, IContentManager contentManager, MDMSContent parentContent, File file,
-			int AD_Table_ID, int Record_ID, String trxName)
+	public static boolean addFile(DMS dms, MDMSContent parentContent, File file, int AD_Table_ID, int Record_ID, String trxName)
 	{
 		if (file == null)
 			throw new AdempiereException(DMSConstant.MSG_FILL_MANDATORY + " file");
 
 		// Create Content
-		int contentID = Utils.createDMSContent(file.getName(), file.getName(), MDMSContent.CONTENTBASETYPE_Content, contentManager.getPath(parentContent),
-				null, file, 0, 0, false, trxName);
+		int contentID = Utils.createDMSContent(file.getName(), file.getName(), MDMSContent.CONTENTBASETYPE_Content,
+				dms.getContentManager().getPath(parentContent), null, file, 0, 0, false, trxName);
 
 		MDMSContent content = new MDMSContent(Env.getCtx(), contentID, trxName);
 
@@ -1249,20 +1249,19 @@ public class Utils
 		Utils.createAssociation(contentID, contentRelatedID, Record_ID, AD_Table_ID, MDMSAssociationType.getVersionType(true), 0, trxName);
 
 		// File write on Storage provider and create thumbnail
-		writeFileOnStorageAndThumnail(fileStorgProvider, contentManager, file, content);
+		writeFileOnStorageAndThumnail(dms, file, content);
 
 		return true;
-	}
+	} // addFile
 
 	/**
 	 * File write on Storage provider and create thumbnail
 	 * 
-	 * @param fsProvider
-	 * @param contentMngr
-	 * @param media
+	 * @param dms
+	 * @param file
 	 * @param content
 	 */
-	public static void writeFileOnStorageAndThumnail(IFileStorageProvider fsProvider, IContentManager contentMngr, File file, MDMSContent content)
+	public static void writeFileOnStorageAndThumnail(DMS dms, File file, MDMSContent content)
 	{
 		byte[] data = null;
 		try
@@ -1274,9 +1273,12 @@ public class Utils
 			throw new AdempiereException("Error while reading file", e);
 		}
 
+		IFileStorageProvider fsProvider = dms.getFileStorageProvider();
+		IContentManager contentMngr = dms.getContentManager();
+
 		fsProvider.writeBLOB(fsProvider.getBaseDirectory(contentMngr.getPath(content)), data, content);
 
-		IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(content.getDMS_MimeType().getMimeType());
+		IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(dms, content.getDMS_MimeType().getMimeType());
 
 		if (thumbnailGenerator != null)
 			thumbnailGenerator.addThumbnail(content, fsProvider.getFile(contentMngr.getPath(content)), null);

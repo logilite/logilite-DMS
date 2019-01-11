@@ -19,8 +19,7 @@ import org.compiere.model.PO;
 import org.compiere.util.CCache;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.MDMSContent;
 
 public class DefaultMountingStrategy implements IMountingStrategy
@@ -38,18 +37,16 @@ public class DefaultMountingStrategy implements IMountingStrategy
 
 	private static CCache<String, MDMSContent>	mountingParentCache				= new CCache<String, MDMSContent>(null, "MountingParentCache", 50, false);
 
-	private String								fileSeprator					= Utils.getStorageProviderFileSeparator();
-
 	@Override
 	public String getMountingPath(String Table_Name, int Record_ID)
 	{
-		return fileSeprator + DMS_MOUNTING_BASE + fileSeprator + Table_Name + fileSeprator + Record_ID;
+		return DMSConstant.FILE_SEPARATOR + DMS_MOUNTING_BASE + DMSConstant.FILE_SEPARATOR + Table_Name + DMSConstant.FILE_SEPARATOR + Record_ID;
 	}
 
 	@Override
 	public String getMountingPath(PO po)
 	{
-		return fileSeprator + DMS_MOUNTING_BASE + fileSeprator + po.get_TableName() + fileSeprator + po.get_ID();
+		return DMSConstant.FILE_SEPARATOR + DMS_MOUNTING_BASE + DMSConstant.FILE_SEPARATOR + po.get_TableName() + DMSConstant.FILE_SEPARATOR + po.get_ID();
 	}
 
 	@Override

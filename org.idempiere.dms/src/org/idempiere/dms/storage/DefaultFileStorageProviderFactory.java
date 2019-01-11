@@ -13,6 +13,7 @@
 
 package org.idempiere.dms.storage;
 
+import org.compiere.model.MStorageProvider;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.IFileStorageProviderFactory;
 
@@ -22,7 +23,7 @@ public class DefaultFileStorageProviderFactory implements IFileStorageProviderFa
 	@Override
 	public IFileStorageProvider get(String type)
 	{
-		if (type.equalsIgnoreCase("FileSystem"))
+		if (type.equalsIgnoreCase(MStorageProvider.METHOD_FileSystem))
 		{
 			return new FileSystemStorageProvider();
 		}
