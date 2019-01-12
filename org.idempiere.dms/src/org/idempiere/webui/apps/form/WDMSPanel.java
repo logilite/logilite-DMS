@@ -254,7 +254,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public WDMSPanel()
 	{
-		dms = new DMS(Env.getAD_Client_ID(Env.getCtx()), null);
+		dms = new DMS(Env.getAD_Client_ID(Env.getCtx()));
 
 		try
 		{
@@ -278,6 +278,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
 
+		dms.createMountingStrategy(null);
 		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
 
 		/*
