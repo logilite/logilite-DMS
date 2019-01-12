@@ -14,18 +14,8 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringReader;
-import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -35,9 +25,6 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
@@ -73,12 +60,6 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
-import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.hwpf.extractor.WordExtractor;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.xwpf.converter.pdf.PdfConverter;
-import org.apache.poi.xwpf.converter.pdf.PdfOptions;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MImage;
@@ -98,18 +79,13 @@ import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.pdfpreview.ConvertXlsToPdf;
-import org.idempiere.dms.pdfpreview.ConvertXlsxToPdf;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
-import org.w3c.tidy.Tidy;
 import org.zkoss.image.AImage;
-import org.zkoss.util.media.AMedia;
-import org.zkoss.zhtml.Filedownload;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
@@ -124,24 +100,13 @@ import org.zkoss.zul.Space;
 import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
 
-import com.itextpdf.text.Rectangle;
-import com.itextpdf.tool.xml.XMLWorkerHelper;
-import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.html.simpleparser.HTMLWorker;
-import com.lowagie.text.pdf.PdfWriter;
 
 public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
 
 	private static final long				serialVersionUID		= -6813481516566180243L;
 	public static CLogger					log						= CLogger.getCLogger(WDMSPanel.class);
-
-	private static String					SQL_LATEST_VERSION		= "" + "SELECT DMS_Content_ID, DMS_Association_ID " + "FROM DMS_Association "
-																			+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID= ? "
-																			+ "GROUP BY DMS_Content_ID,DMS_Association_ID " + "ORDER BY Max(seqNo) DESC ";
 
 	public Tabbox							tabBox					= new Tabbox();
 	private Tabs							tabs					= new Tabs();
@@ -278,7 +243,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
 
-		dms.createMountingStrategy(null);
+		dms.initMountingStrategy(null);
 		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
 
 		/*
@@ -811,7 +776,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				addRootBreadCrumb();
 			}
 			renderViewer();
-
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH) || event.getTarget().equals(btnSearch))
 		{
@@ -855,7 +819,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			openCanvasContextMenu(event);
 		}
-
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
 			DMSViewerComp = (DMSViewerComponent) event.getTarget();
@@ -902,7 +865,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_paste) || event.getTarget().equals(mnu_canvasPaste))
 		{
-
 			if (DMSClipboard.get() != null)
 			{
 				MDMSContent sourceContent = DMSClipboard.get();
@@ -919,12 +881,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						dms.pasteCutContent(sourceContent, destPasteContent);
 					renderViewer();
 				}
-
 			}
 		}
 		else if (event.getTarget().equals(mnu_download))
 		{
-			DMS_ZK_Util.downloadContentDocument(dms, dirContent);
+			DMS_ZK_Util.downloadDocument(dms, dirContent);
 		}
 		else if (event.getTarget().equals(mnu_rename))
 		{
@@ -940,7 +901,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					}
 				}
 			});
-
 		}
 		else if (event.getTarget().equals(mnu_delete))
 		{
@@ -952,7 +912,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				{
 					if (result)
 					{
-						deleteContent(DMSViewerComp.getDMSContent(), DMSViewerComp.getDMSAssociation());
+						dms.deleteContent(DMSViewerComp.getDMSContent(), DMSViewerComp.getDMSAssociation());
 						try
 						{
 							renderViewer();
@@ -1016,117 +976,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	}
 
-	/**
-	 * This will be a soft deletion. System will only inactive the files.
-	 * 
-	 * @param dmsContent
-	 */
-	private void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
-	{
-		// first delete if it is link
-		if (dmsAssociation.getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
-		{
-			inActiveContentAndAssociation(null, dmsAssociation);
-		}
-		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Content))
-		{
-			if (dmsAssociation.getDMS_AssociationType_ID() == 1000000)
-			{
-				// TODO get parent dms_content
-				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
-				int DMS_Association_ID = DB.getSQLValue(null, "SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
-						parentContent.getDMS_Content_ID());
-
-				MDMSAssociation parentAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
-				inActiveContentAndAssociation(parentContent, parentAssociation);
-				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(parentContent);
-				for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
-				{
-					MDMSContent content = (MDMSContent) entry.getKey();
-					MDMSAssociation association = (MDMSAssociation) entry.getValue();
-					inActiveContentAndAssociation(content, association);
-				}
-			}
-			else
-			{
-				inActiveContentAndAssociation(dmsContent, dmsAssociation);
-				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(dmsContent);
-				for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
-				{
-					MDMSContent content = (MDMSContent) entry.getKey();
-					MDMSAssociation association = (MDMSAssociation) entry.getValue();
-					inActiveContentAndAssociation(content, association);
-				}
-			}
-		}
-		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Directory))
-		{
-			// Inactive Directory content and its child recursively
-			inActiveContentAndAssociation(dmsContent, dmsAssociation);
-			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(dmsContent);
-			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
-			{
-				MDMSContent content = (MDMSContent) entry.getKey();
-				MDMSAssociation association = (MDMSAssociation) entry.getValue();
-				// recursive call
-				deleteContent(content, association);
-			}
-		}
-	}
-
-	private void inActiveContentAndAssociation(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
-	{
-		if (dmsAssociation != null)
-		{
-			dmsAssociation.setIsActive(false);
-			dmsAssociation.saveEx();
-		}
-		if (dmsContent != null)
-		{
-			dmsContent.setIsActive(false);
-			dmsContent.saveEx();
-		}
-	}
-
-	private HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent)
-	{
-
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-		String sql = "SELECT c.DMS_Content_ID, a.DMS_Association_ID FROM DMS_Content c"
-				+ " INNER JOIN DMS_Association a ON c.DMS_Content_ID = a.DMS_Content_ID "
-				+ " WHERE a.DMS_Content_Related_ID = ? AND c.IsActive='Y' AND a.IsActive='Y' ";
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, dmsContent.getDMS_Content_ID());
-			rs = pstmt.executeQuery();
-
-			if (rs != null)
-			{
-				while (rs.next())
-				{
-					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)),
-							(new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
-				}
-			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "getRelatedContents fetching failure: ", e);
-			throw new AdempiereException("getRelatedContents fetching failure: " + e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-
-		return map;
-	}
-
 	private void renderBreadCrumb(Event event) throws IOException, URISyntaxException
 	{
 		breadCrumbEvent = (BreadCrumbLink) event.getTarget();
@@ -1135,7 +984,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			if (breadCrumbEvent.getPathId().equals("0"))
 			{
-				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? ORDER BY Created desc",
+				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE Name = ? ORDER BY Created desc",
 						String.valueOf(recordID));
 				breadCrumbEvent.setPathId(String.valueOf(DMS_Content_ID));
 
@@ -1208,7 +1057,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		viewerComponents = new ArrayList<DMSViewerComponent>();
 
-		HashMap<I_DMS_Content, I_DMS_Association> dmsContent = null;
+		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = null;
 
 		// Setting current dms content value on label
 		if (isTabViewer())
@@ -1218,14 +1067,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		if (isSearch)
-			dmsContent = renderSearchedContent();
+			contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent);
 		else if (isGenericSearch)
-			dmsContent = getGenericSearchedContent();
+			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
 		else
-			dmsContent = getDMSContents();
+			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent);
 
 		Components.removeAllChildren(grid);
-		for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : dmsContent.entrySet())
+		for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : contentsMap.entrySet())
 		{
 
 			thumbFile = dms.getThumbnail(entry.getKey(), "150");
@@ -1265,111 +1114,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		grid.appendChild(rows);
 		tabBox.setSelectedIndex(0);
-	}
-
-	private HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent()
-	{
-		StringBuffer query = new StringBuffer();
-		if (!Util.isEmpty(vsearchBox.getTextbox().getValue(), true))
-		{
-			String inputParam = vsearchBox.getTextbox().getValue();
-			query.append("(").append(DMSConstant.NAME).append(":*").append(inputParam).append("*").append(" OR ").append(DMSConstant.DESCRIPTION).append(":*")
-					.append(inputParam).append("*)");
-		}
-		else
-		{
-			query.append("*:*");
-		}
-
-		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
-
-		getHierarchicalContent(hirachicalContent, currDMSContent != null ? currDMSContent.getDMS_Content_ID() : 0);
-
-		if (currDMSContent != null)
-		{
-			hirachicalContent.append(currDMSContent.getDMS_Content_ID()).append(")");
-			query.append(hirachicalContent.toString());
-		}
-		else
-		{
-			if (hirachicalContent.substring(hirachicalContent.length() - 4, hirachicalContent.length()).equals(" OR "))
-			{
-				hirachicalContent.replace(hirachicalContent.length() - 4, hirachicalContent.length(), ")");
-				query.append(hirachicalContent.toString());
-			}
-		}
-
-		// AD_Client_id append for search client wise
-		if (!Util.isEmpty(query.toString()))
-			query.append(" AND ");
-
-		query.append(" AD_Client_ID:(").append(Env.getAD_Client_ID(Env.getCtx())).append(")").append(" AND Show_InActive : 'false'");
-
-		if (recordID > 0)
-			query.append(" AND Record_ID:" + recordID);
-
-		if (tableID > 0)
-			query.append(" AND AD_Table_ID:" + tableID);
-
-		List<Integer> documentList = dms.searchIndex(query.toString());
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-
-		for (Integer entry : documentList)
-		{
-			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
-
-			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null), new MDMSAssociation(Env.getCtx(),
-					((BigDecimal) latestversion.get(1)).intValue(), null));
-		}
-		return map;
-	}
-
-	/**
-	 * get all DMS Contents for rendering
-	 */
-	private HashMap<I_DMS_Content, I_DMS_Association> getDMSContents()
-	{
-		int contentID = 0;
-
-		if (currDMSContent != null)
-			contentID = currDMSContent.getDMS_Content_ID();
-
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			// select only active records
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE, null);
-			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setInt(2, contentID);
-			pstmt.setInt(3, contentID);
-
-			rs = pstmt.executeQuery();
-
-			if (rs != null)
-			{
-				while (rs.next())
-				{
-					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)),
-							(new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
-				}
-			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Content fetching failure: ", e);
-			throw new AdempiereException("Content fetching failure: " + e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-
-		return map;
 	}
 
 	/**
@@ -1439,7 +1183,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				try
 				{
-					documentToPreview = convertToPDF(documentToPreview, mimeType);
+					documentToPreview = dms.convertToPDF(documentToPreview, mimeType);
 				}
 				catch (Exception e)
 				{
@@ -1464,8 +1208,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				else
 				{
-					AMedia media = new AMedia(documentToPreview, "application/octet-stream", null);
-					Filedownload.save(media);
+					DMS_ZK_Util.downloadDocument(documentToPreview);
 				}
 				// Fix for search --> download content --> back (which was
 				// navigate to home/root folder)
@@ -1476,145 +1219,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				FDialog.error(0, dms.getPathFromContentManager(currDMSContent) + " Content missing in storage,");
 			}
 		}
-	}
-
-	/**
-	 * Convert .docx to .pdf convert .doc to .pdf
-	 * 
-	 * @param documentToPreview
-	 * @param mimeType
-	 * @return
-	 * @throws IOException
-	 * @throws FileNotFoundException
-	 * @throws DocumentException
-	 * @throws com.itextpdf.text.DocumentException
-	 */
-	private File convertToPDF(File documentToPreview, MDMSMimeType mimeType) throws IOException, FileNotFoundException, DocumentException,
-			com.itextpdf.text.DocumentException
-	{
-		if (mimeType.getMimeType().equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
-		{
-			XWPFDocument document = new XWPFDocument(new FileInputStream(documentToPreview));
-			File newDocPDF = File.createTempFile("Zito", "DocxToPDF");
-			OutputStream pdfFile = new FileOutputStream(newDocPDF);
-			PdfOptions options = PdfOptions.create();
-			PdfConverter.getInstance().convert(document, pdfFile, options);
-			return newDocPDF;
-		}
-		else if (mimeType.getMimeType().equals("application/msword"))
-		{
-			HWPFDocument doc = new HWPFDocument(new FileInputStream(documentToPreview));
-			WordExtractor we = new WordExtractor(doc);
-			File newDocPDF = File.createTempFile("Zito", "DocToPDF");
-			OutputStream pdfFile = new FileOutputStream(newDocPDF);
-			String k = we.getText();
-			Document document = new Document();
-			PdfWriter.getInstance(document, pdfFile);
-			document.open();
-			document.add(new Paragraph(k));
-			document.close();
-			return newDocPDF;
-		}
-		else if (mimeType.getMimeType().equals("application/vnd.ms-excel")
-				|| mimeType.getMimeType().equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-		{
-			String fileName = documentToPreview.getName();
-			if (fileName != null && fileName.length() > 0)
-			{
-				String extension = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
-				if ("xls".equalsIgnoreCase(extension))
-				{
-					return convertXlsToPDF(documentToPreview);
-				}
-				else if ("xlsx".equalsIgnoreCase(extension))
-				{
-					return convertXlsxToPdf(documentToPreview);
-				}
-			}
-		}
-
-		return documentToPreview;
-	}
-
-	/**
-	 * Convert xlsx file to pdf file
-	 * 
-	 * @param documentToPreview
-	 * @return
-	 * @throws IOException
-	 * @throws FileNotFoundException
-	 * @throws com.itextpdf.text.DocumentException
-	 */
-	private File convertXlsxToPdf(File documentToPreview) throws IOException, FileNotFoundException, com.itextpdf.text.DocumentException
-	{
-		File newXlsxToHTML = File.createTempFile("Zito", "XlsxToHTML");
-		try
-		{
-			float pdfWidth = 1050;
-			float pdfheight = 900;
-			String sourcePath = documentToPreview.getAbsolutePath();
-			String destinationPath = newXlsxToHTML.getAbsolutePath();
-
-			// Convert .xlsx file to html
-			ConvertXlsxToPdf.convert(sourcePath, destinationPath);
-			InputStream in = new FileInputStream(new File(destinationPath));
-
-			// Convert html to xhtml
-			Tidy tidy = new Tidy();
-			File newHtmlToXhtml = File.createTempFile("Zito", "HtmlToXHtml");
-			tidy.setShowWarnings(false);
-			// tidy.setXmlTags(true);
-			tidy.setXHTML(true);
-			tidy.setMakeClean(true);
-			org.w3c.dom.Document d = tidy.parseDOM(in, null);
-			tidy.pprint(d, new FileOutputStream(newHtmlToXhtml));
-
-			// Convert xhtml to pdf
-			File newXhtmlToPdf = File.createTempFile("Zito", "XHtmlToPdf");
-			com.itextpdf.text.Document document = new com.itextpdf.text.Document();
-			Rectangle size = new Rectangle(pdfWidth, pdfheight);
-			document.setPageSize(size);
-			com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(document, new FileOutputStream(newXhtmlToPdf));
-			document.open();
-
-			XMLWorkerHelper.getInstance().parseXHtml(writer, document, new FileInputStream(newHtmlToXhtml));
-			document.close();
-
-			return newXhtmlToPdf;
-		}
-		catch (InvalidFormatException | ParserConfigurationException | TransformerException e)
-		{
-			throw new AdempiereException(e);
-		}
-	}
-
-	/**
-	 * Convert xls file to pdf
-	 * 
-	 * @param documentToPreview
-	 * @return pdf file
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws DocumentException
-	 */
-	private File convertXlsToPDF(File documentToPreview) throws FileNotFoundException, IOException, DocumentException
-	{
-		InputStream in = new FileInputStream(documentToPreview);
-		ConvertXlsToPdf test = new ConvertXlsToPdf(in);
-		String html = test.getHTML();
-
-		File newXlsToPdf = File.createTempFile("zito", "XlsToPDF");
-
-		Document document = new Document(PageSize.A4, 20, 20, 20, 20);
-		PdfWriter.getInstance(document, new FileOutputStream(newXlsToPdf));
-		document.open();
-		document.addCreationDate();
-
-		HTMLWorker htmlWorker = new HTMLWorker(document);
-		htmlWorker.parse(new StringReader(html));
-		document.close();
-
-		return newXlsToPdf;
 	}
 
 	/**
@@ -2007,10 +1611,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		canvasContextMenu.open(this, "at_pointer");
 	}
 
+	// TODO Need check for refactoring
+	/**
+	 * @param DMSContent
+	 * @param isDir
+	 */
 	private void linkCopyDocument(MDMSContent DMSContent, boolean isDir)
 	{
 		boolean isDocPresent = false;
-		isDocPresent = isDoumentPresent(DMSContent, isDir);
+		isDocPresent = dms.isDocumentPresent(currDMSContent, DMSContent, isDir);
 		if (DMSClipboard.get() == null)
 		{
 			return;
@@ -2111,24 +1720,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				throw new AdempiereException("Render content problem: " + e);
 			}
 		}
-	}
-
-	private boolean isDoumentPresent(MDMSContent DMSContent, boolean isDir)
-	{
-		StringBuilder query = new StringBuilder();
-		query.append("SELECT count(DMS_Content_ID) FROM DMS_Association where DMS_Content_ID = ");
-		query.append(DMSClipboard.get().getDMS_Content_ID());
-
-		if (currDMSContent == null && !isDir)
-		{
-			query.append(" AND DMS_Content_Related_ID IS NULL");
-		}
-		else
-		{
-			query.append(" AND DMS_Content_Related_ID = ").append(DMSContent.getDMS_Content_ID());
-		}
-
-		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
 	}
 
 	private HashMap<String, List<Object>> getQueryParamas()
@@ -2455,54 +2046,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		return params;
-	}
-
-	private HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent()
-	{
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-		List<Integer> documentList = null;
-
-		HashMap<String, List<Object>> params = getQueryParamas();
-		String query = dms.buildSolrSearchQuery(params);
-
-		// AD_Client_id append for search client wise
-		if (!Util.isEmpty(query))
-			query += " AND ";
-
-		query += "AD_Client_ID :(" + (Env.getAD_Client_ID(Env.getCtx()) + ")");
-
-		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
-
-		getHierarchicalContent(hirachicalContent, currDMSContent != null ? currDMSContent.getDMS_Content_ID() : 0);
-
-		if (currDMSContent != null)
-		{
-			hirachicalContent.append(currDMSContent.getDMS_Content_ID()).append(")");
-			query += " " + hirachicalContent.toString();
-		}
-		else
-		{
-			if (hirachicalContent.substring(hirachicalContent.length() - 4, hirachicalContent.length()).equals(" OR "))
-			{
-				hirachicalContent.replace(hirachicalContent.length() - 4, hirachicalContent.length(), ")");
-				query += " " + hirachicalContent.toString();
-			}
-		}
-
-		documentList = dms.searchIndex(query);
-
-		for (Integer entry : documentList)
-		{
-			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
-
-			if (latestversion != null)
-			{
-				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null), new MDMSAssociation(Env.getCtx(),
-						((BigDecimal) latestversion.get(1)).intValue(), null));
-			}
-		}
-		return map;
-	}
+	} // getQueryParamas
 
 	@Override
 	public void valueChange(ValueChangeEvent event)
@@ -2632,7 +2176,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				panelAttribute.appendChild(gridView);
 			}
 		}
-	}
+	} // valueChange
 
 	private void showBreadcumb(MDMSContent breadcumbContent)
 	{
@@ -2653,7 +2197,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		breadRow.appendChild(breadCrumbLink);
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
-	}
+	} // showBreadcumb
 
 	public List<BreadCrumbLink> getParentLinks()
 	{
@@ -2685,44 +2229,4 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		gridBreadCrumb.appendChild(breadRows);
 	}
 
-	private void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID)
-	{
-		PreparedStatement pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
-		ResultSet rs = null;
-		try
-		{
-			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setInt(2, DMS_Content_ID);
-			pstmt.setInt(3, DMS_Content_ID);
-			rs = pstmt.executeQuery();
-
-			while (rs.next())
-			{
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-
-				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-					getHierarchicalContent(hierarchicalContent, dmsContent.getDMS_Content_ID());
-				else
-				{
-					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-					hierarchicalContent.append(association.getDMS_Content_ID() + " OR ");
-
-					if (association.getDMS_Content_ID() != dmsContent.getDMS_Content_ID())
-						hierarchicalContent.append(dmsContent.getDMS_Content_ID() + " OR ");
-				}
-			}
-
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Fail to get hierarchical Content.", e);
-			throw new AdempiereException("Fail to get hierarchical Content: " + e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			pstmt = null;
-			rs = null;
-		}
-	}
 }

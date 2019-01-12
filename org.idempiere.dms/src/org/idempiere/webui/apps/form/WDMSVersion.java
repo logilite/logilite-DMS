@@ -179,7 +179,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			DMS_ZK_Util.downloadContentDocument(dms, DMSViewerComp.getDMSContent());
+			DMS_ZK_Util.downloadDocument(dms, DMSViewerComp.getDMSContent());
 		}
 		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{

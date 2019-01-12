@@ -14,19 +14,20 @@ import org.zkoss.zhtml.Filedownload;
 public class DMS_ZK_Util
 {
 
-	public static void downloadContentDocument(DMS dms, MDMSContent content) throws FileNotFoundException
+	public static void downloadDocument(DMS dms, MDMSContent content) throws FileNotFoundException
 	{
 		File document = dms.getFileFromStorage(content);
 
 		if (document.exists())
-		{
-			AMedia media = new AMedia(document, "application/octet-stream", null);
-			Filedownload.save(media);
-		}
+			downloadDocument(document);
 		else
-		{
 			FDialog.warn(0, "Document is not available.");
-		}
-	}
+	} // downloadDocument
+
+	public static void downloadDocument(File document) throws FileNotFoundException
+	{
+		AMedia media = new AMedia(document, "application/octet-stream", null);
+		Filedownload.save(media);
+	} // downloadDocument
 
 }

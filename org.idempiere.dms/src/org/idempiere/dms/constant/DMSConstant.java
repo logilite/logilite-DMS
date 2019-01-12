@@ -99,4 +99,9 @@ public final class DMSConstant
 	public static final String	STYLE_CONTENT_COMP_VIEWER_NORMAL	= "background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff";
 	public static final String	STYLE_CONTENT_COMP_VIEWER_SELECTED	= "background-color:#99cbff; box-shadow: 7px 7px 7px #888888";
 
+	// Queries
+	public static final String	SQL_GET_CONTENT_LATEST_VERSION		= "SELECT DMS_Content_ID, DMS_Association_ID FROM DMS_Association "
+																			+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID = ? "
+																			+ "GROUP BY DMS_Content_ID, DMS_Association_ID 	ORDER BY MAX(SeqNo) DESC ";
+
 }

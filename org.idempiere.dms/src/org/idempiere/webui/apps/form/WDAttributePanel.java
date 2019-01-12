@@ -513,7 +513,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnDownload))
 		{
-			DMS_ZK_Util.downloadContentDocument(dms, DMS_Content);
+			DMS_ZK_Util.downloadDocument(dms, DMS_Content);
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
@@ -546,7 +546,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		else if (event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			DMS_ZK_Util.downloadContentDocument(dms, DMSViewerComp.getDMSContent());
+			DMS_ZK_Util.downloadDocument(dms, DMSViewerComp.getDMSContent());
 		}
 
 	}

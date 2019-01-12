@@ -119,6 +119,7 @@ public class Utils
 	static CCache<Integer, IContentManager>		cache_contentManager					= new CCache<Integer, IContentManager>("ContentManager", 2);
 	static CCache<String, MImage>				cache_dirThumbnail						= new CCache<String, MImage>("DirThumbnail", 2);
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail					= new CCache<Integer, MImage>("MimetypeThumbnail", 2);
+	static CCache<String, Integer>				cache_contentType						= new CCache<String, Integer>("ContentTypeCache", 100);
 
 	// Oracle Database compatible
 	static
@@ -341,7 +342,7 @@ public class Utils
 	}
 
 	/**
-	 * get mimetypeID from media
+	 * get MimeTypeID from File
 	 * 
 	 * @param file
 	 * @return
@@ -351,7 +352,7 @@ public class Utils
 		int dmsMimeType_ID = -1;
 
 		if (file != null && getFileMimeType(file) != null)
-			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE UPPER(mimetype) = '" + getFileMimeType(file).toUpperCase()
+			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE UPPER(MimeType) = '" + getFileMimeType(file).toUpperCase()
 					+ "'");
 
 		if (dmsMimeType_ID != -1)
@@ -533,6 +534,20 @@ public class Utils
 		cache_mimetypeThumbnail.put(DMS_MimeType_ID, mImage);
 		return mImage;
 
+	}
+
+	public static int getContentTypeID(String contentType, int AD_Client_ID)
+	{
+		Integer contentTypeID = cache_contentType.get(contentType);
+		if (contentTypeID == null || contentTypeID <= 0)
+		{
+			contentTypeID = DB.getSQLValue(null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND AD_Client_ID = ?",
+					contentType, AD_Client_ID);
+
+			if (contentTypeID > 0)
+				cache_contentType.put(contentType, contentTypeID);
+		}
+		return contentTypeID;
 	}
 
 	/**

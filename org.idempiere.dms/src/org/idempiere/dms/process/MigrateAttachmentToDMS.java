@@ -54,7 +54,7 @@ public class MigrateAttachmentToDMS extends SvrProcess
 
 			Utils.initiateMountingContent(table.getTableName(), attachment.getRecord_ID(), attachment.getAD_Table_ID());
 
-			dms.createMountingStrategy(table.getTableName());
+			dms.initMountingStrategy(table.getTableName());
 			MDMSContent mountingParent = dms.getMountingStrategy().getMountingParent(table.getTableName(), attachment.getRecord_ID());
 
 			MAttachmentEntry[] attachmentEntries = attachment.getEntries();
