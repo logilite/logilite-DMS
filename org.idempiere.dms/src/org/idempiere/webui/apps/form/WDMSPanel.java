@@ -1099,7 +1099,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 
 			boolean isLink = entry.getValue().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID();
-			DMSViewerComponent viewerComp = new DMSViewerComponent(entry.getKey(), image, isLink, entry.getValue());
+			DMSViewerComponent viewerComp = new DMSViewerComponent(dms, entry.getKey(), image, isLink, entry.getValue());
 			viewerComp.setDwidth(DMSConstant.CONTENT_COMPONENT_WIDTH);
 			viewerComp.setDheight(DMSConstant.CONTENT_COMPONENT_HEIGHT);
 			viewerComp.addEventListener(Events.ON_CLICK, this);
@@ -1618,8 +1618,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void linkCopyDocument(MDMSContent DMSContent, boolean isDir)
 	{
-		boolean isDocPresent = false;
-		isDocPresent = dms.isDocumentPresent(currDMSContent, DMSContent, isDir);
+		boolean isDocPresent = dms.isDocumentPresent(currDMSContent, DMSContent, isDir);
 		if (DMSClipboard.get() == null)
 		{
 			return;
@@ -1702,23 +1701,21 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			return;
 		}
 
-		if (!isDocPresent)
+		//
+		int DMS_Content_Related_ID = 0;
+		if (DMSContent != null)
+			DMS_Content_Related_ID = DMSContent.getDMS_Content_ID();
+
+		dms.createAssociation(DMSClipboard.get().getDMS_Content_ID(), DMS_Content_Related_ID, 0, 0, Utils.getDMS_Association_Link_ID(), 0, null);
+
+		try
 		{
-			int DMS_Content_Related_ID = 0;
-			if (DMSContent != null)
-				DMS_Content_Related_ID = DMSContent.getDMS_Content_ID();
-
-			dms.createAssociation(DMSClipboard.get().getDMS_Content_ID(), DMS_Content_Related_ID, 0, 0, Utils.getDMS_Association_Link_ID(), 0, null);
-
-			try
-			{
-				renderViewer();
-			}
-			catch (Exception e)
-			{
-				log.log(Level.SEVERE, "Render content problem.", e);
-				throw new AdempiereException("Render content problem: " + e);
-			}
+			renderViewer();
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Render content problem.", e);
+			throw new AdempiereException("Render content problem: " + e);
 		}
 	}
 

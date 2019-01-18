@@ -294,11 +294,10 @@ public class DMS
 		String trxName = Trx.createTrxName("AddFiles");
 		trx = Trx.get(trxName, true);
 
-		// Create Directory folder hierarchy
-		if (!Util.isEmpty(dirPath, true))
+		// Create Directory folder hierarchy OR get leaf DMS-Content
+		if (!Util.isEmpty(dirPath, true) && !dirPath.equals(DMSConstant.FILE_SEPARATOR))
 		{
-			// TODO Need implement dir creation with recursive logic
-			dirContent = Utils.createDirectory(dirPath, dirContent, AD_Table_ID, Record_ID, fileStorageProvider, contentManager, false, trx.getTrxName());
+			dirContent = createDirHierarchy(dirPath, dirContent, AD_Table_ID, Record_ID, trx.getTrxName());
 		}
 
 		if (!isVersion && contentType != null)
@@ -315,6 +314,32 @@ public class DMS
 
 		return true;
 	}// addFile
+
+	/**
+	 * Create Directory Hierarchy or Get leaf DMSContent from dirPath
+	 * 
+	 * @param dirPath
+	 * @param dirContent
+	 * @param AD_Table_ID
+	 * @param Record_ID
+	 * @param trxName
+	 * @return {@link MDMSContent} - Leaf node
+	 */
+	public MDMSContent createDirHierarchy(String dirPath, MDMSContent dirContent, int AD_Table_ID, int Record_ID, String trxName)
+	{
+		// For Ref '\\' = '\', "\\" = "\\\\"
+		String[] dirs = dirPath.split(DMSConstant.FILE_SEPARATOR);
+
+		for (int i = 0; i < dirs.length; i++)
+		{
+			String dir = dirs[i].trim();
+			if (!Util.isEmpty(dir, true))
+			{
+				dirContent = Utils.createDirectory(dir, dirContent, AD_Table_ID, Record_ID, fileStorageProvider, contentManager, false, trxName);
+			}
+		}
+		return dirContent;
+	} // createDirHierarchy
 
 	/**
 	 * @param parentContent
@@ -480,12 +505,12 @@ public class DMS
 		return Utils.getMimetypeThumbnail(dms_MimeType_ID);
 	}
 
-	public String getPathFromContentManager(MDMSContent content)
+	public String getPathFromContentManager(I_DMS_Content content)
 	{
 		return contentManager.getPath(content);
 	}
 
-	public File getFileFromStorage(MDMSContent content)
+	public File getFileFromStorage(I_DMS_Content content)
 	{
 		return fileStorageProvider.getFile(this.getPathFromContentManager(content));
 	}

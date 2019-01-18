@@ -19,6 +19,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.compiere.util.CLogger;
+import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
@@ -142,26 +143,28 @@ public class DMSViewerComponent extends Div
 	/**
 	 * Constructor for dmsContent is not a version
 	 * 
+	 * @param dms
 	 * @param content
 	 * @param image
 	 * @param isLink
 	 * @param DMSAssociation
 	 */
-	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation)
+	public DMSViewerComponent(DMS dms, I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation)
 	{
-		this(content, image, isLink, DMSAssociation, null);
+		this(dms, content, image, isLink, DMSAssociation, null);
 	}
 
 	/**
 	 * Constructor for dmsContent is a version
 	 * 
+	 * @param dms
 	 * @param content
 	 * @param image
 	 * @param isLink
 	 * @param DMSAssociation
 	 * @param version
 	 */
-	public DMSViewerComponent(I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation, String version)
+	public DMSViewerComponent(DMS dms, I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation, String version)
 	{
 		String name = content.getName();
 		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
@@ -212,7 +215,7 @@ public class DMSViewerComponent extends Div
 		prevImg.setContent(image);
 
 		dImage.appendChild(prevImg);
-		dImage.setTooltiptext(Utils.getToolTipTextMsg(content));
+		dImage.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
 		vbox.appendChild(dImage);
 
 		fLabel.appendChild(new Label(fName));

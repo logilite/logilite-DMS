@@ -29,7 +29,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -763,60 +765,31 @@ public class Utils
 		final String[] units = new String[] { "Byte", "kB", "MB", "GB", "TB" };
 		int digitGroups = (int) (Math.log10(size) / Math.log10(1024));
 		return new DecimalFormat("#,##0.#").format(size / Math.pow(1024, digitGroups)) + " " + units[digitGroups];
-	}
+	} // readableFileSize
 
-	public static String getToolTipTextMsg(I_DMS_Content content)
+	public static String getToolTipTextMsg(DMS dms, I_DMS_Content content)
 	{
-		MDMSContentType mdmsContentType = null;
-		String msg = null;
-
+		String msg = "";
 		if (content.getDMS_ContentType_ID() > 0)
 		{
-			mdmsContentType = new MDMSContentType(Env.getCtx(), content.getDMS_ContentType_ID(), null);
+			MDMSContentType mdmsContentType = new MDMSContentType(Env.getCtx(), content.getDMS_ContentType_ID(), null);
 			msg = "Content Type: " + mdmsContentType.getName() + "\n";
 		}
 
+		msg += "Size: ";
 		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
-			IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-			IContentManager contentManager = getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-			if (fileStorageProvider == null)
-				throw new AdempiereException("File Storage Provider not found.");
-
-			if (contentManager == null)
-				throw new AdempiereException("Content manager is not found.");
-
-			File file = fileStorageProvider.getFile(contentManager.getPath(content));
-
+			File file = dms.getFileFromStorage(content);
 			if (file != null)
-			{
-				if (!Util.isEmpty(msg))
-					msg = msg + "Size: " + readableFileSize(file.length()) + "\n";
-				else
-					msg = "Size: " + readableFileSize(file.length()) + "\n";
-			}
-			else
-			{
-				msg = null;
-			}
+				msg += readableFileSize(file.length());
 		}
 		else
 		{
-			if (!Util.isEmpty(content.getDMS_FileSize()) && !Util.isEmpty(msg))
-			{
-				msg = msg + "Size: " + content.getDMS_FileSize() + "\n";
-			}
-			else
-			{
-				msg = "Size: " + content.getDMS_FileSize() + "\n";
-			}
+			msg += content.getDMS_FileSize();
 		}
 
-		msg = msg + "Created: " + content.getCreated();
-
-		return msg;
-	}
+		return msg + "\nCreated: " + content.getCreated();
+	} // getToolTipTextMsg
 
 	public static void initiateMountingContent(String table_Name, int Record_ID, int AD_Table_ID)
 	{
@@ -1182,6 +1155,7 @@ public class Utils
 							switch (displayType)
 							{
 								case DisplayType.YesNo:
+
 									attrs[i].setMAttributeInstance(asiID, value);
 									break;
 
@@ -1189,12 +1163,20 @@ public class Utils
 								case DisplayType.DateTime:
 								case DisplayType.Time:
 
-									// TODO String_to_timestamp
-									Timestamp valueTimeStamp = new Timestamp(111); // value;
-									attrs[i].setMAttributeInstance(asiID, valueTimeStamp);
+									try
+									{
+										Date parsedDate = DMSConstant.sdfWithTime.parse(value);
+										Timestamp timestamp = new Timestamp(parsedDate.getTime());
+										attrs[i].setMAttributeInstance(asiID, timestamp);
+									}
+									catch (ParseException e)
+									{
+										throw new AdempiereException("Error while parsing String to Timestamp", e);
+									}
 									break;
 
 								case DisplayType.Integer:
+
 									attrs[i].setMAttributeInstance(asiID, value == null ? 0 : Integer.parseInt(value), value);
 									break;
 
@@ -1202,6 +1184,7 @@ public class Utils
 								case DisplayType.Number:
 								case DisplayType.CostPrice:
 								case DisplayType.Quantity:
+
 									attrs[i].setMAttributeInstance(asiID, new BigDecimal(value));
 									break;
 

@@ -142,7 +142,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 			// Getting version number of version
 			String seqNo = ((MDMSContent) contentList.get(i)).getSeqNo();
-			DMSViewerComponent viewerComponent = new DMSViewerComponent(contentList.get(i), image, false, null, seqNo);
+			DMSViewerComponent viewerComponent = new DMSViewerComponent(dms, contentList.get(i), image, false, null, seqNo);
 
 			viewerComponent.setDwidth(DMSConstant.CONTENT_COMPONENT_WIDTH);
 			viewerComponent.setDheight(DMSConstant.CONTENT_COMPONENT_HEIGHT);
