@@ -17,6 +17,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
@@ -460,7 +461,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
-
 		if (event.getTarget().equals(btnEdit))
 		{
 			txtName.setEnabled(true);
@@ -485,9 +485,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				{
 					Utils.isValidFileName(txtName.getValue(), true);
 				}
-				catch (WrongValueException e)
+				catch (AdempiereException e)
 				{
-					throw new WrongValueException(txtName, e.getMessage());
+					throw new WrongValueException(txtName, e.getLocalizedMessage());
 				}
 
 				dms.updateContent(txtName.getValue(), DMS_Content);
@@ -548,8 +548,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
 			DMS_ZK_Util.downloadDocument(dms, DMSViewerComp.getDMSContent());
 		}
+	} // onEvent
 
-	}
-
-	
 }

@@ -75,7 +75,6 @@ import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.X_DMS_Content;
 import org.w3c.tidy.Tidy;
-import org.zkoss.zk.ui.WrongValueException;
 
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
@@ -288,7 +287,7 @@ public class DMS
 		else
 		{
 			if (Utils.getMimeTypeID(file) != dirContent.getDMS_MimeType_ID())
-				throw new WrongValueException("Mime type not matched, please upload same mime type version document.");
+				throw new AdempiereException("Mime type not matched, please upload same mime type version document.");
 		}
 
 		String trxName = Trx.createTrxName("AddFiles");
@@ -368,7 +367,7 @@ public class DMS
 		else
 		{
 			if (Utils.getMimeTypeID(file) != parentContent.getDMS_MimeType_ID())
-				throw new WrongValueException("Mime type not matched, please upload same mime type version document.");
+				throw new AdempiereException("Mime type not matched, please upload same mime type version document.");
 		}
 
 		String trxName = Trx.createTrxName("UploadFile");
@@ -385,7 +384,7 @@ public class DMS
 		{
 			if (trx != null)
 				trx.rollback();
-			throw new AdempiereException("Upload Content Failure :" + e);
+			throw new AdempiereException("Upload Content Failure:\n" + e.getLocalizedMessage());
 		}
 		finally
 		{
@@ -446,7 +445,7 @@ public class DMS
 			File fileCheck = new File(path);
 			if (fileCheck.exists())
 			{
-				throw new WrongValueException(
+				throw new AdempiereException(
 						"File already exists, either rename or upload as a version. \n (Either same file name content exist in inActive mode)");
 			}
 		}
@@ -473,7 +472,7 @@ public class DMS
 	{
 		// TODO
 		return null;
-	}
+	} // selectContent
 
 	public MDMSContent getRootContent(int AD_Table_ID, int Record_ID)
 	{
@@ -590,15 +589,16 @@ public class DMS
 			{
 				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
 				{
-					if (!newFileName.contains(" - copy ")) // TODO
-						newFileName = newFileName + " - copy ";
+					if (!newFileName.contains(" - copy")) // TODO
+						newFileName = newFileName + " - copy";
 
 					newFile = new File(newFileName);
 
 					if (newFile.exists())
 					{
-						newFileName = Utils.getUniqueFoldername(newFile.getAbsolutePath());
+						newFileName = Utils.getUniqueFolderName(newFile.getAbsolutePath());
 						newFile = new File(newFileName);
+						break;
 					}
 				}
 			}
@@ -638,17 +638,18 @@ public class DMS
 			{
 				String uniqueName = newFile.getName();
 
-				if (!newFile.getName().contains(" - copy ")) // TODO
+				if (!newFile.getName().contains(" - copy")) // TODO
 				{
-					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy ";
+					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy";
 					String ext = FilenameUtils.getExtension(newFile.getName());
 					newFile = new File(parent.getAbsolutePath() + DMSConstant.FILE_SEPARATOR + uniqueName + "." + ext);
 				}
 
 				if (newFile.exists())
 				{
-					uniqueName = Utils.getCopiedUniqueFilename(newFile.getAbsolutePath());
+					uniqueName = Utils.getCopiedUniqueFileName(newFile.getAbsolutePath());
 					newFile = new File(uniqueName);
+					break;
 				}
 			}
 		}
@@ -1168,7 +1169,7 @@ public class DMS
 			{
 				content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
 				association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-				this.renameFile(content, association, fileName);
+				this.renameFile(content, association, fileName, true);
 			}
 		}
 		catch (Exception e)
@@ -1184,10 +1185,20 @@ public class DMS
 		}
 	} // updateContent
 
-	public void renameFile(MDMSContent content, MDMSAssociation association, String fileName)
+	/**
+	 * Rename File
+	 * 
+	 * @param content
+	 * @param association
+	 * @param fileName
+	 * @param isAddFileExtention
+	 */
+	public void renameFile(MDMSContent content, MDMSAssociation association, String fileName, boolean isAddFileExtention)
 	{
+		String fileExt = "";
 		String newPath = this.getFileFromStorage(content).getAbsolutePath();
-		String fileExt = newPath.substring(newPath.lastIndexOf("."), newPath.length());
+		if (isAddFileExtention)
+			fileExt = newPath.substring(newPath.lastIndexOf("."), newPath.length());
 		newPath = newPath.substring(0, newPath.lastIndexOf(DMSConstant.FILE_SEPARATOR));
 		newPath = newPath + DMSConstant.FILE_SEPARATOR + fileName + fileExt;
 		newPath = Utils.getUniqueFilename(newPath);
@@ -1282,7 +1293,7 @@ public class DMS
 	public void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
 	{
 		// first delete if it is link
-		if (dmsAssociation.getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+		if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
 		{
 			setContentAndAssociationInActive(null, dmsAssociation);
 		}

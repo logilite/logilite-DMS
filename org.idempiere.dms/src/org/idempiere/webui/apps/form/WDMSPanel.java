@@ -82,6 +82,7 @@ import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
@@ -1098,7 +1099,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				image = new AImage(thumbFile);
 			}
 
-			boolean isLink = entry.getValue().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID();
+			boolean isLink = entry.getValue().getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID;
 			DMSViewerComponent viewerComp = new DMSViewerComponent(dms, entry.getKey(), image, isLink, entry.getValue());
 			viewerComp.setDwidth(DMSConstant.CONTENT_COMPONENT_WIDTH);
 			viewerComp.setDheight(DMSConstant.CONTENT_COMPONENT_HEIGHT);
@@ -1273,7 +1274,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		nextDMSContent = currDMSContent;
 
 		if (selectedDMSAssociation != null && !selectedDMSAssociation.isEmpty()
-				&& selectedDMSAssociation.peek().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID() && currDMSContent != null
+				&& selectedDMSAssociation.peek().getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID && currDMSContent != null
 				&& currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.peek().getDMS_Content_ID())
 		{
 			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.peek().getDMS_Content_Related_ID(), null);
@@ -1503,7 +1504,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.open(this, "at_pointer");
 
 		if (MDMSContent.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType())
-				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
 		{
 			mnu_versionList.setDisabled(false);
 			mnu_paste.setDisabled(true);
@@ -1519,7 +1520,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		if (MDMSContent.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType())
-				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
+				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
 		{
 			mnu_versionList.setDisabled(true);
 			mnu_paste.setDisabled(true);
@@ -1642,7 +1643,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					.getSQLValue(
 							null,
 							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID = ? AND AD_Table_ID = ? AND Record_ID = ?",
-							DMSClipboard.get().getDMS_Content_ID(), Utils.getDMS_Association_Record_ID(), tableID, recordID);
+							DMSClipboard.get().getDMS_Content_ID(), MDMSAssociationType.RECORD_ID, tableID, recordID);
 
 			if (DMS_Association_ID == -1)
 			{
@@ -1656,7 +1657,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (DMS_Content_Related_ID != 0)
 					DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
 
-				DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
+				DMSassociation.setDMS_AssociationType_ID(MDMSAssociationType.LINK_ID);
 				DMSassociation.setRecord_ID(recordID);
 				DMSassociation.setAD_Table_ID(tableID);
 				DMSassociation.saveEx();
@@ -1706,7 +1707,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (DMSContent != null)
 			DMS_Content_Related_ID = DMSContent.getDMS_Content_ID();
 
-		dms.createAssociation(DMSClipboard.get().getDMS_Content_ID(), DMS_Content_Related_ID, 0, 0, Utils.getDMS_Association_Link_ID(), 0, null);
+		dms.createAssociation(DMSClipboard.get().getDMS_Content_ID(), DMS_Content_Related_ID, 0, 0, MDMSAssociationType.LINK_ID, 0, null);
 
 		try
 		{

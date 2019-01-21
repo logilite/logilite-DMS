@@ -13,6 +13,7 @@
 
 package org.idempiere.webui.apps.form;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
@@ -194,9 +195,9 @@ public class WRenameContent extends Window implements EventListener<Event>
 			{
 				Utils.isValidFileName(txtName.getValue(), true);
 			}
-			catch (WrongValueException e)
+			catch (AdempiereException e)
 			{
-				throw new WrongValueException(txtName, e.getMessage());
+				throw new WrongValueException(txtName, e.getLocalizedMessage());
 			}
 		}
 	}

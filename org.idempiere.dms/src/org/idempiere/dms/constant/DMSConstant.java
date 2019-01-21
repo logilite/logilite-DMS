@@ -54,10 +54,6 @@ public final class DMSConstant
 	public static final String		MENUITEM_DELETE						= "Delete";
 	public static final String		MENUITEM_ASSOCIATE					= "Associate";
 
-	// ASSOCIATION TYPE
-	public static final String		LINK								= "Link";
-	public static final String		RECORD								= "Record";
-
 	// DMS MimeType
 	public static final String		DEFAULT								= "Default";
 	public static final String		DIRECTORY							= "Directory";

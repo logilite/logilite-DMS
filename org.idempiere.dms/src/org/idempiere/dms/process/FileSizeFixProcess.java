@@ -1,6 +1,5 @@
 package org.idempiere.dms.process;
 
-import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -14,8 +13,6 @@ import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.idempiere.dms.DMS;
-import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_MimeType;
@@ -173,22 +170,7 @@ public class FileSizeFixProcess extends SvrProcess
 		{
 			addLog(content.getDMS_Content_ID() + "| old name [" + content.getName() + "] to new name [" + newName + "] |parentPath [" + content.getParentURL()
 					+ "] | SUCCESS");
-			String newPath = dms.getFileFromStorage(content).getAbsolutePath();
-			// String fileExt = newPath.substring(newPath.lastIndexOf("."),
-			// newPath.length());
-			newPath = newPath.substring(0, newPath.lastIndexOf(DMSConstant.FILE_SEPARATOR));
-			newPath = newPath + DMSConstant.FILE_SEPARATOR + newName;
-			newPath = Utils.getUniqueFilename(newPath);
-
-			File oldFile = new File(dms.getFileFromStorage(content).getAbsolutePath());
-			File newFile = new File(newPath);
-			oldFile.renameTo(newFile);
-
-			content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf(DMSConstant.FILE_SEPARATOR) + 1,
-					newFile.getAbsolutePath().length()));
-			
-			//addLog("File available  : dms_content_id[" + content.getDMS_Content_ID() + "]");
-			content.saveEx();
+			dms.renameFile(content, association, newName, false);
 			flag = true;
 
 		}
@@ -196,8 +178,6 @@ public class FileSizeFixProcess extends SvrProcess
 		{
 			addLog(content.getDMS_Content_ID() + "| old name [" + content.getName() + "] to new name [" + newName + "] |parentPath [" + content.getParentURL()
 					+ "] | FAIL");
-			//addLog("NO File available  : dms_content_id[" + content.getDMS_Content_ID() + "]");
-			//content.setName(newName);
 		}
 		return flag;
 	}
@@ -228,9 +208,11 @@ public class FileSizeFixProcess extends SvrProcess
 
 			String oldname = mdmsContent.getName().replaceAll("\\s+$", "");
 			String newName = oldname + mimytype.getFileExtension();
-		//	addLog("start rename : [" + oldname +"] to [" + newName +"] dms_content_id[" + mdmsContent.getDMS_Content_ID() + "]" );
+			// addLog("start rename : [" + oldname +"] to [" + newName
+			// +"] dms_content_id[" + mdmsContent.getDMS_Content_ID() + "]" );
 			renameFile(mdmsContent, mdmsAssociation, newName);
-		//	addLog("rename DONE : [" + oldname +"] to [" + newName +"] dms_content_id[" + mdmsContent.getDMS_Content_ID() + "]" );
+			// addLog("rename DONE : [" + oldname +"] to [" + newName
+			// +"] dms_content_id[" + mdmsContent.getDMS_Content_ID() + "]" );
 			cntMigrated++;
 
 			int DMS_Content_ID = mdmsContent.getDMS_Content_ID();
@@ -252,9 +234,13 @@ public class FileSizeFixProcess extends SvrProcess
 					content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
 					association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 					String newVersionName = oldname + "(" + association.getSeqNo() + ")" + mimytype.getFileExtension();
-				//	addLog("start rename version : [" + content.getName() +"] to [" + newVersionName +"] dms_content_id[" + content.getDMS_Content_ID() + "]" );
+					// addLog("start rename version : [" + content.getName()
+					// +"] to [" + newVersionName +"] dms_content_id[" +
+					// content.getDMS_Content_ID() + "]" );
 					renameFile(content, association, newVersionName);
-				//	addLog("rename version DONE: [" + content.getName() +"] to [" + newVersionName +"] dms_content_id[" + content.getDMS_Content_ID() + "]" );
+					// addLog("rename version DONE: [" + content.getName()
+					// +"] to [" + newVersionName +"] dms_content_id[" +
+					// content.getDMS_Content_ID() + "]" );
 					cntMigrated++;
 				}
 			}

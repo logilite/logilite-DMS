@@ -47,6 +47,7 @@ import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.compiere.Adempiere;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.model.MAttribute;
 import org.compiere.model.MAttributeInstance;
@@ -75,7 +76,6 @@ import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
-import org.zkoss.zk.ui.WrongValueException;
 
 /**
  * @author deepak@logilite.com
@@ -437,7 +437,7 @@ public class Utils
 		return fullPath;
 	}
 
-	public static String getCopiedUniqueFilename(String fullPath)
+	public static String getCopiedUniqueFileName(String fullPath)
 	{
 		File document = new File(fullPath);
 
@@ -454,7 +454,7 @@ public class Utils
 			int n = 1;
 			do
 			{
-				fullPath = path + fileNameWOExt + "(" + n++ + ")." + ext;
+				fullPath = path + fileNameWOExt + " (" + n++ + ")." + ext;
 				document = new File(fullPath);
 			}
 			while (document.exists());
@@ -463,7 +463,7 @@ public class Utils
 		return fullPath;
 	}
 
-	public static String getUniqueFoldername(String fullPath)
+	public static String getUniqueFolderName(String fullPath)
 	{
 		File document = new File(fullPath);
 
@@ -479,7 +479,7 @@ public class Utils
 			int n = 1;
 			do
 			{
-				fullPath = path + fileNameWOExt + "(" + n++ + ")";
+				fullPath = path + fileNameWOExt + " (" + n++ + ")";
 				document = new File(fullPath);
 			}
 			while (document.exists());
@@ -582,37 +582,6 @@ public class Utils
 	}
 
 	/**
-	 * get DMS_Association_Link_ID
-	 * 
-	 * @return
-	 */
-	public static int getDMS_Association_Link_ID()
-	{
-		int linkID = 0;
-		linkID = DB.getSQLValue(null, MDMSAssociationType.SQL_GET_ASSOCIATION_TYPE, MDMSAssociationType.AssociationType_Link);
-
-		if (linkID != -1)
-			return linkID;
-		else
-			return 0;
-	}
-
-	/**
-	 * get DMS_Association_Record_ID
-	 * 
-	 * @return
-	 */
-	public static int getDMS_Association_Record_ID()
-	{
-		int recordID = DB.getSQLValue(null, MDMSAssociationType.SQL_GET_ASSOCIATION_TYPE, DMSConstant.RECORD);
-
-		if (recordID != -1)
-			return recordID;
-		else
-			return 0;
-	}
-
-	/**
 	 * Create Index Map for Solr
 	 * 
 	 * @param DMSContent
@@ -701,7 +670,7 @@ public class Utils
 					String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
 					if (parentURL.startsWith(baseURL))
 					{
-						dmsContent.setParentURL(parentURL.replaceFirst(Pattern.quote(baseURL), renamedURL));
+						dmsContent.setParentURL(replacePath(baseURL, renamedURL, parentURL));
 						dmsContent.saveEx();
 					}
 					renameFolder(dmsContent, baseURL, renamedURL);
@@ -720,7 +689,7 @@ public class Utils
 
 						if (content_file.getParentURL().startsWith(baseURL))
 						{
-							content_file.setParentURL(content_file.getParentURL().replaceFirst(Pattern.quote(baseURL), renamedURL));
+							content_file.setParentURL(replacePath(baseURL, renamedURL, content_file.getParentURL()));
 							content_file.saveEx();
 						}
 					}
@@ -738,7 +707,25 @@ public class Utils
 			rs = null;
 			pstmt = null;
 		}
-	}
+	} // renameFolder
+
+	public static String replacePath(String baseURL, String renamedURL, String parentURL)
+	{
+		String setParentURL = null;
+		if (Adempiere.getOSInfo().startsWith("Windows"))
+		{
+			parentURL = parentURL.replaceAll("\\\\", "\\\\\\\\");
+			baseURL = baseURL.replaceAll("\\\\", "\\\\\\\\");
+			renamedURL = renamedURL.replaceAll("\\\\", "\\\\\\\\");
+			setParentURL = parentURL.replaceFirst(Pattern.quote(baseURL), renamedURL);
+			setParentURL = setParentURL.replaceAll(Pattern.quote("\\\\\\\\"), "\\\\");
+		}
+		else
+		{
+			setParentURL = parentURL.replaceFirst(Pattern.quote(baseURL), renamedURL);
+		}
+		return setParentURL;
+	} // replacePath
 
 	public static AImage getImage(String name)
 	{
@@ -958,7 +945,7 @@ public class Utils
 			error = "Invalid File Name. not support end with ()";
 
 		if (!Util.isEmpty(error, true))
-			throw new WrongValueException(Msg.translate(Env.getCtx(), error));
+			throw new AdempiereException(Msg.translate(Env.getCtx(), error));
 
 		return error;
 	} // isValidFileName
@@ -1021,13 +1008,13 @@ public class Utils
 		int contentID = 0;
 
 		if (Util.isEmpty(dirName) || dirName.equals(""))
-			throw new WrongValueException(DMSConstant.MSG_FILL_MANDATORY);
+			throw new AdempiereException(DMSConstant.MSG_FILL_MANDATORY);
 
 		if (dirName.length() > DMSConstant.MAX_FILENAME_LENGTH)
-			throw new WrongValueException("Invalid Directory Name. Directory name less than 250 character");
+			throw new AdempiereException("Invalid Directory Name. Directory name less than 250 character");
 
 		if (dirName.contains(DMSConstant.FILE_SEPARATOR))
-			throw new WrongValueException("Invalid Directory Name.");
+			throw new AdempiereException("Invalid Directory Name.");
 
 		try
 		{
@@ -1132,7 +1119,7 @@ public class Utils
 						boolean isMandatory = attrs[i].isMandatory();
 
 						if (isMandatory && Util.isEmpty(value, true))
-							throw new WrongValueException("Fill Mandatory Attribute:" + key);
+							throw new AdempiereException("Fill Mandatory Attribute:" + key);
 
 						if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attrs[i].getAttributeValueType()))
 						{

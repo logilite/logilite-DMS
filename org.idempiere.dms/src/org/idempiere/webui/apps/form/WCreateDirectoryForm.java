@@ -156,13 +156,13 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 			{
 				dms.createDirectory(dirName, mDMSContent, tableID, recordID, true, null);
 			}
-			catch (WrongValueException e)
+			catch (AdempiereException e)
 			{
 				throw new WrongValueException(txtboxDirectory, e.getLocalizedMessage(), e);
 			}
 
 			this.detach();
 		}
-	}
+	} // onEvent
 
 }
