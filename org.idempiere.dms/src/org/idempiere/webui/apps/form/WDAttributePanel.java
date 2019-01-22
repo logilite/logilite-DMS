@@ -314,14 +314,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		try
 		{
 			MDMSContent versionContent = null;
-
-			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
-					DMS_Content.getDMS_Content_ID());
-
-			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
 			pstmt = DB.prepareStatement(MDMSContent.SQL_FETCH_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
-
 			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());
 			pstmt.setInt(2, dmsAssociation.getDMS_Content_Related_ID());
 
@@ -513,6 +508,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnDownload))
 		{
+			// Resolve NPE after file rename and try to download
+			DMS_Content.load(DMS_Content.get_TrxName());
+			//
 			DMS_ZK_Util.downloadDocument(dms, DMS_Content);
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))

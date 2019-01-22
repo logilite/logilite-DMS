@@ -564,9 +564,7 @@ public class Utils
 			return DMS_Content.getDMS_Content_ID();
 		else
 		{
-			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? ",
-					DMS_Content.getDMS_Content_ID());
-			MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+			MDMSAssociation DMSAssociation = getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
 			if (DMSAssociation.getDMS_Content_Related_ID() > 0)
 			{
@@ -580,6 +578,20 @@ public class Utils
 				return DMSAssociation.getDMS_Content_ID();
 		}
 	}
+
+	/**
+	 * Get association from content ID
+	 * 
+	 * @param contentID
+	 * @param trxName
+	 * @return {@link MDMSAssociation}
+	 */
+	public static MDMSAssociation getAssociationFromContent(int contentID, String trxName)
+	{
+		int DMS_Association_ID = DB.getSQLValue(trxName, DMSConstant.SQL_GET_ASSOCIATION_ID_FROM_CONTENT, contentID);
+
+		return new MDMSAssociation(Env.getCtx(), DMS_Association_ID, trxName);
+	} // getAssociationFromContent
 
 	/**
 	 * Create Index Map for Solr

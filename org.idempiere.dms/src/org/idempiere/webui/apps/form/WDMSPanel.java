@@ -1317,14 +1317,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (recordID > 0 && tableID > 0)
 		{
-			// Getting latest record if multiple dms content available
-			// TODO Need to Check sql purpose
-			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y' ORDER BY created desc", recordID + "");
-
+			// Getting initial mounting content for disabling back navigation
+			MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
 			if (currDMSContent == null)
 				currDMSContent = selectedDMSContent.peek();
 
-			if (currDMSContent.getDMS_Content_ID() == id)
+			if (currDMSContent.getDMS_Content_ID() == mountingContent.getDMS_Content_ID())
 			{
 				btnBack.setDisabled(true);
 				renderViewer();
@@ -1333,7 +1331,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		btnClear.setEnabled(false);
 
-	}
+	} // backNavigation
 
 	/**
 	 * Move in the Directory
@@ -1619,95 +1617,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void linkCopyDocument(MDMSContent DMSContent, boolean isDir)
 	{
-		boolean isDocPresent = dms.isDocumentPresent(currDMSContent, DMSContent, isDir);
-		if (DMSClipboard.get() == null)
-		{
-			return;
-		}
-
-		if (DMSContent != null && DMSContent.get_ID() == DMSClipboard.get().get_ID())
-		{
-			FDialog.warn(0, "You cannot Link into itself");
-			return;
-		}
-		if (isDocPresent)
-		{
-			FDialog.warn(0, "Document already exists.");
-			return;
-		}
-
-		// IF DMS Tab
-		if (isTabViewer())
-		{
-			int DMS_Association_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID = ? AND AD_Table_ID = ? AND Record_ID = ?",
-							DMSClipboard.get().getDMS_Content_ID(), MDMSAssociationType.RECORD_ID, tableID, recordID);
-
-			if (DMS_Association_ID == -1)
-			{
-				MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
-				DMSassociation.setDMS_Content_ID(DMSClipboard.get().getDMS_Content_ID());
-
-				int DMS_Content_Related_ID = DB.getSQLValue(null, "SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? "
-						+ "AND DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(Name) = UPPER('Parent'))",
-						DMSClipboard.get().getDMS_Content_ID());
-
-				if (DMS_Content_Related_ID != 0)
-					DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
-
-				DMSassociation.setDMS_AssociationType_ID(MDMSAssociationType.LINK_ID);
-				DMSassociation.setRecord_ID(recordID);
-				DMSassociation.setAD_Table_ID(tableID);
-				DMSassociation.saveEx();
-
-				try
-				{
-					renderViewer();
-
-					int DMS_Content_ID = DMSassociation.getDMS_Content_Related_ID();
-
-					if (DMS_Content_ID <= 0)
-						DMS_Content_ID = DMSassociation.getDMS_Content_ID();
-					else
-					{
-						MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-
-						if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-							DMS_Content_ID = DMSassociation.getDMS_Content_ID();
-						else
-							DMS_Content_ID = DMSassociation.getDMS_Content_Related_ID();
-					}
-
-					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-
-					// Here currently we can not able to move index creation
-					// logic in model validator
-					// TODO : In future, will find approaches for move index
-					// creation logic
-					dms.createIndexContent(dmsContent, DMSassociation);
-				}
-				catch (Exception e)
-				{
-					log.log(Level.SEVERE, "Render content problem.", e);
-					throw new AdempiereException("Render content problem: " + e);
-				}
-			}
-			else
-			{
-				FDialog.warn(0, "Document already associated.");
-			}
-
-			return;
-		}
-
-		//
-		int DMS_Content_Related_ID = 0;
-		if (DMSContent != null)
-			DMS_Content_Related_ID = DMSContent.getDMS_Content_ID();
-
-		dms.createAssociation(DMSClipboard.get().getDMS_Content_ID(), DMS_Content_Related_ID, 0, 0, MDMSAssociationType.LINK_ID, 0, null);
+		String warnMsg = dms.createLink(DMSContent, currDMSContent, DMSClipboard.get(), isDir, tableID, recordID);
+		if (!Util.isEmpty(warnMsg, true))
+			FDialog.warn(0, warnMsg);
 
 		try
 		{
@@ -1718,7 +1630,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			log.log(Level.SEVERE, "Render content problem.", e);
 			throw new AdempiereException("Render content problem: " + e);
 		}
-	}
+	} // linkCopyDocument
+
+	
 
 	private HashMap<String, List<Object>> getQueryParamas()
 	{

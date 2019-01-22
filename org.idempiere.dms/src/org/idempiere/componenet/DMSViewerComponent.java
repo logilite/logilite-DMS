@@ -219,7 +219,7 @@ public class DMSViewerComponent extends Div
 		vbox.appendChild(dImage);
 
 		fLabel.appendChild(new Label(fName));
-		fLabel.setTooltiptext(name);
+		fLabel.setTooltiptext(content.getName());
 
 		footerDiv.appendChild(fLabel);
 

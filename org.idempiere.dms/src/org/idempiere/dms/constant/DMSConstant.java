@@ -101,4 +101,6 @@ public final class DMSConstant
 																				+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID = ? "
 																				+ "GROUP BY DMS_Content_ID, DMS_Association_ID 	ORDER BY MAX(SeqNo) DESC ";
 
+	public static final String		SQL_GET_ASSOCIATION_ID_FROM_CONTENT	= "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? ORDER BY Created";
+
 }

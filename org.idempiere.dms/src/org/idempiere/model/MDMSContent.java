@@ -23,6 +23,7 @@ import java.util.Properties;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.idempiere.dms.factories.Utils;
 
 public class MDMSContent extends X_DMS_Content
 {
@@ -66,10 +67,7 @@ public class MDMSContent extends X_DMS_Content
 		ResultSet rs = null;
 		try
 		{
-			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
-					DMS_Content.getDMS_Content_ID());
-
-			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
 			pstmt = DB.prepareStatement(SQL_FETCH_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
 			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());

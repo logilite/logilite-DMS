@@ -914,8 +914,6 @@ public class DMS
 	{
 		if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
-			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? ORDER BY CREATED",
-					copiedContent.getDMS_Content_ID());
 
 			String baseURL = null;
 			String renamedURL = null;
@@ -965,7 +963,7 @@ public class DMS
 			newDMSContent.setName(contentname);
 			newDMSContent.saveEx();
 
-			MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+			MDMSAssociation oldDMSAssociation = Utils.getAssociationFromContent(copiedContent.getDMS_Content_ID(), null);
 			MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 
 			PO.copyValues(oldDMSAssociation, newDMSAssociation);
@@ -999,8 +997,6 @@ public class DMS
 	{
 		if (sourceCutContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
-			int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created ",
-					sourceCutContent.getDMS_Content_ID());
 
 			String baseURL = null;
 			String renamedURL = null;
@@ -1035,7 +1031,7 @@ public class DMS
 			Utils.renameFolder(sourceCutContent, baseURL, renamedURL);
 			dirPath.renameTo(newFile);
 
-			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(sourceCutContent.getDMS_Content_ID(), null);
 			if (destPasteContent != null)
 			{
 				dmsAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
@@ -1059,7 +1055,7 @@ public class DMS
 
 			try
 			{
-				pstmt = DB.prepareStatement("SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association "
+				pstmt = DB.prepareStatement("SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association "
 						+ "WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? ORDER BY DMS_Association_ID", null);
 
 				pstmt.setInt(1, DMS_Content_ID);
@@ -1212,6 +1208,94 @@ public class DMS
 		content.saveEx();
 	} // renameFile
 
+	public String createLink(MDMSContent content, MDMSContent currContent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
+	{
+		boolean isDocPresent = this.isDocumentPresent(currContent, content, isDir);
+		if (clipboardContent == null)
+		{
+			return "";
+		}
+
+		int cbContentID = clipboardContent.getDMS_Content_ID();
+		if (content != null && content.get_ID() == cbContentID)
+		{
+			return "You cannot Link into itself";
+		}
+		if (isDocPresent)
+		{
+			return "Document already exists.";
+		}
+
+		// For Tab viewer
+		if (tableID > 0 && recordID > 0)
+		{
+			int DMS_Association_ID = DB
+					.getSQLValue(
+							null,
+							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID = ? AND AD_Table_ID = ? AND Record_ID = ?",
+							cbContentID, MDMSAssociationType.RECORD_ID, tableID, recordID);
+
+			if (DMS_Association_ID == -1)
+			{
+				int DMS_Content_Related_ID = DB.getSQLValue(null, "SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? "
+						+ "AND DMS_AssociationType_ID = ?", cbContentID, MDMSAssociationType.PARENT_ID);
+
+				if (DMS_Content_Related_ID != 0) // TODO
+					DMS_Content_Related_ID = content.getDMS_Content_ID();
+
+				int associationID = this.createAssociation(cbContentID, DMS_Content_Related_ID, recordID, recordID, MDMSAssociationType.LINK_ID, 0, null);
+				MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
+
+				try
+				{
+					// renderViewer();
+
+					int DMS_Content_ID = association.getDMS_Content_Related_ID();
+
+					if (DMS_Content_ID <= 0)
+						DMS_Content_ID = association.getDMS_Content_ID();
+					else
+					{
+						MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+
+						if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+							DMS_Content_ID = association.getDMS_Content_ID();
+						else
+							DMS_Content_ID = association.getDMS_Content_Related_ID();
+					}
+
+					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+
+					// Here currently we can not able to move index creation
+					// logic in model validator
+					// TODO : In future, will find approaches for move index
+					// creation logic
+					this.createIndexContent(dmsContent, association);
+				}
+				catch (Exception e)
+				{
+					log.log(Level.SEVERE, "Render content problem.", e);
+					throw new AdempiereException("Render content problem: " + e);
+				}
+			}
+			else
+			{
+				return "Document already associated.";
+			}
+		}
+		else
+		{
+			//
+			int DMS_Content_Related_ID = 0;
+			if (content != null)
+				DMS_Content_Related_ID = content.getDMS_Content_ID();
+
+			this.createAssociation(cbContentID, DMS_Content_Related_ID, 0, 0, MDMSAssociationType.LINK_ID, 0, null);
+		}
+
+		return null;
+	} // createLink
+
 	public boolean isDocumentPresent(MDMSContent currDMSContent, MDMSContent DMSContent, boolean isDir)
 	{
 		StringBuilder query = new StringBuilder();
@@ -1303,10 +1387,7 @@ public class DMS
 			{
 				// TODO get parent dms_content
 				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
-				int DMS_Association_ID = DB.getSQLValue(null, "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? ORDER BY Created",
-						parentContent.getDMS_Content_ID());
-
-				MDMSAssociation parentAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
+				MDMSAssociation parentAssociation = Utils.getAssociationFromContent(parentContent.getDMS_Content_ID(), null);
 				setContentAndAssociationInActive(parentContent, parentAssociation);
 
 				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(parentContent);
