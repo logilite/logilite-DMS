@@ -51,23 +51,26 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	 */
 	private static final long				serialVersionUID	= -3613076228042516782L;
 
-	public static CLogger					log					= CLogger.getCLogger(WDMSVersion.class);
+	private static CLogger					log					= CLogger.getCLogger(WDMSVersion.class);
 
 	private ArrayList<DMSViewerComponent>	viewerComponents	= null;
-
-	private static DMSViewerComponent		prevComponent		= null;
-
+	private DMSViewerComponent				prevComponent		= null;
 	private Grid							gridView			= GridFactory.newGridLayout();
-
 	private DMS								dms;
 
-	public WDMSVersion(DMS dms, MDMSContent mDMSContent)
+	/**
+	 * Constructor
+	 * 
+	 * @param dms
+	 * @param content
+	 */
+	public WDMSVersion(DMS dms, MDMSContent content)
 	{
 		this.dms = dms;
 
 		try
 		{
-			renderDMSVersion(mDMSContent);
+			renderDMSVersion(content);
 			init();
 
 			this.addEventListener(Events.ON_CLICK, this);
@@ -79,13 +82,13 @@ public class WDMSVersion extends Window implements EventListener<Event>
 			log.log(Level.SEVERE, "DMS Version fetching failure :", e);
 			throw new AdempiereException("DMS Version fetching failure :" + e);
 		}
-	}
+	} // Constructor
 
 	private void init()
 	{
 		this.setHeight("38%");
 		this.setWidth("44%");
-		this.setTitle("DMS Version List");
+		this.setTitle(DMSConstant.MSG_DMS_VERSION_LIST);
 		this.setClosable(true);
 		this.appendChild(gridView);
 
@@ -97,23 +100,18 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		gridView.setHeight("100%");
 
 		AEnv.showCenterScreen(this);
-	}
+	} // init
 
 	public void renderDMSVersion(MDMSContent DMS_Content) throws IOException
 	{
-		byte[] imgByteData = null;
-		File thumbFile = null;
-		int i = 0;
 
 		Components.removeAllChildren(gridView);
-
-		Rows rows = new Rows();
-		Row row = new Row();
-
-		Cell cell = null;
-
-		MImage mImage = null;
-		AImage image = null;
+		gridView.setSizedByContent(true);
+		gridView.setZclass("none");
+		Rows rows = gridView.newRows();
+		Row row = rows.newRow();
+		row.setZclass("none");
+		row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap;");
 
 		List<I_DMS_Content> contentList = MDMSContent.getVersionHistory(DMS_Content);
 
@@ -124,16 +122,16 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 		viewerComponents = new ArrayList<DMSViewerComponent>();
 
-		for (i = 0; i < contentList.size(); i++)
+		for (int i = 0; i < contentList.size(); i++)
 		{
-			thumbFile = dms.getThumbnail(contentList.get(i), "150");
+			AImage image = null;
+
+			File thumbFile = dms.getThumbnail(contentList.get(i), "150");
 			if (thumbFile == null)
 			{
-				mImage = Utils.getMimetypeThumbnail(contentList.get(i).getDMS_MimeType_ID());
-				imgByteData = mImage.getData();
-
-				if (imgByteData != null)
-					image = new AImage(contentList.get(i).getName(), imgByteData);
+				MImage mImage = Utils.getMimetypeThumbnail(contentList.get(i).getDMS_MimeType_ID());
+				if (mImage.getData() != null)
+					image = new AImage(contentList.get(i).getName(), mImage.getData());
 			}
 			else
 			{
@@ -148,34 +146,21 @@ public class WDMSVersion extends Window implements EventListener<Event>
 			viewerComponent.setDheight(DMSConstant.CONTENT_COMPONENT_HEIGHT);
 
 			viewerComponent.addEventListener(Events.ON_CLICK, this);
-			viewerComponent.addEventListener(Events.ON_DOUBLE_CLICK, this);
 			viewerComponent.addEventListener(Events.ON_RIGHT_CLICK, this);
-
+			viewerComponent.addEventListener(Events.ON_DOUBLE_CLICK, this);
 			viewerComponents.add(viewerComponent);
 
-			gridView.setSizedByContent(true);
-			gridView.setZclass("none");
-
-			cell = new Cell();
+			Cell cell = new Cell();
 			cell.setWidth(row.getWidth());
 			cell.appendChild(viewerComponent);
-
-			row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap;");
-			row.setZclass("none");
 			row.appendCellChild(cell);
-			rows.appendChild(row);
-			row.appendChild(viewerComponent);
 		}
-		gridView.appendChild(rows);
-	}
+
+	} // renderDMSVersion
 
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
-		log.info(event.getName());
-
-		event.getTarget();
-
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
 			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();

@@ -53,9 +53,10 @@ public class WDAssociationType extends Window implements EventListener<Event>
 {
 
 	private static final long		serialVersionUID	= 4397569198011705268L;
-	protected static final CLogger	log					= CLogger.getCLogger(WDAssociationType.class);
+	private static final CLogger	log					= CLogger.getCLogger(WDAssociationType.class);
 
 	private WTableDirEditor			associationType;
+	private Row						associationTypeRow	= new Row();
 	private Grid					gridView			= GridFactory.newGridLayout();
 	private Label					lblAssociationType	= new Label();
 
@@ -63,15 +64,13 @@ public class WDAssociationType extends Window implements EventListener<Event>
 	private Button					btnOk				= null;
 	private ConfirmPanel			confirmPanel		= null;
 
-	private Row						associationTypeRow	= new Row();
-	private MDMSContent				copyDMSContent		= null;
-	private MDMSContent				associateContent	= null;
-
 	private int						AD_Table_ID			= 0;
 	private int						Record_ID			= 0;
 
-	private AbstractADWindowContent	winContent;
 	private DMS						dms;
+	private MDMSContent				copyDMSContent		= null;
+	private MDMSContent				associateContent	= null;
+	private AbstractADWindowContent	winContent			= null;
 
 	/**
 	 * @param dms
@@ -113,6 +112,7 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		this.setClosable(true);
 		this.appendChild(gridView);
 		this.setWidth("35%");
+
 		gridView.setStyle("position:relative;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
@@ -150,12 +150,9 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		columns.appendChild(column);
 
 		Rows rows = new Rows();
-		Row row = null;
-		Cell cell = null;
 		gridView.appendChild(rows);
 
 		lblAssociationType.setValue("Association Type*");
-
 		associationTypeRow.appendChild(lblAssociationType);
 		associationTypeRow.appendChild(associationType.getComponent());
 		rows.appendChild(associationTypeRow);
@@ -164,9 +161,9 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 		btnOk = confirmPanel.createButton(ConfirmPanel.A_OK);
 
-		row = new Row();
+		Row row = new Row();
 		rows.appendChild(row);
-		cell = new Cell();
+		Cell cell = new Cell();
 		cell.setAlign("right");
 		cell.setColspan(2);
 		cell.appendChild(btnOk);
@@ -174,10 +171,12 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		cell.appendChild(btnClose);
 		row.appendChild(cell);
 		cell.setStyle("position: relative;");
+
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
 		btnOk.setImageContent(Utils.getImage("Ok24.png"));
 		btnClose.setImageContent(Utils.getImage("Cancel24.png"));
+
 		AEnv.showCenterScreen(this);
 	}
 
@@ -194,17 +193,17 @@ public class WDAssociationType extends Window implements EventListener<Event>
 			if (associationType.getValue() == null || (Integer) associationType.getValue() == 0)
 				throw new WrongValueException(associationType.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 
-			int DMS_Association_ID = DB.getSQLValue(null, "SELECT count(DMS_Association_ID) FROM DMS_Association where DMS_Content_ID = ?"
+			int countAssociations = DB.getSQLValue(null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE DMS_Content_ID = ?"
 					+ "  AND DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ?", associateContent.getDMS_Content_ID(),
 					copyDMSContent.getDMS_Content_ID(), (Integer) associationType.getValue());
 
-			if (DMS_Association_ID == 0)
+			if (countAssociations == 0)
 			{
 				dms.createAssociation(associateContent.getDMS_Content_ID(), copyDMSContent.getDMS_Content_ID(), Record_ID, AD_Table_ID,
 						(int) associationType.getValue(), 0, null);
 
 				if (AD_Table_ID > 0 && Record_ID > 0)
-					winContent.getToolbar().getButton("Document Explorer").setPressed(true);
+					winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed(true);
 			}
 			else
 			{

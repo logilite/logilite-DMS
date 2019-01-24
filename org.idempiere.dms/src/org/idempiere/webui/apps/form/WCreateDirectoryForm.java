@@ -23,9 +23,8 @@ import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
-import org.compiere.util.Env;
-import org.compiere.util.Msg;
 import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
@@ -46,16 +45,16 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 	 * 
 	 */
 	private static final long		serialVersionUID	= 4397569198011705268L;
-	protected static final CLogger	log					= CLogger.getCLogger(WCreateDirectoryForm.class);
+	private static final CLogger	log					= CLogger.getCLogger(WCreateDirectoryForm.class);
 
 	private DMS						dms;
+	private MDMSContent				mDMSContent			= null;
 
 	private Borderlayout			mainLayout			= new Borderlayout();
 	private Panel					parameterPanel		= new Panel();
+	private Label					lblDir				= new Label(DMSConstant.MSG_DIRECTORY_NAME);
 	private ConfirmPanel			confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
-	private Label					lblDir				= new Label(Msg.translate(Env.getCtx(), "Directory Name"));
 	private Textbox					txtboxDirectory		= new Textbox();
-	private MDMSContent				mDMSContent			= null;
 
 	private int						tableID				= 0;
 	private int						recordID			= 0;
@@ -94,12 +93,12 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 	{
 		this.setHeight("150px");
 		this.setWidth("500px");
-		this.setTitle(Msg.getMsg(Env.getCtx(), "Create Directory"));
+		this.setTitle(DMSConstant.MSG_CREATE_DIRECTORY);
 		mainLayout.setParent(this);
 		mainLayout.setHflex("1");
 		mainLayout.setVflex("1");
 
-		lblDir.setValue(Msg.getMsg(Env.getCtx(), "Enter Directory Name") + ": ");
+		lblDir.setValue(DMSConstant.MSG_ENTER_DIRETORY_NAME + ": ");
 		lblDir.setStyle("padding-left: 5px");
 		txtboxDirectory.setWidth("300px");
 		txtboxDirectory.setFocus(true);
@@ -133,6 +132,7 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		confirmPanel.getButton(ConfirmPanel.A_OK).setImageContent(Utils.getImage("Ok24.png"));
 		confirmPanel.getButton(ConfirmPanel.A_CANCEL).setImageContent(Utils.getImage("Cancel24.png"));
 		confirmPanel.addActionListener(Events.ON_CLICK, this);
+
 		AEnv.showCenterScreen(this);
 	}
 
@@ -148,21 +148,17 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		{
 			this.detach();
 		}
-		if (event.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(event.getName()))
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(event.getName()))
 		{
-			String dirName = txtboxDirectory.getValue();
-
 			try
 			{
-				dms.createDirectory(dirName, mDMSContent, tableID, recordID, true, null);
+				dms.createDirectory(txtboxDirectory.getValue(), mDMSContent, tableID, recordID, true, null);
 			}
 			catch (AdempiereException e)
 			{
 				throw new WrongValueException(txtboxDirectory, e.getLocalizedMessage(), e);
 			}
-
 			this.detach();
 		}
 	} // onEvent
-
 }

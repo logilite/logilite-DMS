@@ -785,9 +785,6 @@ public class DMS
 
 				if (thumbnailGenerator != null)
 					thumbnailGenerator.addThumbnail(newDMSContent, fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
-
-				String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-				newPath = newPath + DMSConstant.FILE_SEPARATOR + oldDMSContent.getName();
 			}
 		}
 		catch (Exception e)

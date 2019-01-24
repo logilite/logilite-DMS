@@ -750,32 +750,29 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
+			isSearch = false;
 			breadRow.getChildren().clear();
+			addRootBreadCrumb();
+
 			if (isTabViewer())
 			{
-				isSearch = false;
-				addRootBreadCrumb();
-				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? ORDER BY Created desc",
-						String.valueOf(recordID));
-				setCurrDMSContent(new MDMSContent(Env.getCtx(), DMS_Content_ID, null));
+				MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+				setCurrDMSContent(mountingContent);
 
 				if (currDMSContent != null)
 					lblPositionInfo.setText(currDMSContent.getName());
 				else
 					lblPositionInfo.setText(String.valueOf(recordID));
-				btnBack.setEnabled(false);
-				btnNext.setEnabled(false);
 			}
 			else
 			{
-				isSearch = false;
 				currDMSContent = null;
 				lblPositionInfo.setText(null);
-				btnBack.setEnabled(false);
-				btnNext.setEnabled(false);
-				breadRow.getChildren().clear();
-				addRootBreadCrumb();
 			}
+
+			btnBack.setEnabled(false);
+			btnNext.setEnabled(false);
+
 			renderViewer();
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH) || event.getTarget().equals(btnSearch))
@@ -980,15 +977,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private void renderBreadCrumb(Event event) throws IOException, URISyntaxException
 	{
 		breadCrumbEvent = (BreadCrumbLink) event.getTarget();
-
+		boolean isRoot = breadCrumbEvent.getPathId().equals("0");
 		if (isTabViewer())
 		{
-			if (breadCrumbEvent.getPathId().equals("0"))
+			if (isRoot)
 			{
-				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE Name = ? ORDER BY Created desc",
-						String.valueOf(recordID));
-				breadCrumbEvent.setPathId(String.valueOf(DMS_Content_ID));
-
+				MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+				breadCrumbEvent.setPathId(String.valueOf(mountingContent.getDMS_Content_ID()));
 			}
 
 			if (breadCrumbEvent.getImageContent() != null)
@@ -998,7 +993,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		if (breadCrumbEvent.getPathId().equals("0"))
+		if (isRoot)
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
@@ -1006,9 +1001,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnBack.setEnabled(false);
 		}
 
-		int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ? ORDER BY Created desc ",
-				Integer.valueOf(breadCrumbEvent.getPathId()));
-
+		int DMS_Content_ID = Integer.valueOf(breadCrumbEvent.getPathId());
 		currDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 
 		lblPositionInfo.setValue(currDMSContent.getName());
@@ -1632,8 +1625,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 	} // linkCopyDocument
 
-	
-
 	private HashMap<String, List<Object>> getQueryParamas()
 	{
 		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
@@ -2122,6 +2113,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return parents;
 	}
 
+	// TODO Refactor method by passing table & record id
 	public void addRootBreadCrumb()
 	{
 		BreadCrumbLink rootBreadCrumbLink = new BreadCrumbLink();
@@ -2139,6 +2131,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
-	}
+	} // addRootBreadCrumb
 
 }

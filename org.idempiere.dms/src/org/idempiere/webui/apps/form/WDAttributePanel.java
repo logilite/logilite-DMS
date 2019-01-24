@@ -50,6 +50,7 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.image.AImage;
 import org.zkoss.zk.ui.Components;
@@ -101,17 +102,14 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private Textbox				txtName					= null;
 	private Textbox				txtDesc					= null;
 
-	private AImage				imageVersion			= null;
-
-	private ConfirmPanel		confirmPanel			= null;
-
 	private DMS					dms;
 	private MDMSContent			DMS_Content				= null;
 	private MDMSContent			parent_Content			= null;
 	private DMSViewerComponent	viewerComponenet		= null;
 
 	private Tabbox				tabBox					= null;
-
+	private AImage				imageVersion			= null;
+	private ConfirmPanel		confirmPanel			= null;
 	private WDLoadASIPanel		ASIPanel				= null;
 
 	private int					tableId					= 0;
@@ -184,9 +182,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		tabsAttribute.appendChild(tabAttribute);
 		tabsAttribute.appendChild(tabVersionHistory);
 
-		tabAttribute.setLabel("Attributes");
+		tabAttribute.setLabel(DMSConstant.MSG_ATTRIBUTES);
 		tabAttribute.setWidth("100%");
-		tabVersionHistory.setLabel("Version History");
+		tabVersionHistory.setLabel(DMSConstant.MSG_VERSION_HISTORY);
 
 		tabpanelsAttribute.appendChild(tabpanelAttribute);
 		// tabpanelsAttribute.setStyle("display: flex;");
@@ -222,11 +220,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		btnDelete.setEnabled(false);
 
 		btnDownload = new Button();
-		btnDownload.setTooltiptext("Download");
+		btnDownload.setTooltiptext(DMSConstant.TTT_DOWNLOAD);
 		btnDownload.setImage(ThemeManager.getThemeResource("images/Export24.png"));
 
 		btnVersionUpload = new Button();
-		btnVersionUpload.setTooltiptext("Upload Version");
+		btnVersionUpload.setTooltiptext(DMSConstant.TTT_UPLOAD_VERSION);
 		btnVersionUpload.setImage(ThemeManager.getThemeResource("images/Assignment24.png"));
 
 		btnRequery = confirmPanel.createButton(ConfirmPanel.A_REFRESH);
@@ -235,12 +233,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		btnClose.setStyle("float:right;");
 
 		btnEdit = new Button();
-		btnEdit.setTooltiptext("Edit");
+		btnEdit.setTooltiptext(DMSConstant.TTT_EDIT);
 		btnEdit.setImageContent(Utils.getImage("Edit24.png"));
 
 		btnSave = new Button();
 		btnSave.setVisible(false);
-		btnSave.setTooltiptext("Save");
+		btnSave.setTooltiptext(DMSConstant.TTT_SAVE);
 		btnSave.setImageContent(Utils.getImage("Save24.png"));
 
 		btnSave.addEventListener(Events.ON_CLICK, this);
@@ -316,9 +314,10 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			MDMSContent versionContent = null;
 			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
-			pstmt = DB.prepareStatement(MDMSContent.SQL_FETCH_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
+			pstmt = DB.prepareStatement(DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
 			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());
-			pstmt.setInt(2, dmsAssociation.getDMS_Content_Related_ID());
+			pstmt.setInt(2, MDMSAssociationType.VERSION_ID);
+			pstmt.setInt(3, dmsAssociation.getDMS_Content_Related_ID());
 
 			rs = pstmt.executeQuery();
 
@@ -354,14 +353,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 					Cell cell = new Cell();
 					cell.setRowspan(1);
-
-					Label created = new Label("Created: " + versionContent.getCreated());
-					Label createdby = new Label("Created By: " + MUser.getNameOfUser(versionContent.getCreatedBy()));
-					Label size = new Label("Size: " + versionContent.getDMS_FileSize());
-
-					cell.appendChild(created);
-					cell.appendChild(createdby);
-					cell.appendChild(size);
+					cell.appendChild(new Label(DMSConstant.MSG_CREATED + ": " + versionContent.getCreated()));
+					cell.appendChild(new Label(DMSConstant.MSG_CREATEDBY + ": " + MUser.getNameOfUser(versionContent.getCreatedBy())));
+					cell.appendChild(new Label(DMSConstant.MSG_FILESIZE + ": " + versionContent.getDMS_FileSize()));
 
 					row = new Row();
 					row.appendChild(viewerComponenet);
@@ -373,7 +367,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			{
 				Cell cell = new Cell();
 				cell.setColspan(2);
-				cell.appendChild(new Label("No version Document available."));
+				cell.appendChild(new Label(DMSConstant.MSG_NO_VERSION_DOC_EXISTS));
 				row = new Row();
 				row.appendChild(cell);
 				rows.appendChild(row);
@@ -466,7 +460,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		else if (event.getTarget().equals(btnSave))
 		{
 			if (Util.isEmpty(txtName.getValue()))
-				throw new WrongValueException(txtName, "Fill mandatory field");
+				throw new WrongValueException(txtName, DMSConstant.MSG_FILL_MANDATORY);
 
 			ASIPanel.saveAttributes();
 			btnSave.setVisible(false);

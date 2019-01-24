@@ -42,6 +42,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.MDMSContentType;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.WrongValueException;
@@ -111,7 +112,7 @@ public class WDLoadASIPanel extends Panel
 		if (contentType != null && !Util.isEmpty(contentType.getName(), true))
 		{
 			Row row = rows.newRow();
-			lblAttribute.setText("Content Type : " + contentType.getName());
+			lblAttribute.setText(DMSConstant.MSG_CONTENT_TYPE + ": " + contentType.getName());
 			lblAttribute.setStyle("font-weight: bold;");
 			row.appendCellChild(lblAttribute, 2);
 		}
@@ -195,9 +196,9 @@ public class WDLoadASIPanel extends Panel
 	private GridField getGridField(MAttribute attribute)
 	{
 		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, attribute.getName(),
-				Msg.translate(Env.getCtx(), attribute.get_Translation("Name")), attribute.getAD_Reference_ID(), attribute.getAD_Reference_Value_ID(), false,
-				false);
-		String desc = attribute.get_Translation("Description");
+				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), attribute.getAD_Reference_ID(),
+				attribute.getAD_Reference_Value_ID(), false, false);
+		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 		GridField gridField = new GridField(vo);
 		return gridField;
@@ -206,8 +207,8 @@ public class WDLoadASIPanel extends Panel
 	private GridField getStringGridField(MAttribute attribute)
 	{
 		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, attribute.getName(),
-				Msg.translate(Env.getCtx(), attribute.get_Translation("Name")), DisplayType.String, 0, false, false);
-		String desc = attribute.get_Translation("Description");
+				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), DisplayType.String, 0, false, false);
+		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 		GridField gridField = new GridField(vo);
 		return gridField;
@@ -216,8 +217,8 @@ public class WDLoadASIPanel extends Panel
 	private GridField getNumberGridField(MAttribute attribute)
 	{
 		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, attribute.getName(),
-				Msg.translate(Env.getCtx(), attribute.get_Translation("Name")), DisplayType.Number, 0, false, false);
-		String desc = attribute.get_Translation("Description");
+				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), DisplayType.Number, 0, false, false);
+		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 		GridField gridField = new GridField(vo);
 		return gridField;
@@ -231,7 +232,7 @@ public class WDLoadASIPanel extends Panel
 		vo.lookupInfo.ValidationCode = vo.ValidationCode;
 		vo.lookupInfo.IsValidated = true;
 		vo = GridFieldVO.createParameter(vo);
-		String desc = attribute.get_Translation("Description");
+		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 		GridField gridField = new GridField(vo);
 		return gridField;
@@ -309,7 +310,7 @@ public class WDLoadASIPanel extends Panel
 				{
 					mandatory += " - " + attributes[i].getName();
 					Clients.scrollIntoView(editor.getComponent());
-					throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 				}
 				if (value != null)
 					attributes[i].setMAttributeInstance(asiID, value);
@@ -324,7 +325,7 @@ public class WDLoadASIPanel extends Panel
 				{
 					mandatory += " - " + attributes[i].getName();
 					Clients.scrollIntoView(editor.getComponent());
-					throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 				} // setMAttributeInstance doesn't work without decimal point
 				if (value != null && value.scale() == 0)
 					value = value.setScale(1, BigDecimal.ROUND_HALF_UP);
@@ -344,7 +345,7 @@ public class WDLoadASIPanel extends Panel
 				if (attributes[i].isMandatory() && (value == null || value.length() == 0))
 				{
 					mandatory += " - " + attributes[i].getName();
-					throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 				}
 				if (value != null)
 					attributes[i].setMAttributeInstance(asiID, value);
@@ -386,7 +387,7 @@ public class WDLoadASIPanel extends Panel
 			{
 				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
-				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
 			if (valueTimeStamp != null)
 				attributes.setMAttributeInstance(asiID, valueTimeStamp);
@@ -398,7 +399,7 @@ public class WDLoadASIPanel extends Panel
 			{
 				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
-				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
 			if (value != null)
 			{
@@ -417,7 +418,7 @@ public class WDLoadASIPanel extends Panel
 			{
 				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
-				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
 
 			String valueLable = null;
@@ -436,7 +437,7 @@ public class WDLoadASIPanel extends Panel
 			{
 				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
-				throw new WrongValueException(editor.getComponent(), "Fill Mandatory Attribute");
+				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
 
 			if (!Util.isEmpty(value))

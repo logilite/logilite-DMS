@@ -16,8 +16,6 @@ package org.idempiere.webui.apps.form;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Column;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -50,19 +48,16 @@ public class WRenameContent extends Window implements EventListener<Event>
 	private MDMSContent			DMSContent			= null;
 	private MDMSContent			parent_Content		= null;
 
-	private Grid				gridView			= null;
-	private ConfirmPanel		confirmpanel		= null;
+	private Grid				gridView			= GridFactory.newGridLayout();
+	private ConfirmPanel		confirmpanel		= new ConfirmPanel();
 
-	private Textbox				txtName				= null;
-	private Textbox				txtDesc				= null;
-
-	private Label				lblName				= null;
-	private Label				lblDesc				= null;
+	private Textbox				txtName				= new Textbox();
+	private Textbox				txtDesc				= new Textbox();
 
 	private Button				btnOk				= null;
 	private Button				btnCancel			= null;
 
-	private boolean				cancel				= false;
+	private boolean				isCancel			= false;
 
 	public WRenameContent(DMS dms, MDMSContent DMSContent)
 	{
@@ -74,16 +69,14 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private void init()
 	{
-		gridView = GridFactory.newGridLayout();
-
-		this.setHeight("32%");
 		this.setWidth("30%");
-		this.setTitle("Rename");
-		this.appendChild(gridView);
+		this.setHeight("32%");
 		this.setClosable(true);
+		this.setTitle(DMSConstant.MSG_RENAME);
 		this.addEventListener(Events.ON_OK, this);
 		this.setStyle("max-widht:230px; max-height:230px;");
 		this.setStyle("min-widht:230px; min-height:230px;");
+		this.appendChild(gridView);
 
 		gridView.setStyle("position:relative; overflow:auto;");
 		gridView.makeNoStrip();
@@ -94,79 +87,59 @@ public class WRenameContent extends Window implements EventListener<Event>
 		gridView.setStyle("max-widht:230px; max-height:230px;");
 		gridView.setStyle("min-widht:230px; min-height:230px;");
 
-		Columns columns = new Columns();
-		Rows rows = new Rows();
-
-		lblName = new Label("Please enter a new name for the item:");
-		txtName = new Textbox();
-
-		lblDesc = new Label("Description");
-		txtDesc = new Textbox();
-		txtDesc.setMultiline(true);
-		txtDesc.setRows(2);
-
 		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
 		if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 			txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
 		else
 			txtName.setText(DMSContent.getName());
 
-		txtDesc.setValue(DMSContent.getDescription());
-
 		txtName.setFocus(true);
 		txtName.setSelectionRange(0, txtName.getValue().length() - 1);
 		txtName.setWidth("98%");
-		txtDesc.setWidth("98%");
 
-		confirmpanel = new ConfirmPanel();
+		txtDesc.setRows(2);
+		txtDesc.setWidth("98%");
+		txtDesc.setMultiline(true);
+		txtDesc.setValue(DMSContent.getDescription());
 
 		btnOk = confirmpanel.createButton(ConfirmPanel.A_OK);
+		btnOk.addEventListener(Events.ON_CLICK, this);
+		btnOk.setImageContent(Utils.getImage("Ok24.png"));
+
 		btnCancel = confirmpanel.createButton(ConfirmPanel.A_CANCEL);
+		btnCancel.addEventListener(Events.ON_CLICK, this);
+		btnCancel.setImageContent(Utils.getImage("Cancel24.png"));
 
-		gridView.appendChild(columns);
-		gridView.appendChild(rows);
+		Rows rows = gridView.newRows();
 
-		Column column = new Column();
-		columns.appendChild(column);
+		Row row = rows.newRow();
+		row.appendChild(new Label(DMSConstant.MSG_ENTER_NEW_NAME_FOR_ITEM));
 
-		Row row = new Row();
-		row.appendChild(lblName);
-		rows.appendChild(row);
-
-		row = new Row();
+		row = rows.newRow();
 		row.appendChild(txtName);
-		rows.appendChild(row);
 
-		row = new Row();
-		row.appendChild(lblDesc);
-		rows.appendChild(row);
+		row = rows.newRow();
+		row.appendChild(new Label(DMSConstant.MSG_DESCRIPTION));
 
-		row = new Row();
+		row = rows.newRow();
 		row.appendChild(txtDesc);
-		rows.appendChild(row);
 
-		row = new Row();
+		row = rows.newRow();
 		Cell cell = new Cell();
 		cell.setAlign("right");
 		cell.appendChild(btnOk);
 		cell.appendChild(btnCancel);
 		row.appendChild(cell);
-		rows.appendChild(row);
-
-		btnOk.addEventListener(Events.ON_CLICK, this);
-		btnCancel.addEventListener(Events.ON_CLICK, this);
-		btnOk.setImageContent(Utils.getImage("Ok24.png"));
-		btnCancel.setImageContent(Utils.getImage("Cancel24.png"));
 
 		AEnv.showCenterScreen(this);
-	}
+	} // init
 
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
 		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
-			cancel = true;
+			isCancel = true;
 			this.detach();
 		}
 		if (event.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(event.getName()))
@@ -200,7 +173,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 				throw new WrongValueException(txtName, e.getLocalizedMessage());
 			}
 		}
-	}
+	} // ValidateName
 
 	private void renameContent()
 	{
@@ -222,6 +195,6 @@ public class WRenameContent extends Window implements EventListener<Event>
 	 */
 	public boolean isCancel()
 	{
-		return cancel;
+		return isCancel;
 	}
 }

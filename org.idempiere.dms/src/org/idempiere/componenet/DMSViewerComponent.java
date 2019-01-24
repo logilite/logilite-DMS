@@ -28,7 +28,6 @@ import org.idempiere.model.MDMSContent;
 import org.zkoss.image.AImage;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Image;
-import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Vbox;
 
 public class DMSViewerComponent extends Div
@@ -40,28 +39,115 @@ public class DMSViewerComponent extends Div
 
 	public static CLogger		log					= CLogger.getCLogger(DMSViewerComponent.class);
 
-	protected String			fName				= null;
+	private String				fName				= null;
 	private String				contentBaseType		= null;
 
-	protected Image				prevImg;
+	private int					dHeight;
+	private int					dWidth;
 
+	private Image				prevImg;
+	private Image				linkImage			= null;
+
+	private Div					mimeIcon			= new Div();
 	private Div					fLabel				= new Div();
-	protected Div				dImage				= new Div();
+	private Div					dImage				= new Div();
+	private Div					footerDiv			= new Div();
+	private Vbox				vbox				= new Vbox();
 
-	protected int				dHeight;
-	protected int				dWidth;
+	private boolean				isLink				= false;
 
 	private MDMSContent			DMSContent			= null;
 	private MDMSAssociation		DMSAssociation		= null;
 
-	protected Menuitem			menuItem			= null;
+	/**
+	 * Constructor for dmsContent is not a version
+	 * 
+	 * @param dms
+	 * @param content
+	 * @param image
+	 * @param isLink
+	 * @param DMSAssociation
+	 */
+	public DMSViewerComponent(DMS dms, I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation)
+	{
+		this(dms, content, image, isLink, DMSAssociation, null);
+	}
 
-	protected Vbox				vbox				= new Vbox();
+	/**
+	 * Constructor for dmsContent is a version
+	 * 
+	 * @param dms
+	 * @param content
+	 * @param image
+	 * @param isLink
+	 * @param DMSAssociation
+	 * @param version
+	 */
+	public DMSViewerComponent(DMS dms, I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation, String version)
+	{
+		String name = content.getName();
+		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+			name = name.replace("\\(.*\\d\\)", "");
 
-	private boolean				isLink				= false;
-	private Image				linkImage			= null;
-	private Div					mimeIcon			= new Div();
-	private Div					footerDiv			= new Div();
+		if (name.contains("(") && name.contains(")"))
+		{
+			name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
+		}
+
+		/*
+		 * Append version number if exist
+		 */
+		if (version != null)
+		{
+			name = name + " (V" + version + ")";
+		}
+
+		this.fName = name;
+		this.isLink = isLink;
+		this.appendChild(vbox);
+		this.contentBaseType = content.getContentBaseType();
+		this.DMSContent = (MDMSContent) content;
+		this.DMSAssociation = (MDMSAssociation) DMSAssociation;
+		this.setStyle("background-color: #ffffff; padding: 8px; ");
+		ZkCssHelper.appendStyle(this, "text-align: center");
+
+		if (isLink)
+		{
+			try
+			{
+				linkImage = new Image();
+				linkImage.setContent(Utils.getImage("Link16.png"));
+
+				mimeIcon.appendChild(linkImage);
+				mimeIcon.setStyle("float :left;");
+				ZkCssHelper.appendStyle(mimeIcon, "align: left");
+
+				footerDiv.appendChild(mimeIcon);
+			}
+			catch (Exception e)
+			{
+				log.log(Level.SEVERE, "Link image fetching failure: ", e);
+				throw new AdempiereException("Link image fetching failure: " + e);
+			}
+		}
+
+		prevImg = new Image();
+		prevImg.setContent(image);
+		dImage.appendChild(prevImg);
+		dImage.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
+		vbox.appendChild(dImage);
+		ZkCssHelper.appendStyle(dImage, "text-align: center");
+
+		fLabel.appendChild(new Label(fName));
+		fLabel.setTooltiptext(content.getName());
+		fLabel.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right; text-align: center;");
+
+		footerDiv.appendChild(fLabel);
+		vbox.appendChild(footerDiv);
+
+		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+			ZkCssHelper.appendStyle(fLabel, "text-align: center");
+	} // Constructor
 
 	public MDMSContent getDMSContent()
 	{
@@ -126,8 +212,7 @@ public class DMSViewerComponent extends Div
 		}
 
 		prevImg.setWidth(dwidth + "px");
-
-		fLabel.setWidth(dwidth - 30 + "px");
+		fLabel.setWidth(dwidth - (isLink ? 20 : 5) + "px");
 	}
 
 	public String getfName()
@@ -138,106 +223,6 @@ public class DMSViewerComponent extends Div
 	public void setfName(String fName)
 	{
 		this.fName = fName;
-	}
-
-	/**
-	 * Constructor for dmsContent is not a version
-	 * 
-	 * @param dms
-	 * @param content
-	 * @param image
-	 * @param isLink
-	 * @param DMSAssociation
-	 */
-	public DMSViewerComponent(DMS dms, I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation)
-	{
-		this(dms, content, image, isLink, DMSAssociation, null);
-	}
-
-	/**
-	 * Constructor for dmsContent is a version
-	 * 
-	 * @param dms
-	 * @param content
-	 * @param image
-	 * @param isLink
-	 * @param DMSAssociation
-	 * @param version
-	 */
-	public DMSViewerComponent(DMS dms, I_DMS_Content content, AImage image, boolean isLink, I_DMS_Association DMSAssociation, String version)
-	{
-		String name = content.getName();
-		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-			name = name.replace("\\(.*\\d\\)", "");
-
-		if (name.contains("(") && name.contains(")"))
-		{
-			name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
-		}
-
-		/*
-		 * Append version number if exist
-		 */
-
-		if (version != null)
-		{
-			name = name + " (V" + version + ")";
-		}
-
-		this.contentBaseType = content.getContentBaseType();
-		this.fName = name;
-		this.DMSContent = (MDMSContent) content;
-		this.isLink = isLink;
-		this.DMSAssociation = (MDMSAssociation) DMSAssociation;
-
-		if (isLink)
-		{
-			try
-			{
-				linkImage = new Image();
-				linkImage.setContent(Utils.getImage("Link16.png"));
-
-				mimeIcon.appendChild(linkImage);
-				mimeIcon.setStyle("float :left;");
-				ZkCssHelper.appendStyle(mimeIcon, "align: left");
-
-				footerDiv.appendChild(mimeIcon);
-			}
-			catch (Exception e)
-			{
-				log.log(Level.SEVERE, "Link image fetching failure: ", e);
-				throw new AdempiereException("Link image fetching failure: " + e);
-			}
-
-		}
-
-		prevImg = new Image();
-		prevImg.setContent(image);
-
-		dImage.appendChild(prevImg);
-		dImage.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
-		vbox.appendChild(dImage);
-
-		fLabel.appendChild(new Label(fName));
-		fLabel.setTooltiptext(content.getName());
-
-		footerDiv.appendChild(fLabel);
-
-		vbox.appendChild(footerDiv);
-
-		fLabel.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
-
-		ZkCssHelper.appendStyle(dImage, "text-align: center");
-
-		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-		{
-			ZkCssHelper.appendStyle(fLabel, "text-align: center");
-		}
-
-		this.appendChild(vbox);
-		this.setStyle("background-color: #ffffff;padding: 8px; ");
-
-		ZkCssHelper.appendStyle(this, "text-align: center");
 	}
 
 	public MDMSAssociation getDMSAssociation()

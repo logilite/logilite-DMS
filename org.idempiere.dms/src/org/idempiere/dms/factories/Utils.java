@@ -82,6 +82,7 @@ import org.zkoss.util.media.AMedia;
  */
 public class Utils
 {
+
 	private static CLogger						log										= CLogger.getCLogger(Utils.class);
 
 	private static final String					SQL_GET_ASI								= "SELECT REPLACE(a.Name,' ','_') AS Name, ai.Value, ai.ValueTimestamp, ai.ValueNumber, ai.ValueInt FROM M_AttributeInstance ai "
@@ -517,9 +518,7 @@ public class Utils
 		MImage mImage = cache_mimetypeThumbnail.get(DMS_MimeType_ID);
 
 		if (mImage != null)
-		{
 			return mImage;
-		}
 
 		int Icon_ID = DB.getSQLValue(null, "SELECT Icon_ID FROM DMS_MimeType WHERE DMS_MimeType_ID=?", DMS_MimeType_ID);
 
@@ -527,16 +526,13 @@ public class Utils
 		{
 			Icon_ID = DB.getSQLValue(null, "SELECT Icon_ID FROM DMS_MimeType WHERE UPPER(Name) = UPPER(?) ", DMSConstant.DEFAULT);
 			if (Icon_ID <= 0)
-			{
 				Icon_ID = DB.getSQLValue(null, "SELECT AD_Image_ID FROM AD_Image WHERE UPPER(Name) = UPPER(?) ", DMSConstant.DOWNLOAD);
-			}
 		}
 
 		mImage = new MImage(Env.getCtx(), Icon_ID, null);
 		cache_mimetypeThumbnail.put(DMS_MimeType_ID, mImage);
 		return mImage;
-
-	}
+	} // getMimetypeThumbnail
 
 	public static int getContentTypeID(String contentType, int AD_Client_ID)
 	{
@@ -750,12 +746,12 @@ public class Utils
 			url = rf.getResource("/dmsimages/" + name);
 			image = new AImage(url);
 		}
-		catch (IOException e1)
+		catch (IOException e)
 		{
-			log.log(Level.INFO, name + " Icon not found");
+			log.log(Level.WARNING, name + " Icon not found");
 		}
 		return image;
-	}
+	} // getImage
 
 	public static String readableFileSize(long size)
 	{
@@ -768,39 +764,39 @@ public class Utils
 
 	public static String getToolTipTextMsg(DMS dms, I_DMS_Content content)
 	{
-		String msg = "";
+		StringBuffer msg = new StringBuffer(content.getName());
 		if (content.getDMS_ContentType_ID() > 0)
 		{
 			MDMSContentType mdmsContentType = new MDMSContentType(Env.getCtx(), content.getDMS_ContentType_ID(), null);
-			msg = "Content Type: " + mdmsContentType.getName() + "\n";
+			msg.append("\nContent Type: ").append(mdmsContentType.getName());
 		}
 
-		msg += "Size: ";
+		msg.append("\nItem Type: ");
 		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
-			File file = dms.getFileFromStorage(content);
-			if (file != null)
-				msg += readableFileSize(file.length());
+			msg.append(DMSConstant.DIRECTORY);
 		}
 		else
 		{
-			msg += content.getDMS_FileSize();
+			msg.append(content.getDMS_MimeType().getName());
+			msg.append("\nSize: ").append(content.getDMS_FileSize());
 		}
 
-		return msg + "\nCreated: " + content.getCreated();
+		msg.append("\nCreated: ").append(DMSConstant.SDF.format(new Date(content.getCreated().getTime())));
+		msg.append("\nUpdated: ").append(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
+
+		return msg.toString();
 	} // getToolTipTextMsg
 
 	public static void initiateMountingContent(String table_Name, int Record_ID, int AD_Table_ID)
 	{
-		String mountingBaseName = MSysConfig.getValue("DMS_MOUNTING_BASE", "Attachment");
-		initiateMountingContent(mountingBaseName, table_Name, Record_ID, AD_Table_ID);
+		initiateMountingContent(DMSConstant.DMS_MOUNTING_BASE, table_Name, Record_ID, AD_Table_ID);
 	}
 
 	public static void initiateMountingContent(String mountingBaseName, String table_Name, int Record_ID, int AD_Table_ID)
 	{
 		IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 		String baseDir = fileStorageProvider.getBaseDirectory(null);
-
 		File file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName);
 
 		int mountingContent_ID = 0;
@@ -815,9 +811,7 @@ public class Utils
 		}
 		else
 		{
-			mountingContent_ID = DB.getSQLValue(null,
-					"SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND AD_Client_ID= ? AND ContentBaseType ='DIR' AND ParentUrl IS NULL",
-					mountingBaseName, Env.getAD_Client_ID(Env.getCtx()));
+			mountingContent_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_BASE_CONTENT, mountingBaseName, Env.getAD_Client_ID(Env.getCtx()));
 		}
 
 		if (!Util.isEmpty(table_Name) && Record_ID > 0)
@@ -832,8 +826,7 @@ public class Utils
 			}
 			else
 			{
-				tableNameContentID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND AD_Client_ID= ?", table_Name,
-						Env.getAD_Client_ID(Env.getCtx()));
+				tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_CONTENTID_FROM_CONTENTNAME, table_Name, Env.getAD_Client_ID(Env.getCtx()));
 			}
 
 			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
@@ -847,7 +840,7 @@ public class Utils
 				createAssociation(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, 0, 0, null);
 			}
 		}
-	}
+	} // initiateMountingContent
 
 	/**
 	 * Create DMS Content

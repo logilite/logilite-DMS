@@ -23,6 +23,7 @@ import java.util.Properties;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 
 public class MDMSContent extends X_DMS_Content
@@ -31,13 +32,9 @@ public class MDMSContent extends X_DMS_Content
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID		= -6250555517481249806L;
+	private static final long	serialVersionUID	= -6250555517481249806L;
 
-	public static final String	SQL_FETCH_VERSION_LIST	= "SELECT DISTINCT DMS_Content_ID, seqno FROM DMS_Association a "
-																+ " WHERE DMS_Content_Related_ID = ? AND a.DMS_AssociationType_ID = (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE NAME='Version') "
-																+ " UNION SELECT DMS_Content_ID, null FROM DMS_Content WHERE DMS_Content_ID = ? AND ContentBaseType <> 'DIR' ORDER BY DMS_Content_ID DESC";
-
-	private String				seqNo					= null;
+	private String				seqNo				= null;
 
 	public MDMSContent(Properties ctx, int DMS_Content_ID, String trxName)
 	{
@@ -69,9 +66,10 @@ public class MDMSContent extends X_DMS_Content
 		{
 			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
-			pstmt = DB.prepareStatement(SQL_FETCH_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
+			pstmt = DB.prepareStatement(DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
 			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());
-			pstmt.setInt(2, dmsAssociation.getDMS_Content_Related_ID());
+			pstmt.setInt(2, MDMSAssociationType.VERSION_ID);
+			pstmt.setInt(3, dmsAssociation.getDMS_Content_Related_ID());
 
 			rs = pstmt.executeQuery();
 
@@ -81,7 +79,7 @@ public class MDMSContent extends X_DMS_Content
 				{
 					MDMSContent content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
 					// Set version number
-					content.setSeqNo(rs.getString("seqno"));
+					content.setSeqNo(rs.getString("SeqNo"));
 					contentList.add(content);
 				}
 			}
