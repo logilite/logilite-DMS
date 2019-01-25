@@ -15,6 +15,7 @@ package org.idempiere.dms.constant;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.regex.Pattern;
 
 import org.compiere.model.MSysConfig;
 import org.compiere.util.Env;
@@ -38,6 +39,12 @@ public final class DMSConstant
 	// Regular Expression
 	public static final String				REG_EXP_FILENAME					= "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
 	public static final String				REG_SPACE							= "\\S+";
+	public static final String				REG_EXP_WINDOWS_DIRNAME_VALIDATE	= "((^(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])$)|([\\\\//:*?\\\"<>|?*\\x00-\\x1F]))";
+	public static final String				REG_EXP_LINUX_DIRNAME_VALIDATE		= "(/)";
+
+	// Pattern
+	public static final Pattern				PATTERN_WINDOWS_DIRNAME_ISVALID		= Pattern.compile(REG_EXP_WINDOWS_DIRNAME_VALIDATE);
+	public static final Pattern				PATTERN_LINX_DIRNAME_ISVALID		= Pattern.compile(REG_EXP_LINUX_DIRNAME_VALIDATE);
 
 	// File Separator
 	public static final String				STORAGE_PROVIDER_FILE_SEPARATOR		= "STORAGE_PROVIDER_FILE_SEPARATOR";

@@ -73,7 +73,6 @@ import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
-import org.idempiere.model.X_DMS_Content;
 import org.w3c.tidy.Tidy;
 
 import com.itextpdf.text.Rectangle;
@@ -282,7 +281,7 @@ public class DMS
 			if (Util.isEmpty(fileName, true))
 				fileName = file.getName();
 
-			Utils.isValidFileName(fileName, true);
+			Utils.isValidFileName(fileName, false);
 		}
 		else
 		{
@@ -362,7 +361,7 @@ public class DMS
 		{
 			if (Util.isEmpty(fileName, true))
 				fileName = file.getName();
-			Utils.isValidFileName(fileName, true);
+			Utils.isValidFileName(fileName, false);
 		}
 		else
 		{
@@ -1095,7 +1094,7 @@ public class DMS
 
 	public void renameContent(String fileName, MDMSContent DMSContent, MDMSContent parent_Content)
 	{
-		if (DMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			if (!fileName.equalsIgnoreCase(parent_Content.getName()))
 			{

@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
@@ -928,31 +929,51 @@ public class Utils
 	} // createAssociation
 
 	/**
-	 * Check file name is valid
+	 * Check file or directory name is valid
 	 * 
-	 * @param fileName
-	 * @param isThrowEx
-	 * @return
+	 * @param fileName - File / Directory Name
+	 * @param isDirName - Is Directory
+	 * @return Error if any
 	 */
-	public static String isValidFileName(String fileName, boolean isThrowEx)
+	public static String isValidFileName(String fileName, boolean isDirName)
 	{
-		String error = null;
-		if (fileName.equals("") || fileName.equals(null))
-			error = "FillMandatory";
+		if (Util.isEmpty(fileName, true))
+			return DMSConstant.MSG_FILL_MANDATORY;
 
 		if (fileName.length() > DMSConstant.MAX_FILENAME_LENGTH)
-			error = "Invalid File Name. file name less than 250 character";
+			return "Invalid Name, Name should be less than 250 characters";
 
-		if (!fileName.matches(DMSConstant.REG_EXP_FILENAME))
-			error = "Invalid File Name.";
+		if (fileName.contains(DMSConstant.FILE_SEPARATOR))
+			return "Invalid Name, Due to file separator is used";
 
-		if (!Utils.isFileNameEndWithNotBracket(fileName))
-			error = "Invalid File Name. not support end with ()";
+		if (!isDirName)
+		{
+			if (!fileName.matches(DMSConstant.REG_EXP_FILENAME))
+				return "Invalid File Name.";
 
-		if (!Util.isEmpty(error, true))
-			throw new AdempiereException(Msg.translate(Env.getCtx(), error));
+			if (!Utils.isFileNameEndWithNotBracket(fileName))
+				return "Invalid File Name. Not supportted end with ()";
+		}
+		else
+		{
+			Matcher matcher;
+			String invalidChars = "";
 
-		return error;
+			if (Adempiere.getOSInfo().startsWith("Windows"))
+				matcher = DMSConstant.PATTERN_WINDOWS_DIRNAME_ISVALID.matcher(fileName.toUpperCase());
+			else
+				matcher = DMSConstant.PATTERN_LINX_DIRNAME_ISVALID.matcher(fileName.toUpperCase());
+
+			while (matcher.find())
+			{
+				invalidChars += "\n" + matcher.group(0);
+			}
+
+			if (!Util.isEmpty(invalidChars, true))
+				return "A file name can't contain as below characters" + invalidChars;
+		}
+
+		return null;
 	} // isValidFileName
 
 	public static boolean isFileNameEndWithNotBracket(String fileName)
@@ -1012,14 +1033,9 @@ public class Utils
 	{
 		int contentID = 0;
 
-		if (Util.isEmpty(dirName) || dirName.equals(""))
-			throw new AdempiereException(DMSConstant.MSG_FILL_MANDATORY);
-
-		if (dirName.length() > DMSConstant.MAX_FILENAME_LENGTH)
-			throw new AdempiereException("Invalid Directory Name. Directory name less than 250 character");
-
-		if (dirName.contains(DMSConstant.FILE_SEPARATOR))
-			throw new AdempiereException("Invalid Directory Name.");
+		String error = isValidFileName(dirName, true);
+		if (!Util.isEmpty(error))
+			throw new AdempiereException(error);
 
 		try
 		{
@@ -1071,7 +1087,7 @@ public class Utils
 			if (!newFile.exists())
 			{
 				if (!newFile.mkdir())
-					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Invalid Directory Name."));
+					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Something went wrong! Directory is not created."));
 			}
 
 			if (contentID <= 0)

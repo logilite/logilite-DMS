@@ -13,7 +13,6 @@
 
 package org.idempiere.webui.apps.form;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
@@ -150,29 +149,10 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private void ValidateName()
 	{
-		if (Util.isEmpty(txtName.getValue()))
-		{
-			throw new WrongValueException(txtName, DMSConstant.MSG_FILL_MANDATORY);
-		}
-		else if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-		{
-			if (txtName.getValue().length() > DMSConstant.MAX_FILENAME_LENGTH)
-				throw new WrongValueException(txtName, "Invalid Directory Name. Directory name less than 250 character");
-
-			if (txtName.getValue().contains(DMSConstant.FILE_SEPARATOR))
-				throw new WrongValueException(txtName, "Invalid Directory Name.");
-		}
-		else if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
-		{
-			try
-			{
-				Utils.isValidFileName(txtName.getValue(), true);
-			}
-			catch (AdempiereException e)
-			{
-				throw new WrongValueException(txtName, e.getLocalizedMessage());
-			}
-		}
+		boolean isDir = DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory);
+		String error = Utils.isValidFileName(txtName.getValue(), isDir);
+		if (!Util.isEmpty(error, true))
+			throw new WrongValueException(txtName, error);
 	} // ValidateName
 
 	private void renameContent()

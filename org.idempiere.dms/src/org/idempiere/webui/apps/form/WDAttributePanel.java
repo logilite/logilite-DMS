@@ -17,7 +17,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
@@ -470,14 +469,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 			if (!txtName.getValue().equals(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 			{
-				try
-				{
-					Utils.isValidFileName(txtName.getValue(), true);
-				}
-				catch (AdempiereException e)
-				{
-					throw new WrongValueException(txtName, e.getLocalizedMessage());
-				}
+				String error = Utils.isValidFileName(txtName.getValue(), false);
+				if (!Util.isEmpty(error, true))
+					throw new WrongValueException(txtName, error);
 
 				dms.updateContent(txtName.getValue(), DMS_Content);
 			}
