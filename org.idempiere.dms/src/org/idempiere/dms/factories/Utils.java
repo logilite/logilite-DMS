@@ -940,8 +940,12 @@ public class Utils
 		if (Util.isEmpty(fileName, true))
 			return DMSConstant.MSG_FILL_MANDATORY;
 
-		if (fileName.length() > DMSConstant.MAX_FILENAME_LENGTH)
-			return "Invalid Name, Name should be less than 250 characters";
+		if (isDirName && fileName.length() > DMSConstant.MAX_DIRECTORY_LENGTH)
+			return "The folder name would be too long. You can shorten the folder name and try again (Maximum characters: " + DMSConstant.MAX_DIRECTORY_LENGTH
+					+ " instead of " + fileName.length() + ")";
+		else if (!isDirName && fileName.length() > DMSConstant.MAX_FILENAME_LENGTH)
+			return "The filename would be too long. You can shorten the filename and try again (Maximum characters: " + DMSConstant.MAX_FILENAME_LENGTH
+					+ " instead of " + fileName.length() + ")";
 
 		if (fileName.contains(DMSConstant.FILE_SEPARATOR))
 			return "Invalid Name, Due to file separator is used";
@@ -956,14 +960,8 @@ public class Utils
 		}
 		else
 		{
-			Matcher matcher;
 			String invalidChars = "";
-
-			if (Adempiere.getOSInfo().startsWith("Windows"))
-				matcher = DMSConstant.PATTERN_WINDOWS_DIRNAME_ISVALID.matcher(fileName.toUpperCase());
-			else
-				matcher = DMSConstant.PATTERN_LINX_DIRNAME_ISVALID.matcher(fileName.toUpperCase());
-
+			Matcher matcher = DMSConstant.PATTERN_WINDOWS_DIRNAME_ISVALID.matcher(fileName.toUpperCase());
 			while (matcher.find())
 			{
 				invalidChars += "\n" + matcher.group(0);
@@ -978,7 +976,7 @@ public class Utils
 
 	public static boolean isFileNameEndWithNotBracket(String fileName)
 	{
-		boolean isvalidFName = false;
+		boolean isValidName = false;
 		int indexofClosingP = fileName.lastIndexOf(')');
 		if (indexofClosingP > 0)
 		{
@@ -986,33 +984,25 @@ public class Utils
 			{
 				int indexofOpeningP = fileName.lastIndexOf('(');
 				if (indexofOpeningP > 0)
-				{
-					isvalidFName = false;
-				}
+					isValidName = false;
 				else
-				{
-					isvalidFName = true;
-				}
+					isValidName = true;
 			}
 			else
 			{
 				String s = fileName.substring(indexofClosingP + 1, fileName.length());
 				if (!s.matches(DMSConstant.REG_SPACE))
-				{
-					isvalidFName = false;
-				}
+					isValidName = false;
 				else
-				{
-					isvalidFName = true;
-				}
+					isValidName = true;
 			}
 		}
 		else
 		{
-			isvalidFName = true;
+			isValidName = true;
 		}
 
-		return isvalidFName;
+		return isValidName;
 	}
 
 	/**
@@ -1032,6 +1022,8 @@ public class Utils
 			IContentManager contentMngr, boolean errorIfDirExists, String trxName)
 	{
 		int contentID = 0;
+
+		dirName = dirName.trim();
 
 		String error = isValidFileName(dirName, true);
 		if (!Util.isEmpty(error))
@@ -1087,7 +1079,8 @@ public class Utils
 			if (!newFile.exists())
 			{
 				if (!newFile.mkdir())
-					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Something went wrong! Directory is not created."));
+					throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'" + contentMngr.getPath(content)
+							+ DMSConstant.FILE_SEPARATOR + newFile.getName() + "'");
 			}
 
 			if (contentID <= 0)
@@ -1100,8 +1093,7 @@ public class Utils
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Directory is not created", e);
-			throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is not created"), e);
+			throw new AdempiereException(e.getLocalizedMessage(), e);
 		}
 
 		return content;

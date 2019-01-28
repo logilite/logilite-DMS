@@ -88,9 +88,15 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
 		if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
+		{
 			txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
+			txtName.setMaxlength(DMSConstant.MAX_FILENAME_LENGTH);
+		}
 		else
+		{
 			txtName.setText(DMSContent.getName());
+			txtName.setMaxlength(DMSConstant.MAX_DIRECTORY_LENGTH);
+		}
 
 		txtName.setFocus(true);
 		txtName.setSelectionRange(0, txtName.getValue().length() - 1);

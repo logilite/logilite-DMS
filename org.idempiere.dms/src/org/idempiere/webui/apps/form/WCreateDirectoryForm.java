@@ -103,6 +103,7 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		txtboxDirectory.setWidth("300px");
 		txtboxDirectory.setFocus(true);
 		txtboxDirectory.addEventListener(Events.ON_OK, this);
+		txtboxDirectory.setMaxlength(DMSConstant.MAX_DIRECTORY_LENGTH);
 
 		North north = new North();
 		north.setParent(mainLayout);

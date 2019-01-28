@@ -119,7 +119,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	public WDAttributePanel(DMS dms, I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess)
 	{
 		this.dms = dms;
-
 		this.isWindowAccess = isWindowAccess;
 		this.DMS_Content = (MDMSContent) DMS_Content;
 		this.tabBox = tabBox;
@@ -129,12 +128,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		try
 		{
 			init();
-			initAttributes();
-			initVersionHistory();
+			refreshPanel();
 		}
-		catch (Exception ex)
+		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "WDMSAsi: ", ex);
+			log.log(Level.SEVERE, "Issue while opening content attribute panel. " + e.getLocalizedMessage(), e);
 		}
 
 	}
@@ -269,8 +267,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		btnVersionUpload.setDisabled(!isWindowAccess);
 		btnEdit.setDisabled(!isWindowAccess);
-
-	}
+	} // init
 
 	/**
 	 * initialize version history components
@@ -371,7 +368,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				row.appendChild(cell);
 				rows.appendChild(row);
 			}
-
 		}
 		catch (Exception e)
 		{
@@ -384,7 +380,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			pstmt = null;
 		}
 
-	}
+	} // initVersionHistory
 
 	private void initAttributes()
 	{
@@ -417,8 +413,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMS_Content), null);
 		txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
-
 		txtDesc.setValue(DMS_Content.getDescription());
+		txtName.setMaxlength(DMSConstant.MAX_FILENAME_LENGTH);
 
 		txtName.setEnabled(false);
 		txtDesc.setEnabled(false);
@@ -436,10 +432,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		ASIPanel = new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(), DMS_Content.getM_AttributeSetInstance_ID());
 		ASIPanel.setEditableAttribute(false);
-		tabpanelAttribute.appendChild(ASIPanel);
 		ASIPanel.appendChild(btnEdit);
 		ASIPanel.appendChild(btnSave);
-	}
+		btnSave.setVisible(false);
+		tabpanelAttribute.appendChild(ASIPanel);
+	} // initAttributes
 
 	/*
 	 * (non-Javadoc)
@@ -458,15 +455,6 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
-			if (Util.isEmpty(txtName.getValue()))
-				throw new WrongValueException(txtName, DMSConstant.MSG_FILL_MANDATORY);
-
-			ASIPanel.saveAttributes();
-			btnSave.setVisible(false);
-			ASIPanel.setEditableAttribute(false);
-			txtName.setEnabled(false);
-			txtDesc.setEnabled(false);
-
 			if (!txtName.getValue().equals(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 			{
 				String error = Utils.isValidFileName(txtName.getValue(), false);
@@ -476,6 +464,12 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				dms.updateContent(txtName.getValue(), DMS_Content);
 			}
 
+			ASIPanel.saveAttributes();
+			ASIPanel.setEditableAttribute(false);
+			btnSave.setVisible(false);
+			txtName.setEnabled(false);
+			txtDesc.setEnabled(false);
+
 			if ((Util.isEmpty(DMS_Content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
 					|| (!Util.isEmpty(DMS_Content.getDescription()) && !DMS_Content.getDescription().equals(txtDesc.getValue())))
 			{
@@ -483,12 +477,13 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				DMS_Content.save();
 			}
 
-			MDMSContent DMSContent = new MDMSContent(Env.getCtx(), DMS_Content.getDMS_Content_ID(), null);
+			DMS_Content.load(null);
+
 			Events.sendEvent(new Event("onRenameComplete", this));
 			tabBox.setSelectedTab((Tab) tabBox.getSelectedTab());
-			tabBox.getSelectedTab().setLabel(DMSContent.getName());
-			initAttributes();
-			initVersionHistory();
+			tabBox.getSelectedTab().setLabel(DMS_Content.getName());
+
+			refreshPanel();
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
@@ -526,8 +521,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH))
 		{
-			initAttributes();
-			initVersionHistory();
+			refreshPanel();
 		}
 		else if (event.getTarget().getClass().equals(DMSViewerComponent.class))
 		{
@@ -535,5 +529,14 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			DMS_ZK_Util.downloadDocument(dms, DMSViewerComp.getDMSContent());
 		}
 	} // onEvent
+
+	/**
+	 * 
+	 */
+	public void refreshPanel()
+	{
+		initAttributes();
+		initVersionHistory();
+	}
 
 }

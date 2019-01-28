@@ -778,9 +778,7 @@ public class DMS
 				newDMSContent.saveEx();
 				trx.commit();
 
-				MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), newDMSContent.getDMS_MimeType_ID(), null);
-
-				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(this, mimeType.getMimeType());
+				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(this, newDMSContent.getDMS_MimeType().getMimeType());
 
 				if (thumbnailGenerator != null)
 					thumbnailGenerator.addThumbnail(newDMSContent, fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
@@ -1094,6 +1092,8 @@ public class DMS
 
 	public void renameContent(String fileName, MDMSContent DMSContent, MDMSContent parent_Content)
 	{
+		fileName = fileName.trim();
+
 		if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			if (!fileName.equalsIgnoreCase(parent_Content.getName()))

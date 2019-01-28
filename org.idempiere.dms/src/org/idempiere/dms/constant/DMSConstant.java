@@ -30,7 +30,18 @@ import org.idempiere.dms.factories.Utils;
 public final class DMSConstant
 {
 
-	public static final int					MAX_FILENAME_LENGTH					= 250;
+	// System Configuration
+	public static final String				DMS_MOUNTING_BASE					= MSysConfig.getValue("DMS_MOUNTING_BASE", "Attachment",
+																						Env.getAD_Client_ID(Env.getCtx()));
+	public static final String				DMS_MOUNTING_ARCHIVE_BASE			= MSysConfig.getValue("DMS_MOUNTING_ARCHIVE_BASE", "Archive",
+																						Env.getAD_Client_ID(Env.getCtx()));
+
+	public static final int					MAX_FILENAME_LENGTH					= MSysConfig.getIntValue("DMS_FILENAME_LENGTH", 150,
+																						Env.getAD_Client_ID(Env.getCtx()));
+	public static final int					MAX_DIRECTORY_LENGTH				= MSysConfig.getIntValue("DMS_DIRECTORY_LENGTH", 50,
+																						Env.getAD_Client_ID(Env.getCtx()));
+	public static final int					DMS_VIEWER_LABLE_FONT_SIZE			= MSysConfig.getIntValue("DMS_VIEWER_LABLE_FONT_SIZE", 11,
+																						Env.getAD_Client_ID(Env.getCtx()));
 
 	// Content widget size
 	public static final int					CONTENT_COMPONENT_HEIGHT			= 120;
@@ -120,10 +131,6 @@ public final class DMSConstant
 	public static final String				TTT_EDIT							= "Edit";
 	public static final String				TTT_DOWNLOAD						= "Download";
 	public static final String				TTT_UPLOAD_VERSION					= "Upload Version";
-
-	// System Configuration
-	public static final String				DMS_MOUNTING_BASE					= MSysConfig.getValue("DMS_MOUNTING_BASE", "Attachment");
-	public static final String				DMS_MOUNTING_ARCHIVE_BASE			= MSysConfig.getValue("DMS_MOUNTING_ARCHIVE_BASE", "Archive");
 
 	// Date Format
 	public static final SimpleDateFormat	SDF									= new SimpleDateFormat("yyyy-MM-dd hh:mm z");

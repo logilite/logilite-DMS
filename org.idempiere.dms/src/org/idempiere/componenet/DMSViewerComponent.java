@@ -20,6 +20,7 @@ import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.compiere.util.CLogger;
 import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
@@ -47,6 +48,8 @@ public class DMSViewerComponent extends Div
 
 	private Image				prevImg;
 	private Image				linkImage			= null;
+
+	private Label				lblFileName			= null;
 
 	private Div					mimeIcon			= new Div();
 	private Div					fLabel				= new Div();
@@ -136,17 +139,17 @@ public class DMSViewerComponent extends Div
 		dImage.appendChild(prevImg);
 		dImage.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
 		vbox.appendChild(dImage);
-		ZkCssHelper.appendStyle(dImage, "text-align: center");
+		ZkCssHelper.appendStyle(dImage, "text-align: center;");
 
-		fLabel.appendChild(new Label(fName));
+		lblFileName = new Label(fName);
+		ZkCssHelper.appendStyle(lblFileName, "font-size:" + DMSConstant.DMS_VIEWER_LABLE_FONT_SIZE + "px;");
+
+		fLabel.appendChild(lblFileName);
 		fLabel.setTooltiptext(content.getName());
 		fLabel.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right; text-align: center;");
 
 		footerDiv.appendChild(fLabel);
 		vbox.appendChild(footerDiv);
-
-		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-			ZkCssHelper.appendStyle(fLabel, "text-align: center");
 	} // Constructor
 
 	public MDMSContent getDMSContent()
@@ -194,7 +197,7 @@ public class DMSViewerComponent extends Div
 		}
 
 		prevImg.setHeight(dheight - 30 + "px");
-	}
+	} // setDheight
 
 	public int getDwidth()
 	{
@@ -213,7 +216,7 @@ public class DMSViewerComponent extends Div
 
 		prevImg.setWidth(dwidth + "px");
 		fLabel.setWidth(dwidth - (isLink ? 20 : 5) + "px");
-	}
+	} // setDwidth
 
 	public String getfName()
 	{
