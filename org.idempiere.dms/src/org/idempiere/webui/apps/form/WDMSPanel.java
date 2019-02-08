@@ -62,7 +62,6 @@ import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
-import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
@@ -73,7 +72,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.idempiere.componenet.DMSViewerComponent;
+import org.idempiere.componenet.AbstractComponentIconViewer;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
@@ -86,7 +85,6 @@ import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
-import org.zkoss.image.AImage;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
@@ -100,120 +98,118 @@ import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
+import org.zkoss.zul.impl.XulElement;
 
 import com.lowagie.text.DocumentException;
 
 public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
+	private static final long		serialVersionUID		= -6813481516566180243L;
+	private static CLogger			log						= CLogger.getCLogger(WDMSPanel.class);
 
-	private static final long				serialVersionUID		= -6813481516566180243L;
-	public static CLogger					log						= CLogger.getCLogger(WDMSPanel.class);
+	public static final String		ATTRIBUTE_TOGGLE		= "Toggle";
+	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
 
-	public Tabbox							tabBox					= new Tabbox();
-	private Tabs							tabs					= new Tabs();
-	public Tab								tabView					= new Tab(DMSConstant.MSG_EXPLORER);
-	public Tabpanels						tabPanels				= new Tabpanels();
-	public Tabpanel							tabViewPanel			= new Tabpanel();
+	private Tabbox					tabBox					= new Tabbox();
+	private Tabs					tabs					= new Tabs();
+	private Tabpanels				tabPanels				= new Tabpanels();
 
-	private Grid							grid					= GridFactory.newGridLayout();
-	private Grid							gridBreadCrumb			= GridFactory.newGridLayout();
-	private Grid							searchgridView			= GridFactory.newGridLayout();
+	private Grid					grid					= GridFactory.newGridLayout();
+	private Grid					gridBreadCrumb			= GridFactory.newGridLayout();
 
-	private BreadCrumbLink					breadCrumbEvent			= null;
+	private BreadCrumbLink			breadCrumbEvent			= null;
 
-	private Rows							breadRows				= new Rows();
-	public Row								breadRow				= new Row();
+	private Rows					breadRows				= new Rows();
+	private Row						breadRow				= new Row();
 
-	// View Result Tab
-	private Searchbox						vsearchBox				= new Searchbox();
+	private Searchbox				vsearchBox				= new Searchbox();
 
-	private Label							lblAdvanceSearch		= new Label(DMSConstant.MSG_ADVANCE_SEARCH);
-	private Label							lblDocumentName			= new Label(DMSConstant.MSG_NAME);
-	private Label							lblContentType			= new Label(DMSConstant.MSG_CONTENT_TYPE);
-	private Label							lblCreated				= new Label(DMSConstant.MSG_CREATED);
-	private Label							lblUpdated				= new Label(DMSConstant.MSG_UPDATED);
-	private Label							lblContentMeta			= new Label(DMSConstant.MSG_CONTENT_META);
-	private Label							lblDescription			= new Label(DMSConstant.MSG_DESCRIPTION);
-	private Label							lblCreatedBy			= new Label(DMSConstant.MSG_CREATEDBY);
-	private Label							lblUpdatedBy			= new Label(DMSConstant.MSG_UPDATEDBY);
-	private Label							lblPositionInfo			= new Label();
-	private Label							lblShowBreadCrumb		= null;
+	private Label					lblAdvanceSearch		= new Label(DMSConstant.MSG_ADVANCE_SEARCH);
+	private Label					lblDocumentName			= new Label(DMSConstant.MSG_NAME);
+	private Label					lblContentType			= new Label(DMSConstant.MSG_CONTENT_TYPE);
+	private Label					lblCreated				= new Label(DMSConstant.MSG_CREATED);
+	private Label					lblUpdated				= new Label(DMSConstant.MSG_UPDATED);
+	private Label					lblContentMeta			= new Label(DMSConstant.MSG_CONTENT_META);
+	private Label					lblDescription			= new Label(DMSConstant.MSG_DESCRIPTION);
+	private Label					lblCreatedBy			= new Label(DMSConstant.MSG_CREATEDBY);
+	private Label					lblUpdatedBy			= new Label(DMSConstant.MSG_UPDATEDBY);
+	private Label					lblPositionInfo			= new Label();
+	private Label					lblShowBreadCrumb		= null;
 
-	private Datebox							dbCreatedTo				= new Datebox();
-	private Datebox							dbCreatedFrom			= new Datebox();
-	private Datebox							dbUpdatedTo				= new Datebox();
-	private Datebox							dbUpdatedFrom			= new Datebox();
+	private Datebox					dbCreatedTo				= new Datebox();
+	private Datebox					dbCreatedFrom			= new Datebox();
+	private Datebox					dbUpdatedTo				= new Datebox();
+	private Datebox					dbUpdatedFrom			= new Datebox();
 
-	private ConfirmPanel					confirmPanel			= new ConfirmPanel();
+	private ConfirmPanel			confirmPanel			= new ConfirmPanel();
 
-	private Button							btnClear				= confirmPanel.createButton(ConfirmPanel.A_RESET);
-	private Button							btnRefresh				= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
-	private Button							btnCloseTab				= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
-	private Button							btnSearch				= new Button();
-	private Button							btnCreateDir			= new Button();
-	private Button							btnUploadContent		= new Button();
-	private Button							btnBack					= new Button();
-	private Button							btnNext					= new Button();
+	private Button					btnClear				= confirmPanel.createButton(ConfirmPanel.A_RESET);
+	private Button					btnRefresh				= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
+	private Button					btnCloseTab				= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
+	private Button					btnSearch				= new Button();
+	private Button					btnCreateDir			= new Button();
+	private Button					btnUploadContent		= new Button();
+	private Button					btnBack					= new Button();
+	private Button					btnNext					= new Button();
+	private Button					btnToggleView			= new Button();
 
-	private Textbox							txtDocumentName			= new Textbox();
-	private Textbox							txtDescription			= new Textbox();
+	private Textbox					txtDocumentName			= new Textbox();
+	private Textbox					txtDescription			= new Textbox();
 
-	private WTableDirEditor					lstboxContentType		= null;
-	private WTableDirEditor					lstboxCreatedBy			= null;
-	private WTableDirEditor					lstboxUpdatedBy			= null;
-	private Checkbox						chkInActive				= new Checkbox();
+	private WTableDirEditor			lstboxContentType		= null;
+	private WTableDirEditor			lstboxCreatedBy			= null;
+	private WTableDirEditor			lstboxUpdatedBy			= null;
+	private Checkbox				chkInActive				= new Checkbox();
 
-	public DMS								dms						= null;
-	private MDMSContent						currDMSContent			= null;
-	private MDMSContent						nextDMSContent			= null;
-	private MDMSContent						copyDMSContent			= null;
-	private MDMSContent						dirContent				= null;
-	private MDMSAssociation					previousDMSAssociation	= null;
+	private DMS						dms						= null;
+	private MDMSContent				currDMSContent			= null;
+	private MDMSContent				nextDMSContent			= null;
+	private MDMSContent				copyDMSContent			= null;
+	private MDMSContent				dirContent				= null;
+	private MDMSAssociation			previousDMSAssociation	= null;
 
-	private Stack<MDMSContent>				selectedDMSContent		= new Stack<MDMSContent>();
-	private Stack<MDMSAssociation>			selectedDMSAssociation	= new Stack<MDMSAssociation>();
+	private Stack<MDMSContent>		selectedDMSContent		= new Stack<MDMSContent>();
+	private Stack<MDMSAssociation>	selectedDMSAssociation	= new Stack<MDMSAssociation>();
 
 	//
-	private DMSViewerComponent				DMSViewerComp			= null;
-	private DMSViewerComponent				prevComponent			= null;
-	private WUploadContent					uploadContent			= null;
-	private WCreateDirectoryForm			createDirectoryForm		= null;
-	private WDLoadASIPanel					asiPanel				= null;
+	private Component				compCellRowViewer		= null;
+	private WUploadContent			uploadContent			= null;
+	private WCreateDirectoryForm	createDirectoryForm		= null;
+	private WDLoadASIPanel			asiPanel				= null;
 
-	private Panel							panelAttribute			= new Panel();
+	private Panel					panelAttribute			= new Panel();
 
-	private Menupopup						contentContextMenu		= new Menupopup();
-	private Menupopup						canvasContextMenu		= new Menupopup();
+	private Menupopup				contentContextMenu		= new Menupopup();
+	private Menupopup				canvasContextMenu		= new Menupopup();
 
-	private Menuitem						mnu_versionList			= null;
-	private Menuitem						mnu_copy				= null;
-	private Menuitem						mnu_createLink			= null;
-	private Menuitem						mnu_delete				= null;
-	private Menuitem						mnu_associate			= null;
-	private Menuitem						mnu_uploadVersion		= null;
-	private Menuitem						mnu_rename				= null;
-	private Menuitem						mnu_cut					= null;
-	private Menuitem						mnu_paste				= null;
-	private Menuitem						mnu_download			= null;
+	private Menuitem				mnu_cut					= null;
+	private Menuitem				mnu_copy				= null;
+	private Menuitem				mnu_paste				= null;
+	private Menuitem				mnu_rename				= null;
+	private Menuitem				mnu_delete				= null;
+	private Menuitem				mnu_download			= null;
+	private Menuitem				mnu_associate			= null;
+	private Menuitem				mnu_createLink			= null;
+	private Menuitem				mnu_versionList			= null;
+	private Menuitem				mnu_uploadVersion		= null;
 
-	private Menuitem						mnu_canvasCreateLink	= null;
-	private Menuitem						mnu_canvasPaste			= null;
+	private Menuitem				mnu_canvasPaste			= null;
+	private Menuitem				mnu_canvasCreateLink	= null;
 
-	public int								recordID				= 0;
-	public int								tableID					= 0;
-	public int								windowID				= 0;
+	private int						recordID				= 0;
+	private int						tableID					= 0;
+	private int						windowID				= 0;
 
-	private boolean							isSearch				= false;
-	private boolean							isGenericSearch			= false;
-	private boolean							isAllowCreateDirectory	= true;
-	private boolean							isWindowAccess			= true;
+	private boolean					isSearch				= false;
+	private boolean					isGenericSearch			= false;
+	private boolean					isAllowCreateDirectory	= true;
+	private boolean					isWindowAccess			= true;
 
-	private ArrayList<DMSViewerComponent>	viewerComponents		= null;
-	private ArrayList<WEditor>				m_editors				= new ArrayList<WEditor>();
+	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
 
-	private Map<String, Component>			ASI_Value				= new HashMap<String, Component>();
+	private Map<String, Component>	ASI_Value				= new HashMap<String, Component>();
 
-	private AbstractADWindowContent			winContent;
+	private AbstractADWindowContent	winContent;
 
 	/**
 	 * Constructor initialize
@@ -315,127 +311,72 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void initForm()
 	{
-		tabBox.setWidth("100%");
-		tabBox.setHeight("100%");
-		tabBox.appendChild(tabs);
-		tabBox.appendChild(tabPanels);
-		tabBox.addEventListener(Events.ON_SELECT, this);
+		this.setHeight("100%");
+		this.setWidth("100%");
+		this.appendChild(tabBox);
+		this.addEventListener(Events.ON_CLICK, this);
+		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
+
+		grid.setSclass("SB-Grid");
+		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
 		grid.setStyle("width: 100%; height:95%; position:relative; overflow: auto;");
+
 		// View Result Tab
+		Grid btnGrid = GridFactory.newGridLayout();
+		// Rows Header Buttons
+		Rows rowsBtn = btnGrid.newRows();
 
-		Grid btngrid = GridFactory.newGridLayout();
-		Columns columns = new Columns();
-		Column column = new Column();
-		column.setWidth("90px");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("130px");
-		column.setAlign("center");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("120px");
-		column.setAlign("right");
-		columns.appendChild(column);
-
-		Rows rows = new Rows();
-		btngrid.appendChild(rows);
-
-		Row row = new Row();
-		rows.appendChild(row);
-		btnBack.setImageContent(Utils.getImage("Left24.png"));
-		btnBack.setTooltiptext("Previous Record");
+		// Row Navigation Button
+		DMS_ZK_Util.setButtonData(btnBack, "Left24.png", DMSConstant.TTT_PREVIOUS_RECORD, this);
+		btnBack.setEnabled(false);
 
 		lblPositionInfo.setHflex("1");
-		lblPositionInfo.setStyle("float: right;");
-		ZkCssHelper.appendStyle(lblPositionInfo, "font-weight: bold;");
-		ZkCssHelper.appendStyle(lblPositionInfo, "text-align: center;");
+		ZkCssHelper.appendStyle(lblPositionInfo, "float: right; font-weight: bold; text-align: center;");
 
-		btnNext.setImageContent(Utils.getImage("Right24.png"));
-		btnNext.setTooltiptext("Next Record");
-		btnBack.addEventListener(Events.ON_CLICK, this);
-		btnNext.addEventListener(Events.ON_CLICK, this);
-		btnNext.setStyle("float:right;");
-
-		btnBack.setEnabled(false);
 		btnNext.setEnabled(false);
+		btnNext.setStyle("float:right;");
+		DMS_ZK_Util.setButtonData(btnNext, "Right24.png", DMSConstant.TTT_NEXT_RECORD, this);
 
+		Row row = rowsBtn.newRow();
 		row.appendChild(btnBack);
 		row.appendChild(lblPositionInfo);
 		row.appendChild(btnNext);
 
-		row = new Row();
-		rows.appendChild(row);
+		// Row Operation - Create Directory, Upload Content
+		DMS_ZK_Util.setButtonData(btnCreateDir, "Folder24.png", DMSConstant.MSG_CREATE_DIRECTORY, this);
+		DMS_ZK_Util.setButtonData(btnUploadContent, "Upload24.png", DMSConstant.MSG_UPLOAD_CONTENT, this);
 
+		row = rowsBtn.newRow();
 		row.appendChild(btnCreateDir);
 		row.appendChild(btnUploadContent);
 
-		btnCreateDir.setImageContent(Utils.getImage("Folder24.png"));
-		btnCreateDir.setTooltiptext("Create Directory");
-		btnCreateDir.addEventListener(Events.ON_CLICK, this);
+		//
+		Grid searchGridView = GridFactory.newGridLayout();
+		searchGridView.setVflex(true);
+		searchGridView.setStyle("max-height: 100%; width: 100%; position: relative; overflow: auto;");
 
-		btnUploadContent.setImageContent(Utils.getImage("Upload24.png"));
-		btnUploadContent.setTooltiptext("Upload Content");
-		btnUploadContent.addEventListener(Events.ON_CLICK, this);
+		Rows rowsSearch = searchGridView.newRows();
 
-		searchgridView.setStyle("max-height: 100%;width: 100%;position:relative; overflow: auto;");
-		searchgridView.setVflex(true);
-		columns = new Columns();
+		row = rowsSearch.newRow();
+		DMS_ZK_Util.createCellUnderRow(row, 1, 3, vsearchBox);
 
-		column = new Column();
-		column.setWidth("90px");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("130px");
-		column.setAlign("center");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("120px");
-		column.setAlign("right");
-		columns.appendChild(column);
-
-		rows = new Rows();
-		searchgridView.appendChild(rows);
-
-		row = new Row();
-		Cell searchCell = new Cell();
-		searchCell.setRowspan(1);
-		searchCell.setColspan(3);
-		searchCell.appendChild(vsearchBox);
-		rows.appendChild(row);
-		row.appendChild(searchCell);
-		vsearchBox.getButton().setImageContent(Utils.getImage("Search16.png"));
-		vsearchBox.getButton().addEventListener(Events.ON_CLICK, this);
+		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search16.png", DMSConstant.TTT_SEARCH, this);
 		vsearchBox.addEventListener(Events.ON_OK, this);
 
-		row = new Row();
-		rows.appendChild(row);
+		row = rowsSearch.newRow();
 		row.appendCellChild(lblAdvanceSearch);
 		lblAdvanceSearch.setHflex("1");
 		ZkCssHelper.appendStyle(lblAdvanceSearch, "font-weight: bold;");
 
-		row = new Row();
-		rows.appendChild(row);
-		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
-		Cell nameCell = new Cell();
-		nameCell.setColspan(2);
+		row = rowsSearch.newRow();
 		row.appendChild(lblDocumentName);
-		nameCell.appendChild(txtDocumentName);
-		row.appendChild(nameCell);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, txtDocumentName);
+		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
 		txtDocumentName.setWidth("100%");
 
-		row = new Row();
-		rows.appendChild(row);
-		nameCell = new Cell();
-		nameCell.setColspan(2);
+		row = rowsSearch.newRow();
 		row.appendChild(lblDescription);
-		nameCell.appendChild(txtDescription);
-		row.appendChild(nameCell);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, txtDescription);
 		txtDescription.setWidth("100%");
 
 		Language lang = Env.getLanguage(Env.getCtx());
@@ -452,16 +393,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			throw new AdempiereException("User fetching failure :" + e);
 		}
 
-		row = new Row();
-		rows.appendChild(row);
+		row = rowsSearch.newRow();
 		row.setAlign("right");
 		row.appendChild(lblCreatedBy);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxCreatedBy.getComponent());
 		lblCreatedBy.setStyle("float: left;");
-		Cell createdByCell = new Cell();
-		createdByCell.setColspan(2);
 		lstboxCreatedBy.getComponent().setWidth("100%");
-		createdByCell.appendChild(lstboxCreatedBy.getComponent());
-		row.appendChild(createdByCell);
 
 		Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		lookup = null;
@@ -476,44 +413,33 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			throw new AdempiereException("User fetching failure :" + e);
 		}
 
-		row = new Row();
-		rows.appendChild(row);
+		row = rowsSearch.newRow();
 		row.setAlign("right");
 		row.appendChild(lblUpdatedBy);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxUpdatedBy.getComponent());
 		lblUpdatedBy.setStyle("float: left;");
-		Cell updatedByCell = new Cell();
-		updatedByCell.setColspan(2);
 		lstboxUpdatedBy.getComponent().setWidth("100%");
-		updatedByCell.appendChild(lstboxUpdatedBy.getComponent());
-		row.appendChild(updatedByCell);
 
-		row = new Row();
-		rows.appendChild(row);
+		dbCreatedFrom.setStyle(DMSConstant.CSS_STYLE_DATEBOX);
+		dbUpdatedFrom.setStyle(DMSConstant.CSS_STYLE_DATEBOX);
+		dbCreatedTo.setStyle(DMSConstant.CSS_STYLE_DATEBOX);
+		dbUpdatedTo.setStyle(DMSConstant.CSS_STYLE_DATEBOX);
+
+		//
+		row = rowsSearch.newRow();
 		row.appendChild(lblCreated);
 		Hbox hbox = new Hbox();
-		dbCreatedFrom.setStyle("width: 100%; display:flex; flex-direction: row;");
-		dbCreatedTo.setStyle("width: 100%; display:flex; flex-direction: row;");
 		hbox.appendChild(dbCreatedFrom);
 		hbox.appendChild(dbCreatedTo);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, hbox);
 
-		Cell createdCell = new Cell();
-		createdCell.setColspan(2);
-		createdCell.appendChild(hbox);
-		row.appendChild(createdCell);
-
-		row = new Row();
-		rows.appendChild(row);
+		//
+		row = rowsSearch.newRow();
 		row.appendChild(lblUpdated);
 		hbox = new Hbox();
-		dbUpdatedFrom.setStyle("width: 100%; display:flex; flex-direction: row;");
-		dbUpdatedTo.setStyle("width: 100%; display:flex; flex-direction: row;");
 		hbox.appendChild(dbUpdatedFrom);
 		hbox.appendChild(dbUpdatedTo);
-
-		Cell updatedCell = new Cell();
-		updatedCell.setColspan(2);
-		updatedCell.appendChild(hbox);
-		row.appendChild(updatedCell);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, hbox);
 
 		Column_ID = MColumn.getColumn_ID(MDMSContentType.Table_Name, MDMSContentType.COLUMNNAME_DMS_ContentType_ID);
 		lookup = null;
@@ -528,88 +454,61 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			throw new AdempiereException("Contenttype fetching failure :" + e);
 		}
 
-		row = new Row();
-		rows.appendChild(row);
+		//
+		row = rowsSearch.newRow();
 		row.setAlign("right");
 		row.appendChild(lblContentType);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxContentType.getComponent());
 		lblContentType.setStyle("float: left;");
-		Cell contentTypeListCell = new Cell();
-		contentTypeListCell.setColspan(2);
 		lstboxContentType.getComponent().setWidth("100%");
-		contentTypeListCell.appendChild(lstboxContentType.getComponent());
 		lstboxContentType.addValueChangeListener(this);
-		row.appendChild(contentTypeListCell);
 
-		// Active
-		chkInActive.setLabel("Show InActive");
+		//
+		row = rowsSearch.newRow();
+		row.setStyle("padding-left : 109px;");
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, chkInActive);
 		chkInActive.setChecked(false);
-		row = new Row();
-		rows.appendChild(row);
-		Cell activeCell = new Cell();
-		activeCell.setColspan(2);
-		// row.setAlign("center");
-		row.setStyle("padding-left : 109px");
-		activeCell.appendChild(chkInActive);
+		chkInActive.setLabel(DMSConstant.MSG_SHOW_IN_ACTIVE);
 		chkInActive.addEventListener(Events.ON_CLICK, this);
-		row.appendChild(activeCell);
 
-		row = new Row();
-		rows.appendChild(row);
+		//
+		row = rowsSearch.newRow();
 		row.appendChild(lblContentMeta);
 		ZkCssHelper.appendStyle(lblContentMeta, "font-weight: bold;");
 
-		row = new Row();
-		rows.appendChild(row);
-		Cell cell = new Cell();
-		cell.setColspan(3);
-		cell.appendChild(panelAttribute);
-		// panelAttribute.setStyle("max-height: 200px; overflow: auto;");
-		row.appendChild(cell);
+		//
+		row = rowsSearch.newRow();
+		DMS_ZK_Util.createCellUnderRow(row, 0, 3, panelAttribute);
 
-		row = new Row();
-		rows.appendChild(row);
+		//
+		row = rowsSearch.newRow();
+
+		DMS_ZK_Util.setButtonData(btnClear, "Reset24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnSearch, "Search24.png", DMSConstant.TTT_SEARCH, this);
+		DMS_ZK_Util.setButtonData(btnRefresh, "Refresh24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnCloseTab, "Close24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnToggleView, "List16.png", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
+
+		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
+
 		hbox = new Hbox();
-
-		btnClear.addEventListener(Events.ON_CLICK, this);
-		btnRefresh.addEventListener(Events.ON_CLICK, this);
-
-		btnSearch.setImageContent(Utils.getImage("Search24.png"));
-		btnSearch.setTooltiptext("Search");
-
-		btnSearch.addEventListener(Events.ON_CLICK, this);
-
-		btnClear.setImageContent(Utils.getImage("Reset24.png"));
-		btnRefresh.setImageContent(Utils.getImage("Refresh24.png"));
-		btnCloseTab.setImageContent(Utils.getImage("Close24.png"));
-
-		btnCloseTab.addEventListener(Events.ON_CLICK, this);
-
-		hbox.appendChild(btnClear);
-		hbox.appendChild(btnRefresh);
+		hbox.setStyle(DMSConstant.CSS_STYLE_FLEX_ROW_DIRECTION);
 		hbox.appendChild(btnSearch);
+		hbox.appendChild(btnRefresh);
+		hbox.appendChild(btnClear);
+		hbox.appendChild(btnToggleView);
 		hbox.appendChild(btnCloseTab);
 
-		cell = new Cell();
-		cell.setColspan(3);
-		cell.setRowspan(1);
+		Cell cell = DMS_ZK_Util.createCellUnderRow(row, 1, 3, hbox);
 		cell.setAlign("right");
-		cell.appendChild(hbox);
-		row.appendChild(cell);
 
-		Tabpanel tabViewPanel = new Tabpanel();
-		tabViewPanel.setHeight("100%");
-		tabViewPanel.setWidth("100%");
-		Hbox boxViewSeparator = new Hbox();
-		boxViewSeparator.setWidth("100%");
-		boxViewSeparator.setHeight("100%");
-
-		cell = new Cell();
-		cell.setWidth("100%");
-		cell.setStyle("position: absolute;");
-		cell.appendChild(gridBreadCrumb);
-		cell.appendChild(grid);
-		cell.addEventListener(Events.ON_RIGHT_CLICK, this);
-		boxViewSeparator.appendChild(cell);
+		/*
+		 * Main Layout View
+		 */
+		Cell cell_layout = new Cell();
+		cell_layout.setWidth("100%");
+		cell_layout.appendChild(gridBreadCrumb);
+		cell_layout.appendChild(grid);
 
 		gridBreadCrumb
 				.setStyle("width: 100%; position:relative; overflow: auto; background-color: rgba(0,0,0,.2); background-clip: padding-box; color: #222; background: transparent; "
@@ -617,89 +516,55 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						+ "box-shadow: inset 1px 1px 0 rgba(0,0,0,.1),inset 0 -1px 0 rgba(0,0,0,.07);");
 
 		breadRow.setZclass("none");
-		breadRow.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%;");
+		breadRow.setStyle(DMSConstant.CSS_STYLE_FLEX_ROW_DIRECTION);
 
 		Splitter splitter = new Splitter();
 		splitter.setCollapse("after");
+
+		Cell cell_attribute = new Cell();
+		cell_attribute.setWidth("32%");
+		cell_attribute.setHeight("100%");
+		cell_attribute.appendChild(btnGrid);
+		cell_attribute.appendChild(searchGridView);
+
+		Hbox boxViewSeparator = new Hbox();
+		boxViewSeparator.setWidth("100%");
+		boxViewSeparator.setHeight("100%");
+		boxViewSeparator.appendChild(cell_layout);
 		boxViewSeparator.appendChild(splitter);
+		boxViewSeparator.appendChild(cell_attribute);
 
-		cell = new Cell();
-		cell.setWidth("32%");
-		cell.setHeight("100%");
-		// cell.setStyle("height: 100%; overflow: hidden;");
-		cell.appendChild(btngrid);
-		cell.appendChild(searchgridView);
-		searchgridView.setParent(cell);
-		boxViewSeparator.appendChild(cell);
+		Tabpanel tabViewPanel = new Tabpanel();
+		tabViewPanel.setHeight("100%");
+		tabViewPanel.setWidth("100%");
 		tabViewPanel.appendChild(boxViewSeparator);
-		cell.setParent(boxViewSeparator);
-		searchgridView.appendChild(rows);
-
-		tabs.appendChild(tabView);
 		tabPanels.appendChild(tabViewPanel);
-		this.setHeight("100%");
-		this.setWidth("100%");
-		this.appendChild(tabBox);
 
-		this.addEventListener(Events.ON_CLICK, this);
-		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
+		tabBox.setWidth("100%");
+		tabBox.setHeight("100%");
+		tabBox.appendChild(tabs);
+		tabBox.appendChild(tabPanels);
+		tabBox.addEventListener(Events.ON_SELECT, this);
 
-		mnu_versionList = new Menuitem(DMSConstant.MENUITEM_VERSIONlIST);
-		mnu_cut = new Menuitem(DMSConstant.MENUITEM_CUT);
-		mnu_copy = new Menuitem(DMSConstant.MENUITEM_COPY);
-		mnu_paste = new Menuitem(DMSConstant.MENUITEM_PASTE);
-		mnu_download = new Menuitem(DMSConstant.MENUITEM_DOWNLOAD);
-		mnu_createLink = new Menuitem(DMSConstant.MENUITEM_CREATELINK);
-		mnu_delete = new Menuitem(DMSConstant.MENUITEM_DELETE);
-		mnu_associate = new Menuitem(DMSConstant.MENUITEM_ASSOCIATE);
-		mnu_uploadVersion = new Menuitem(DMSConstant.MENUITEM_UPLOADVERSION);
-		mnu_rename = new Menuitem(DMSConstant.MENUITEM_RENAME);
+		tabs.appendChild(new Tab(DMSConstant.MSG_EXPLORER));
 
-		mnu_canvasCreateLink = new Menuitem(DMSConstant.MENUITEM_CREATELINK);
-		mnu_canvasPaste = new Menuitem(DMSConstant.MENUITEM_PASTE);
+		// Context Menu item for Right click on DMSContent
+		mnu_cut = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CUT, "Cut24.png", this);
+		mnu_copy = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_COPY, "Copy24.png", this);
+		mnu_paste = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PASTE, "Paste24.png", this);
+		mnu_rename = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_RENAME, "Rename24.png", this);
+		mnu_delete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DELETE, "Delete24.png", this);
+		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Downloads24.png", this);
+		mnu_associate = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ASSOCIATE, "Associate24.png", this);
+		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link24.png", this);
+		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Versions24.png", this);
+		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "uploadversion24.png", this);
 
-		canvasContextMenu.appendChild(mnu_canvasPaste);
-		canvasContextMenu.appendChild(mnu_canvasCreateLink);
-		mnu_canvasCreateLink.addEventListener(Events.ON_CLICK, this);
-		mnu_canvasPaste.addEventListener(Events.ON_CLICK, this);
+		// Context Menu item for Right click on Canvas area
+		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_PASTE, "Paste24.png", this);
+		mnu_canvasCreateLink = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link24.png", this);
 
-		contentContextMenu.appendChild(mnu_uploadVersion);
-		contentContextMenu.appendChild(mnu_versionList);
-		contentContextMenu.appendChild(mnu_cut);
-		contentContextMenu.appendChild(mnu_copy);
-		contentContextMenu.appendChild(mnu_paste);
-		contentContextMenu.appendChild(mnu_download);
-		contentContextMenu.appendChild(mnu_createLink);
-		contentContextMenu.appendChild(mnu_rename);
-		contentContextMenu.appendChild(mnu_delete);
-		contentContextMenu.appendChild(mnu_associate);
-
-		mnu_canvasCreateLink.setImageContent(Utils.getImage("Link24.png"));
-		mnu_canvasPaste.setImageContent(Utils.getImage("Paste24.png"));
-		mnu_createLink.setImageContent(Utils.getImage("Link24.png"));
-		mnu_uploadVersion.setImageContent(Utils.getImage("uploadversion24.png"));
-		mnu_paste.setImageContent(Utils.getImage("Paste24.png"));
-		mnu_download.setImageContent(Utils.getImage("Downloads24.png"));
-		mnu_rename.setImageContent(Utils.getImage("Rename24.png"));
-		mnu_cut.setImageContent(Utils.getImage("Cut24.png"));
-		mnu_versionList.setImageContent(Utils.getImage("Versions24.png"));
-		mnu_copy.setImageContent(Utils.getImage("Copy24.png"));
-		mnu_delete.setImageContent(Utils.getImage("Delete24.png"));
-		mnu_associate.setImageContent(Utils.getImage("Associate24.png"));
-
-		mnu_uploadVersion.addEventListener(Events.ON_CLICK, this);
-		mnu_versionList.addEventListener(Events.ON_CLICK, this);
-		mnu_cut.addEventListener(Events.ON_CLICK, this);
-		mnu_paste.addEventListener(Events.ON_CLICK, this);
-		mnu_download.addEventListener(Events.ON_CLICK, this);
-		mnu_rename.addEventListener(Events.ON_CLICK, this);
-		mnu_createLink.addEventListener(Events.ON_CLICK, this);
-		mnu_copy.addEventListener(Events.ON_CLICK, this);
-		mnu_delete.addEventListener(Events.ON_CLICK, this);
-		mnu_associate.addEventListener(Events.ON_CLICK, this);
-
-		// mnu_delete.setDisabled(true);
-
+		//
 		DMSConstant.dateFormatWithTime.setTimeZone(TimeZone.getTimeZone("UTC"));
 		addRootBreadCrumb();
 		SessionManager.getAppDesktop();
@@ -710,10 +575,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		log.info(event.getName());
 
-		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
+		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (event.getTarget() instanceof Cell || event.getTarget() instanceof Row))
 		{
-			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			openDirectoryORContent(DMSViewerComp);
+			openDirectoryORContent(event.getTarget());
 		}
 		else if (event.getTarget().equals(btnCreateDir))
 		{
@@ -775,6 +639,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			renderViewer();
 		}
+		else if (event.getTarget() == btnToggleView)
+		{
+			if (btnToggleView.getAttribute(ATTRIBUTE_TOGGLE).equals(DMSConstant.ICON_VIEW_LARGE))
+				currThumbViewerAction = DMSConstant.ICON_VIEW_LIST;
+			else
+				currThumbViewerAction = DMSConstant.ICON_VIEW_LARGE;
+
+			btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
+
+			renderViewer();
+		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH) || event.getTarget().equals(btnSearch))
 		{
 			HashMap<String, List<Object>> params = getQueryParamas();
@@ -801,26 +676,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			renderViewer();
 		}
-		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
-		{
-			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			currentCompSelection(DMSViewerComp);
-		}
-		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(WDMSPanel.class))
-		{
-			if (prevComponent != null)
-			{
-				ZkCssHelper.appendStyle(prevComponent.getfLabel(), DMSConstant.STYLE_CONTENT_COMP_VIEWER_NORMAL);
-			}
-		}
-		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Cell.class))
+		// Event for any area of panel user doing right click then show context
+		// related paste or else...
+		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Grid.class))
 		{
 			openCanvasContextMenu(event);
 		}
-		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
+		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
+				&& (event.getTarget().getClass().equals(Cell.class) || event.getTarget().getClass().equals(Row.class)))
 		{
-			DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			openContentContextMenu(DMSViewerComp);
+			compCellRowViewer = event.getTarget();
+			openContentContextMenu(compCellRowViewer);
 
 			// show only download option on menu context if access are
 			// read-only.
@@ -832,7 +698,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_versionList))
 		{
-			new WDMSVersion(dms, DMSViewerComp.getDMSContent());
+			new WDMSVersion(dms, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT));
 		}
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
@@ -851,7 +717,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_copy))
 		{
-			DMSClipboard.put(DMSViewerComp.getDMSContent(), true);
+			DMSClipboard.put((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT), true);
 		}
 		else if (event.getTarget().equals(mnu_createLink))
 		{
@@ -859,7 +725,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_cut))
 		{
-			DMSClipboard.put(DMSViewerComp.getDMSContent(), false);
+			DMSClipboard.put((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT), false);
 		}
 		else if (event.getTarget().equals(mnu_paste) || event.getTarget().equals(mnu_canvasPaste))
 		{
@@ -910,7 +776,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				{
 					if (result)
 					{
-						dms.deleteContent(DMSViewerComp.getDMSContent(), DMSViewerComp.getDMSAssociation());
+						dms.deleteContent((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT),
+								(MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_ASSOCIATION));
 						try
 						{
 							renderViewer();
@@ -927,12 +794,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			};
 
-			FDialog.ask(0, this, "Are you sure to delete " + DMSViewerComp.getDMSContent().getName() + "?", callback);
+			FDialog.ask(0, this,
+					"Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT)).getName() + "?", callback);
 
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
-			new WDAssociationType(dms, copyDMSContent, DMSViewerComp.getDMSContent(), getTable_ID(), getRecord_ID(), winContent);
+			new WDAssociationType(dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT), getTable_ID(),
+					getRecord_ID(), winContent);
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
@@ -952,15 +821,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			renderBreadCrumb(event);
 		}
-		else if (Events.ON_OK.equals(event.getName())
-				|| (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(vsearchBox.getButton().getClass())))
+		else if ((Events.ON_OK.equals(event.getName()) || Events.ON_CLICK.equals(event.getName()))
+				&& event.getTarget().getClass().equals(vsearchBox.getButton().getClass()))
 		{
 			breadRow.getChildren().clear();
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);
 			lblPositionInfo.setValue(null);
-			isGenericSearch = true;
+
 			isSearch = false;
+			isGenericSearch = true;
 			renderViewer();
 		}
 
@@ -972,7 +842,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnNext.setEnabled(false);
 		}
 
-	}
+	} // onEvent
 
 	private void renderBreadCrumb(Event event) throws IOException, URISyntaxException
 	{
@@ -1033,7 +903,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 		renderViewer();
-	}
+	} // renderBreadCrumb
 
 	/**
 	 * @throws IOException
@@ -1041,16 +911,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public void renderViewer() throws IOException, URISyntaxException
 	{
-		byte[] imgByteData = null;
-		File thumbFile = null;
-
-		Rows rows = new Rows();
-		Row row = new Row();
-		MImage mImage = null;
-		AImage image = null;
-
-		viewerComponents = new ArrayList<DMSViewerComponent>();
-
 		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = null;
 
 		// Setting current dms content value on label
@@ -1067,51 +927,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else
 			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent);
 
-		Components.removeAllChildren(grid);
-		for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : contentsMap.entrySet())
-		{
+		// TODO
+		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 
-			thumbFile = dms.getThumbnail(entry.getKey(), "150");
+		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
+		viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_COMPONENT_WIDTH, DMSConstant.CONTENT_COMPONENT_HEIGHT, this, eventsList);
 
-			if (thumbFile == null)
-			{
-				if (entry.getKey().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-				{
-					mImage = dms.getDirThumbnail();
-				}
-				else
-				{
-					mImage = dms.getMimetypeThumbnail(entry.getKey().getDMS_MimeType_ID());
-				}
-				imgByteData = mImage.getData();
-				if (imgByteData != null)
-					image = new AImage(entry.getKey().getName(), imgByteData);
-			}
-			else
-			{
-				image = new AImage(thumbFile);
-			}
-
-			boolean isLink = entry.getValue().getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID;
-			DMSViewerComponent viewerComp = new DMSViewerComponent(dms, entry.getKey(), image, isLink, entry.getValue());
-			viewerComp.setDwidth(DMSConstant.CONTENT_COMPONENT_WIDTH);
-			viewerComp.setDheight(DMSConstant.CONTENT_COMPONENT_HEIGHT);
-			viewerComp.addEventListener(Events.ON_CLICK, this);
-			viewerComp.addEventListener(Events.ON_RIGHT_CLICK, this);
-			viewerComp.addEventListener(Events.ON_DOUBLE_CLICK, this);
-			viewerComponents.add(viewerComp);
-			row.appendChild(viewerComp);
-		}
-		row.setZclass("none");
-		row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%; overflow: hidden;");
-		rows.appendChild(row);
-
-		grid.appendChild(rows);
 		tabBox.setSelectedIndex(0);
 	}
 
 	/**
-	 * clear the gridview components
+	 * Clear the grid view components
 	 */
 	private void clearComponents()
 	{
@@ -1133,23 +959,21 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				editor.setValue(null);
 		}
 		Components.removeAllChildren(panelAttribute);
-	}
+	} // clearComponents
 
 	/**
 	 * open the Directory OR Content
 	 * 
-	 * @param DMSViewerComp
+	 * @param component - Cell, Row, etc
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 * @throws DocumentException
 	 * @throws com.itextpdf.text.DocumentException
 	 */
-	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException, DocumentException,
-			com.itextpdf.text.DocumentException
+	private void openDirectoryORContent(Component component) throws IOException, URISyntaxException, DocumentException, com.itextpdf.text.DocumentException
 	{
-		selectedDMSContent.push(DMSViewerComp.getDMSContent());
-
-		selectedDMSAssociation.push(DMSViewerComp.getDMSAssociation());
+		selectedDMSContent.push((MDMSContent) component.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT));
+		selectedDMSAssociation.push((MDMSAssociation) component.getAttribute(DMSConstant.CELL_ATTRIBUTE_ASSOCIATION));
 
 		if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
@@ -1162,11 +986,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
-			File documentToPreview = null;
-
-			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), selectedDMSContent.peek().getDMS_MimeType_ID(), null);
-
-			documentToPreview = dms.getFileFromStorage(selectedDMSContent.peek());
+			MDMSMimeType mimeType = (MDMSMimeType) selectedDMSContent.peek().getDMS_MimeType();
+			File documentToPreview = dms.getFileFromStorage(selectedDMSContent.peek());
 
 			if (documentToPreview != null)
 			{
@@ -1213,7 +1034,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				FDialog.error(0, dms.getPathFromContentManager(currDMSContent) + " Content missing in storage,");
 			}
 		}
-	}
+	} // openDirectoryORContent
 
 	/**
 	 * Navigate the Previous Directory.
@@ -1236,9 +1057,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				if (currDMSContent != null && parents.size() > 1)
 				{
+					lblShowBreadCrumb = new Label(" >");
 					breadRow.appendChild(breadCrumbLink);
-					lblShowBreadCrumb = new Label();
-					lblShowBreadCrumb.setValue(" >");
 					breadRow.appendChild(new Space());
 					breadRow.appendChild(lblShowBreadCrumb);
 
@@ -1354,7 +1174,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		btnNext.setEnabled(false);
 		btnBack.setEnabled(true);
-	}
+	} // directoryNavigation
 
 	/**
 	 * Make Directory
@@ -1371,7 +1191,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				renderViewer();
 			}
 		});
-	}
+	} // createDirectory
 
 	/**
 	 * Upload Content
@@ -1389,95 +1209,78 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		});
 		uploadContent.addEventListener(Events.ON_CLOSE, this);
-	}
+	} // uploadContent
 
 	/**
 	 * Open MenuPopup when Right click on Directory OR Content
 	 * 
-	 * @param DMSViewerCom
+	 * @param compCellRowViewer
 	 */
-	private void openContentContextMenu(final DMSViewerComponent DMSViewerCom)
+	private void openContentContextMenu(final Component compCellRowViewer)
 	{
-		dirContent = DMSViewerCom.getDMSContent();
-		contentContextMenu.setPage(DMSViewerCom.getPage());
+		dirContent = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT);
+		contentContextMenu.setPage(compCellRowViewer.getPage());
 		copyDMSContent = DMSClipboard.get();
 
 		if (!isWindowAccess || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)))
 		{
-			mnu_associate.setDisabled(true);
-			mnu_copy.setDisabled(true);
-			mnu_createLink.setDisabled(true);
-			mnu_cut.setDisabled(true);
-			mnu_delete.setDisabled(true);
-			mnu_paste.setDisabled(true);
-			mnu_rename.setDisabled(true);
-			mnu_uploadVersion.setDisabled(true);
-			mnu_versionList.setDisabled(true);
-			mnu_download.setDisabled(true);
-			DMSViewerCom.setContext(contentContextMenu);
+			ctxMenuItemDisabled(true);
+
+			((XulElement) compCellRowViewer).setContext(contentContextMenu);
 			contentContextMenu.open(this, "at_pointer");
 			return;
 		}
 		else
 		{
-			mnu_delete.setDisabled(false);
-			mnu_associate.setDisabled(false);
-			mnu_copy.setDisabled(false);
-			mnu_createLink.setDisabled(false);
-			mnu_cut.setDisabled(false);
-			mnu_paste.setDisabled(false);
-			mnu_rename.setDisabled(false);
-			mnu_uploadVersion.setDisabled(false);
-			mnu_versionList.setDisabled(false);
-			mnu_download.setDisabled(false);
+			ctxMenuItemDisabled(false);
 		}
 
 		if (copyDMSContent == null)
 		{
 			mnu_paste.setDisabled(true);
-			mnu_canvasPaste.setDisabled(true);
-			mnu_createLink.setDisabled(true);
 			mnu_associate.setDisabled(true);
+			mnu_createLink.setDisabled(true);
 			mnu_versionList.setDisabled(true);
+			mnu_canvasPaste.setDisabled(true);
 			mnu_uploadVersion.setDisabled(true);
 		}
-		else if (copyDMSContent == DMSViewerCom.getDMSContent())
+		else if (copyDMSContent == dirContent)
 		{
 			mnu_paste.setDisabled(true);
-			mnu_canvasPaste.setDisabled(true);
 			mnu_associate.setDisabled(true);
 			mnu_createLink.setDisabled(true);
+			mnu_canvasPaste.setDisabled(true);
 		}
-		else if (MDMSContent.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getDMSContent().getContentBaseType()))
+		else if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
 		{
 			mnu_paste.setDisabled(false);
-			mnu_canvasPaste.setDisabled(false);
 			mnu_associate.setDisabled(true);
 			mnu_versionList.setDisabled(true);
+			mnu_canvasPaste.setDisabled(false);
 			mnu_uploadVersion.setDisabled(true);
 		}
 		else
 		{
-			mnu_createLink.setDisabled(false);
 			mnu_associate.setDisabled(false);
+			mnu_createLink.setDisabled(false);
 		}
 
-		if (MDMSContent.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType()))
+		if (MDMSContent.CONTENTBASETYPE_Content.equals(dirContent.getContentBaseType()))
 		{
-			mnu_versionList.setDisabled(false);
 			mnu_paste.setDisabled(true);
+			mnu_download.setDisabled(false);
+			mnu_createLink.setDisabled(true);
+			mnu_versionList.setDisabled(false);
 			mnu_canvasPaste.setDisabled(true);
 			mnu_uploadVersion.setDisabled(false);
-			mnu_createLink.setDisabled(true);
-			mnu_download.setDisabled(false);
 
-			if (copyDMSContent != null && copyDMSContent != DMSViewerCom.getDMSContent())
+			if (copyDMSContent != null && copyDMSContent != dirContent)
 				mnu_associate.setDisabled(false);
 			else
 				mnu_associate.setDisabled(true);
 		}
 
-		if (MDMSContent.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType()))
+		if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
 		{
 			if (copyDMSContent != null)
 				mnu_createLink.setDisabled(false);
@@ -1491,73 +1294,58 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		mnu_copy.setDisabled(false);
-		DMSViewerCom.setContext(contentContextMenu);
+
+		((XulElement) compCellRowViewer).setContext(contentContextMenu);
 		contentContextMenu.open(this, "at_pointer");
 
-		if (MDMSContent.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType())
-				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
+		if (((MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_ASSOCIATION)).getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
 		{
-			mnu_versionList.setDisabled(false);
-			mnu_paste.setDisabled(true);
-			mnu_canvasPaste.setDisabled(true);
-			mnu_uploadVersion.setDisabled(false);
-			mnu_createLink.setDisabled(true);
-			mnu_download.setDisabled(false);
-			mnu_copy.setDisabled(true);
-			mnu_associate.setDisabled(true);
-			mnu_rename.setDisabled(true);
-			mnu_delete.setDisabled(false);
-			mnu_cut.setDisabled(true);
-		}
-
-		if (MDMSContent.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType())
-				&& DMSViewerCom.getDMSAssociation().getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
-		{
-			mnu_versionList.setDisabled(true);
-			mnu_paste.setDisabled(true);
-			mnu_canvasPaste.setDisabled(true);
-			mnu_uploadVersion.setDisabled(true);
-			mnu_createLink.setDisabled(true);
-			mnu_download.setDisabled(true);
-			mnu_copy.setDisabled(true);
-			mnu_associate.setDisabled(true);
-			mnu_rename.setDisabled(true);
-			mnu_delete.setDisabled(true);
-			mnu_cut.setDisabled(true);
-		}
-	}
-
-	/**
-	 * select the directory or content
-	 * 
-	 * @param DMSViewerComp
-	 */
-	private void currentCompSelection(DMSViewerComponent DMSViewerComp)
-	{
-		if (prevComponent != null)
-		{
-			ZkCssHelper.appendStyle(prevComponent.getfLabel(), DMSConstant.STYLE_CONTENT_COMP_VIEWER_NORMAL);
-		}
-
-		for (DMSViewerComponent viewerComponent : viewerComponents)
-		{
-			if (viewerComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent().getDMS_Content_ID())
+			if (MDMSContent.CONTENTBASETYPE_Content.equals(dirContent.getContentBaseType()))
 			{
-				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(), DMSConstant.STYLE_CONTENT_COMP_VIEWER_SELECTED);
+				mnu_cut.setDisabled(true);
+				mnu_copy.setDisabled(true);
+				mnu_paste.setDisabled(true);
+				mnu_rename.setDisabled(true);
+				mnu_delete.setDisabled(false);
+				mnu_download.setDisabled(false);
+				mnu_associate.setDisabled(true);
+				mnu_createLink.setDisabled(true);
+				mnu_versionList.setDisabled(false);
+				mnu_canvasPaste.setDisabled(true);
+				mnu_uploadVersion.setDisabled(false);
+			}
+			else if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
+			{
+				ctxMenuItemDisabled(true);
 
-				prevComponent = viewerComponent;
-				break;
+				mnu_canvasPaste.setDisabled(true);
 			}
 		}
-	}
+	} // openContentContextMenu
+
+	/**
+	 * @param isDisabled
+	 */
+	public void ctxMenuItemDisabled(boolean isDisabled)
+	{
+		mnu_cut.setDisabled(isDisabled);
+		mnu_copy.setDisabled(isDisabled);
+		mnu_paste.setDisabled(isDisabled);
+		mnu_rename.setDisabled(isDisabled);
+		mnu_delete.setDisabled(isDisabled);
+		mnu_download.setDisabled(isDisabled);
+		mnu_associate.setDisabled(isDisabled);
+		mnu_createLink.setDisabled(isDisabled);
+		mnu_versionList.setDisabled(isDisabled);
+		mnu_uploadVersion.setDisabled(isDisabled);
+	} // ctxMenuItemDisabled
 
 	private void openCanvasContextMenu(Event event)
 	{
-		Cell cell = (Cell) event.getTarget();
-
+		Component compCellRowViewer = event.getTarget();
 		dirContent = currDMSContent;
-		canvasContextMenu.setPage(cell.getPage());
-		cell.setContext(canvasContextMenu);
+		canvasContextMenu.setPage(compCellRowViewer.getPage());
+		((XulElement) compCellRowViewer).setContext(canvasContextMenu);
 
 		if (DMSClipboard.get() == null)
 		{
@@ -1572,23 +1360,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (tableID <= 0 || recordID <= 0)
 		{
-			if (DMSClipboard.get() != null && !DMSClipboard.getIsCopy())
-			{
+			if (DMSClipboard.get() == null || (DMSClipboard.get() != null && !DMSClipboard.getIsCopy()))
 				mnu_canvasPaste.setDisabled(true);
-			}
 			else
-			{
 				mnu_canvasPaste.setDisabled(false);
-			}
-
-			if (DMSClipboard.get() == null)
-			{
-				mnu_canvasPaste.setDisabled(true);
-			}
-			else
-			{
-				mnu_canvasPaste.setDisabled(false);
-			}
 		}
 
 		if (currDMSContent != null)
@@ -1601,7 +1376,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		canvasContextMenu.open(this, "at_pointer");
-	}
+	} // openCanvasContextMenu
 
 	// TODO Need check for refactoring
 	/**
@@ -2132,5 +1907,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
 	} // addRootBreadCrumb
+
+	/**
+	 * Get Current Toggle Action
+	 * 
+	 * @return Toggle Action like Panel, List, etc
+	 */
+	public String getCurrToggleAction()
+	{
+		return currThumbViewerAction;
+	}
+
+	public Row getBreadRow()
+	{
+		return breadRow;
+	}
 
 }

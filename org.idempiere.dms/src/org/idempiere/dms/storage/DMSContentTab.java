@@ -310,7 +310,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 			reload();
 		}
 
-		documentViewerPanel.breadRow.getChildren().clear();
+		documentViewerPanel.getBreadRow().getChildren().clear();
 		documentViewerPanel.addRootBreadCrumb();
 	}
 

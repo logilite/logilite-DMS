@@ -13,9 +13,8 @@
 
 package org.idempiere.webui.apps.form;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -26,17 +25,17 @@ import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
-import org.adempiere.webui.component.ZkCssHelper;
-import org.compiere.model.MImage;
 import org.compiere.util.CLogger;
-import org.idempiere.componenet.DMSViewerComponent;
+import org.idempiere.componenet.AbstractComponentIconViewer;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
+import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
-import org.zkoss.image.AImage;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -49,14 +48,12 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	/**
 	 * 
 	 */
-	private static final long				serialVersionUID	= -3613076228042516782L;
+	private static final long	serialVersionUID	= -3613076228042516782L;
 
-	private static CLogger					log					= CLogger.getCLogger(WDMSVersion.class);
+	private static CLogger		log					= CLogger.getCLogger(WDMSVersion.class);
 
-	private ArrayList<DMSViewerComponent>	viewerComponents	= null;
-	private DMSViewerComponent				prevComponent		= null;
-	private Grid							gridView			= GridFactory.newGridLayout();
-	private DMS								dms;
+	private Grid				gridView			= GridFactory.newGridLayout();
+	private DMS					dms;
 
 	/**
 	 * Constructor
@@ -67,15 +64,12 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	public WDMSVersion(DMS dms, MDMSContent content)
 	{
 		this.dms = dms;
-
 		try
 		{
-			renderDMSVersion(content);
 			init();
+			renderDMSVersion(content);
 
-			this.addEventListener(Events.ON_CLICK, this);
-			this.addEventListener(Events.ON_DOUBLE_CLICK, this);
-			this.addEventListener(Events.ON_CLOSE, this);
+			AEnv.showCenterScreen(this);
 		}
 		catch (IOException e)
 		{
@@ -86,32 +80,30 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 	private void init()
 	{
-		this.setHeight("38%");
 		this.setWidth("44%");
-		this.setTitle(DMSConstant.MSG_DMS_VERSION_LIST);
+		this.setHeight("38%");
 		this.setClosable(true);
 		this.appendChild(gridView);
+		this.setTitle(DMSConstant.MSG_DMS_VERSION_LIST);
 
-		gridView.setStyle("overflow: auto; position:relative;");
 		gridView.makeNoStrip();
-		gridView.setOddRowSclass("even");
-		gridView.setZclass("none");
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
-
-		AEnv.showCenterScreen(this);
+		gridView.setZclass("none");
+		gridView.setSizedByContent(true);
+		gridView.setOddRowSclass("even");
+		gridView.setStyle("overflow: auto; position:relative;");
 	} // init
 
 	public void renderDMSVersion(MDMSContent DMS_Content) throws IOException
 	{
-
 		Components.removeAllChildren(gridView);
-		gridView.setSizedByContent(true);
-		gridView.setZclass("none");
 		Rows rows = gridView.newRows();
 		Row row = rows.newRow();
 		row.setZclass("none");
-		row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap;");
+		row.setStyle(DMSConstant.CSS_STYLE_FLEX_ROW_DIRECTION);
+
+		MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
 		List<I_DMS_Content> contentList = MDMSContent.getVersionHistory(DMS_Content);
 
@@ -120,82 +112,23 @@ public class WDMSVersion extends Window implements EventListener<Event>
 			throw new AdempiereException("No versions are available.");
 		}
 
-		viewerComponents = new ArrayList<DMSViewerComponent>();
-
+		HashMap<I_DMS_Content, I_DMS_Association> contentMap = new HashMap<I_DMS_Content, I_DMS_Association>();
 		for (int i = 0; i < contentList.size(); i++)
-		{
-			AImage image = null;
+			contentMap.put(contentList.get(i), dmsAssociation);
 
-			File thumbFile = dms.getThumbnail(contentList.get(i), "150");
-			if (thumbFile == null)
-			{
-				MImage mImage = Utils.getMimetypeThumbnail(contentList.get(i).getDMS_MimeType_ID());
-				if (mImage.getData() != null)
-					image = new AImage(contentList.get(i).getName(), mImage.getData());
-			}
-			else
-			{
-				image = new AImage(thumbFile);
-			}
+		String[] eventsList = new String[] { Events.ON_DOUBLE_CLICK };
 
-			// Getting version number of version
-			String seqNo = ((MDMSContent) contentList.get(i)).getSeqNo();
-			DMSViewerComponent viewerComponent = new DMSViewerComponent(dms, contentList.get(i), image, false, null, seqNo);
-
-			viewerComponent.setDwidth(DMSConstant.CONTENT_COMPONENT_WIDTH);
-			viewerComponent.setDheight(DMSConstant.CONTENT_COMPONENT_HEIGHT);
-
-			viewerComponent.addEventListener(Events.ON_CLICK, this);
-			viewerComponent.addEventListener(Events.ON_RIGHT_CLICK, this);
-			viewerComponent.addEventListener(Events.ON_DOUBLE_CLICK, this);
-			viewerComponents.add(viewerComponent);
-
-			Cell cell = new Cell();
-			cell.setWidth(row.getWidth());
-			cell.appendChild(viewerComponent);
-			row.appendCellChild(cell);
-		}
-
+		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_LARGE);
+		viewerComponent.init(dms, contentMap, gridView, DMSConstant.CONTENT_COMPONENT_WIDTH, DMSConstant.CONTENT_COMPONENT_HEIGHT, this, eventsList);
 	} // renderDMSVersion
 
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
-		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
+		Component component = event.getTarget();
+		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (component instanceof Cell || component instanceof Row))
 		{
-			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			DMS_ZK_Util.downloadDocument(dms, DMSViewerComp.getDMSContent());
-		}
-		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(DMSViewerComponent.class))
-		{
-			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			currentCompSelection(DMSViewerComp);
-		}
-		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(WDMSVersion.class))
-		{
-			removeStyle();
+			DMS_ZK_Util.downloadDocument(dms, (MDMSContent) component.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT));
 		}
 	} // onEvent
-
-	private void currentCompSelection(DMSViewerComponent DMSViewerComp)
-	{
-		removeStyle();
-
-		for (DMSViewerComponent viewerComponent : viewerComponents)
-		{
-			if (viewerComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent().getDMS_Content_ID())
-			{
-				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(), DMSConstant.STYLE_CONTENT_COMP_VIEWER_SELECTED);
-
-				prevComponent = viewerComponent;
-				break;
-			}
-		}
-	} // currentCompSelection
-
-	public void removeStyle()
-	{
-		if (prevComponent != null)
-			ZkCssHelper.appendStyle(prevComponent.getfLabel(), DMSConstant.STYLE_CONTENT_COMP_VIEWER_NORMAL);
-	}
 }

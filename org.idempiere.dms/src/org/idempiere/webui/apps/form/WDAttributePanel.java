@@ -15,6 +15,7 @@ package org.idempiere.webui.apps.form;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.adempiere.webui.component.Button;
@@ -36,29 +37,28 @@ import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.theme.ThemeManager;
-import org.compiere.model.MImage;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.idempiere.componenet.DMSViewerComponent;
+import org.idempiere.componenet.AbstractComponentIconViewer;
+import org.idempiere.componenet.DefaultComponentIconViewerLarge;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
+import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
-import org.zkoss.image.AImage;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
-import org.zkoss.zul.Cell;
 import org.zkoss.zul.South;
 
 public class WDAttributePanel extends Panel implements EventListener<Event>
@@ -67,54 +67,53 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID		= 5200959427619624094L;
-	private static CLogger		log						= CLogger.getCLogger(WDAttributePanel.class);
+	private static final long			serialVersionUID		= 5200959427619624094L;
+	private static CLogger				log						= CLogger.getCLogger(WDAttributePanel.class);
 
-	private Panel				panelAttribute			= new Panel();
-	private Panel				panelFooterButtons		= new Panel();
-	private Borderlayout		mainLayout				= new Borderlayout();
+	private Panel						panelAttribute			= new Panel();
+	private Panel						panelFooterButtons		= new Panel();
+	private Borderlayout				mainLayout				= new Borderlayout();
 
-	private Tabbox				tabBoxAttribute			= new Tabbox();
-	private Tabs				tabsAttribute			= new Tabs();
-	private Tab					tabAttribute			= new Tab();
-	private Tab					tabVersionHistory		= new Tab();
+	private Tabbox						tabBoxAttribute			= new Tabbox();
+	private Tabs						tabsAttribute			= new Tabs();
+	private Tab							tabAttribute			= new Tab();
+	private Tab							tabVersionHistory		= new Tab();
 
-	private Tabpanels			tabpanelsAttribute		= new Tabpanels();
-	private Tabpanel			tabpanelAttribute		= new Tabpanel();
-	private Tabpanel			tabpanelVersionHitory	= new Tabpanel();
+	private Tabpanels					tabpanelsAttribute		= new Tabpanels();
+	private Tabpanel					tabpanelAttribute		= new Tabpanel();
+	private Tabpanel					tabpanelVersionHitory	= new Tabpanel();
 
-	private Grid				gridAttributeLayout		= new Grid();
-	private Grid				grid					= new Grid();
+	private Grid						gridAttributeLayout		= new Grid();
+	private Grid						grid					= new Grid();
 
-	private Button				btnDelete				= null;
-	private Button				btnRequery				= null;
-	private Button				btnClose				= null;
-	private Button				btnDownload				= null;
-	private Button				btnEdit					= null;
-	private Button				btnSave					= null;
-	private Button				btnVersionUpload		= null;
+	private Button						btnDelete				= null;
+	private Button						btnRequery				= null;
+	private Button						btnClose				= null;
+	private Button						btnDownload				= null;
+	private Button						btnEdit					= null;
+	private Button						btnSave					= null;
+	private Button						btnVersionUpload		= null;
 
-	private Label				lblStatus				= null;
-	private Label				lblName					= null;
-	private Label				lblDesc					= null;
+	private Label						lblStatus				= null;
+	private Label						lblName					= null;
+	private Label						lblDesc					= null;
 
-	private Textbox				txtName					= null;
-	private Textbox				txtDesc					= null;
+	private Textbox						txtName					= null;
+	private Textbox						txtDesc					= null;
 
-	private DMS					dms;
-	private MDMSContent			DMS_Content				= null;
-	private MDMSContent			parent_Content			= null;
-	private DMSViewerComponent	viewerComponenet		= null;
+	private DMS							dms;
+	private MDMSContent					DMS_Content				= null;
+	private MDMSContent					parent_Content			= null;
+	private AbstractComponentIconViewer	viewerComponenet		= null;
 
-	private Tabbox				tabBox					= null;
-	private AImage				imageVersion			= null;
-	private ConfirmPanel		confirmPanel			= null;
-	private WDLoadASIPanel		ASIPanel				= null;
+	private Tabbox						tabBox					= null;
+	private ConfirmPanel				confirmPanel			= null;
+	private WDLoadASIPanel				ASIPanel				= null;
 
-	private int					tableId					= 0;
-	private int					recordId				= 0;
+	private int							tableId					= 0;
+	private int							recordId				= 0;
 
-	private boolean				isWindowAccess			= true;
+	private boolean						isWindowAccess			= true;
 
 	public WDAttributePanel(DMS dms, I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess)
 	{
@@ -278,31 +277,14 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		Grid versionGrid = new Grid();
 		versionGrid.setHeight("100%");
 		versionGrid.setWidth("100%");
-		this.setZclass("none");
 		versionGrid.setStyle("position:relative; float: right; overflow-y: auto;");
+
+		this.setZclass("none");
 		this.setStyle("position:relative; float: right; height: 100%; overflow: auto;");
 
 		tabpanelVersionHitory.appendChild(versionGrid);
 
-		Columns columns = new Columns();
-
-		Column column = new Column();
-		column.setWidth("30%");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("65%");
-		columns.appendChild(column);
-
-		Rows rows = new Rows();
-		Row row = null;
-
-		versionGrid.appendChild(columns);
-		versionGrid.setHeight("100%");
-		versionGrid.setWidth("98%");
-		versionGrid.appendChild(rows);
-		versionGrid.setZclass("none");
-
+		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = new HashMap<I_DMS_Content, I_DMS_Association>();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -316,58 +298,48 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			pstmt.setInt(3, dmsAssociation.getDMS_Content_Related_ID());
 
 			rs = pstmt.executeQuery();
-
-			if (rs.isBeforeFirst())
+			// if (rs.isBeforeFirst())
+			// {
+			while (rs.next())
 			{
-				while (rs.next())
-				{
-					versionContent = new MDMSContent(Env.getCtx(), rs.getInt(1), null);
+				versionContent = new MDMSContent(Env.getCtx(), rs.getInt(1), null);
+				contentsMap.put(versionContent, dmsAssociation);
 
-					String filename = dms.getThumbnailURL(versionContent, "150");
-					if (Util.isEmpty(filename))
-					{
-						MImage mImage = Utils.getMimetypeThumbnail(versionContent.getDMS_MimeType_ID());
-						byte[] imgByteData = mImage.getData();
-
-						if (imgByteData != null)
-						{
-							imageVersion = new AImage(versionContent.getName(), imgByteData);
-						}
-					}
-					else
-					{
-						imageVersion = new AImage(filename);
-					}
-
-					viewerComponenet = new DMSViewerComponent(dms, versionContent, imageVersion, false, dmsAssociation);
-					viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK, this);
-
-					viewerComponenet.setDheight(100);
-					viewerComponenet.setDwidth(100);
-
-					viewerComponenet.getfLabel().setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; float: right;");
-
-					Cell cell = new Cell();
-					cell.setRowspan(1);
-					cell.appendChild(new Label(DMSConstant.MSG_CREATED + ": " + versionContent.getCreated()));
-					cell.appendChild(new Label(DMSConstant.MSG_CREATEDBY + ": " + MUser.getNameOfUser(versionContent.getCreatedBy())));
-					cell.appendChild(new Label(DMSConstant.MSG_FILESIZE + ": " + versionContent.getDMS_FileSize()));
-
-					row = new Row();
-					row.appendChild(viewerComponenet);
-					row.appendChild(cell);
-					rows.appendChild(row);
-				}
+				// viewerComponenet = (AbstractDMSViewerComp)
+				// DMS_ZK_Util.getDMSCompViewer("");
+				// viewerComponenet.init(dms, versionContent,
+				// dmsAssociation);
+				// viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK,
+				// this);
+				// viewerComponenet.setDheight(100);
+				// viewerComponenet.setDwidth(100);
+				//
+				// Cell cell = new Cell();
+				// cell.setRowspan(1);
+				// cell.appendChild(new Label(DMSConstant.MSG_CREATED + ": "
+				// + versionContent.getCreated()));
+				// cell.appendChild(new Label(DMSConstant.MSG_CREATEDBY +
+				// ": " +
+				// MUser.getNameOfUser(versionContent.getCreatedBy())));
+				// cell.appendChild(new Label(DMSConstant.MSG_FILESIZE +
+				// ": " + versionContent.getDMS_FileSize()));
+				//
+				// row = new Row();
+				// row.appendChild(viewerComponenet);
+				// row.appendChild(cell);
+				// rows.appendChild(row);
 			}
-			else
-			{
-				Cell cell = new Cell();
-				cell.setColspan(2);
-				cell.appendChild(new Label(DMSConstant.MSG_NO_VERSION_DOC_EXISTS));
-				row = new Row();
-				row.appendChild(cell);
-				rows.appendChild(row);
-			}
+			// }
+			// else
+			// {
+			// // Cell cell = new Cell();
+			// // cell.setColspan(2);
+			// // cell.appendChild(new
+			// // Label(DMSConstant.MSG_NO_VERSION_DOC_EXISTS));
+			// // row = new Row();
+			// // row.appendChild(cell);
+			// // rows.appendChild(row);
+			// }
 		}
 		catch (Exception e)
 		{
@@ -379,6 +351,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			rs = null;
 			pstmt = null;
 		}
+
+		String[] eventsList = new String[] { Events.ON_DOUBLE_CLICK };
+
+		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_VERSION);
+		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_COMPONENT_WIDTH, DMSConstant.CONTENT_COMPONENT_HEIGHT, this, eventsList);
 
 	} // initVersionHistory
 
@@ -523,10 +500,10 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		{
 			refreshPanel();
 		}
-		else if (event.getTarget().getClass().equals(DMSViewerComponent.class))
+		else if (event.getTarget().getClass().equals(DefaultComponentIconViewerLarge.class))
 		{
-			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			DMS_ZK_Util.downloadDocument(dms, DMSViewerComp.getDMSContent());
+			DefaultComponentIconViewerLarge DMSViewerComp = (DefaultComponentIconViewerLarge) event.getTarget();
+			// DMS_ZK_Util.downloadDocument(dms, DMSViewerComp.getDMSContent());
 		}
 	} // onEvent
 

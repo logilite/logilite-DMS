@@ -74,6 +74,7 @@ import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
 import org.w3c.tidy.Tidy;
+import org.zkoss.image.AImage;
 
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
@@ -1752,4 +1753,6 @@ public class DMS
 			throw new AdempiereException(e);
 		}
 	} // convertXlsxToPdf
+
+	
 }
