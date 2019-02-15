@@ -2175,7 +2175,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
 		{
 			XWPFDocument document = new XWPFDocument(new FileInputStream(documentToPreview));
-			File newDocPDF = File.createTempFile("Zito", "DocxToPDF");
+			File newDocPDF = File.createTempFile("DMS", "DocxToPDF");
 			OutputStream pdfFile = new FileOutputStream(newDocPDF);
 			PdfOptions options = PdfOptions.create();
 			PdfConverter.getInstance().convert(document, pdfFile, options);
@@ -2185,7 +2185,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			HWPFDocument doc = new HWPFDocument(new FileInputStream(documentToPreview));
 			WordExtractor we = new WordExtractor(doc);
-			File newDocPDF   = File.createTempFile("Zito", "DocToPDF");
+			File newDocPDF   = File.createTempFile("DMS", "DocToPDF");
 			OutputStream pdfFile = new FileOutputStream(newDocPDF);
 			String k = we.getText();
 			Document document = new Document();
@@ -2229,7 +2229,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private File convertXlsxToPdf(File documentToPreview)
 			throws IOException, FileNotFoundException, com.itextpdf.text.DocumentException
 	{
-		File newXlsxToHTML = File.createTempFile("Zito", "XlsxToHTML");
+		File newXlsxToHTML = File.createTempFile("DMS", "XlsxToHTML");
 		try
 		{
 			float pdfWidth = 1050;
@@ -2243,7 +2243,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			// Convert html to xhtml
 			Tidy tidy = new Tidy();
-			File newHtmlToXhtml = File.createTempFile("Zito", "HtmlToXHtml");
+			File newHtmlToXhtml = File.createTempFile("DMS", "HtmlToXHtml");
 			tidy.setShowWarnings(false);
 			// tidy.setXmlTags(true);
 			tidy.setXHTML(true);
@@ -2252,7 +2252,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			tidy.pprint(d, new FileOutputStream(newHtmlToXhtml));
 
 			// Convert xhtml to pdf
-			File newXhtmlToPdf = File.createTempFile("Zito", "XHtmlToPdf");
+			File newXhtmlToPdf = File.createTempFile("DMS", "XHtmlToPdf");
 			com.itextpdf.text.Document document = new com.itextpdf.text.Document();
 			Rectangle size = new Rectangle(pdfWidth, pdfheight);
 			document.setPageSize(size);
@@ -2286,7 +2286,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		ConvertXlsToPdf test = new ConvertXlsToPdf(in);
 		String html = test.getHTML();
 
-		File newXlsToPdf = File.createTempFile("zito", "XlsToPDF");
+		File newXlsToPdf = File.createTempFile("DMS", "XlsToPDF");
 		
 		Document document = new Document(PageSize.A4,20,20,20,20);
 		PdfWriter.getInstance(document,
