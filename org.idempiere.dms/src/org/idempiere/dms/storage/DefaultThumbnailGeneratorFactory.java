@@ -13,6 +13,7 @@
 
 package org.idempiere.dms.storage;
 
+import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.IThumbnailGeneratorFactory;
 
@@ -20,15 +21,15 @@ public class DefaultThumbnailGeneratorFactory implements IThumbnailGeneratorFact
 {
 
 	@Override
-	public IThumbnailGenerator get(String mimeType)
+	public IThumbnailGenerator get(DMS dms, String mimeType)
 	{
 		if (mimeType.equalsIgnoreCase("application/pdf"))
 		{
-			return new PDFThumbnailGenerator();
+			return new PDFThumbnailGenerator(dms);
 		}
 		else if (mimeType.startsWith("image/"))
 		{
-			return new ImageThumbnailGenerator();
+			return new ImageThumbnailGenerator(dms);
 		}
 		return null;
 	}

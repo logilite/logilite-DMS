@@ -37,11 +37,11 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.Msg;
+import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.X_DMS_AssociationType;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -53,9 +53,10 @@ public class WDAssociationType extends Window implements EventListener<Event>
 {
 
 	private static final long		serialVersionUID	= 4397569198011705268L;
-	protected static final CLogger	log					= CLogger.getCLogger(WDAssociationType.class);
+	private static final CLogger	log					= CLogger.getCLogger(WDAssociationType.class);
 
 	private WTableDirEditor			associationType;
+	private Row						associationTypeRow	= new Row();
 	private Grid					gridView			= GridFactory.newGridLayout();
 	private Label					lblAssociationType	= new Label();
 
@@ -63,21 +64,26 @@ public class WDAssociationType extends Window implements EventListener<Event>
 	private Button					btnOk				= null;
 	private ConfirmPanel			confirmPanel		= null;
 
-	private Row						associationTypeRow	= new Row();
-	private MDMSContent				copyDMSContent		= null;
-	private MDMSContent				associateContent	= null;
-	
 	private int						AD_Table_ID			= 0;
 	private int						Record_ID			= 0;
-	
-	private AbstractADWindowContent	winContent;
+
+	private DMS						dms;
+	private MDMSContent				copyDMSContent		= null;
+	private MDMSContent				associateContent	= null;
+	private AbstractADWindowContent	winContent			= null;
 
 	/**
+	 * @param dms
 	 * @param copyDMSContent
 	 * @param associateContent
+	 * @param AD_Table_ID
+	 * @param Record_ID
+	 * @param winContent
 	 */
-	public WDAssociationType(MDMSContent copyDMSContent, MDMSContent associateContent, int AD_Table_ID, int Record_ID, AbstractADWindowContent winContent)
+	public WDAssociationType(DMS dms, MDMSContent copyDMSContent, MDMSContent associateContent, int AD_Table_ID, int Record_ID,
+			AbstractADWindowContent winContent)
 	{
+		this.dms = dms;
 		this.copyDMSContent = copyDMSContent;
 		this.associateContent = associateContent;
 		this.AD_Table_ID = AD_Table_ID;
@@ -106,6 +112,7 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		this.setClosable(true);
 		this.appendChild(gridView);
 		this.setWidth("35%");
+
 		gridView.setStyle("position:relative;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
@@ -113,18 +120,15 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int Column_ID = MColumn.getColumn_ID(X_DMS_AssociationType.Table_Name,
-				X_DMS_AssociationType.COLUMNNAME_DMS_AssociationType_ID);
+		int Column_ID = MColumn.getColumn_ID(MDMSAssociationType.Table_Name, MDMSAssociationType.COLUMNNAME_DMS_AssociationType_ID);
 		MLookup lookup = null;
 		try
 		{
-			lookup = MLookupFactory
-					.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
-							X_DMS_AssociationType.COLUMNNAME_DMS_AssociationType_ID, 0, true,
-							"DMS_AssociationType.DMS_AssociationType_ID NOT IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE EntityType = 'D')");
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
+					MDMSAssociationType.COLUMNNAME_DMS_AssociationType_ID, 0, true,
+					"DMS_AssociationType.DMS_AssociationType_ID NOT IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE EntityType = 'D')");
 
-			associationType = new WTableDirEditor(X_DMS_AssociationType.COLUMNNAME_DMS_AssociationType_ID, true, false,
-					true, lookup);
+			associationType = new WTableDirEditor(MDMSAssociationType.COLUMNNAME_DMS_AssociationType_ID, true, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -146,24 +150,20 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		columns.appendChild(column);
 
 		Rows rows = new Rows();
-		Row row = null;
-		Cell cell = null;
 		gridView.appendChild(rows);
 
 		lblAssociationType.setValue("Association Type*");
-
 		associationTypeRow.appendChild(lblAssociationType);
 		associationTypeRow.appendChild(associationType.getComponent());
-		// associationType.addValueChangeListener(this);
 		rows.appendChild(associationTypeRow);
 
 		confirmPanel = new ConfirmPanel();
 		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 		btnOk = confirmPanel.createButton(ConfirmPanel.A_OK);
 
-		row = new Row();
+		Row row = new Row();
 		rows.appendChild(row);
-		cell = new Cell();
+		Cell cell = new Cell();
 		cell.setAlign("right");
 		cell.setColspan(2);
 		cell.appendChild(btnOk);
@@ -171,10 +171,12 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		cell.appendChild(btnClose);
 		row.appendChild(cell);
 		cell.setStyle("position: relative;");
+
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
 		btnOk.setImageContent(Utils.getImage("Ok24.png"));
 		btnClose.setImageContent(Utils.getImage("Cancel24.png"));
+
 		AEnv.showCenterScreen(this);
 	}
 
@@ -188,29 +190,20 @@ public class WDAssociationType extends Window implements EventListener<Event>
 	{
 		if (event.getTarget().getId().equals(ConfirmPanel.A_OK))
 		{
-			String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
-
 			if (associationType.getValue() == null || (Integer) associationType.getValue() == 0)
-				throw new WrongValueException(associationType.getComponent(), fillMandatory);
+				throw new WrongValueException(associationType.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 
-			int DMS_Association_ID = DB.getSQLValue(null,
-					"SELECT count(DMS_Association_ID) FROM DMS_Association where DMS_Content_ID = ?"
-							+ "  AND DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ?",
-					associateContent.getDMS_Content_ID(), copyDMSContent.getDMS_Content_ID(),
-					(Integer) associationType.getValue());
+			int countAssociations = DB.getSQLValue(null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE DMS_Content_ID = ?"
+					+ "  AND DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ?", associateContent.getDMS_Content_ID(),
+					copyDMSContent.getDMS_Content_ID(), (Integer) associationType.getValue());
 
-			if (DMS_Association_ID == 0)
+			if (countAssociations == 0)
 			{
-				MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
-				DMSassociation.setDMS_Content_ID(associateContent.getDMS_Content_ID());
-				DMSassociation.setDMS_Content_Related_ID(copyDMSContent.getDMS_Content_ID());
-				DMSassociation.setDMS_AssociationType_ID((Integer) associationType.getValue());
-				DMSassociation.setAD_Table_ID(AD_Table_ID);
-				DMSassociation.setRecord_ID(Record_ID);
-				DMSassociation.saveEx();
+				dms.createAssociation(associateContent.getDMS_Content_ID(), copyDMSContent.getDMS_Content_ID(), Record_ID, AD_Table_ID,
+						(int) associationType.getValue(), 0, null);
 
 				if (AD_Table_ID > 0 && Record_ID > 0)
-					winContent.getToolbar().getButton("Document Explorer").setPressed(true);
+					winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed(true);
 			}
 			else
 			{

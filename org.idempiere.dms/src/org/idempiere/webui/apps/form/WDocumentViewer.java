@@ -19,8 +19,8 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Window;
-import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IContentEditor;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSContent;
@@ -36,22 +36,24 @@ public class WDocumentViewer extends Window
 	 * 
 	 */
 	private static final long	serialVersionUID	= 7234966943628502177L;
-	public static CLogger		log					= CLogger.getCLogger(WDocumentViewer.class);
 
 	private Tabbox				tabBox				= null;
 	private Tabpanel			tabDataPanel		= new Tabpanel();
-	private MDMSContent			mDMSContent			= null;
-	private MDMSMimeType		mimeType			= null;
+
 	private File				document_preview	= null;
 
+	private DMS					dms;
+	private MDMSContent			mDMSContent			= null;
+	private MDMSMimeType		mimeType			= null;
 	private WDAttributePanel	attributePanel		= null;
 
 	private int					tableID				= 0;
 	private int					recordID			= 0;
 
-	public WDocumentViewer(Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID)
+	public WDocumentViewer(DMS dms, Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID)
 	{
 		mimeType = new MDMSMimeType(Env.getCtx(), mdms_content.getDMS_MimeType_ID(), null);
+		this.dms = dms;
 		this.tabBox = tabBox;
 		this.mDMSContent = mdms_content;
 		this.document_preview = document_preview;
@@ -69,13 +71,6 @@ public class WDocumentViewer extends Window
 		this.setHeight("100%");
 		this.setWidth("100%");
 
-		Hbox boxViewSeparator = new Hbox();
-		boxViewSeparator.setWidth("100%");
-		boxViewSeparator.setHeight("100%");
-
-		Cell cellPreview = new Cell();
-		cellPreview.setWidth("70%");
-
 		IContentEditor contentEditor = Utils.getContentEditor(mimeType.getMimeType());
 
 		if (contentEditor != null)
@@ -86,15 +81,23 @@ public class WDocumentViewer extends Window
 		else
 			throw new AdempiereException("No Content Editor found.");
 
+		// Content view
+		Cell cellPreview = new Cell();
+		cellPreview.setWidth("70%");
 		cellPreview.appendChild(contentEditor.initPanel());
+
 		Splitter splitter = new Splitter();
 		splitter.setCollapse("after");
-		
+
+		// Content attribute view
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		attributePanel = new WDAttributePanel(mDMSContent, tabBox, tableID, recordID, isWindowAccess);
+		attributePanel = new WDAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess);
 		cellCPreview.appendChild(attributePanel);
 
+		Hbox boxViewSeparator = new Hbox();
+		boxViewSeparator.setWidth("100%");
+		boxViewSeparator.setHeight("100%");
 		boxViewSeparator.setStyle("position:relative; overflow: auto;");
 		boxViewSeparator.appendChild(cellPreview);
 		boxViewSeparator.appendChild(splitter);
@@ -104,5 +107,5 @@ public class WDocumentViewer extends Window
 		tabDataPanel.setZclass("none");
 		tabDataPanel.appendChild(boxViewSeparator);
 		return tabDataPanel;
-	}
+	} // initForm
 }

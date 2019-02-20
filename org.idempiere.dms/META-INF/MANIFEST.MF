@@ -42,5 +42,6 @@ Service-Component: OSGI-INF/*.xml,
  OSGI-INF/DMSViewerFactory.xml
 Export-Package: com.lowagie.text,
  com.lowagie.text.pdf,
+ org.idempiere.dms,
  org.idempiere.dms.factories,
  org.idempiere.model

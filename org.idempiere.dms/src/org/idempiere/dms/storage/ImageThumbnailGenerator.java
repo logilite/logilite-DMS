@@ -23,87 +23,68 @@ import java.util.logging.Level;
 
 import javax.imageio.ImageIO;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
-import org.compiere.util.Env;
+import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IThumbnailGenerator;
-import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 
 public class ImageThumbnailGenerator implements IThumbnailGenerator
 {
-	private static CLogger			log							= CLogger.getCLogger(ImageThumbnailGenerator.class);
+	private static CLogger		log				= CLogger.getCLogger(ImageThumbnailGenerator.class);
 
-	private String					thumbnailSizes				= null;
+	private DMS					dms;
+	private ArrayList<String>	thumbSizesList	= null;
 
-	private IFileStorageProvider	fileStorageProvider			= null;
-	private IFileStorageProvider	thumbnailStorageProvider	= null;
-	private IThumbnailProvider		thumbnailProvider			= null;
-
-	private ArrayList<String>		thumbSizesList				= null;
+	/**
+	 * Constructor
+	 * 
+	 * @param dms
+	 */
+	public ImageThumbnailGenerator(DMS dms)
+	{
+		this.dms = dms;
+	}
 
 	@Override
 	public void init()
 	{
-		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-		if (fileStorageProvider == null)
-			throw new AdempiereException("No Storage Provider Found.");
-
-		thumbnailStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), true);
-
-		if (thumbnailStorageProvider == null)
-			throw new AdempiereException("No Thumbnail Storage Provide Found.");
-
-		thumbnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (thumbnailProvider == null)
-			throw new AdempiereException("Thumbnail Storage Provide Found.");
-
-		thumbnailSizes = MSysConfig.getValue(ThumbnailProvider.DMS_THUMBNAILS_SIZES, "150,300,500");
-
+		String thumbnailSizes = MSysConfig.getValue(ThumbnailProvider.DMS_THUMBNAILS_SIZES, "150,300,500");
 		thumbSizesList = new ArrayList<String>(Arrays.asList(thumbnailSizes.split(",")));
 	}
 
 	@Override
 	public void addThumbnail(I_DMS_Content content, File file, String size)
 	{
-		String path = null;
-
 		try
 		{
-			BufferedImage thumbnailImage = null;
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
 			if (size == null)
 			{
 				for (int i = 0; i < thumbSizesList.size(); i++)
-				{
-					path = thumbnailProvider.getThumbDirPath(content) + "-" + thumbSizesList.get(i) + ".jpg";
-
-					thumbnailImage = Utils.getImageThumbnail(file, thumbSizesList.get(i).toString());
-					ImageIO.write(thumbnailImage, "jpg", baos);
-
-					thumbnailStorageProvider.writeBLOB(path, baos.toByteArray(), content);
-				}
+					createThumbnail(content, file, thumbSizesList.get(i));
 			}
 			else
 			{
-				path = thumbnailProvider.getThumbDirPath(content) + "-" + size + ".jpg";
-
-				thumbnailImage = Utils.getImageThumbnail(file, size);
-				ImageIO.write(thumbnailImage, "jpg", baos);
-				thumbnailStorageProvider.writeBLOB(path, baos.toByteArray(), content);
+				createThumbnail(content, file, size);
 			}
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Image thumbnail creation failure:", e);
-			//throw new AdempiereException("Image thumbnail creation failure:" + e.getLocalizedMessage());
 		}
 	}
+
+	public void createThumbnail(I_DMS_Content content, File file, String size) throws IOException
+	{
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+		String path = dms.getThumbnailProvider().getThumbPath(content, size);
+
+		BufferedImage thumbnailImage = Utils.getImageThumbnail(file, size);
+
+		ImageIO.write(thumbnailImage, "jpg", baos);
+
+		dms.getThumbnailStorageProvider().writeBLOB(path, baos.toByteArray(), content);
+	} // createThumbnail
 }

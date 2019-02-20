@@ -44,36 +44,30 @@ public class DMSModelValidator implements ModelValidator
 	@Override
 	public int getAD_Client_ID()
 	{
-		// TODO Auto-generated method stub
-		return 0;
+		return m_AD_Client_ID;
 	}
 
 	@Override
 	public String login(int AD_Org_ID, int AD_Role_ID, int AD_User_ID)
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public String modelChange(PO po, int type) throws Exception
 	{
-		
 		/*
-		 * Before save event of attributeInstance table
-		 * Set indexed flag on change of attribute value
-		 * 
+		 * Before save event of attributeInstance table Set indexed flag on
+		 * change of attribute value
 		 */
-		if (MAttributeInstance.Table_Name.equals(po.get_TableName()) && type == TYPE_BEFORE_CHANGE
-				&& (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value)
-						|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueTimeStamp)
-						|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber)
-						|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueInt)))
+		if (MAttributeInstance.Table_Name.equals(po.get_TableName())
+				&& type == TYPE_BEFORE_CHANGE
+				&& (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value) || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueTimeStamp)
+						|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber) || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueInt)))
 		{
 			MAttributeInstance attributeInstance = (MAttributeInstance) po;
 
-			int dmsContentID = DB.getSQLValue(po.get_TrxName(),
-					"SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ",
+			int dmsContentID = DB.getSQLValue(po.get_TrxName(), "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ",
 					attributeInstance.getM_AttributeSetInstance_ID());
 
 			if (dmsContentID > 0)
@@ -89,11 +83,10 @@ public class DMSModelValidator implements ModelValidator
 		 * Before Save event Set isIndexed flag false for eligible for create
 		 * index again
 		 */
-		if (MDMSContent.Table_Name.equals(po.get_TableName()) && type == TYPE_BEFORE_CHANGE
-				&& (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
-						|| po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
-						|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
-						|| po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)))
+		if (MDMSContent.Table_Name.equals(po.get_TableName())
+				&& type == TYPE_BEFORE_CHANGE
+				&& (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name) || po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
+						|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description) || po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)))
 		{
 			MDMSContent dmsContent = (MDMSContent) po;
 			dmsContent.setIsIndexed(false);
@@ -119,18 +112,12 @@ public class DMSModelValidator implements ModelValidator
 						@Override
 						public void afterCommit(Trx trx, boolean success)
 						{
-							int DMS_Association_ID = DB.getSQLValue(null,
-									"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ?",
-									dmsContent.getDMS_Content_ID());
-
-							MDMSAssociation DMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID,
-									null);
+							MDMSAssociation DMSAssociation = Utils.getAssociationFromContent(dmsContent.getDMS_Content_ID(), null);
 
 							try
 							{
 								Map<String, Object> solrValue = Utils.createIndexMap(dmsContent, DMSAssociation);
-								IIndexSearcher indexSeracher = ServiceUtils
-										.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+								IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
 
 								if (indexSeracher == null)
 								{
@@ -152,39 +139,31 @@ public class DMSModelValidator implements ModelValidator
 
 							if (!isIndexed)
 							{
-								DB.executeUpdate("UPDATE DMS_Content SET IsIndexed = 'Y' WHERE DMS_Content_ID = ? ",
-										dmsContent.get_ID(), null);
+								DB.executeUpdate("UPDATE DMS_Content SET IsIndexed = 'Y' WHERE DMS_Content_ID = ? ", dmsContent.get_ID(), null);
 							}
-
 						}
 
 						@Override
 						public void afterRollback(Trx trx, boolean success)
 						{
 							// TODO Auto-generated method stub
-
 						}
 
 						@Override
 						public void afterClose(Trx trx)
 						{
 							// TODO Auto-generated method stub
-
 						}
-
 					});
-
 				}
 			}
 		}
-
 		return null;
-	}
+	} // modelChange
 
 	@Override
 	public String docValidate(PO po, int timing)
 	{
-		// TODO Auto-generated method stub
 		return null;
 	}
 

@@ -27,6 +27,7 @@ import org.apache.commons.io.filefilter.RegexFileFilter;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CLogger;
 import org.compiere.util.Util;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
@@ -34,12 +35,11 @@ import org.idempiere.model.MDMSContent;
 
 public class FileSystemStorageProvider implements IFileStorageProvider
 {
-	public static CLogger		log				= CLogger.getCLogger(FileSystemStorageProvider.class);
+	public static CLogger		log			= CLogger.getCLogger(FileSystemStorageProvider.class);
 
-	public I_AD_StorageProvider	provider		= null;
+	public I_AD_StorageProvider	provider	= null;
 
-	public String				baseDir			= null;
-	private String				fileSeparator	= null;
+	public String				baseDir		= null;
 
 	@Override
 	public void init(I_AD_StorageProvider storageProvider)
@@ -50,13 +50,12 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 		if (Util.isEmpty(baseDir))
 			baseDir = "/opt/DMS_Content";
 
-		fileSeparator = Utils.getStorageProviderFileSeparator();
 	}
 
 	@Override
 	public File[] getFiles(String parent, String pattern)
 	{
-		File directory = new File(baseDir + fileSeparator + parent);
+		File directory = new File(baseDir + DMSConstant.FILE_SEPARATOR + parent);
 
 		if (directory.exists())
 		{
@@ -82,7 +81,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	@Override
 	public String[] list(String parent)
 	{
-		File[] files = new File(baseDir + fileSeparator + parent).listFiles();
+		File[] files = new File(baseDir + DMSConstant.FILE_SEPARATOR + parent).listFiles();
 		String[] fileList = new String[files.length];
 
 		for (int i = 0; i < files.length; i++)
@@ -98,7 +97,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	{
 		try
 		{
-			File file = new File(baseDir + fileSeparator + path);
+			File file = new File(baseDir + DMSConstant.FILE_SEPARATOR + path);
 			if (file.exists())
 			{
 				Path filePath = Paths.get(file.getAbsolutePath());
@@ -123,7 +122,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 			file = new File(path);
 
 			String absolutePath = file.getAbsolutePath();
-			String folderpath = absolutePath.substring(0, absolutePath.lastIndexOf(fileSeparator));
+			String folderpath = absolutePath.substring(0, absolutePath.lastIndexOf(DMSConstant.FILE_SEPARATOR));
 
 			new File(folderpath).mkdirs();
 
@@ -160,12 +159,11 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 
 	private String buildValidPath(String path)
 	{
-		if (fileSeparator.charAt(0) == path.charAt(0) && path.charAt(0) == baseDir.charAt(baseDir.length() - 1))
+		if (DMSConstant.FILE_SEPARATOR.charAt(0) == path.charAt(0) && path.charAt(0) == baseDir.charAt(baseDir.length() - 1))
 			return baseDir + path.substring(1, path.length());
-		else if (fileSeparator.charAt(0) == path.charAt(0)
-				|| fileSeparator.charAt(0) == baseDir.charAt(baseDir.length() - 1))
+		else if (DMSConstant.FILE_SEPARATOR.charAt(0) == path.charAt(0) || DMSConstant.FILE_SEPARATOR.charAt(0) == baseDir.charAt(baseDir.length() - 1))
 			return baseDir + path;
 		else
-			return baseDir + fileSeparator + path;
+			return baseDir + DMSConstant.FILE_SEPARATOR + path;
 	}
 }
