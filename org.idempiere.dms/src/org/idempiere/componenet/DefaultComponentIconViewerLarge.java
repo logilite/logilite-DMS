@@ -16,9 +16,9 @@ package org.idempiere.componenet;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
-import org.adempiere.webui.component.ZkCssHelper;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
@@ -39,19 +39,29 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 	private Row	row;
 
 	@Override
+	public void createHeaderPart()
+	{
+	} // createHeaderPart
+
+	@Override
+	public void setNoComponentExistsMsg(Rows rows)
+	{
+	} // setNoComponentExistsMsg
+
+	@Override
 	public void createComponent(Rows rows, I_DMS_Content content, I_DMS_Association association, int compWidth, int compHeight)
 	{
 		if (row == null)
 		{
 			row = rows.newRow();
 			row.setSclass("SB-ROW");
-			row.setStyle("display: flex; flex-direction: row; flex-wrap: wrap; width: 100%; height: 100%; overflow: hidden; padding: 2px; cellspacing=10;");
+			row.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION + " width: 100%; overflow: hidden; padding: 2px;");
 		}
 
 		// Content Label
 		Label lblName = new Label(getContentName(content, ((MDMSContent) content).getSeqNo()));
-		lblName.setSclass("SB-LABEL");
-		lblName.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 15px; width: " + compWidth + "px;");
+		lblName.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 15px; width: " + (compWidth - 10)
+				+ "px; display: inline-block;");
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
@@ -60,64 +70,55 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
 		Vbox vbox = new Vbox();
-		vbox.setSclass("SB-VBOX");
 		vbox.appendChild(thumbImg);
 		vbox.appendChild(lblName);
 		vbox.setAlign("center");
-		vbox.setStyle("width: 100%; height: 100%; max-width:" + compWidth + "px;");
+		vbox.setStyle("position: relative; width: 100%; height: 100%; max-width:" + compWidth + "px;");
 
 		Cell cell = new Cell();
-		row.appendChild(cell);
 		cell.appendChild(vbox);
-		cell.setSclass("SB-CELL");
 		cell.setWidth(compWidth + "px");
 		cell.setHeight(compHeight + "px");
-		cell.setStyle("background: #f3f3f3;");
+		cell.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
+		row.appendChild(cell);
 
 		//
-		cell.setAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT, content);
-		cell.setAttribute(DMSConstant.CELL_ATTRIBUTE_ASSOCIATION, association);
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, content);
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
 
-		//
-		cell.addEventListener(Events.ON_CLICK, this); // Listener for Selection
+		// Listener for component selection
+		cell.addEventListener(Events.ON_CLICK, this);
+		cell.addEventListener(Events.ON_RIGHT_CLICK, this);
 
 		for (int i = 0; i < eventsList.length; i++)
 			cell.addEventListener(eventsList[i], listener);
 
-		if (isLink(association))
+		if (Utils.isLink(association))
 		{
-			Div mimeIcon = new Div();
 			Image linkImg = new Image();
 			linkImg = (Image) LinkImage.clone();
+			linkImg.setStyle("background: #ffffff80;");
+
+			Div mimeIcon = new Div();
 			mimeIcon.appendChild(linkImg);
-			ZkCssHelper.appendStyle(mimeIcon, "position: absolute; top: 75px; left: 5px; z-index: 9999;");
+			mimeIcon.setStyle("position: absolute; bottom: 24%;");
 			vbox.appendChild(mimeIcon);
 		}
-	} // createComponent
 
-	@Override
-	public void createHeaderPart()
-	{
-		// Columns columns = new Columns();
-		// grid.appendChild(columns);
-	} // createHeaderPart
+		// set tooltip text
+		cell.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
+	} // createComponent
 
 	@Override
 	public void removeSelection(Component component)
 	{
 		if (prevComponent != null)
-			((Cell) prevComponent).setStyle(DMSConstant.CSS_CONTENT_NORMAL_COMP_VIEWER_LARGE);
+			((Cell) prevComponent).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
 	}
 
 	@Override
 	public void setSelection(Component component)
 	{
-		((Cell) component).setStyle(DMSConstant.CSS_CONTENT_SELECTED_COMP_VIEWER_LARGE);
-	}
-
-	@Override
-	public void setNoComponentExistsMsg(Rows rows)
-	{
-
+		((Cell) component).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED);
 	}
 }

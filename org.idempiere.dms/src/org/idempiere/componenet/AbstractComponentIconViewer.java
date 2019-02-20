@@ -11,8 +11,6 @@ import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
-import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
@@ -37,8 +35,6 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	}
 
 	protected DMS								dms;
-	protected MDMSContent						content		= null;
-	protected MDMSAssociation					association	= null;
 
 	protected Grid								grid;
 	protected Component							prevComponent;
@@ -46,7 +42,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	protected String[]							eventsList;
 	protected EventListener<? extends Event>	listener;
 
-	//
+	// Abstract method definition
 	public abstract void createHeaderPart();
 
 	public abstract void setNoComponentExistsMsg(Rows rows);
@@ -65,14 +61,10 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		// Clearing Grid layout children's
 		Components.removeAllChildren(grid);
 
-		grid.setWidth("100%");
-		grid.setHeight("100%");
-		grid.setSclass("SB-GRID");
-
 		Rows rows = grid.newRows();
 		rows.setSclass("SB-ROWS");
 
-		//
+		// Grid Header Part creation
 		createHeaderPart();
 
 		//
@@ -90,7 +82,8 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
-		if (event.getName().equals(Events.ON_CLICK) && (event.getTarget() instanceof Cell || event.getTarget() instanceof Row))
+		if ((event.getName().equals(Events.ON_CLICK) || event.getName().equals(Events.ON_RIGHT_CLICK))
+				&& (event.getTarget() instanceof Cell || event.getTarget() instanceof Row))
 		{
 			removeSelection(prevComponent);
 			setSelection(event.getTarget());
@@ -113,35 +106,4 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 		return name;
 	} // getContentName
-
-	/**
-	 * Is Link
-	 * 
-	 * @param association
-	 * @return TRUE if Link
-	 */
-	public boolean isLink(I_DMS_Association association)
-	{
-		return association.getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID;
-	} // isLink
-
-	public MDMSAssociation getAssociation()
-	{
-		return association;
-	}
-
-	public void setAssociation(MDMSAssociation association)
-	{
-		this.association = association;
-	}
-
-	public MDMSContent getContent()
-	{
-		return content;
-	}
-
-	public void setContent(MDMSContent content)
-	{
-		this.content = content;
-	}
 }

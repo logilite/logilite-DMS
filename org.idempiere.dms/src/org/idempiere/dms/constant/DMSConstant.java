@@ -13,7 +13,6 @@
 
 package org.idempiere.dms.constant;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
@@ -44,21 +43,21 @@ public final class DMSConstant
 																							Env.getAD_Client_ID(Env.getCtx()));
 
 	// Content widget size
-	public static final int					CONTENT_COMPONENT_HEIGHT				= 120;
-	public static final int					CONTENT_COMPONENT_WIDTH					= 120;
+	public static final int					CONTENT_LARGE_ICON_WIDTH				= 120;
+	public static final int					CONTENT_LARGE_ICON_HEIGHT				= 120;
 
 	// Cell attributes
-	public static final String				CELL_ATTRIBUTE_CONTENT					= "Content";
-	public static final String				CELL_ATTRIBUTE_ASSOCIATION				= "Association";
+	public static final String				COMP_ATTRIBUTE_CONTENT					= "ATTR_CONTENT";
+	public static final String				COMP_ATTRIBUTE_ASSOCIATION				= "ATTR_ASSOCIATION";
 
 	// View thumbnail toggle action
+	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
 	public static final String				ICON_VIEW_LARGE							= "ICON_VIEW_LARGE";
 	public static final String				ICON_VIEW_VERSION						= "ICON_VIEW_VERSION";
-	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
 
 	// Regular Expression
-	public static final String				REG_EXP_FILENAME						= "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
 	public static final String				REG_SPACE								= "\\S+";
+	public static final String				REG_EXP_FILENAME						= "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
 	public static final String				REG_EXP_WINDOWS_DIRNAME_VALIDATE		= "((^(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])$)|([\\\\//:*?\\\"<>|?*\\x00-\\x1F]))";
 	public static final String				REG_EXP_LINUX_DIRNAME_VALIDATE			= "(/)";
 
@@ -74,16 +73,16 @@ public final class DMSConstant
 	public static final String				TOOLBAR_BUTTON_DOCUMENT_EXPLORER		= "Document Explorer";
 
 	// Context Menu Item
-	public static final String				MENUITEM_UPLOADVERSION					= "Upload Version";
-	public static final String				MENUITEM_VERSIONlIST					= "Version List";
-	public static final String				MENUITEM_RENAME							= "Rename";
 	public static final String				MENUITEM_CUT							= "Cut";
 	public static final String				MENUITEM_COPY							= "Copy";
 	public static final String				MENUITEM_PASTE							= "Paste";
-	public static final String				MENUITEM_DOWNLOAD						= "Download";
-	public static final String				MENUITEM_CREATELINK						= "Create Link";
+	public static final String				MENUITEM_RENAME							= "Rename";
 	public static final String				MENUITEM_DELETE							= "Delete";
+	public static final String				MENUITEM_DOWNLOAD						= "Download";
 	public static final String				MENUITEM_ASSOCIATE						= "Associate";
+	public static final String				MENUITEM_CREATELINK						= "Create Link";
+	public static final String				MENUITEM_VERSIONlIST					= "Version List";
+	public static final String				MENUITEM_UPLOADVERSION					= "Upload Version";
 
 	// DMS MimeType
 	public static final String				DEFAULT									= "Default";
@@ -99,12 +98,12 @@ public final class DMSConstant
 	public static final String				CREATEDBY								= "createdBy";
 	public static final String				UPDATEDBY								= "updatedBy";
 	public static final String				RECORD_ID								= "Record_ID";
-	public static final String				AD_Table_ID								= "AD_Table_ID";
 	public static final String				DESCRIPTION								= "description";
 	public static final String				CONTENTTYPE								= "contentType";
-	public static final String				DMS_CONTENT_ID							= "DMS_Content_ID";
-	public static final String				SHOW_INACTIVE							= "Show_InActive";
+	public static final String				AD_Table_ID								= "AD_Table_ID";
 	public static final String				AD_CLIENT_ID							= "AD_Client_ID";
+	public static final String				SHOW_INACTIVE							= "Show_InActive";
+	public static final String				DMS_CONTENT_ID							= "DMS_Content_ID";
 
 	// Msg translate
 	public static final String				MSG_NAME								= Msg.translate(Env.getCtx(), "Name");
@@ -117,6 +116,7 @@ public final class DMSConstant
 	public static final String				MSG_CONTENT_TYPE						= Msg.translate(Env.getCtx(), "Content Type");
 	public static final String				MSG_CONTENT_META						= Msg.translate(Env.getCtx(), "Content Meta");
 	public static final String				MSG_FILL_MANDATORY						= Msg.translate(Env.getCtx(), "FillMandatory");
+	public static final String				MSG_CONTENT_NAME						= Msg.translate(Env.getCtx(), "DMS_CONTENT_ID");
 	public static final String				MSG_ADVANCE_SEARCH						= Msg.translate(Env.getCtx(), "Advance Search");
 	public static final String				MSG_DIRECTORY_NAME						= Msg.translate(Env.getCtx(), "Directory Name");
 	public static final String				MSG_DMS_CONTENT_TYPE					= Msg.translate(Env.getCtx(), "DMS_ContentType_ID");
@@ -127,6 +127,9 @@ public final class DMSConstant
 	public static final String				MSG_ATTRIBUTES							= Msg.getMsg(Env.getCtx(), "Attributes");
 	public static final String				MSG_SELECT_FILE							= Msg.getMsg(Env.getCtx(), "SelectFile");
 	public static final String				MSG_ATTRIBUTE_SET						= Msg.getMsg(Env.getCtx(), "attribute.set");
+	public static final String				MSG_SIZE								= "Size";
+	public static final String				MSG_LINK								= "Link";
+	public static final String				MSG_FILE_TYPE							= "File Type";
 	public static final String				MSG_FILE_FOLDER							= "File Folder";
 	public static final String				MSG_SHOW_IN_ACTIVE						= "Show InActive";
 	public static final String				MSG_UPLOAD_CONTENT						= "Upload Content";
@@ -146,18 +149,22 @@ public final class DMSConstant
 	public static final String				TTT_UPLOAD_VERSION						= "Upload Version";
 	public static final String				TTT_PREVIOUS_RECORD						= "Previous Record";
 	public static final String				TTT_DISPLAYS_ITEMS_LAYOUT				= "Displays items Layout";
+
 	// Date Format
 	public static final SimpleDateFormat	SDF										= new SimpleDateFormat("yyyy-MM-dd hh:mm z");
-	public static final SimpleDateFormat	sdfWithTime								= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
-	public static final DateFormat			dateFormatWithTime						= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	public static final SimpleDateFormat	SDF_WITH_TIME							= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+	public static final SimpleDateFormat	SDF_DATE_FORMAT_WITH_TIME				= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
 	// CSS Style
-	public static final String				CSS_STYLE_DATEBOX						= "width: 100%; display:flex; flex-direction: row;";
-	public static final String				CSS_STYLE_FLEX_ROW_DIRECTION			= "display: flex; flex-direction: row; flex-wrap: wrap; height: 100%;";
-	public static final String				CSS_CONTENT_NORMAL_COMP_VIEWER_LARGE	= "border: 2px solid #ffffff; box-shadow: #ffffff 0px 0px 0px 0px;";																			// "background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff";
-	public static final String				CSS_CONTENT_SELECTED_COMP_VIEWER_LARGE	= "border: 2px solid #3363ad; box-shadow: #5f87c4 2px 2px 2px 2px;";																			// "background-color:#99cbff; box-shadow: 7px 7px 7px #888888";
-	public static final String				CSS_CONTENT_NORMAL_COMP_VIEWER_LIST		= "border: 2px solid #ffffff;";
-	public static final String				CSS_CONTENT_SELECTED_COMP_VIEWER_LIST	= "border: 2px solid #3363ad;";
+	public static final String				CSS_DATEBOX								= "width: 100%; display:flex; flex-direction: row;";
+	public static final String				CSS_BREAD_CRUMB_LINK					= "font-weight: bold; font-size: small; padding-left: 5px; color: dimgray;";
+	public static final String				CSS_FLEX_ROW_DIRECTION					= "display: flex; flex-direction: row; flex-wrap: wrap; height: 100%;";
+
+	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL	= "margin: 5px; background: #e2e2e2; border: 4px double #ffffff !important; border-radius: 5px;";
+	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED	= "margin: 5px; background: #abcdff; border: 4px double #3363ad !important; border-radius: 5px;";
+
+	public static final String				CSS_CONTENT_COMP_VIEWER_LIST_NORMAL		= "border-top: 1px solid #ffffff; border-bottom: 0px double #ffffff;";
+	public static final String				CSS_CONTENT_COMP_VIEWER_LIST_SELECTED	= "border-top: 1px solid #3363ad; border-bottom: 1px double #3363ad;";
 
 	// Queries
 	public static final String				SQL_GET_CONTENT_LATEST_VERSION			= "SELECT DMS_Content_ID, DMS_Association_ID FROM DMS_Association "

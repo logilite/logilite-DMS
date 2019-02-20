@@ -57,7 +57,7 @@ public class PDFContentEditor extends Panel implements IContentEditor
 		provider = storageProvider;
 		baseDir = storageProvider.getFolder();
 	}
-	
+
 	@Override
 	public Panel initPanel()
 	{
@@ -65,10 +65,8 @@ public class PDFContentEditor extends Panel implements IContentEditor
 		this.setWidth("100%");
 		this.setStyle("overflow: auto; -webkit-overflow-scrolling: touch;");
 
-		Iframe iframeContentPriview = new Iframe();
-
 		AMedia media = null;
-		
+
 		try
 		{
 			media = new AMedia(file, null, null);
@@ -78,13 +76,12 @@ public class PDFContentEditor extends Panel implements IContentEditor
 			throw new AdempiereException("Document cannot be displayed:" + e.getLocalizedMessage());
 		}
 
+		Iframe iframeContentPriview = new Iframe();
 		iframeContentPriview.setContent(media);
 		iframeContentPriview.setWidth("100%");
-		iframeContentPriview.setHeight("100%");
-		
+		iframeContentPriview.setHeight("98%");
 		this.appendChild(iframeContentPriview);
 
 		return this;
-	}
-
+	} // initPanel
 }

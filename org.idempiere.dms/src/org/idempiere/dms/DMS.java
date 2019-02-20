@@ -74,7 +74,6 @@ import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
 import org.w3c.tidy.Tidy;
-import org.zkoss.image.AImage;
 
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
@@ -744,7 +743,7 @@ public class DMS
 				PO.copyValues(oldDMSAssociation, newDMSAssociation);
 				newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
 
-				if (oldDMSAssociation.getDMS_AssociationType_ID() == 1000001)
+				if (oldDMSAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID)
 				{
 					crID = newDMSContent.getDMS_Content_ID();
 
@@ -1062,7 +1061,7 @@ public class DMS
 					MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 
 					this.moveFile(dmsContent, destPasteContent);
-					if (dmsAssociation.getDMS_AssociationType_ID() == 1000001)
+					if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID)
 					{
 						if (destPasteContent != null && destPasteContent.getDMS_Content_ID() == 0)
 							destPasteContent = null;
@@ -1374,13 +1373,13 @@ public class DMS
 	public void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
 	{
 		// first delete if it is link
-		if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
+		if (Utils.isLink(dmsAssociation))
 		{
 			setContentAndAssociationInActive(null, dmsAssociation);
 		}
 		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Content))
 		{
-			if (dmsAssociation.getDMS_AssociationType_ID() == 1000000)
+			if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.VERSION_ID)
 			{
 				// TODO get parent dms_content
 				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
@@ -1754,5 +1753,4 @@ public class DMS
 		}
 	} // convertXlsxToPdf
 
-	
 }

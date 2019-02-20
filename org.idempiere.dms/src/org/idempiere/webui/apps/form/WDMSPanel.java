@@ -16,7 +16,9 @@ package org.idempiere.webui.apps.form;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -36,7 +38,6 @@ import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.DatetimeBox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
@@ -53,8 +54,12 @@ import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
+import org.adempiere.webui.editor.WDateEditor;
+import org.adempiere.webui.editor.WDatetimeEditor;
 import org.adempiere.webui.editor.WEditor;
+import org.adempiere.webui.editor.WNumberEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
+import org.adempiere.webui.editor.WTimeEditor;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
@@ -81,7 +86,6 @@ import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
@@ -207,7 +211,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
 
-	private Map<String, Component>	ASI_Value				= new HashMap<String, Component>();
+	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
 
 	private AbstractADWindowContent	winContent;
 
@@ -319,7 +323,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
-		grid.setStyle("width: 100%; height:95%; position:relative; overflow: auto;");
+		grid.setStyle("width: 100%; height: 95%; position: relative; overflow: auto;");
 
 		// View Result Tab
 		Grid btnGrid = GridFactory.newGridLayout();
@@ -420,10 +424,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		lblUpdatedBy.setStyle("float: left;");
 		lstboxUpdatedBy.getComponent().setWidth("100%");
 
-		dbCreatedFrom.setStyle(DMSConstant.CSS_STYLE_DATEBOX);
-		dbUpdatedFrom.setStyle(DMSConstant.CSS_STYLE_DATEBOX);
-		dbCreatedTo.setStyle(DMSConstant.CSS_STYLE_DATEBOX);
-		dbUpdatedTo.setStyle(DMSConstant.CSS_STYLE_DATEBOX);
+		dbCreatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
+		dbUpdatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
+		dbCreatedTo.setStyle(DMSConstant.CSS_DATEBOX);
+		dbUpdatedTo.setStyle(DMSConstant.CSS_DATEBOX);
 
 		//
 		row = rowsSearch.newRow();
@@ -490,13 +494,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMS_ZK_Util.setButtonData(btnToggleView, "List16.png", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
 
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
+		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important;");
 
 		hbox = new Hbox();
-		hbox.setStyle(DMSConstant.CSS_STYLE_FLEX_ROW_DIRECTION);
+		hbox.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
 		hbox.appendChild(btnSearch);
 		hbox.appendChild(btnRefresh);
 		hbox.appendChild(btnClear);
-		hbox.appendChild(btnToggleView);
 		hbox.appendChild(btnCloseTab);
 
 		Cell cell = DMS_ZK_Util.createCellUnderRow(row, 1, 3, hbox);
@@ -506,23 +510,22 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		 * Main Layout View
 		 */
 		Cell cell_layout = new Cell();
-		cell_layout.setWidth("100%");
+		cell_layout.setWidth("70%");
+		cell_layout.appendChild(btnToggleView);
 		cell_layout.appendChild(gridBreadCrumb);
 		cell_layout.appendChild(grid);
 
-		gridBreadCrumb
-				.setStyle("width: 100%; position:relative; overflow: auto; background-color: rgba(0,0,0,.2); background-clip: padding-box; color: #222; background: transparent; "
-						+ "font-family: Roboto,sans-serif; border: solid transparent; border-width: 1px 1px 1px 6px;min-height: 28px; padding: 100px 0 0;"
-						+ "box-shadow: inset 1px 1px 0 rgba(0,0,0,.1),inset 0 -1px 0 rgba(0,0,0,.07);");
+		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; min-height: 32px; "
+				+ "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px;");
 
 		breadRow.setZclass("none");
-		breadRow.setStyle(DMSConstant.CSS_STYLE_FLEX_ROW_DIRECTION);
+		breadRow.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
 
 		Splitter splitter = new Splitter();
 		splitter.setCollapse("after");
 
 		Cell cell_attribute = new Cell();
-		cell_attribute.setWidth("32%");
+		cell_attribute.setWidth("30%");
 		cell_attribute.setHeight("100%");
 		cell_attribute.appendChild(btnGrid);
 		cell_attribute.appendChild(searchGridView);
@@ -565,7 +568,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_canvasCreateLink = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link24.png", this);
 
 		//
-		DMSConstant.dateFormatWithTime.setTimeZone(TimeZone.getTimeZone("UTC"));
+		DMSConstant.SDF_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
 		addRootBreadCrumb();
 		SessionManager.getAppDesktop();
 	}
@@ -698,7 +701,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_versionList))
 		{
-			new WDMSVersion(dms, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT));
+			new WDMSVersion(dms, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
 		}
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
@@ -717,7 +720,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_copy))
 		{
-			DMSClipboard.put((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT), true);
+			DMSClipboard.put((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), true);
 		}
 		else if (event.getTarget().equals(mnu_createLink))
 		{
@@ -725,7 +728,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_cut))
 		{
-			DMSClipboard.put((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT), false);
+			DMSClipboard.put((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), false);
 		}
 		else if (event.getTarget().equals(mnu_paste) || event.getTarget().equals(mnu_canvasPaste))
 		{
@@ -776,8 +779,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				{
 					if (result)
 					{
-						dms.deleteContent((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT),
-								(MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_ASSOCIATION));
+						dms.deleteContent((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT),
+								(MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION));
 						try
 						{
 							renderViewer();
@@ -795,12 +798,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			};
 
 			FDialog.ask(0, this,
-					"Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT)).getName() + "?", callback);
+					"Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?", callback);
 
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
-			new WDAssociationType(dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT), getTable_ID(),
+			new WDAssociationType(dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(),
 					getRecord_ID(), winContent);
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
@@ -884,20 +887,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			while (iterator.hasNext())
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
-				breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
-
+				breadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 				breadRow.appendChild(breadCrumbLink);
 
-				lblShowBreadCrumb = new Label();
-				lblShowBreadCrumb.setValue(" >");
-				breadRow.appendChild(new Space());
-				breadRow.appendChild(lblShowBreadCrumb);
-
 				if (Integer.valueOf(breadCrumbLink.getPathId()) == currDMSContent.getDMS_Content_ID())
-				{
-					breadRow.removeChild(lblShowBreadCrumb);
 					break;
-				}
+
+				breadRow.appendChild(new Space());
+				breadRow.appendChild(new Label(">"));
 				breadRows.appendChild(breadRow);
 				gridBreadCrumb.appendChild(breadRows);
 			}
@@ -931,7 +928,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
-		viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_COMPONENT_WIDTH, DMSConstant.CONTENT_COMPONENT_HEIGHT, this, eventsList);
+		viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 
 		tabBox.setSelectedIndex(0);
 	}
@@ -972,8 +969,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void openDirectoryORContent(Component component) throws IOException, URISyntaxException, DocumentException, com.itextpdf.text.DocumentException
 	{
-		selectedDMSContent.push((MDMSContent) component.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT));
-		selectedDMSAssociation.push((MDMSAssociation) component.getAttribute(DMSConstant.CELL_ATTRIBUTE_ASSOCIATION));
+		selectedDMSContent.push((MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
+		selectedDMSAssociation.push((MDMSAssociation) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION));
 
 		if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
@@ -1053,11 +1050,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			while (iterator.hasNext())
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
-				breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+				breadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 
 				if (currDMSContent != null && parents.size() > 1)
 				{
-					lblShowBreadCrumb = new Label(" >");
+					lblShowBreadCrumb = new Label(">");
 					breadRow.appendChild(breadCrumbLink);
 					breadRow.appendChild(new Space());
 					breadRow.appendChild(lblShowBreadCrumb);
@@ -1086,8 +1083,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		nextDMSContent = currDMSContent;
 
-		if (selectedDMSAssociation != null && !selectedDMSAssociation.isEmpty()
-				&& selectedDMSAssociation.peek().getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID && currDMSContent != null
+		if (selectedDMSAssociation != null && !selectedDMSAssociation.isEmpty() && Utils.isLink(selectedDMSAssociation.peek()) && currDMSContent != null
 				&& currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.peek().getDMS_Content_ID())
 		{
 			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.peek().getDMS_Content_Related_ID(), null);
@@ -1157,7 +1153,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		BreadCrumbLink breadCrumbLink = new BreadCrumbLink();
 		breadCrumbLink.setPathId(nextDMSContent.getName());
 		breadCrumbLink.setLabel(nextDMSContent.getName());
-		breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+		breadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 
 		breadRow.appendChild(new Label(" > "));
 		breadRow.appendChild(breadCrumbLink);
@@ -1218,7 +1214,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void openContentContextMenu(final Component compCellRowViewer)
 	{
-		dirContent = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT);
+		dirContent = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
 		contentContextMenu.setPage(compCellRowViewer.getPage());
 		copyDMSContent = DMSClipboard.get();
 
@@ -1298,7 +1294,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		((XulElement) compCellRowViewer).setContext(contentContextMenu);
 		contentContextMenu.open(this, "at_pointer");
 
-		if (((MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.CELL_ATTRIBUTE_ASSOCIATION)).getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
+		if (Utils.isLink(((MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION))))
 		{
 			if (MDMSContent.CONTENTBASETYPE_Content.equals(dirContent.getContentBaseType()))
 			{
@@ -1403,328 +1399,186 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private HashMap<String, List<Object>> getQueryParamas()
 	{
 		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
-		List<Object> value = new ArrayList<Object>();
 
 		if (!Util.isEmpty(txtDocumentName.getValue(), true))
-		{
-			value.add("*" + txtDocumentName.getValue().toLowerCase() + "*");
-			params.put(DMSConstant.NAME, value);
-
-		}
+			setSearchParams(DMSConstant.NAME, "*" + txtDocumentName.getValue().toLowerCase() + "*", null, params);
 
 		if (!Util.isEmpty(txtDescription.getValue(), true))
-		{
-			value = new ArrayList<Object>();
-			value.add("*" + txtDescription.getValue().toLowerCase().trim() + "*");
-			params.put(DMSConstant.DESCRIPTION, value);
-		}
+			setSearchParams(DMSConstant.DESCRIPTION, "*" + txtDescription.getValue().toLowerCase().trim() + "*", null, params);
 
+		//
 		if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() != null)
 		{
 			if (dbCreatedFrom.getValue().after(dbCreatedTo.getValue()))
 				throw new WrongValueException(dbCreatedFrom, "Invalid Date Range");
 			else
-			{
-				value = new ArrayList<Object>();
-				value.add(DMSConstant.dateFormatWithTime.format(dbCreatedFrom.getValue()));
-				value.add(DMSConstant.dateFormatWithTime.format(dbCreatedTo.getValue()));
-				params.put(DMSConstant.CREATED, value);
-			}
+				setSearchParams(DMSConstant.CREATED, dbCreatedFrom.getValue(), dbCreatedTo.getValue(), params);
 		}
 		else if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() == null)
-		{
-			value = new ArrayList<Object>();
-			value.add(DMSConstant.dateFormatWithTime.format(dbCreatedFrom.getValue()));
-			value.add("*");
-			params.put(DMSConstant.CREATED, value);
-		}
+			setSearchParams(DMSConstant.CREATED, dbCreatedFrom.getValue(), "*", params);
 		else if (dbCreatedTo.getValue() != null && dbCreatedFrom.getValue() == null)
-		{
-			value = new ArrayList<Object>();
-			value.add("*");
-			value.add(DMSConstant.dateFormatWithTime.format(dbCreatedTo.getValue()));
-			params.put(DMSConstant.CREATED, value);
-		}
+			setSearchParams(DMSConstant.CREATED, "*", dbCreatedTo.getValue(), params);
 
+		//
 		if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() != null)
 		{
 			if (dbUpdatedFrom.getValue().after(dbUpdatedTo.getValue()))
 				throw new WrongValueException(dbUpdatedFrom, "Invalid Date Range");
 			else
-			{
-				value = new ArrayList<Object>();
-				value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedFrom.getValue()));
-				value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedTo.getValue()));
-				params.put(DMSConstant.UPDATED, value);
-			}
-
+				setSearchParams(DMSConstant.UPDATED, dbUpdatedFrom.getValue(), dbUpdatedTo.getValue(), params);
 		}
 		else if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() == null)
-		{
-			value = new ArrayList<Object>();
-			value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedFrom.getValue()));
-			value.add("*");
-			params.put(DMSConstant.UPDATED, value);
-		}
+			setSearchParams(DMSConstant.UPDATED, dbUpdatedFrom.getValue(), "*", params);
 		else if (dbUpdatedTo.getValue() != null && dbUpdatedFrom.getValue() == null)
-		{
-			value = new ArrayList<Object>();
-			value.add("*");
-			value.add(DMSConstant.dateFormatWithTime.format(dbUpdatedTo.getValue()));
-			params.put(DMSConstant.UPDATED, value);
-		}
+			setSearchParams(DMSConstant.UPDATED, "*", dbUpdatedTo.getValue(), params);
 
 		if (lstboxCreatedBy.getValue() != null)
-		{
-			value = new ArrayList<Object>();
-			value.add(lstboxCreatedBy.getValue());
-			params.put(DMSConstant.CREATEDBY, value);
-		}
+			setSearchParams(DMSConstant.CREATEDBY, lstboxCreatedBy.getValue(), null, params);
 
 		if (lstboxUpdatedBy.getValue() != null)
-		{
-			value = new ArrayList<Object>();
-			value.add(lstboxUpdatedBy.getValue());
-			params.put(DMSConstant.UPDATEDBY, value);
-		}
+			setSearchParams(DMSConstant.UPDATEDBY, lstboxUpdatedBy.getValue(), null, params);
 
 		// if chkInActive = true, display all files
 		// if chkInActive = false, display only active files
 		if (chkInActive != null)
-		{
-			value = new ArrayList<Object>();
-			value.add(chkInActive.isChecked());
-			if (chkInActive.isChecked())
-			{
-				value.add(!chkInActive.isChecked());
-			}
-			params.put(DMSConstant.SHOW_INACTIVE, value);
-		}
+			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false : null, params);
 
+		//
 		if (lstboxContentType.getValue() != null)
 		{
-
-			value = new ArrayList<Object>();
-			value.add(lstboxContentType.getValue());
-			params.put(DMSConstant.CONTENTTYPE, value);
+			setSearchParams(DMSConstant.CONTENTTYPE, lstboxContentType.getValue(), null, params);
 
 			for (WEditor editor : m_editors)
 			{
-				// if (editor.getValue() != null && editor.getValue() != "")
-				// {
-				int displayType = editor.getGridField().getDisplayType();
 				String compName = null;
+				int dt = editor.getGridField().getDisplayType();
 
-				if (displayType == DisplayType.Search || displayType == DisplayType.Table || displayType == DisplayType.List)
+				if (dt == DisplayType.Search || dt == DisplayType.Table || dt == DisplayType.List)
 					compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
 				else
 					compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
 
 				compName = compName.replaceAll("/", "");
 
-				if (displayType == DisplayType.Number || displayType == DisplayType.Integer || displayType == DisplayType.Quantity
-						|| displayType == DisplayType.Amount || displayType == DisplayType.CostPrice)
+				Object from = null;
+				Object to = null;
+
+				if (dt == DisplayType.Number || dt == DisplayType.Integer || dt == DisplayType.Quantity || dt == DisplayType.Amount
+						|| dt == DisplayType.CostPrice)
 				{
-					NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName);
-					NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to");
+					NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName).getComponent();
+					NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to").getComponent();
 
 					if (fromNumBox.getValue() != null && toNumBox.getValue() != null)
 					{
-						value = new ArrayList<Object>();
-
-						if (displayType == DisplayType.Number)
+						if (dt == DisplayType.Number)
 						{
-							value.add(fromNumBox.getValue().doubleValue());
-							value.add(toNumBox.getValue().doubleValue());
+							from = fromNumBox.getValue().doubleValue();
+							to = toNumBox.getValue().doubleValue();
 						}
 						else
 						{
-							value.add(fromNumBox.getValue());
-							value.add(toNumBox.getValue());
+							from = fromNumBox.getValue();
+							to = toNumBox.getValue();
 						}
-						params.put(compName, value);
 					}
 					else if (fromNumBox.getValue() != null && toNumBox.getValue() == null)
 					{
-						value = new ArrayList<Object>();
-
-						if (displayType == DisplayType.Number)
-						{
-							value.add(fromNumBox.getValue().doubleValue());
-						}
+						if (dt == DisplayType.Number)
+							from = fromNumBox.getValue().doubleValue();
 						else
-						{
-							value.add(fromNumBox.getValue());
-						}
-						value.add("*");
-						params.put(compName, value);
+							from = fromNumBox.getValue();
+						to = "*";
 					}
 					else if (fromNumBox.getValue() == null && toNumBox.getValue() != null)
 					{
-						value = new ArrayList<Object>();
-						value.add("*");
-						if (displayType == DisplayType.Number)
+						from = "*";
+						if (dt == DisplayType.Number)
+							to = toNumBox.getValue().doubleValue();
+						else
+							to = toNumBox.getValue();
+					}
+				}
+				// Component:Date-Datebox, DateTime-DatetimeBox, Time-Timebox
+				else if (dt == DisplayType.Date || dt == DisplayType.DateTime || dt == DisplayType.Time)
+				{
+					WEditor dataFrom = (WEditor) ASI_Value.get(compName);
+					WEditor dataTo = (WEditor) ASI_Value.get(compName + "to");
+
+					if (dataFrom.getValue() != null && dataTo.getValue() != null)
+					{
+						if (((Date) dataFrom.getValue()).after((Date) dataTo.getValue()))
 						{
-							value.add(toNumBox.getValue().doubleValue());
+							Clients.scrollIntoView((Component) dataFrom);
+							throw new WrongValueException((Component) dataFrom, "Invalid Date Range");
 						}
 						else
 						{
-							value.add(toNumBox.getValue());
+							from = dataFrom.getValue();
+							to = dataTo.getValue();
 						}
-						params.put(compName, value);
+					}
+					else if (dataFrom.getValue() != null && dataTo.getValue() == null)
+					{
+						from = dataFrom.getValue();
+						to = "*";
+					}
+					else if (dataTo.getValue() != null && dataFrom.getValue() == null)
+					{
+						from = "*";
+						to = dataTo.getValue();
 					}
 				}
-				else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime || displayType == DisplayType.Time)
+				else if (dt == DisplayType.YesNo)
 				{
-
-					if (displayType == DisplayType.Date)
-					{
-						Datebox fromDate = (Datebox) ASI_Value.get(compName);
-						Datebox toDate = (Datebox) ASI_Value.get(compName + "to");
-
-						if (fromDate.getValue() != null && toDate.getValue() != null)
-						{
-							if (fromDate.getValue().after(toDate.getValue()))
-							{
-								Clients.scrollIntoView(fromDate);
-								throw new WrongValueException(fromDate, "Invalid Date Range");
-							}
-							else
-							{
-								value = new ArrayList<Object>();
-								value.add(DMSConstant.dateFormatWithTime.format(fromDate.getValue()));
-								value.add(DMSConstant.dateFormatWithTime.format(toDate.getValue()));
-								params.put(compName, value);
-							}
-						}
-						else if (fromDate.getValue() != null && toDate.getValue() == null)
-						{
-							value = new ArrayList<Object>();
-							value.add(DMSConstant.dateFormatWithTime.format(fromDate.getValue()));
-							value.add("*");
-							params.put(compName, value);
-						}
-						else if (toDate.getValue() != null && fromDate.getValue() == null)
-						{
-							value = new ArrayList<Object>();
-							value.add("*");
-							value.add(DMSConstant.dateFormatWithTime.format(toDate.getValue()));
-							params.put(compName, value);
-						}
-					}
-					else if (displayType == DisplayType.DateTime)
-					{
-						DatetimeBox fromDatetime = (DatetimeBox) ASI_Value.get(compName);
-						DatetimeBox toDatetime = (DatetimeBox) ASI_Value.get(compName + "to");
-
-						if (fromDatetime.getValue() != null && toDatetime.getValue() != null)
-						{
-							if (fromDatetime.getValue().after(toDatetime.getValue()))
-								throw new WrongValueException(fromDatetime, "Invalid Date Range");
-							else
-							{
-								value = new ArrayList<Object>();
-								value.add(DMSConstant.dateFormatWithTime.format(fromDatetime.getValue()));
-								value.add(DMSConstant.dateFormatWithTime.format(toDatetime.getValue()));
-								params.put(compName, value);
-							}
-						}
-						else if (fromDatetime.getValue() != null && toDatetime.getValue() == null)
-						{
-							value = new ArrayList<Object>();
-							value.add(DMSConstant.dateFormatWithTime.format(fromDatetime.getValue()));
-							value.add("*");
-							params.put(compName, value);
-						}
-						else if (toDatetime.getValue() != null && fromDatetime.getValue() == null)
-						{
-							value = new ArrayList<Object>();
-							value.add("*");
-							value.add(DMSConstant.dateFormatWithTime.format(toDatetime.getValue()));
-							params.put(compName, value);
-						}
-
-					}
-					else if (displayType == DisplayType.Time)
-					{
-						Timebox timeboxFrom = (Timebox) ASI_Value.get(compName);
-						Timebox timeboxTo = (Timebox) ASI_Value.get(compName + "to");
-
-						if (timeboxFrom.getValue() != null && timeboxTo.getValue() != null)
-						{
-							if (timeboxFrom.getValue().after(timeboxTo.getValue()))
-								throw new WrongValueException(timeboxFrom, "Invalid Date Range");
-							else
-							{
-								value = new ArrayList<Object>();
-								value.add(DMSConstant.dateFormatWithTime.format(timeboxFrom.getValue()));
-								value.add(DMSConstant.dateFormatWithTime.format(timeboxTo.getValue()));
-								params.put(compName, value);
-							}
-						}
-						else if (timeboxFrom.getValue() != null && timeboxTo.getValue() == null)
-						{
-							value = new ArrayList<Object>();
-							value.add(DMSConstant.dateFormatWithTime.format(timeboxFrom.getValue()));
-							value.add("*");
-							params.put(compName, value);
-						}
-						else if (timeboxTo.getValue() != null && timeboxFrom.getValue() == null)
-						{
-							value = new ArrayList<Object>();
-							value.add("*");
-							value.add(DMSConstant.dateFormatWithTime.format(timeboxTo.getValue()));
-							params.put(compName, value);
-						}
-
-					}
+					from = ((boolean) editor.getValue() ? "Y" : "N");
+					to = null;
 				}
-				else if (displayType == DisplayType.YesNo)
-				{
-					value = new ArrayList<Object>();
-
-					if ((boolean) editor.getValue())
-						value.add("Y");
-					else
-						value.add("N");
-
-					params.put(compName, value);
-				}
-				else if (displayType == DisplayType.String || displayType == DisplayType.Text)
+				else if (dt == DisplayType.String || dt == DisplayType.Text)
 				{
 					if (!Util.isEmpty(editor.getValue().toString(), true))
 					{
-						value = new ArrayList<Object>();
-						value.add(editor.getValue().toString().toLowerCase());
-						params.put(compName, value);
+						from = editor.getValue().toString().toLowerCase();
+						to = null;
 					}
 				}
 				else if (!Util.isEmpty(editor.getDisplay()))
 				{
-					value = new ArrayList<Object>();
-					value.add(editor.getValue());
-					params.put(compName, value);
+					from = editor.getValue();
+					to = null;
 				}
-				// }
+
+				//
+				if (from != null || to != null)
+					setSearchParams(compName, from, to, params);
 			}
 		}
 
 		if (tableID > 0)
-		{
-			value = new ArrayList<Object>();
-			value.add(tableID);
-			params.put(DMSConstant.AD_Table_ID, value);
-		}
+			setSearchParams(DMSConstant.AD_Table_ID, tableID, null, params);
 
 		if (recordID > 0)
-		{
-			value = new ArrayList<Object>();
-			value.add(recordID);
-			params.put(DMSConstant.RECORD_ID, value);
-		}
+			setSearchParams(DMSConstant.RECORD_ID, recordID, null, params);
 
 		return params;
 	} // getQueryParamas
+
+	private void setSearchParams(String searchAttributeName, Object data, Object data2, HashMap<String, List<Object>> params)
+	{
+		ArrayList<Object> value = new ArrayList<Object>();
+
+		if (data instanceof Date || data instanceof Timestamp)
+			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data));
+		else if (data != null)
+			value.add(data);
+
+		if (data2 instanceof Date || data2 instanceof Timestamp)
+			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data2));
+		else if (data2 != null)
+			value.add(data2);
+
+		params.put(searchAttributeName, value);
+	} // setSearchParams
 
 	@Override
 	public void valueChange(ValueChangeEvent event)
@@ -1733,23 +1587,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			Components.removeAllChildren(panelAttribute);
 
-			Grid gridView = GridFactory.newGridLayout();
-
-			gridView.setHeight("100%");
-
 			Columns columns = new Columns();
-
-			Column column = new Column();
-			columns.appendChild(column);
-
-			column = new Column();
-			columns.appendChild(column);
-
-			column = new Column();
-			columns.appendChild(column);
+			columns.appendChild(new Column());
+			columns.appendChild(new Column());
+			columns.appendChild(new Column());
 
 			Rows rows = new Rows();
 
+			Grid gridView = GridFactory.newGridLayout();
+			gridView.setHeight("100%");
 			gridView.appendChild(rows);
 			gridView.appendChild(columns);
 
@@ -1761,94 +1607,63 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				for (WEditor editor : m_editors)
 				{
-					Row row = new Row();
-					rows.appendChild(row);
-
-					int displayType = editor.getGridField().getDisplayType();
 					String compName = null;
+					int dt = editor.getGridField().getDisplayType();
 
-					if (displayType == DisplayType.Search || displayType == DisplayType.Table)
+					if (dt == DisplayType.Search || dt == DisplayType.Table)
 						compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
 					else
 						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
-
 					compName = compName.replaceAll("/", "");
 
-					if (displayType == DisplayType.Number || displayType == DisplayType.Integer || displayType == DisplayType.Quantity
-							|| displayType == DisplayType.Amount || displayType == DisplayType.CostPrice)
-					{
-						NumberBox numBox = new NumberBox(false);
+					Row row = rows.newRow();
+					row.appendChild(editor.getLabel());
 
-						row.appendChild(editor.getLabel());
+					if (dt == DisplayType.Number || dt == DisplayType.Integer || dt == DisplayType.Quantity || dt == DisplayType.Amount
+							|| dt == DisplayType.CostPrice)
+					{
+						WNumberEditor numBox = new WNumberEditor(compName + "to", false, false, true, dt, "SB");
 						row.appendChild(editor.getComponent());
-						row.appendChild(numBox);
+						row.appendChild(numBox.getComponent());
 
-						ASI_Value.put(compName, editor.getComponent());
+						ASI_Value.put(compName, editor);
 						ASI_Value.put(compName + "to", numBox);
-
 					}
-
-					else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime || displayType == DisplayType.Time)
+					// Component:Date-Datebox, DateTime-DatetimeBox,
+					// Time-Timebox
+					else if (dt == DisplayType.Date || dt == DisplayType.DateTime || dt == DisplayType.Time)
 					{
+						WEditor compTo = null;
 
-						if (displayType == DisplayType.Date)
+						if (dt == DisplayType.Date)
 						{
-							Datebox dateBox = new Datebox();
-							dateBox.setName(compName + "to");
-							row.appendChild(editor.getLabel());
+							compTo = new WDateEditor(compName + "to", false, false, true, "");
 							row.appendChild(editor.getComponent());
-							row.appendChild(dateBox);
-
-							ASI_Value.put(compName, editor.getComponent());
-							ASI_Value.put(dateBox.getName(), dateBox);
+							row.appendChild(compTo.getComponent());
 						}
-						else if (displayType == DisplayType.Time)
+						else if (dt == DisplayType.Time)
 						{
-							Timebox timebox = new Timebox();
-							timebox.setFormat("h:mm:ss a");
-							timebox.setWidth("100%");
-							timebox.setName(compName + "to");
-							row.appendChild(editor.getLabel());
+							compTo = new WTimeEditor(compName + "to", false, false, true, "");
 							row.appendChild(editor.getComponent());
-							row.appendChild(timebox);
-
-							ASI_Value.put(compName, editor.getComponent());
-							ASI_Value.put(timebox.getName(), timebox);
+							row.appendChild(compTo.getComponent());
+							((Timebox) compTo.getComponent()).setFormat("h:mm:ss a");
+							((Timebox) compTo.getComponent()).setWidth("100%");
 						}
-						else if (displayType == DisplayType.DateTime)
+						else if (dt == DisplayType.DateTime)
 						{
-							DatetimeBox datetimeBox = new DatetimeBox();
-
-							Cell cell = new Cell();
-							cell.setColspan(2);
-
-							row.appendChild(editor.getLabel());
-							cell.appendChild(editor.getComponent());
-							row.appendChild(cell);
-
-							ASI_Value.put(compName, editor.getComponent());
-
-							row = new Row();
-							rows.appendChild(row);
-
+							compTo = new WDatetimeEditor(compName, false, false, true, "");
+							row.appendCellChild(editor.getComponent(), 2);
+							row = rows.newRow();
 							row.appendChild(new Space());
-							cell = new Cell();
-							cell.setColspan(2);
-							cell.appendChild(datetimeBox);
-							row.appendChild(cell);
-
-							ASI_Value.put(compName + "to", datetimeBox);
+							row.appendCellChild(compTo.getComponent(), 2);
 						}
+						ASI_Value.put(compName, editor);
+						ASI_Value.put(compName + "to", compTo);
 					}
 					else
 					{
-						Cell cell = new Cell();
-						cell.setColspan(2);
-						row.appendChild(editor.getLabel());
-						cell.appendChild(editor.getComponent());
-						row.appendChild(cell);
-
-						ASI_Value.put(editor.getLabel().getValue(), editor.getComponent());
+						row.appendCellChild(editor.getComponent(), 2);
+						ASI_Value.put(editor.getLabel().getValue(), editor);
 					}
 				}
 				panelAttribute.appendChild(gridView);
@@ -1860,8 +1675,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		Components.removeAllChildren(gridBreadCrumb);
 
-		lblShowBreadCrumb = new Label();
-		lblShowBreadCrumb.setValue(" > ");
+		lblShowBreadCrumb = new Label(">");
 		breadRow.appendChild(new Space());
 		breadRow.appendChild(lblShowBreadCrumb);
 
@@ -1870,7 +1684,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		breadCrumbLink.addEventListener(Events.ON_CLICK, this);
 		// breadCrumbLink.addEventListener(Events.ON_MOUSE_OVER, this);
 		breadCrumbLink.setLabel(breadcumbContent.getName());
-		breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+		breadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 
 		breadRow.appendChild(breadCrumbLink);
 		breadRows.appendChild(breadRow);
@@ -1896,14 +1710,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		rootBreadCrumbLink.setImageContent(Utils.getImage("Home24.png"));
 		rootBreadCrumbLink.setPathId(String.valueOf(0));
 		rootBreadCrumbLink.addEventListener(Events.ON_CLICK, this);
-		rootBreadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+		rootBreadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 
 		breadRow.appendChild(rootBreadCrumbLink);
-		lblShowBreadCrumb = new Label();
-		// lblShowBreadCrumb.setValue(" > ");
-		breadRow.appendChild(new Space());
-		breadRow.appendChild(lblShowBreadCrumb);
-
+		breadRow.appendChild(new Label());
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
 	} // addRootBreadCrumb

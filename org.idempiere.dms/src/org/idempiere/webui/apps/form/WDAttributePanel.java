@@ -43,7 +43,6 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.componenet.AbstractComponentIconViewer;
-import org.idempiere.componenet.DefaultComponentIconViewerLarge;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
@@ -67,53 +66,52 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	/**
 	 * 
 	 */
-	private static final long			serialVersionUID		= 5200959427619624094L;
-	private static CLogger				log						= CLogger.getCLogger(WDAttributePanel.class);
+	private static final long	serialVersionUID		= 5200959427619624094L;
+	private static CLogger		log						= CLogger.getCLogger(WDAttributePanel.class);
 
-	private Panel						panelAttribute			= new Panel();
-	private Panel						panelFooterButtons		= new Panel();
-	private Borderlayout				mainLayout				= new Borderlayout();
+	private Panel				panelAttribute			= new Panel();
+	private Panel				panelFooterButtons		= new Panel();
+	private Borderlayout		mainLayout				= new Borderlayout();
 
-	private Tabbox						tabBoxAttribute			= new Tabbox();
-	private Tabs						tabsAttribute			= new Tabs();
-	private Tab							tabAttribute			= new Tab();
-	private Tab							tabVersionHistory		= new Tab();
+	private Tabbox				tabBoxAttribute			= new Tabbox();
+	private Tabs				tabsAttribute			= new Tabs();
+	private Tab					tabAttribute			= new Tab();
+	private Tab					tabVersionHistory		= new Tab();
 
-	private Tabpanels					tabpanelsAttribute		= new Tabpanels();
-	private Tabpanel					tabpanelAttribute		= new Tabpanel();
-	private Tabpanel					tabpanelVersionHitory	= new Tabpanel();
+	private Tabpanels			tabpanelsAttribute		= new Tabpanels();
+	private Tabpanel			tabpanelAttribute		= new Tabpanel();
+	private Tabpanel			tabpanelVersionHitory	= new Tabpanel();
 
-	private Grid						gridAttributeLayout		= new Grid();
-	private Grid						grid					= new Grid();
+	private Grid				gridAttributeLayout		= new Grid();
+	private Grid				grid					= new Grid();
 
-	private Button						btnDelete				= null;
-	private Button						btnRequery				= null;
-	private Button						btnClose				= null;
-	private Button						btnDownload				= null;
-	private Button						btnEdit					= null;
-	private Button						btnSave					= null;
-	private Button						btnVersionUpload		= null;
+	private Button				btnDelete				= null;
+	private Button				btnRequery				= null;
+	private Button				btnClose				= null;
+	private Button				btnDownload				= null;
+	private Button				btnEdit					= null;
+	private Button				btnSave					= null;
+	private Button				btnVersionUpload		= null;
 
-	private Label						lblStatus				= null;
-	private Label						lblName					= null;
-	private Label						lblDesc					= null;
+	private Label				lblStatus				= null;
+	private Label				lblName					= null;
+	private Label				lblDesc					= null;
 
-	private Textbox						txtName					= null;
-	private Textbox						txtDesc					= null;
+	private Textbox				txtName					= null;
+	private Textbox				txtDesc					= null;
 
-	private DMS							dms;
-	private MDMSContent					DMS_Content				= null;
-	private MDMSContent					parent_Content			= null;
-	private AbstractComponentIconViewer	viewerComponenet		= null;
+	private DMS					dms;
+	private MDMSContent			DMS_Content				= null;
+	private MDMSContent			parent_Content			= null;
 
-	private Tabbox						tabBox					= null;
-	private ConfirmPanel				confirmPanel			= null;
-	private WDLoadASIPanel				ASIPanel				= null;
+	private Tabbox				tabBox					= null;
+	private ConfirmPanel		confirmPanel			= null;
+	private WDLoadASIPanel		ASIPanel				= null;
 
-	private int							tableId					= 0;
-	private int							recordId				= 0;
+	private int					tableId					= 0;
+	private int					recordId				= 0;
 
-	private boolean						isWindowAccess			= true;
+	private boolean				isWindowAccess			= true;
 
 	public WDAttributePanel(DMS dms, I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess)
 	{
@@ -355,7 +353,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		String[] eventsList = new String[] { Events.ON_DOUBLE_CLICK };
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_VERSION);
-		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_COMPONENT_WIDTH, DMSConstant.CONTENT_COMPONENT_HEIGHT, this, eventsList);
+		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT-30, this, eventsList);
 
 	} // initVersionHistory
 
@@ -500,10 +498,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		{
 			refreshPanel();
 		}
-		else if (event.getTarget().getClass().equals(DefaultComponentIconViewerLarge.class))
+		else if (event.getTarget().getClass().equals(Row.class))
 		{
-			DefaultComponentIconViewerLarge DMSViewerComp = (DefaultComponentIconViewerLarge) event.getTarget();
-			// DMS_ZK_Util.downloadDocument(dms, DMSViewerComp.getDMSContent());
+			DMS_ZK_Util.downloadDocument(dms, (MDMSContent) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
 		}
 	} // onEvent
 

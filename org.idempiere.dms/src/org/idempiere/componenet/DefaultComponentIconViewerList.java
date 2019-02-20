@@ -24,12 +24,13 @@ import org.compiere.model.MUser;
 import org.compiere.util.Env;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Image;
 
 /**
@@ -46,25 +47,20 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	{
 		Columns columns = new Columns();
 		columns.setSizable(true);
-		columns.appendChild(createColumn("", "5%", "center"));
-		columns.appendChild(createColumn("Name", "30%", "left"));
-		columns.appendChild(createColumn("Size", "10%", "Left"));
-		columns.appendChild(createColumn("Updated", "15%", "center"));
-		columns.appendChild(createColumn("File Type", "15%", "left"));
-		columns.appendChild(createColumn("Modified By", "20%", "center"));
-		columns.appendChild(createColumn("Link", "5%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, "35%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, "10%", "Left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, "15%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "15%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, "20%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_LINK, "5%", "center"));
 
 		grid.appendChild(columns);
 	} // createHeaderPart
 
-	private Column createColumn(String labelName, String size, String align)
+	@Override
+	public void setNoComponentExistsMsg(Rows rows)
 	{
-		Column column = new Column();
-		column.setLabel(labelName);
-		column.setWidth(size);
-		column.setAlign(align);
-		return column;
-	} // createColumn
+	} // setNoComponentExistsMsg
 
 	@Override
 	public void createComponent(Rows rows, I_DMS_Content content, I_DMS_Association association, int compWidth, int compHeight)
@@ -84,33 +80,34 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		Label lblFileType = new Label(content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory) ? DMSConstant.MSG_FILE_FOLDER : content
 				.getDMS_MimeType().getName());
 		Label lblModifiedBy = new Label(MUser.get(Env.getCtx(), content.getUpdatedBy()).getName());
-
-		// Icon
-		row.appendCellChild(thumbImg);
-		// Name
-		row.appendCellChild(lblName);
-		// Size
-		row.appendCellChild(lblSize);
-		// Date Updated
-		row.appendCellChild(lblUpdated);
-		// File Type
-		row.appendCellChild(lblFileType);
-		// Modified By (user)
-		row.appendCellChild(lblModifiedBy);
-		// Link
 		Image linkImg = new Image();
-		if (association.getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
+		if (Utils.isLink(association))
 			linkImg = (Image) LinkImage.clone();
+
+		Hbox hbox = new Hbox();
+		hbox.appendChild(thumbImg);
+		hbox.appendChild(lblName);
+
+		row.appendCellChild(hbox);
+		row.appendCellChild(lblSize);
+		row.appendCellChild(lblUpdated);
+		row.appendCellChild(lblFileType);
+		row.appendCellChild(lblModifiedBy);
 		row.appendCellChild(linkImg);
 
 		//
-		row.setAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT, content);
-		row.setAttribute(DMSConstant.CELL_ATTRIBUTE_ASSOCIATION, association);
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, content);
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
 
-		row.addEventListener(Events.ON_CLICK, this); // Listener for Selection
+		// Listener for component selection
+		row.addEventListener(Events.ON_CLICK, this);
+		row.addEventListener(Events.ON_RIGHT_CLICK, this);
 
 		for (int i = 0; i < eventsList.length; i++)
 			row.addEventListener(eventsList[i], listener);
+
+		// set tooltip text
+		row.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
 
 	} // createComponent
 
@@ -118,18 +115,23 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	public void removeSelection(Component component)
 	{
 		if (prevComponent != null)
-			((Row) prevComponent).setStyle(DMSConstant.CSS_CONTENT_NORMAL_COMP_VIEWER_LIST);
+			((Row) component).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_NORMAL);
 	}
 
 	@Override
 	public void setSelection(Component component)
 	{
-		((Row) component).setStyle(DMSConstant.CSS_CONTENT_SELECTED_COMP_VIEWER_LIST);
+		((Row) component).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_SELECTED);
 	}
 
-	@Override
-	public void setNoComponentExistsMsg(Rows rows)
+	private Column createColumn(String labelName, String size, String align)
 	{
+		Column column = new Column();
+		column.setLabel(labelName);
+		column.setWidth(size);
+		column.setAlign(align);
 
-	}
+		return column;
+	} // createColumn
+
 }

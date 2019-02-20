@@ -70,6 +70,7 @@ import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
+import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
@@ -128,7 +129,6 @@ public class Utils
 	// Oracle Database compatible
 	static
 	{
-
 		SQL_GET_RELATED_FOLDER_CONTENT = SQL_GET_RELATED_FOLDER_CONTENT_COMMON.replace("#DB_SPECIFIC_CONDITION#",
 				DB.isPostgreSQL() == true ? "FETCH FIRST ROW ONLY" : " WHERE rownum <= 1");
 
@@ -929,6 +929,17 @@ public class Utils
 	} // createAssociation
 
 	/**
+	 * Check Association Type is Link
+	 * 
+	 * @param association
+	 * @return TRUE if Link
+	 */
+	public static boolean isLink(I_DMS_Association association)
+	{
+		return association.getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID;
+	} // isLink
+
+	/**
 	 * Check file or directory name is valid
 	 * 
 	 * @param fileName - File / Directory Name
@@ -1165,7 +1176,7 @@ public class Utils
 
 									try
 									{
-										Date parsedDate = DMSConstant.sdfWithTime.parse(value);
+										Date parsedDate = DMSConstant.SDF_WITH_TIME.parse(value);
 										Timestamp timestamp = new Timestamp(parsedDate.getTime());
 										attrs[i].setMAttributeInstance(asiID, timestamp);
 									}

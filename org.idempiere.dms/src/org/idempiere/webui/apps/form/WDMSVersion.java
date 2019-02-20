@@ -23,7 +23,6 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Row;
-import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
 import org.idempiere.componenet.AbstractComponentIconViewer;
@@ -36,7 +35,6 @@ import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -81,32 +79,19 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	private void init()
 	{
 		this.setWidth("44%");
-		this.setHeight("38%");
+		this.setHeight("50%");
 		this.setClosable(true);
 		this.appendChild(gridView);
 		this.setTitle(DMSConstant.MSG_DMS_VERSION_LIST);
 
-		gridView.makeNoStrip();
-		gridView.setWidth("100%");
-		gridView.setHeight("100%");
-		gridView.setZclass("none");
-		gridView.setSizedByContent(true);
-		gridView.setOddRowSclass("even");
-		gridView.setStyle("overflow: auto; position:relative;");
+		gridView.setStyle("width: 100%; height: 95%; position: relative; overflow: auto;");
 	} // init
 
 	public void renderDMSVersion(MDMSContent DMS_Content) throws IOException
 	{
-		Components.removeAllChildren(gridView);
-		Rows rows = gridView.newRows();
-		Row row = rows.newRow();
-		row.setZclass("none");
-		row.setStyle(DMSConstant.CSS_STYLE_FLEX_ROW_DIRECTION);
-
 		MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
 		List<I_DMS_Content> contentList = MDMSContent.getVersionHistory(DMS_Content);
-
 		if (contentList.size() == 0)
 		{
 			throw new AdempiereException("No versions are available.");
@@ -119,7 +104,8 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		String[] eventsList = new String[] { Events.ON_DOUBLE_CLICK };
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_LARGE);
-		viewerComponent.init(dms, contentMap, gridView, DMSConstant.CONTENT_COMPONENT_WIDTH, DMSConstant.CONTENT_COMPONENT_HEIGHT, this, eventsList);
+		viewerComponent.init(dms, contentMap, gridView, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+
 	} // renderDMSVersion
 
 	@Override
@@ -128,7 +114,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		Component component = event.getTarget();
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (component instanceof Cell || component instanceof Row))
 		{
-			DMS_ZK_Util.downloadDocument(dms, (MDMSContent) component.getAttribute(DMSConstant.CELL_ATTRIBUTE_CONTENT));
+			DMS_ZK_Util.downloadDocument(dms, (MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
 		}
 	} // onEvent
 }
