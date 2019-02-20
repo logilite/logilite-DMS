@@ -38,7 +38,8 @@ Bundle-ClassPath: .,
  lib/tidy.jar,
  lib/itextpdf-5.4.1.jar,
  lib/xmlworker-5.4.1.1_LLP.jar
-Service-Component: OSGI-INF/*.xml
+Service-Component: OSGI-INF/*.xml,
+ OSGI-INF/DMSViewerFactory.xml
 Export-Package: com.lowagie.text,
  com.lowagie.text.pdf,
  org.idempiere.dms.factories,
