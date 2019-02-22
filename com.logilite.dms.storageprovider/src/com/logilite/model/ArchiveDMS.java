@@ -26,7 +26,6 @@ import org.compiere.model.MArchive;
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MStorageProvider;
-import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CCache;
@@ -35,60 +34,52 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.idempiere.dms.factories.IContentManager;
+import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.MDMSMimeType;
-import org.idempiere.model.X_DMS_Content;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.zkoss.util.media.AMedia;
-
-import com.logilite.search.factory.IIndexSearcher;
-import com.logilite.search.factory.ServiceUtils;
 
 public class ArchiveDMS implements IArchiveStore
 {
-	private IFileStorageProvider			fileStorgProvider				= null;
-	private IContentManager					contentManager					= null;
-	private IIndexSearcher					indexSeracher					= null;
-	private IThumbnailGenerator				thumbnailGenerator				= null;
-	private String							DMS_ARCHIVE_CONTENT_TYPE		= "ArchiveDocument";
-	private String							DMS_ATTRIBUTE_BUSINESS_PARTNER	= "C_BPartner_ID";
-	private String							DMS_ATTRIBUTE_DOCUMENT_TYPE		= "C_DocType_ID";
-	private String							DMS_ATTRIBUTE_SET_NAME			= "Archive Document";
-	private String							DMS_ATTRIBUTE_DOCUMENT_STATUS	= "DocStatus";
-	private String							DMS_ATTRIBUTE_PROCESS			= "AD_Process_ID";
-	private String							DMS_ATTRIBUTE_CREATED_DATE		= "Created";
 
-	private static CCache<String, Integer>	cTypeCache						= new CCache<String, Integer>(
-			"ArchiveCache", 100);
 	private static final CLogger			log								= CLogger.getCLogger(ArchiveDMS.class);
+
+	private static final String				DMS_ARCHIVE_CONTENT_TYPE		= "ArchiveDocument";
+	private static final String				DMS_ATTRIBUTE_BUSINESS_PARTNER	= "C_BPartner_ID";
+	private static final String				DMS_ATTRIBUTE_DOCUMENT_TYPE		= "C_DocType_ID";
+	private static final String				DMS_ATTRIBUTE_SET_NAME			= "Archive Document";
+	private static final String				DMS_ATTRIBUTE_DOCUMENT_STATUS	= "DocStatus";
+	private static final String				DMS_ATTRIBUTE_PROCESS			= "AD_Process_ID";
+	private static final String				DMS_ATTRIBUTE_CREATED_DATE		= "Created";
+
+	private static CCache<String, Integer>	cache_AttributeName				= new CCache<String, Integer>("cache_AttributeName", 5);
+	private static CCache<String, Integer>	cache_AttributeSetName			= new CCache<String, Integer>("cache_AttributeSetName", 5);
+	private static CCache<String, Integer>	cache_AttributeValue			= new CCache<String, Integer>("cache_AttributeValue", 5);
+
+	private DMS								dms;
+
+	/**
+	 * Constructor
+	 */
+	public ArchiveDMS()
+	{
+		super();
+		dms = new DMS(Env.getAD_Client_ID(Env.getCtx()));
+	}
 
 	@Override
 	public byte[] loadLOBData(MArchive archive, MStorageProvider prov)
 	{
 		byte[] data = archive.getByteData();
 		if (data == null)
-		{
 			return null;
-		}
-
-		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-		if (fileStorgProvider == null)
-			throw new AdempiereException("Storage provider is not define on clientInfo.");
-
-		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-		if (contentManager == null)
-			throw new AdempiereException("Content manager is not found.");
 
 		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
@@ -123,7 +114,7 @@ public class ArchiveDMS implements IArchiveStore
 							return null;
 						}
 						MDMSContent mdmsContent = new MDMSContent(Env.getCtx(), contentID, null);
-						File file = fileStorgProvider.getFile(contentManager.getPath(mdmsContent));
+						File file = dms.getFileFromStorage(mdmsContent);
 						if (file.exists())
 						{
 							// read files into byte[]
@@ -151,10 +142,8 @@ public class ArchiveDMS implements IArchiveStore
 							log.severe("file not found: " + file.getAbsolutePath());
 							return null;
 						}
-
 					}
 				}
-
 			}
 		}
 		catch (Exception e)
@@ -170,19 +159,7 @@ public class ArchiveDMS implements IArchiveStore
 		try
 		{
 			Trx trx = null;
-			fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-			if (fileStorgProvider == null)
-				throw new AdempiereException("Storage provider is not define on clientInfo.");
-
-			contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-			if (contentManager == null)
-				throw new AdempiereException("Content manager is not found.");
-
-			indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-			if (indexSeracher == null)
-				throw new AdempiereException("Solr Index server is not found.");
-
-			int cTypeID = getContentTypeID(DMS_ARCHIVE_CONTENT_TYPE, 0);
+			int cTypeID = Utils.getContentTypeID(DMS_ARCHIVE_CONTENT_TYPE, 0);
 
 			Integer tableID = archive.getAD_Table_ID();
 			String tableName = MTable.getTableName(Env.getCtx(), tableID);
@@ -195,8 +172,7 @@ public class ArchiveDMS implements IArchiveStore
 				if (tableName == null)
 					tableName = "";
 				// Generate Mounting Parent
-				String mountingArchiveBaseName = MSysConfig.getValue("DMS_MOUNTING_ARCHIVE_BASE", "Archive");
-				Utils.initiateMountingContent(mountingArchiveBaseName, tableName, recordID, tableID);
+				Utils.initiateMountingContent(DMSConstant.DMS_MOUNTING_ARCHIVE_BASE, tableName, recordID, tableID);
 				mountingStrategy = Utils.getMountingStrategy(tableName);
 				mountingParent = mountingStrategy.getMountingParentForArchive();
 			}
@@ -214,49 +190,28 @@ public class ArchiveDMS implements IArchiveStore
 			{
 				String trxName = Trx.createTrxName("UploadFiles");
 				trx = Trx.get(trxName, true);
-				
+
 				// Create DMS Content
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), 0, trxName);
-				dmsContent.setName(file.getName());
-				dmsContent.setValue(file.getName());
-				dmsContent.setDMS_MimeType_ID(Utils.getMimeTypeID(new AMedia(file, "application/pdf", null)));
-				dmsContent.setParentURL(contentManager.getPath(mountingParent));
-				dmsContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
-				dmsContent.setIsMounting(true);
-				dmsContent.setDMS_FileSize(Utils.readableFileSize(file.length()));
-				if (cTypeID > 0)
-					dmsContent.setDMS_ContentType_ID(cTypeID);
-				dmsContent.saveEx();
+				int contentID = dms.createDMSContent(file.getName(), file.getName(), MDMSContent.CONTENTBASETYPE_Content,
+						dms.getPathFromContentManager(mountingParent), null, file, cTypeID, 0, true, trxName);
+				MDMSContent content = new MDMSContent(Env.getCtx(), contentID, trxName);
 
 				// Create Attributes
-				addAttributes(tableID, recordID, dmsContent, archive);
+				addAttributes(tableID, recordID, content, archive);
 
 				// Create DMS Association
-				MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, trxName);
-				dmsAssociation.setDMS_Content_ID(dmsContent.getDMS_Content_ID());
-				dmsAssociation.setAD_Table_ID(tableID);
-				dmsAssociation.setRecord_ID(recordID);
-				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
+				int contentRelatedID = 0;
 				if (mountingParent != null)
-					dmsAssociation.setDMS_Content_Related_ID(mountingParent.getDMS_Content_ID());
-				dmsAssociation.saveEx();
+					contentRelatedID = mountingParent.getDMS_Content_ID();
+				int associationID = dms.createAssociation(contentID, contentRelatedID, recordID, tableID, MDMSAssociationType.getVersionType(true), 0, trxName);
+				MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, trxName);
 
-				// Upload file to DMS
-				fileStorgProvider.writeBLOB(fileStorgProvider.getBaseDirectory(contentManager.getPath(dmsContent)),
-						inflatedData, dmsContent);
+				// File write on Storage provider and Generate Thumbnail Image
+				Utils.writeFileOnStorageAndThumnail(dms, file, content);
 
-				MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), dmsContent.getDMS_MimeType_ID(),
-						trxName);
-
-				// Generate Thumbnail Image
-				thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
-				if (thumbnailGenerator != null)
-					thumbnailGenerator.addThumbnail(dmsContent, file, null);
-
-				archive.setByteData(generateEntry(dmsContent, dmsAssociation));
+				archive.setByteData(generateEntry(content, association));
 
 				trx.commit();
-				
 			}
 			catch (Exception e)
 			{
@@ -271,13 +226,12 @@ public class ArchiveDMS implements IArchiveStore
 				if (trx != null)
 					trx.close();
 			}
-
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, e.getMessage(), e);
 		}
-	}
+	} // save
 
 	public byte[] generateEntry(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
 	{
@@ -311,7 +265,7 @@ public class ArchiveDMS implements IArchiveStore
 			log.log(Level.SEVERE, e.getMessage());
 			return "Error Message".getBytes();
 		}
-	}
+	} // generateEntry
 
 	public File generateFile(MArchive archive, byte[] inflatedData) throws Exception
 	{
@@ -349,21 +303,7 @@ public class ArchiveDMS implements IArchiveStore
 			}
 		}
 		return file;
-	}
-
-	public static int getContentTypeID(String contentType, int clientID)
-	{
-		Integer cTypeID = cTypeCache.get(contentType);
-		if (cTypeID == null || cTypeID <= 0)
-		{
-			cTypeID = DB.getSQLValue(null,
-					"SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive='Y' AND Value = ? AND AD_Client_ID = ?",
-					contentType, clientID);
-			if (cTypeID > 0)
-				cTypeCache.put(contentType, cTypeID);
-		}
-		return cTypeID;
-	}
+	} // generateFile
 
 	public void addAttributes(int tableID, int recordID, MDMSContent dmsContent, MArchive archive)
 	{
@@ -404,29 +344,25 @@ public class ArchiveDMS implements IArchiveStore
 			MAttributeInstance attributeInstance = null;
 			if (bPartnerValue > 0)
 			{
-				attributeInstance = new MAttributeInstance(Env.getCtx(), bpartnerAttributeID, asi.get_ID(),
-						bPartnerValue, null);
+				attributeInstance = new MAttributeInstance(Env.getCtx(), bpartnerAttributeID, asi.get_ID(), bPartnerValue, null);
 				attributeInstance.save();
 			}
 
 			if (docTypeValue > 0)
 			{
-				attributeInstance = new MAttributeInstance(Env.getCtx(), docTypeAttributeID, asi.get_ID(), docTypeValue,
-						null);
+				attributeInstance = new MAttributeInstance(Env.getCtx(), docTypeAttributeID, asi.get_ID(), docTypeValue, null);
 				attributeInstance.save();
 			}
 
 			if (!Util.isEmpty(docStatusValue))
 			{
-				attributeInstance = new MAttributeInstance(Env.getCtx(), docStatusAttributeID, asi.get_ID(),
-						docStatusValue, null);
+				attributeInstance = new MAttributeInstance(Env.getCtx(), docStatusAttributeID, asi.get_ID(), docStatusValue, null);
 				attributeInstance.save();
 			}
 
 			if (createdAttributeID > 0)
 			{
-				attributeInstance = new MAttributeInstance(Env.getCtx(), createdAttributeID, asi.get_ID(),
-						archive.getCreated(), null);
+				attributeInstance = new MAttributeInstance(Env.getCtx(), createdAttributeID, asi.get_ID(), archive.getCreated(), null);
 				attributeInstance.save();
 			}
 
@@ -434,8 +370,7 @@ public class ArchiveDMS implements IArchiveStore
 			{
 				if (archive.getAD_Process_ID() > 0)
 				{
-					attributeInstance = new MAttributeInstance(Env.getCtx(), processAttributeID, asi.get_ID(),
-							archive.getAD_Process_ID(), null);
+					attributeInstance = new MAttributeInstance(Env.getCtx(), processAttributeID, asi.get_ID(), archive.getAD_Process_ID(), null);
 					attributeInstance.save();
 				}
 			}
@@ -443,7 +378,7 @@ public class ArchiveDMS implements IArchiveStore
 			dmsContent.setM_AttributeSetInstance_ID(asi.get_ID());
 			dmsContent.save();
 		}
-	}
+	} // addAttributes
 
 	@Override
 	public boolean deleteArchive(MArchive archive, MStorageProvider prov)
@@ -453,41 +388,40 @@ public class ArchiveDMS implements IArchiveStore
 
 	public int getAttributeID(String AttributeName)
 	{
-		Integer attributeID = cTypeCache.get(AttributeName);
+		Integer attributeID = cache_AttributeName.get(AttributeName);
 		if (attributeID == null || attributeID <= 0)
 		{
 			String sql = "SELECT M_Attribute_ID FROM M_Attribute WHERE IsActive='Y' AND Name = ? AND AD_Client_ID = 0";
 			attributeID = DB.getSQLValue(null, sql, AttributeName);
 			if (attributeID > 0)
-				cTypeCache.put(AttributeName, attributeID);
+				cache_AttributeName.put(AttributeName, attributeID);
 		}
 		return attributeID;
-	}
+	} // getAttributeID
 
 	public int getAttributeSetID(String AttributeSetName)
 	{
-		Integer attributeSetID = cTypeCache.get(AttributeSetName);
+		Integer attributeSetID = cache_AttributeSetName.get(AttributeSetName);
 		if (attributeSetID == null || attributeSetID <= 0)
 		{
 			String sql = "SELECT M_AttributeSet_ID FROM M_AttributeSet WHERE IsActive='Y' AND Name = ? AND AD_Client_ID = 0";
 			attributeSetID = DB.getSQLValue(null, sql, AttributeSetName);
 			if (attributeSetID > 0)
-				cTypeCache.put(AttributeSetName, attributeSetID);
+				cache_AttributeSetName.put(AttributeSetName, attributeSetID);
 		}
 		return attributeSetID;
-	}
+	} // getAttributeSetID
 
 	public int getAttributeValueID(String AttributeValue)
 	{
-		Integer attributeValueID = cTypeCache.get(AttributeValue);
+		Integer attributeValueID = cache_AttributeValue.get(AttributeValue);
 		if (attributeValueID == null || attributeValueID <= 0)
 		{
 			String sql = "SELECT M_AttributeValue_ID FROM M_AttributeValue WHERE IsActive='Y' AND Value = ? AND AD_Client_ID = 0";
 			attributeValueID = DB.getSQLValue(null, sql, AttributeValue);
 			if (attributeValueID > 0)
-				cTypeCache.put(AttributeValue, attributeValueID);
+				cache_AttributeValue.put(AttributeValue, attributeValueID);
 		}
 		return attributeValueID;
-	}
-
+	} // getAttributeValueID
 }
