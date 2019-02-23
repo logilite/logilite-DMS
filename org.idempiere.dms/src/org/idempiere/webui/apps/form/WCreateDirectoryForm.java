@@ -13,7 +13,6 @@
 
 package org.idempiere.webui.apps.form;
 
-import java.io.File;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -24,17 +23,11 @@ import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
-import org.compiere.util.Env;
-import org.compiere.util.Msg;
-import org.compiere.util.Util;
-import org.idempiere.dms.factories.IContentManager;
+import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
-import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.X_DMS_Content;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -45,27 +38,23 @@ import org.zkoss.zul.North;
 import org.zkoss.zul.Separator;
 import org.zkoss.zul.South;
 
-public class CreateDirectoryForm extends Window implements EventListener<Event>
+public class WCreateDirectoryForm extends Window implements EventListener<Event>
 {
 
 	/**
 	 * 
 	 */
 	private static final long		serialVersionUID	= 4397569198011705268L;
-	protected static final CLogger	log					= CLogger.getCLogger(CreateDirectoryForm.class);
+	private static final CLogger	log					= CLogger.getCLogger(WCreateDirectoryForm.class);
+
+	private DMS						dms;
+	private MDMSContent				mDMSContent			= null;
 
 	private Borderlayout			mainLayout			= new Borderlayout();
 	private Panel					parameterPanel		= new Panel();
+	private Label					lblDir				= new Label(DMSConstant.MSG_DIRECTORY_NAME);
 	private ConfirmPanel			confirmPanel		= new ConfirmPanel(true, false, false, false, false, false);
-	private Label					lblDir				= new Label(Msg.translate(Env.getCtx(), "Directory Name"));
 	private Textbox					txtboxDirectory		= new Textbox();
-	private File					file				= null;
-	private MDMSContent				mDMSContent			= null;
-
-	private String					fileSeprator		= null;
-
-	private IFileStorageProvider	fileStorageProvider	= null;
-	private IContentManager			contentManager		= null;
 
 	private int						tableID				= 0;
 	private int						recordID			= 0;
@@ -73,27 +62,19 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	/**
 	 * Constructor initialize
 	 * 
+	 * @param dms
 	 * @param DMSContent
 	 */
-	public CreateDirectoryForm(I_DMS_Content DMSContent, int tableID, int recordID)
+	public WCreateDirectoryForm(DMS dms, I_DMS_Content DMSContent, int tableID, int recordID)
 	{
+		this.dms = dms;
+
 		try
 		{
 			this.mDMSContent = (MDMSContent) DMSContent;
 			this.tableID = tableID;
 			this.recordID = recordID;
 
-			fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-			if (fileStorageProvider == null)
-				throw new AdempiereException("Storage provider is not found");
-
-			contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-			if (contentManager == null)
-				throw new AdempiereException("Content manager is not found");
-
-			fileSeprator = Utils.getStorageProviderFileSeparator();
 			init();
 		}
 		catch (Exception e)
@@ -112,16 +93,17 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	{
 		this.setHeight("150px");
 		this.setWidth("500px");
-		this.setTitle(Msg.getMsg(Env.getCtx(), "Create Directory"));
+		this.setTitle(DMSConstant.MSG_CREATE_DIRECTORY);
 		mainLayout.setParent(this);
 		mainLayout.setHflex("1");
 		mainLayout.setVflex("1");
 
-		lblDir.setValue(Msg.getMsg(Env.getCtx(), "Enter Directory Name") + ": ");
+		lblDir.setValue(DMSConstant.MSG_ENTER_DIRETORY_NAME + ": ");
 		lblDir.setStyle("padding-left: 5px");
 		txtboxDirectory.setWidth("300px");
 		txtboxDirectory.setFocus(true);
 		txtboxDirectory.addEventListener(Events.ON_OK, this);
+		txtboxDirectory.setMaxlength(DMSConstant.MAX_DIRECTORY_LENGTH);
 
 		North north = new North();
 		north.setParent(mainLayout);
@@ -151,6 +133,7 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 		confirmPanel.getButton(ConfirmPanel.A_OK).setImageContent(Utils.getImage("Ok24.png"));
 		confirmPanel.getButton(ConfirmPanel.A_CANCEL).setImageContent(Utils.getImage("Cancel24.png"));
 		confirmPanel.addActionListener(Events.ON_CLICK, this);
+
 		AEnv.showCenterScreen(this);
 	}
 
@@ -162,88 +145,21 @@ public class CreateDirectoryForm extends Window implements EventListener<Event>
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
-		log.info(event.getName());
-		
 		if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
 			this.detach();
 		}
-		if (event.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(event.getName()))
+		else if (event.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(event.getName()))
 		{
-			String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
-			String dirName = txtboxDirectory.getValue();
-
-			if (Util.isEmpty(dirName) || dirName.equals(""))
-				throw new WrongValueException(txtboxDirectory, fillMandatory);
-			
-			if (dirName.length() > Utils.filaNameLength)
-				throw new WrongValueException(txtboxDirectory, "Invalid Directory Name. Directory name less than 250 character");
-			
-			if (dirName.contains(fileSeprator))
-				throw new WrongValueException(txtboxDirectory, "Invalid Directory Name.");
-
 			try
 			{
-				File rootFolder = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(mDMSContent)));
-
-				if (!rootFolder.exists())
-					rootFolder.mkdirs();
-
-				file = new File(rootFolder + fileSeprator + dirName);
-
-				File files[] = rootFolder.listFiles();
-
-				for (int i = 0; i < files.length; i++)
-				{
-					if (file.getName().equalsIgnoreCase(files[i].getName()))
-					{
-						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists. \n (Either same file name content exist in inActive mode)"));
-					}
-				}
-
-				if (!file.exists()){
-					if(!file.mkdir()){
-						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Invalid Directory Name."));
-					}
-				}
-				else{
-					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists. \n (Either same file name content exist in inActive mode)"));
-				}
-					
-
-				MDMSContent content = new MDMSContent(Env.getCtx(), 0, null);
-				content.setDMS_MimeType_ID(Utils.getMimeTypeID(null));
-				content.setName(dirName);
-
-				content.setParentURL(contentManager.getPath(mDMSContent));
-
-				content.setValue(dirName);
-				content.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Directory);
-				content.saveEx();
-
-				MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
-				dmsAssociation.setDMS_Content_ID(content.getDMS_Content_ID());
-				if (mDMSContent != null)
-					dmsAssociation.setDMS_Content_Related_ID(mDMSContent.getDMS_Content_ID());
-				dmsAssociation.setAD_Table_ID(tableID);
-				dmsAssociation.setRecord_ID(recordID);
-				// dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType());
-				dmsAssociation.saveEx();
-				this.detach();
-
+				dms.createDirectory(txtboxDirectory.getValue(), mDMSContent, tableID, recordID, true, null);
 			}
 			catch (AdempiereException e)
 			{
-				log.log(Level.SEVERE, "Directory is allready created (Either same file name content exist in inActive mode)", e);
-				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is allready created \n (Either same file name content exist in inActive mode)"));
+				throw new WrongValueException(txtboxDirectory, e.getLocalizedMessage(), e);
 			}
-			catch (Exception e)
-			{
-
-				log.log(Level.SEVERE, "Directory is not created", e);
-				throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory is not created"));
-
-			}
+			this.detach();
 		}
-	}
+	} // onEvent
 }

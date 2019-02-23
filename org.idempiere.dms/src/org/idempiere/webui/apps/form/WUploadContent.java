@@ -14,6 +14,8 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -44,22 +46,13 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.Msg;
-import org.compiere.util.Trx;
-import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.IThumbnailGenerator;
+import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
-import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.MDMSMimeType;
-import org.idempiere.model.X_DMS_Content;
-import org.idempiere.model.X_DMS_ContentType;
+import org.idempiere.model.MDMSContentType;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.util.media.Media;
 import org.zkoss.zk.ui.Components;
@@ -71,82 +64,68 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Space;
 
-import com.logilite.search.factory.IIndexSearcher;
-import com.logilite.search.factory.ServiceUtils;
-
 public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
 {
 
 	/**
 	 * 
 	 */
-	private static final long		serialVersionUID		= -6554158380274124479L;
-	private static CLogger			log						= CLogger.getCLogger(WUploadContent.class);
+	private static final long	serialVersionUID	= -6554158380274124479L;
 
-	private WTableDirEditor			contentType;
+	private static CLogger		log					= CLogger.getCLogger(WUploadContent.class);
 
-	private Label					lblFile					= new Label();
-	private Label					lblContentType			= new Label();
-	private Label					lblDesc					= new Label();
-	private Label					lblName					= new Label();
+	private DMS					dms;
+	private MDMSContent			DMSContent			= null;
 
-	private Textbox					txtDesc					= new Textbox();
-	private Textbox					txtName					= new Textbox();
+	private Label				lblFile				= new Label();
+	private Label				lblContentType		= new Label();
+	private Label				lblDesc				= new Label();
+	private Label				lblName				= new Label();
 
-	private Grid					gridView				= GridFactory.newGridLayout();
-	private Row						contentTypeRow			= new Row();
-	private Row						nameRow					= new Row();
+	private Textbox				txtDesc				= new Textbox();
+	private Textbox				txtName				= new Textbox();
 
-	private Button					btnFileUpload			= new Button();
-	private Button					btnClose				= null;
-	public Button					btnOk					= null;
-	private ConfirmPanel			confirmPanel			= null;
+	private Grid				gridView			= GridFactory.newGridLayout();
+	private Row					contentTypeRow		= new Row();
+	private Row					nameRow				= new Row();
 
-	private AMedia					uploadedMedia			= null;
+	private Button				btnFileUpload		= new Button();
+	private Button				btnClose			= null;
+	private Button				btnOk				= null;
+	private ConfirmPanel		confirmPanel		= null;
 
-	private IFileStorageProvider	fileStorgProvider		= null;
-	private IThumbnailGenerator		thumbnailGenerator		= null;
-	private IContentManager			contentManager			= null;
-	private IIndexSearcher			indexSeracher			= null;
+	private Tabbox				tabBoxAttribute		= new Tabbox();
+	private Tabs				tabsAttribute		= new Tabs();
+	private Tab					tabAttribute		= new Tab();
+	private Tabpanels			tabPanelsAttribute	= new Tabpanels();
+	private Tabpanel			tabPanelAttribute	= new Tabpanel();
 
-	private Tabbox					tabBoxAttribute			= new Tabbox();
-	private Tabs					tabsAttribute			= new Tabs();
-	private Tab						tabAttribute			= new Tab();
-	private Tabpanels				tabPanelsAttribute		= new Tabpanels();
-	private Tabpanel				tabPanelAttribute		= new Tabpanel();
+	private int					tableID				= 0;
+	private int					recordID			= 0;
 
-	private int						DMS_Content_Related_ID	= 0;
-	private int						tableID					= 0;
-	private int						recordID				= 0;
+	private boolean				isVersion			= false;
+	private boolean				isCancel			= false;
 
-	private MDMSContent				DMSContent				= null;
+	private AMedia				uploadedMedia		= null;
+	private WTableDirEditor		contentType;
+	private WDLoadASIPanel		asiPanel			= null;
 
-	private boolean					isVersion				= false;
-	private WDLoadASIPanel			asiPanel				= null;
-	private boolean					cancel					= false;
-	
 	/**
 	 * Constructor initialize
 	 * 
+	 * @param dms
 	 * @param mDMSContent
 	 * @param isVersion
+	 * @param tableID
+	 * @param recordID
 	 */
-	public WUploadContent(MDMSContent mDMSContent, boolean isVersion, int tableID, int recordID)
+	public WUploadContent(DMS dms, MDMSContent mDMSContent, boolean isVersion, int tableID, int recordID)
 	{
+		this.dms = dms;
 		this.DMSContent = (MDMSContent) mDMSContent;
 		this.isVersion = isVersion;
 		this.tableID = tableID;
 		this.recordID = recordID;
-
-		fileStorgProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-		if (fileStorgProvider == null)
-			throw new AdempiereException("Storage provider is not define on clientInfo.");
-
-		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (contentManager == null)
-			throw new AdempiereException("Content manager is not found.");
 
 		init();
 
@@ -155,11 +134,9 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			contentTypeRow.setVisible(false);
 			nameRow.setVisible(false);
 			tabBoxAttribute.setVisible(false);
-			DMS_Content_Related_ID = Utils.getDMS_Content_Related_ID(mDMSContent);
 			this.setHeight("26%");
 			this.setWidth("40%");
 		}
-		
 	}
 
 	/**
@@ -167,16 +144,16 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	public void init()
 	{
-		// this.setHeight("50%");
 		if (!isVersion)
 		{
 			this.setStyle("min-height:40%; max-height:60%; overflow-y:auto;");
 			this.setWidth("50%");
 		}
-		this.setTitle("Upload Content");
+		this.setTitle(DMSConstant.MSG_UPLOAD_CONTENT);
 		this.setClosable(true);
 		this.appendChild(gridView);
 		this.addEventListener(Events.ON_OK, this);
+
 		gridView.setStyle("overflow: auto; position:relative;");
 		gridView.makeNoStrip();
 		gridView.setOddRowSclass("even");
@@ -184,15 +161,13 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int Column_ID = MColumn.getColumn_ID(X_DMS_ContentType.Table_Name,
-				X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID);
+		int Column_ID = MColumn.getColumn_ID(MDMSContentType.Table_Name, MDMSContentType.COLUMNNAME_DMS_ContentType_ID);
 		MLookup lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
-					Env.getLanguage(Env.getCtx()), X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			contentType = new WTableDirEditor(X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true,
-					lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
+					MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
+			contentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -200,11 +175,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			throw new AdempiereException("Contenttype fetching failure :" + e);
 		}
 
-		lblFile.setValue(Msg.getMsg(Env.getCtx(), "SelectFile") + "* ");
-		lblContentType.setValue("DMS Content Type");
+		lblFile.setValue(DMSConstant.MSG_SELECT_FILE + "* ");
+		lblContentType.setValue(DMSConstant.MSG_DMS_CONTENT_TYPE);
 		btnFileUpload.setLabel("-");
 		btnFileUpload.setWidth("100%");
-		lblDesc.setValue("Description");
+		lblDesc.setValue(DMSConstant.MSG_DESCRIPTION);
 		txtDesc.setMultiline(true);
 		txtDesc.setRows(2);
 		txtDesc.setWidth("100%");
@@ -225,15 +200,13 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		column.setAlign("left");
 		columns.appendChild(column);
 
-		Rows rows = new Rows();
-		gridView.appendChild(rows);
+		Rows rows = gridView.newRows();
 
-		Row row = new Row();
+		Row row = rows.newRow();
 		row.appendChild(lblFile);
 		row.appendChild(btnFileUpload);
-		rows.appendChild(row);
 
-		lblName.setValue("Name");
+		lblName.setValue(DMSConstant.MSG_NAME);
 		nameRow.appendChild(lblName);
 		nameRow.appendChild(txtName);
 		rows.appendChild(nameRow);
@@ -243,26 +216,18 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		contentType.addValueChangeListener(this);
 		rows.appendChild(contentTypeRow);
 
-		row = new Row();
+		row = rows.newRow();
 		row.appendChild(lblDesc);
 		row.appendChild(txtDesc);
-		rows.appendChild(row);
 
-		confirmPanel = new ConfirmPanel();
-		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
-		btnOk = confirmPanel.createButton(ConfirmPanel.A_OK);
-		btnOk.setImageContent(Utils.getImage("Ok24.png"));
-		btnClose.setImageContent(Utils.getImage("Cancel24.png"));
-
-		row = new Row();
-		rows.appendChild(row);
+		row = rows.newRow();
 		Cell cell = new Cell();
 		cell.setColspan(2);
 
 		tabBoxAttribute.appendChild(tabsAttribute);
 		tabBoxAttribute.appendChild(tabPanelsAttribute);
 
-		tabAttribute.setLabel("Attribute Set");
+		tabAttribute.setLabel(DMSConstant.MSG_ATTRIBUTE_SET);
 		tabsAttribute.appendChild(tabAttribute);
 		tabPanelsAttribute.appendChild(tabPanelAttribute);
 		tabPanelAttribute.setStyle("min-height :20px; max-height: 120px; overflow: auto;");
@@ -271,24 +236,32 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		cell.appendChild(tabBoxAttribute);
 		row.appendChild(cell);
 
-		row = new Row();
-		rows.appendChild(row);
+		row = rows.newRow();
+		confirmPanel = new ConfirmPanel();
+
+		btnOk = confirmPanel.createButton(ConfirmPanel.A_OK);
+		btnOk.setImageContent(Utils.getImage("Ok24.png"));
+
+		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
+		btnClose.setImageContent(Utils.getImage("Cancel24.png"));
+
 		cell = new Cell();
 		cell.setAlign("right");
 		cell.setColspan(2);
 		cell.appendChild(btnOk);
 		cell.appendChild(new Space());
 		cell.appendChild(btnClose);
-		row.appendChild(cell);
 		cell.setStyle("position: relative;");
+		row.appendChild(cell);
 
 		btnFileUpload.setUpload(AdempiereWebUI.getUploadSetting());
 		btnFileUpload.addEventListener(Events.ON_UPLOAD, this);
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
 		addEventListener(Events.ON_UPLOAD, this);
+
 		AEnv.showCenterScreen(this);
-	}
+	} // init
 
 	/*
 	 * (non-Javadoc)
@@ -305,11 +278,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(e.getName()))
 		{
-			saveUploadedDcoument();
+			saveUploadedDocument();
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
-			cancel = true;
+			isCancel = true;
 			this.detach();
 		}
 	}
@@ -317,155 +290,50 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	/**
 	 * save uploaded document in current directory
 	 */
-	private void saveUploadedDcoument()
+	private void saveUploadedDocument()
 	{
-		Trx trx = null;
-		MDMSContent uploadedDMSContent = null;
-		int ASI_ID = 0;
-
-		String fillMandatory = Msg.translate(Env.getCtx(), "FillMandatory");
-		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (indexSeracher == null)
-			throw new AdempiereException("Index server is not found.");
-
 		if (btnFileUpload.getLabel().equalsIgnoreCase("-"))
-			throw new WrongValueException(btnFileUpload, fillMandatory);
+			throw new WrongValueException(btnFileUpload, DMSConstant.MSG_FILL_MANDATORY);
 
-		String newFilename = txtName.getValue();
-		
-		if (nameRow.isVisible())
-		{
-			String validationMsg = Utils.isValidFileName(newFilename);			
-			if(validationMsg != null){
-				String validationResponse = Msg.translate(Env.getCtx(), validationMsg);
-				throw new WrongValueException(txtName, validationResponse);
-			}
-		}
-
-		if (isVersion)
-		{
-			if (Utils.getMimeTypeID(uploadedMedia) != DMSContent.getDMS_MimeType_ID())
-				throw new WrongValueException(btnFileUpload,
-						"Mime type not matched, please upload same mime type version document.");
-		}
-
-		if (contentType.getValue() != null)
-		{
-			ASI_ID = asiPanel.saveAttributes();
-		}
-		
+		File tmpFile = null;
 		try
 		{
-			String trxName = Trx.createTrxName("UploadFiles");
-			trx = Trx.get(trxName, true);
-			uploadedDMSContent = new MDMSContent(Env.getCtx(), 0, trx.getTrxName());
+			tmpFile = File.createTempFile(uploadedMedia.getName(), "." + uploadedMedia.getFormat());
+			FileOutputStream os = new FileOutputStream(tmpFile);
+			os.write(uploadedMedia.getByteData());
+			os.flush();
+			os.close();
 
-			if (!isVersion)
+			// Adding File
+			if (isVersion)
+				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue());
+			else
 			{
-				String format = uploadedMedia.getFormat();
-				if (format == null)
-				{
-					throw new AdempiereException("Invalid File format");
-				}
-				
-				if (!txtName.getValue().contains(format))
-				{
-					uploadedDMSContent.setName(txtName.getValue() + "." + format);
-				}
-				else
-				{
-					uploadedDMSContent.setName(txtName.getValue());
-				}
+				int ASI_ID = 0;
+				int cTypeID = 0;
 
 				if (contentType.getValue() != null)
 				{
-					uploadedDMSContent.setDMS_ContentType_ID((Integer) contentType.getValue());
-					uploadedDMSContent.setM_AttributeSetInstance_ID(ASI_ID);
+					cTypeID = (int) contentType.getValue();
+					ASI_ID = asiPanel.saveAttributes();
 				}
-				uploadedDMSContent.setParentURL(contentManager.getPath(DMSContent));
+
+				dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
 			}
-			else
-			{
-				uploadedDMSContent.setName(DMSContent.getName());
-				uploadedDMSContent.setDMS_ContentType_ID(DMSContent.getDMS_ContentType_ID());
-				uploadedDMSContent.setM_AttributeSetInstance_ID(DMSContent.getM_AttributeSetInstance_ID());
-				uploadedDMSContent.setParentURL(DMSContent.getParentURL());
-			}
-
-			uploadedDMSContent.setDescription(txtDesc.getValue());
-			uploadedDMSContent.setDMS_MimeType_ID(Utils.getMimeTypeID(uploadedMedia));
-			uploadedDMSContent.setContentBaseType(X_DMS_Content.CONTENTBASETYPE_Content);
-			uploadedDMSContent.setDMS_FileSize(Utils.readableFileSize(uploadedMedia.getByteData().length));
-
-			uploadedDMSContent.saveEx();
-
-			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), 0, trx.getTrxName());
-
-			dmsAssociation.setDMS_Content_ID(uploadedDMSContent.getDMS_Content_ID());
-
-			if (isVersion)
-			{
-				dmsAssociation.setDMS_Content_Related_ID(DMS_Content_Related_ID);
-				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(false));
-
-				int seqNo = DB.getSQLValue(null,
-						"SELECT MAX(seqNo) FROM DMS_Association WHERE DMS_Content_Related_ID = ?",
-						DMS_Content_Related_ID);
-				dmsAssociation.setSeqNo(seqNo + 1);
-
-			}
-			else
-			{
-				if (DMSContent != null)
-					dmsAssociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
-
-				dmsAssociation.setDMS_AssociationType_ID(MDMSAssociationType.getVersionType(true));
-				
-				// Display an error when trying to upload same name file
-				String path = fileStorgProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent));
-				File file = new File(path);
-				if (file.exists())
-				{
-					throw new WrongValueException("File already exists, either rename or upload as a version. \n (Either same file name content exist in inActive mode)");
-				}
-			}
-
-			dmsAssociation.setAD_Table_ID(tableID);
-			dmsAssociation.setRecord_ID(recordID);
-			dmsAssociation.saveEx();
-
-			fileStorgProvider.writeBLOB(fileStorgProvider.getBaseDirectory(contentManager.getPath(uploadedDMSContent)),
-					uploadedMedia.getByteData(), uploadedDMSContent);
-
-			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), uploadedDMSContent.getDMS_MimeType_ID(), null);
-
-			thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
-
-			if (thumbnailGenerator != null)
-				thumbnailGenerator.addThumbnail(uploadedDMSContent,
-						fileStorgProvider.getFile(contentManager.getPath(uploadedDMSContent)), null);
-
-			// Transaction commit
-			trx.commit();
-
 		}
-		catch (Exception e)
+		catch (IOException e)
 		{
-			if (trx != null)
-				trx.rollback();
-			log.log(Level.SEVERE, "Upload Content Failure :", e);
-			throw new AdempiereException("Upload Content Failure :" + e);
+			log.log(Level.SEVERE, "Fail to convert Media to File.", e);
+			throw new AdempiereException("Fail to convert Media to File.", e);
 		}
 		finally
 		{
-			// Close transaction - "UploadFiles"
-			if (trx != null)
-				trx.close();
+			if (tmpFile != null)
+				tmpFile.delete();
 		}
 
 		this.detach();
-	}
+	} // saveUploadedDocument
 
 	/**
 	 * check media is uploaded
@@ -487,7 +355,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			log.log(Level.SEVERE, "Upload Content Failure: ", e);
 			throw new AdempiereException("Upload Content Failure: " + e);
 		}
-	}
+	} // processUploadMedia
 
 	@Override
 	public void valueChange(ValueChangeEvent event)
@@ -509,7 +377,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 */
 	public boolean isCancel()
 	{
-		return cancel;
+		return isCancel;
 	}
-	
+
 }

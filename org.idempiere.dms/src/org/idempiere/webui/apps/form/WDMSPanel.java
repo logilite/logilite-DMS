@@ -14,21 +14,11 @@
 package org.idempiere.webui.apps.form;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringReader;
-import java.math.BigDecimal;
 import java.net.URISyntaxException;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -37,9 +27,6 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
@@ -51,7 +38,6 @@ import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
-import org.adempiere.webui.component.DatetimeBox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
@@ -68,62 +54,41 @@ import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
+import org.adempiere.webui.editor.WDateEditor;
+import org.adempiere.webui.editor.WDatetimeEditor;
 import org.adempiere.webui.editor.WEditor;
+import org.adempiere.webui.editor.WNumberEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
+import org.adempiere.webui.editor.WTimeEditor;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.filefilter.DirectoryFileFilter;
-import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.hwpf.extractor.WordExtractor;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.xwpf.converter.pdf.PdfConverter;
-import org.apache.poi.xwpf.converter.pdf.PdfOptions;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.compiere.model.MAttributeInstance;
-import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
-import org.compiere.model.MImage;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
-import org.compiere.model.MTable;
-import org.compiere.model.PO;
-import org.compiere.model.Query;
-import org.compiere.model.X_AD_User;
+import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.Msg;
+import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.idempiere.componenet.DMSViewerComponent;
+import org.idempiere.componenet.AbstractComponentIconViewer;
+import org.idempiere.dms.DMS;
+import org.idempiere.dms.DMS_ZK_Util;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
-import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.factories.IThumbnailGenerator;
-import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.Utils;
-import org.idempiere.dms.pdfpreview.ConvertXlsToPdf;
-import org.idempiere.dms.pdfpreview.ConvertXlsxToPdf;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
-import org.idempiere.model.X_DMS_Content;
-import org.idempiere.model.X_DMS_ContentType;
-import org.w3c.tidy.Tidy;
-import org.zkoss.image.AImage;
-import org.zkoss.util.media.AMedia;
-import org.zkoss.zhtml.Filedownload;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
@@ -137,211 +102,125 @@ import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
+import org.zkoss.zul.impl.XulElement;
 
-import com.itextpdf.text.Rectangle;
-import com.itextpdf.tool.xml.XMLWorkerHelper;
-import com.logilite.search.factory.IIndexSearcher;
-import com.logilite.search.factory.ServiceUtils;
-import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.html.simpleparser.HTMLWorker;
-import com.lowagie.text.pdf.PdfWriter;
 
 public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
+	private static final long		serialVersionUID		= -6813481516566180243L;
+	private static CLogger			log						= CLogger.getCLogger(WDMSPanel.class);
 
-	private static final long				serialVersionUID			= -6813481516566180243L;
-	public static CLogger					log							= CLogger.getCLogger(WDMSPanel.class);
+	public static final String		ATTRIBUTE_TOGGLE		= "Toggle";
+	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
 
-	private static String					SQL_LATEST_VERSION			= ""
-																				+ "SELECT DMS_Content_ID, DMS_Association_ID "
-																				+ "FROM DMS_Association "
-																				+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID= ? "
-																				+ "GROUP BY DMS_Content_ID,DMS_Association_ID "
-																				+ "ORDER BY Max(seqNo) DESC ";
+	private Tabbox					tabBox					= new Tabbox();
+	private Tabs					tabs					= new Tabs();
+	private Tabpanels				tabPanels				= new Tabpanels();
 
-	private static final String				spFileSeprator				= Utils.getStorageProviderFileSeparator();
+	private Grid					grid					= GridFactory.newGridLayout();
+	private Grid					gridBreadCrumb			= GridFactory.newGridLayout();
 
-	public Tabbox							tabBox						= new Tabbox();
-	private Tabs							tabs						= new Tabs();
-	public Tab								tabView						= new Tab(Msg.getMsg(Env.getCtx(), "Explorer"));
-	public Tabpanels						tabPanels					= new Tabpanels();
-	public Tabpanel							tabViewPanel				= new Tabpanel();
+	private BreadCrumbLink			breadCrumbEvent			= null;
 
-	private Grid							grid						= GridFactory.newGridLayout();
-	private Grid							gridBreadCrumb				= GridFactory.newGridLayout();
-	private Grid							searchgridView				= GridFactory.newGridLayout();
+	private Rows					breadRows				= new Rows();
+	private Row						breadRow				= new Row();
 
-	private BreadCrumbLink					breadCrumbEvent				= null;
+	private Searchbox				vsearchBox				= new Searchbox();
 
-	private Rows							breadRows					= new Rows();
-	public Row								breadRow					= new Row();
+	private Label					lblAdvanceSearch		= new Label(DMSConstant.MSG_ADVANCE_SEARCH);
+	private Label					lblDocumentName			= new Label(DMSConstant.MSG_NAME);
+	private Label					lblContentType			= new Label(DMSConstant.MSG_CONTENT_TYPE);
+	private Label					lblCreated				= new Label(DMSConstant.MSG_CREATED);
+	private Label					lblUpdated				= new Label(DMSConstant.MSG_UPDATED);
+	private Label					lblContentMeta			= new Label(DMSConstant.MSG_CONTENT_META);
+	private Label					lblDescription			= new Label(DMSConstant.MSG_DESCRIPTION);
+	private Label					lblCreatedBy			= new Label(DMSConstant.MSG_CREATEDBY);
+	private Label					lblUpdatedBy			= new Label(DMSConstant.MSG_UPDATEDBY);
+	private Label					lblPositionInfo			= new Label();
+	private Label					lblShowBreadCrumb		= null;
 
-	// View Result Tab
-	private Searchbox						vsearchBox					= new Searchbox();
-	private Label							lblAdvanceSearch			= new Label(Msg.translate(Env.getCtx(),
-																				"Advance Search"));
-	private Label							lblDocumentName				= new Label(Msg.translate(Env.getCtx(), "Name"));
-	private Label							lblContentType				= new Label(Msg.translate(Env.getCtx(),
-																				"Content Type"));
-	private Label							lblCreated					= new Label(Msg.translate(Env.getCtx(),
-																				"Created"));
-	private Label							lblUpdated					= new Label(Msg.translate(Env.getCtx(),
-																				"Updated"));
-	private Label							lblContentMeta				= new Label(Msg.translate(Env.getCtx(),
-																				"Content Meta"));
+	private Datebox					dbCreatedTo				= new Datebox();
+	private Datebox					dbCreatedFrom			= new Datebox();
+	private Datebox					dbUpdatedTo				= new Datebox();
+	private Datebox					dbUpdatedFrom			= new Datebox();
 
-	private Label							lblDescription				= new Label(Msg.translate(Env.getCtx(),
-																				"Description"));
+	private ConfirmPanel			confirmPanel			= new ConfirmPanel();
 
-	private Label							lblCreatedBy				= new Label(Msg.translate(Env.getCtx(),
-																				"CreatedBy"));
+	private Button					btnClear				= confirmPanel.createButton(ConfirmPanel.A_RESET);
+	private Button					btnRefresh				= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
+	private Button					btnCloseTab				= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
+	private Button					btnSearch				= new Button();
+	private Button					btnCreateDir			= new Button();
+	private Button					btnUploadContent		= new Button();
+	private Button					btnBack					= new Button();
+	private Button					btnNext					= new Button();
+	private Button					btnToggleView			= new Button();
 
-	private Label							lblUpdatedBy				= new Label(Msg.translate(Env.getCtx(),
-																				"UpdatedBy"));
+	private Textbox					txtDocumentName			= new Textbox();
+	private Textbox					txtDescription			= new Textbox();
 
-	private Label							lblShowBreadCrumb			= null;
+	private WTableDirEditor			lstboxContentType		= null;
+	private WTableDirEditor			lstboxCreatedBy			= null;
+	private WTableDirEditor			lstboxUpdatedBy			= null;
+	private Checkbox				chkInActive				= new Checkbox();
 
-	private Datebox							dbCreatedTo					= new Datebox();
-	private Datebox							dbCreatedFrom				= new Datebox();
-	private Datebox							dbUpdatedTo					= new Datebox();
-	private Datebox							dbUpdatedFrom				= new Datebox();
+	private DMS						dms						= null;
+	private MDMSContent				currDMSContent			= null;
+	private MDMSContent				nextDMSContent			= null;
+	private MDMSContent				copyDMSContent			= null;
+	private MDMSContent				dirContent				= null;
+	private MDMSAssociation			previousDMSAssociation	= null;
 
-	private ConfirmPanel					confirmPanel				= new ConfirmPanel();
+	private Stack<MDMSContent>		selectedDMSContent		= new Stack<MDMSContent>();
+	private Stack<MDMSAssociation>	selectedDMSAssociation	= new Stack<MDMSAssociation>();
 
-	private Button							btnClear					= confirmPanel
-																				.createButton(ConfirmPanel.A_RESET);
-	private Button							btnRefresh					= confirmPanel
-																				.createButton(ConfirmPanel.A_REFRESH);
-	private Button							btnCloseTab					= confirmPanel
-																				.createButton(ConfirmPanel.A_CANCEL);
+	//
+	private Component				compCellRowViewer		= null;
+	private WUploadContent			uploadContent			= null;
+	private WCreateDirectoryForm	createDirectoryForm		= null;
+	private WDLoadASIPanel			asiPanel				= null;
 
-	private Button							btnSearch					= new Button();
+	private Panel					panelAttribute			= new Panel();
 
-	private Textbox							txtDocumentName				= new Textbox();
-	private Textbox							txtDescription				= new Textbox();
+	private Menupopup				contentContextMenu		= new Menupopup();
+	private Menupopup				canvasContextMenu		= new Menupopup();
 
-	private WTableDirEditor					lstboxContentType			= null;
-	private WTableDirEditor					lstboxCreatedBy				= null;
-	private WTableDirEditor					lstboxUpdatedBy				= null;
-	private Checkbox						chkInActive					= new Checkbox();
+	private Menuitem				mnu_cut					= null;
+	private Menuitem				mnu_copy				= null;
+	private Menuitem				mnu_paste				= null;
+	private Menuitem				mnu_rename				= null;
+	private Menuitem				mnu_delete				= null;
+	private Menuitem				mnu_download			= null;
+	private Menuitem				mnu_associate			= null;
+	private Menuitem				mnu_createLink			= null;
+	private Menuitem				mnu_versionList			= null;
+	private Menuitem				mnu_uploadVersion		= null;
 
-	// create Directory
-	private Button							btnCreateDir				= new Button();
-	private Button							btnUploadContent			= new Button();
-	private Button							btnBack						= new Button();
-	private Button							btnNext						= new Button();
+	private Menuitem				mnu_canvasPaste			= null;
+	private Menuitem				mnu_canvasCreateLink	= null;
 
-	private Label							lblPositionInfo				= new Label();
+	private int						recordID				= 0;
+	private int						tableID					= 0;
+	private int						windowID				= 0;
 
-	private MDMSContent						currDMSContent				= null;
-	private MDMSContent						nextDMSContent				= null;
+	private boolean					isSearch				= false;
+	private boolean					isGenericSearch			= false;
+	private boolean					isAllowCreateDirectory	= true;
+	private boolean					isWindowAccess			= true;
 
-	private MDMSAssociation					previousDMSAssociation		= null;
+	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
 
-	private Stack<MDMSAssociation>			selectedDMSAssociation		= new Stack<MDMSAssociation>();
-	private Stack<MDMSContent>				selectedDMSContent			= new Stack<MDMSContent>();
+	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
 
-	private ArrayList<DMSViewerComponent>	viewerComponents			= null;
-
-	public IFileStorageProvider				fileStorageProvider			= null;
-	public IThumbnailProvider				thumbnailProvider			= null;
-	public IContentManager					contentManager				= null;
-	public IFileStorageProvider				thumbnailStorageProvider	= null;
-	private IIndexSearcher					indexSeracher				= null;
-	private IMountingStrategy				mountingStrategy			= null;
-
-	private Menupopup						contentContextMenu			= new Menupopup();
-	private Menupopup						canvasContextMenu			= new Menupopup();
-
-	private Menuitem						mnu_versionList				= null;
-	private Menuitem						mnu_copy					= null;
-	private Menuitem						mnu_createLink				= null;
-	private Menuitem						mnu_delete					= null;
-	private Menuitem						mnu_associate				= null;
-	private Menuitem						mnu_uploadVersion			= null;
-	private Menuitem						mnu_rename					= null;
-	private Menuitem						mnu_cut						= null;
-	private Menuitem						mnu_paste					= null;
-	private Menuitem						mnu_download				= null;
-
-	private Menuitem						mnu_canvasCreateLink		= null;
-	private Menuitem						mnu_canvasPaste				= null;
-
-	private DMSViewerComponent				DMSViewerComp				= null;
-	private MDMSContent						copyDMSContent				= null;
-	private MDMSContent						dirContent					= null;
-
-	private WUploadContent					uploadContent				= null;
-	private CreateDirectoryForm				createDirectoryForm			= null;
-
-	private Panel							panelAttribute				= new Panel();
-	private WDLoadASIPanel					asiPanel					= null;
-
-	public int								recordID					= 0;
-	public int								tableID						= 0;
-	public int								windowID					= 0;
-
-	private boolean							isSearch					= false;
-	private boolean							isGenericSearch				= false;
-	private boolean 						isAllowCreateDirectory		= true;
-	private boolean							isWindowAccess				= true;
-
-	private static final int				COMPONENT_HEIGHT			= 120;
-	private static final int				COMPONENT_WIDTH				= 120;
-
-	private static final String				MENUITEM_UPLOADVERSION		= "Upload Version";
-	private static final String				MENUITEM_VERSIONlIST		= "Version List";
-	private static final String				MENUITEM_RENAME				= "Rename";
-	private static final String				MENUITEM_CUT				= "Cut";
-	private static final String				MENUITEM_COPY				= "Copy";
-	private static final String				MENUITEM_PASTE				= "Paste";
-	private static final String				MENUITEM_DOWNLOAD			= "Download";
-	private static final String				MENUITEM_CREATELINK			= "Create Link";
-	private static final String				MENUITEM_DELETE				= "Delete";
-	private static final String				MENUITEM_ASSOCIATE			= "Associate";
-
-	private DMSViewerComponent				prevComponent				= null;
-
-	private ArrayList<WEditor>				m_editors					= new ArrayList<WEditor>();
-
-	private Map<String, Component>			ASI_Value					= new HashMap<String, Component>();
-	private DateFormat						dateFormat					= new SimpleDateFormat(
-																				"yyyy-MM-dd'T'HH:mm:ss'Z'");
-	
-	private AbstractADWindowContent			winContent;
+	private AbstractADWindowContent	winContent;
 
 	/**
 	 * Constructor initialize
 	 */
 	public WDMSPanel()
 	{
-		fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-
-		if (fileStorageProvider == null)
-			throw new AdempiereException("Storage provider is not found.");
-
-		thumbnailStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), true);
-
-		if (thumbnailStorageProvider == null)
-			throw new AdempiereException("Thumbnail Storage provider is not found.");
-
-		thumbnailProvider = Utils.getThumbnailProvider(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (thumbnailProvider == null)
-			throw new AdempiereException("Thumbnail provider is not found.");
-
-		contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (contentManager == null)
-			throw new AdempiereException("Content manager is not found.");
-
-		indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-
-		if (indexSeracher == null)
-			throw new AdempiereException("Index server is not found.");
+		dms = new DMS(Env.getAD_Client_ID(Env.getCtx()));
 
 		try
 		{
@@ -359,14 +238,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		this();
 		this.winContent = winContent;
-		this.windowID = winContent.getADWindow().getAD_Window_ID(); 
+		this.windowID = winContent.getADWindow().getAD_Window_ID();
 		isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
-		
+
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
-		mountingStrategy = Utils.getMountingStrategy(null);
-		currDMSContent = mountingStrategy.getMountingParent(MTable.getTableName(Env.getCtx(), Table_ID), Record_ID);
-		
+
+		dms.initMountingStrategy(null);
+		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
+
 		/*
 		 * Navigation and createDir buttons are disabled based on
 		 * "IsAllowCreateDirectory" check on client info.
@@ -379,7 +259,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnNext.setEnabled(false);
 			btnCreateDir.setEnabled(false);
 		}
-		
+
 		btnCreateDir.setEnabled(isWindowAccess);
 		btnUploadContent.setEnabled(isWindowAccess);
 	}
@@ -398,12 +278,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		return tableID;
 	}
-	
-	public void setWindow_ID (int AD_Window_ID)
+
+	public void setWindow_ID(int AD_Window_ID)
 	{
 		this.windowID = AD_Window_ID;
 	}
-	
+
 	public int getWindow_ID()
 	{
 		return windowID;
@@ -427,10 +307,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	public boolean isTabViewer()
 	{
-		if (tableID > 0 && recordID > 0)
-			return true;
-		else
-			return false;
+		return (tableID > 0 && recordID > 0);
 	}
 
 	/**
@@ -438,136 +315,81 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void initForm()
 	{
-		tabBox.setWidth("100%");
-		tabBox.setHeight("100%");
-		tabBox.appendChild(tabs);
-		tabBox.appendChild(tabPanels);
-		tabBox.addEventListener(Events.ON_SELECT, this);
-		grid.setStyle("width: 100%; height:95%; position:relative; overflow: auto;");
+		this.setHeight("100%");
+		this.setWidth("100%");
+		this.appendChild(tabBox);
+		this.addEventListener(Events.ON_CLICK, this);
+		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
+
+		grid.setSclass("SB-Grid");
+		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
+		grid.setStyle("width: 100%; height: 95%; position: relative; overflow: auto;");
+
 		// View Result Tab
+		Grid btnGrid = GridFactory.newGridLayout();
+		// Rows Header Buttons
+		Rows rowsBtn = btnGrid.newRows();
 
-		Grid btngrid = GridFactory.newGridLayout();
-		Columns columns = new Columns();
-		Column column = new Column();
-		column.setWidth("90px");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("130px");
-		column.setAlign("center");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("120px");
-		column.setAlign("right");
-		columns.appendChild(column);
-
-		Rows rows = new Rows();
-		btngrid.appendChild(rows);
-
-		Row row = new Row();
-		rows.appendChild(row);
-		btnBack.setImageContent(Utils.getImage("Left24.png"));
-		btnBack.setTooltiptext("Previous Record");
+		// Row Navigation Button
+		DMS_ZK_Util.setButtonData(btnBack, "Left24.png", DMSConstant.TTT_PREVIOUS_RECORD, this);
+		btnBack.setEnabled(false);
 
 		lblPositionInfo.setHflex("1");
-		lblPositionInfo.setStyle("float: right;");
-		ZkCssHelper.appendStyle(lblPositionInfo, "font-weight: bold;");
-		ZkCssHelper.appendStyle(lblPositionInfo, "text-align: center;");
+		ZkCssHelper.appendStyle(lblPositionInfo, "float: right; font-weight: bold; text-align: center;");
 
-		btnNext.setImageContent(Utils.getImage("Right24.png"));
-		btnNext.setTooltiptext("Next Record");
-		btnBack.addEventListener(Events.ON_CLICK, this);
-		btnNext.addEventListener(Events.ON_CLICK, this);
-		btnNext.setStyle("float:right;");
-
-		btnBack.setEnabled(false);
 		btnNext.setEnabled(false);
+		btnNext.setStyle("float:right;");
+		DMS_ZK_Util.setButtonData(btnNext, "Right24.png", DMSConstant.TTT_NEXT_RECORD, this);
 
+		Row row = rowsBtn.newRow();
 		row.appendChild(btnBack);
 		row.appendChild(lblPositionInfo);
 		row.appendChild(btnNext);
 
-		row = new Row();
-		rows.appendChild(row);
+		// Row Operation - Create Directory, Upload Content
+		DMS_ZK_Util.setButtonData(btnCreateDir, "Folder24.png", DMSConstant.MSG_CREATE_DIRECTORY, this);
+		DMS_ZK_Util.setButtonData(btnUploadContent, "Upload24.png", DMSConstant.MSG_UPLOAD_CONTENT, this);
 
+		row = rowsBtn.newRow();
 		row.appendChild(btnCreateDir);
 		row.appendChild(btnUploadContent);
 
-		btnCreateDir.setImageContent(Utils.getImage("Folder24.png"));
-		btnCreateDir.setTooltiptext("Create Directory");
-		btnCreateDir.addEventListener(Events.ON_CLICK, this);
+		//
+		Grid searchGridView = GridFactory.newGridLayout();
+		searchGridView.setVflex(true);
+		searchGridView.setStyle("max-height: 100%; width: 100%; position: relative; overflow: auto;");
 
-		btnUploadContent.setImageContent(Utils.getImage("Upload24.png"));
-		btnUploadContent.setTooltiptext("Upload Content");
-		btnUploadContent.addEventListener(Events.ON_CLICK, this);
+		Rows rowsSearch = searchGridView.newRows();
 
-		searchgridView.setStyle("max-height: 100%;width: 100%;position:relative; overflow: auto;");
-		searchgridView.setVflex(true);
-		columns = new Columns();
+		row = rowsSearch.newRow();
+		DMS_ZK_Util.createCellUnderRow(row, 1, 3, vsearchBox);
 
-		column = new Column();
-		column.setWidth("90px");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("130px");
-		column.setAlign("center");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("120px");
-		column.setAlign("right");
-		columns.appendChild(column);
-
-		rows = new Rows();
-		searchgridView.appendChild(rows);
-
-		row = new Row();
-		Cell searchCell = new Cell();
-		searchCell.setRowspan(1);
-		searchCell.setColspan(3);
-		searchCell.appendChild(vsearchBox);
-		rows.appendChild(row);
-		row.appendChild(searchCell);
-		vsearchBox.getButton().setImageContent(Utils.getImage("Search16.png"));
-		vsearchBox.getButton().addEventListener(Events.ON_CLICK, this);
+		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search16.png", DMSConstant.TTT_SEARCH, this);
 		vsearchBox.addEventListener(Events.ON_OK, this);
 
-		row = new Row();
-		rows.appendChild(row);
+		row = rowsSearch.newRow();
 		row.appendCellChild(lblAdvanceSearch);
 		lblAdvanceSearch.setHflex("1");
 		ZkCssHelper.appendStyle(lblAdvanceSearch, "font-weight: bold;");
 
-		row = new Row();
-		rows.appendChild(row);
-		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
-		Cell nameCell = new Cell();
-		nameCell.setColspan(2);
+		row = rowsSearch.newRow();
 		row.appendChild(lblDocumentName);
-		nameCell.appendChild(txtDocumentName);
-		row.appendChild(nameCell);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, txtDocumentName);
+		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
 		txtDocumentName.setWidth("100%");
 
-		row = new Row();
-		rows.appendChild(row);
-		nameCell = new Cell();
-		nameCell.setColspan(2);
+		row = rowsSearch.newRow();
 		row.appendChild(lblDescription);
-		nameCell.appendChild(txtDescription);
-		row.appendChild(nameCell);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, txtDescription);
 		txtDescription.setWidth("100%");
 
-		int Column_ID = MColumn.getColumn_ID(X_AD_User.Table_Name, X_AD_User.COLUMNNAME_AD_User_ID);
+		Language lang = Env.getLanguage(Env.getCtx());
+		int Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		MLookup lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
-					Env.getLanguage(Env.getCtx()), X_AD_User.COLUMNNAME_AD_User_ID, 0, true, "");
-			lstboxCreatedBy = new WTableDirEditor(X_AD_User.COLUMNNAME_AD_User_ID, false, false, true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MUser.COLUMNNAME_AD_User_ID, 0, true, "");
+			lstboxCreatedBy = new WTableDirEditor(MUser.COLUMNNAME_AD_User_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -575,24 +397,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			throw new AdempiereException("User fetching failure :" + e);
 		}
 
-		row = new Row();
-		rows.appendChild(row);
+		row = rowsSearch.newRow();
 		row.setAlign("right");
 		row.appendChild(lblCreatedBy);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxCreatedBy.getComponent());
 		lblCreatedBy.setStyle("float: left;");
-		Cell createdByCell = new Cell();
-		createdByCell.setColspan(2);
 		lstboxCreatedBy.getComponent().setWidth("100%");
-		createdByCell.appendChild(lstboxCreatedBy.getComponent());
-		row.appendChild(createdByCell);
 
-		Column_ID = MColumn.getColumn_ID(X_AD_User.Table_Name, X_AD_User.COLUMNNAME_AD_User_ID);
+		Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
-					Env.getLanguage(Env.getCtx()), X_AD_User.COLUMNNAME_AD_User_ID, 0, true, "");
-			lstboxUpdatedBy = new WTableDirEditor(X_AD_User.COLUMNNAME_AD_User_ID, false, false, true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MUser.COLUMNNAME_AD_User_ID, 0, true, "");
+			lstboxUpdatedBy = new WTableDirEditor(MUser.COLUMNNAME_AD_User_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -600,53 +417,40 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			throw new AdempiereException("User fetching failure :" + e);
 		}
 
-		row = new Row();
-		rows.appendChild(row);
+		row = rowsSearch.newRow();
 		row.setAlign("right");
 		row.appendChild(lblUpdatedBy);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxUpdatedBy.getComponent());
 		lblUpdatedBy.setStyle("float: left;");
-		Cell updatedByCell = new Cell();
-		updatedByCell.setColspan(2);
 		lstboxUpdatedBy.getComponent().setWidth("100%");
-		updatedByCell.appendChild(lstboxUpdatedBy.getComponent());
-		row.appendChild(updatedByCell);
 
-		row = new Row();
-		rows.appendChild(row);
+		dbCreatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
+		dbUpdatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
+		dbCreatedTo.setStyle(DMSConstant.CSS_DATEBOX);
+		dbUpdatedTo.setStyle(DMSConstant.CSS_DATEBOX);
+
+		//
+		row = rowsSearch.newRow();
 		row.appendChild(lblCreated);
 		Hbox hbox = new Hbox();
-		dbCreatedFrom.setStyle("width: 100%; display:flex; flex-direction: row;");
-		dbCreatedTo.setStyle("width: 100%; display:flex; flex-direction: row;");
 		hbox.appendChild(dbCreatedFrom);
 		hbox.appendChild(dbCreatedTo);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, hbox);
 
-		Cell createdCell = new Cell();
-		createdCell.setColspan(2);
-		createdCell.appendChild(hbox);
-		row.appendChild(createdCell);
-
-		row = new Row();
-		rows.appendChild(row);
+		//
+		row = rowsSearch.newRow();
 		row.appendChild(lblUpdated);
 		hbox = new Hbox();
-		dbUpdatedFrom.setStyle("width: 100%; display:flex; flex-direction: row;");
-		dbUpdatedTo.setStyle("width: 100%; display:flex; flex-direction: row;");
 		hbox.appendChild(dbUpdatedFrom);
 		hbox.appendChild(dbUpdatedTo);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, hbox);
 
-		Cell updatedCell = new Cell();
-		updatedCell.setColspan(2);
-		updatedCell.appendChild(hbox);
-		row.appendChild(updatedCell);
-
-		Column_ID = MColumn.getColumn_ID(X_DMS_ContentType.Table_Name, X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID);
+		Column_ID = MColumn.getColumn_ID(MDMSContentType.Table_Name, MDMSContentType.COLUMNNAME_DMS_ContentType_ID);
 		lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir,
-					Env.getLanguage(Env.getCtx()), X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			lstboxContentType = new WTableDirEditor(X_DMS_ContentType.COLUMNNAME_DMS_ContentType_ID, false, false,
-					true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
+			lstboxContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -654,178 +458,117 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			throw new AdempiereException("Contenttype fetching failure :" + e);
 		}
 
-		row = new Row();
-		rows.appendChild(row);
+		//
+		row = rowsSearch.newRow();
 		row.setAlign("right");
 		row.appendChild(lblContentType);
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxContentType.getComponent());
 		lblContentType.setStyle("float: left;");
-		Cell contentTypeListCell = new Cell();
-		contentTypeListCell.setColspan(2);
 		lstboxContentType.getComponent().setWidth("100%");
-		contentTypeListCell.appendChild(lstboxContentType.getComponent());
 		lstboxContentType.addValueChangeListener(this);
-		row.appendChild(contentTypeListCell);
 
-		// Active
-		chkInActive.setLabel("Show InActive");
+		//
+		row = rowsSearch.newRow();
+		row.setStyle("padding-left : 109px;");
+		DMS_ZK_Util.createCellUnderRow(row, 0, 2, chkInActive);
 		chkInActive.setChecked(false);
-		row = new Row();
-		rows.appendChild(row);
-		Cell activeCell = new Cell();
-		activeCell.setColspan(2);
-//		row.setAlign("center");
-		row.setStyle("padding-left : 109px");
-		activeCell.appendChild(chkInActive);
+		chkInActive.setLabel(DMSConstant.MSG_SHOW_IN_ACTIVE);
 		chkInActive.addEventListener(Events.ON_CLICK, this);
-		row.appendChild(activeCell);
-		
-		
-		row = new Row();
-		rows.appendChild(row);
+
+		//
+		row = rowsSearch.newRow();
 		row.appendChild(lblContentMeta);
 		ZkCssHelper.appendStyle(lblContentMeta, "font-weight: bold;");
 
-		row = new Row();
-		rows.appendChild(row);
-		Cell cell = new Cell();
-		cell.setColspan(3);
-		cell.appendChild(panelAttribute);
-		// panelAttribute.setStyle("max-height: 200px; overflow: auto;");
-		row.appendChild(cell);
+		//
+		row = rowsSearch.newRow();
+		DMS_ZK_Util.createCellUnderRow(row, 0, 3, panelAttribute);
 
-		row = new Row();
-		rows.appendChild(row);
+		//
+		row = rowsSearch.newRow();
+
+		DMS_ZK_Util.setButtonData(btnClear, "Reset24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnSearch, "Search24.png", DMSConstant.TTT_SEARCH, this);
+		DMS_ZK_Util.setButtonData(btnRefresh, "Refresh24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnCloseTab, "Close24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnToggleView, "List16.png", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
+
+		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
+		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important;");
+
 		hbox = new Hbox();
-
-		btnClear.addEventListener(Events.ON_CLICK, this);
-		btnRefresh.addEventListener(Events.ON_CLICK, this);
-
-		btnSearch.setImageContent(Utils.getImage("Search24.png"));
-		btnSearch.setTooltiptext("Search");
-
-		btnSearch.addEventListener(Events.ON_CLICK, this);
-
-		btnClear.setImageContent(Utils.getImage("Reset24.png"));
-		btnRefresh.setImageContent(Utils.getImage("Refresh24.png"));
-		btnCloseTab.setImageContent(Utils.getImage("Close24.png"));
-
-		btnCloseTab.addEventListener(Events.ON_CLICK, this);
-
-		hbox.appendChild(btnClear);
-		hbox.appendChild(btnRefresh);
+		hbox.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
 		hbox.appendChild(btnSearch);
+		hbox.appendChild(btnRefresh);
+		hbox.appendChild(btnClear);
 		hbox.appendChild(btnCloseTab);
 
-		cell = new Cell();
-		cell.setColspan(3);
-		cell.setRowspan(1);
+		Cell cell = DMS_ZK_Util.createCellUnderRow(row, 1, 3, hbox);
 		cell.setAlign("right");
-		cell.appendChild(hbox);
-		row.appendChild(cell);
+
+		/*
+		 * Main Layout View
+		 */
+		Cell cell_layout = new Cell();
+		cell_layout.setWidth("70%");
+		cell_layout.appendChild(btnToggleView);
+		cell_layout.appendChild(gridBreadCrumb);
+		cell_layout.appendChild(grid);
+
+		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; min-height: 32px; "
+				+ "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px;");
+
+		breadRow.setZclass("none");
+		breadRow.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
+
+		Splitter splitter = new Splitter();
+		splitter.setCollapse("after");
+
+		Cell cell_attribute = new Cell();
+		cell_attribute.setWidth("30%");
+		cell_attribute.setHeight("100%");
+		cell_attribute.appendChild(btnGrid);
+		cell_attribute.appendChild(searchGridView);
+
+		Hbox boxViewSeparator = new Hbox();
+		boxViewSeparator.setWidth("100%");
+		boxViewSeparator.setHeight("100%");
+		boxViewSeparator.appendChild(cell_layout);
+		boxViewSeparator.appendChild(splitter);
+		boxViewSeparator.appendChild(cell_attribute);
 
 		Tabpanel tabViewPanel = new Tabpanel();
 		tabViewPanel.setHeight("100%");
 		tabViewPanel.setWidth("100%");
-		Hbox boxViewSeparator = new Hbox();
-		boxViewSeparator.setWidth("100%");
-		boxViewSeparator.setHeight("100%");
-
-		cell = new Cell();
-		cell.setWidth("100%");
-		cell.setStyle("position: absolute;");
-		cell.appendChild(gridBreadCrumb);
-		cell.appendChild(grid);
-		cell.addEventListener(Events.ON_RIGHT_CLICK, this);
-		boxViewSeparator.appendChild(cell);
-
-		gridBreadCrumb
-				.setStyle("width: 100%; position:relative; overflow: auto; background-color: rgba(0,0,0,.2); background-clip: padding-box; color: #222; background: transparent;font-family: Roboto,sans-serif; border: solid transparent; border-width: 1px 1px 1px 6px;min-height: 28px; padding: 100px 0 0;box-shadow: inset 1px 1px 0 rgba(0,0,0,.1),inset 0 -1px 0 rgba(0,0,0,.07);");
-
-		breadRow.setZclass("none");
-		breadRow.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%;");
-
-		Splitter splitter = new Splitter();
-		splitter.setCollapse("after");
-		boxViewSeparator.appendChild(splitter);
-
-		cell = new Cell();
-		cell.setWidth("32%");
-		cell.setHeight("100%");
-		// cell.setStyle("height: 100%; overflow: hidden;");
-		cell.appendChild(btngrid);
-		cell.appendChild(searchgridView);
-		searchgridView.setParent(cell);
-		boxViewSeparator.appendChild(cell);
 		tabViewPanel.appendChild(boxViewSeparator);
-		cell.setParent(boxViewSeparator);
-		searchgridView.appendChild(rows);
-
-		tabs.appendChild(tabView);
 		tabPanels.appendChild(tabViewPanel);
-		this.setHeight("100%");
-		this.setWidth("100%");
-		this.appendChild(tabBox);
 
-		this.addEventListener(Events.ON_CLICK, this);
-		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
+		tabBox.setWidth("100%");
+		tabBox.setHeight("100%");
+		tabBox.appendChild(tabs);
+		tabBox.appendChild(tabPanels);
+		tabBox.addEventListener(Events.ON_SELECT, this);
 
-		mnu_versionList = new Menuitem(MENUITEM_VERSIONlIST);
-		mnu_cut = new Menuitem(MENUITEM_CUT);
-		mnu_copy = new Menuitem(MENUITEM_COPY);
-		mnu_paste = new Menuitem(MENUITEM_PASTE);
-		mnu_download = new Menuitem(MENUITEM_DOWNLOAD);
-		mnu_createLink = new Menuitem(MENUITEM_CREATELINK);
-		mnu_delete = new Menuitem(MENUITEM_DELETE);
-		mnu_associate = new Menuitem(MENUITEM_ASSOCIATE);
-		mnu_uploadVersion = new Menuitem(MENUITEM_UPLOADVERSION);
-		mnu_rename = new Menuitem(MENUITEM_RENAME);
+		tabs.appendChild(new Tab(DMSConstant.MSG_EXPLORER));
 
-		mnu_canvasCreateLink = new Menuitem(MENUITEM_CREATELINK);
-		mnu_canvasPaste = new Menuitem(MENUITEM_PASTE);
+		// Context Menu item for Right click on DMSContent
+		mnu_cut = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CUT, "Cut24.png", this);
+		mnu_copy = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_COPY, "Copy24.png", this);
+		mnu_paste = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PASTE, "Paste24.png", this);
+		mnu_rename = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_RENAME, "Rename24.png", this);
+		mnu_delete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DELETE, "Delete24.png", this);
+		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Downloads24.png", this);
+		mnu_associate = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ASSOCIATE, "Associate24.png", this);
+		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link24.png", this);
+		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Versions24.png", this);
+		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "uploadversion24.png", this);
 
-		canvasContextMenu.appendChild(mnu_canvasPaste);
-		canvasContextMenu.appendChild(mnu_canvasCreateLink);
-		mnu_canvasCreateLink.addEventListener(Events.ON_CLICK, this);
-		mnu_canvasPaste.addEventListener(Events.ON_CLICK, this);
+		// Context Menu item for Right click on Canvas area
+		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_PASTE, "Paste24.png", this);
+		mnu_canvasCreateLink = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link24.png", this);
 
-		contentContextMenu.appendChild(mnu_uploadVersion);
-		contentContextMenu.appendChild(mnu_versionList);
-		contentContextMenu.appendChild(mnu_cut);
-		contentContextMenu.appendChild(mnu_copy);
-		contentContextMenu.appendChild(mnu_paste);
-		contentContextMenu.appendChild(mnu_download);
-		contentContextMenu.appendChild(mnu_createLink);
-		contentContextMenu.appendChild(mnu_rename);
-		contentContextMenu.appendChild(mnu_delete);
-		contentContextMenu.appendChild(mnu_associate);
-
-		mnu_canvasCreateLink.setImageContent(Utils.getImage("Link24.png"));
-		mnu_canvasPaste.setImageContent(Utils.getImage("Paste24.png"));
-		mnu_createLink.setImageContent(Utils.getImage("Link24.png"));
-		mnu_uploadVersion.setImageContent(Utils.getImage("uploadversion24.png"));
-		mnu_paste.setImageContent(Utils.getImage("Paste24.png"));
-		mnu_download.setImageContent(Utils.getImage("Downloads24.png"));
-		mnu_rename.setImageContent(Utils.getImage("Rename24.png"));
-		mnu_cut.setImageContent(Utils.getImage("Cut24.png"));
-		mnu_versionList.setImageContent(Utils.getImage("Versions24.png"));
-		mnu_copy.setImageContent(Utils.getImage("Copy24.png"));
-		mnu_delete.setImageContent(Utils.getImage("Delete24.png"));
-		mnu_associate.setImageContent(Utils.getImage("Associate24.png"));
-
-		mnu_uploadVersion.addEventListener(Events.ON_CLICK, this);
-		mnu_versionList.addEventListener(Events.ON_CLICK, this);
-		mnu_cut.addEventListener(Events.ON_CLICK, this);
-		mnu_paste.addEventListener(Events.ON_CLICK, this);
-		mnu_download.addEventListener(Events.ON_CLICK, this);
-		mnu_rename.addEventListener(Events.ON_CLICK, this);
-		mnu_createLink.addEventListener(Events.ON_CLICK, this);
-		mnu_copy.addEventListener(Events.ON_CLICK, this);
-		mnu_delete.addEventListener(Events.ON_CLICK, this);
-		mnu_associate.addEventListener(Events.ON_CLICK, this);
-
-		//mnu_delete.setDisabled(true);
-
-		dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+		//
+		DMSConstant.SDF_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
 		addRootBreadCrumb();
 		SessionManager.getAppDesktop();
 	}
@@ -835,11 +578,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		log.info(event.getName());
 
-		if (Events.ON_DOUBLE_CLICK.equals(event.getName())
-				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
+		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (event.getTarget() instanceof Cell || event.getTarget() instanceof Row))
 		{
-			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			openDirectoryORContent(DMSViewerComp);
+			openDirectoryORContent(event.getTarget());
 		}
 		else if (event.getTarget().equals(btnCreateDir))
 		{
@@ -868,45 +609,54 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_RESET))
 		{
-			isGenericSearch = true; // For solve navigation issue After search and reset button pressed.
+			// For solve navigation issue After search and reset button pressed.
+			isGenericSearch = true;
+
 			isSearch = false;
-			clearComponenets();
+			clearComponents();
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
+			isSearch = false;
 			breadRow.getChildren().clear();
+			addRootBreadCrumb();
+
 			if (isTabViewer())
 			{
-				isSearch = false;
-				addRootBreadCrumb();
-				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? ORDER BY Created desc",
-						String.valueOf(recordID));
-				setCurrDMSContent(new MDMSContent(Env.getCtx(), DMS_Content_ID, null));
-		
+				MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+				setCurrDMSContent(mountingContent);
+
 				if (currDMSContent != null)
 					lblPositionInfo.setText(currDMSContent.getName());
 				else
 					lblPositionInfo.setText(String.valueOf(recordID));
-				btnBack.setEnabled(false);
-				btnNext.setEnabled(false);
 			}
 			else
 			{
-				isSearch = false;
 				currDMSContent = null;
 				lblPositionInfo.setText(null);
-				btnBack.setEnabled(false);
-				btnNext.setEnabled(false);
-				breadRow.getChildren().clear();
-				addRootBreadCrumb();
 			}
-			renderViewer();
 
+			btnBack.setEnabled(false);
+			btnNext.setEnabled(false);
+
+			renderViewer();
+		}
+		else if (event.getTarget() == btnToggleView)
+		{
+			if (btnToggleView.getAttribute(ATTRIBUTE_TOGGLE).equals(DMSConstant.ICON_VIEW_LARGE))
+				currThumbViewerAction = DMSConstant.ICON_VIEW_LIST;
+			else
+				currThumbViewerAction = DMSConstant.ICON_VIEW_LARGE;
+
+			btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
+
+			renderViewer();
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH) || event.getTarget().equals(btnSearch))
 		{
 			HashMap<String, List<Object>> params = getQueryParamas();
-			String query = indexSeracher.buildSolrSearchQuery(params);
+			String query = dms.buildSolrSearchQuery(params);
 
 			if (query.equals("*:*") || query.startsWith("AD_Table_ID"))
 			{
@@ -929,43 +679,33 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			renderViewer();
 		}
-		else if (Events.ON_CLICK.equals(event.getName())
-				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
-		{
-			DMSViewerComponent DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			currentCompSelection(DMSViewerComp);
-		}
-		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(WDMSPanel.class))
-		{
-			if (prevComponent != null)
-			{
-				ZkCssHelper.appendStyle(prevComponent.getfLabel(),
-						"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
-			}
-		}
-		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Cell.class))
+		// Event for any area of panel user doing right click then show context
+		// related paste or else...
+		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Grid.class))
 		{
 			openCanvasContextMenu(event);
 		}
-
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
-				&& event.getTarget().getClass().equals(DMSViewerComponent.class))
+				&& (event.getTarget().getClass().equals(Cell.class) || event.getTarget().getClass().equals(Row.class)))
 		{
-			DMSViewerComp = (DMSViewerComponent) event.getTarget();
-			openContentContextMenu(DMSViewerComp);
-			
-			// show only download option on menu context if access are read-only.
+			compCellRowViewer = event.getTarget();
+			openContentContextMenu(compCellRowViewer);
+
+			// show only download option on menu context if access are
+			// read-only.
 			if (!isWindowAccess)
+			{
 				mnu_download.setDisabled(false);
+				mnu_copy.setDisabled(false);
+			}
 		}
 		else if (event.getTarget().equals(mnu_versionList))
 		{
-			new WDMSVersion(DMSViewerComp.getDMSContent());
+			new WDMSVersion(dms, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
 		}
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
-			final WUploadContent uploadContent = new WUploadContent(dirContent, true, this.getTable_ID(),
-					this.getRecord_ID());
+			final WUploadContent uploadContent = new WUploadContent(dms, dirContent, true, this.getTable_ID(), this.getRecord_ID());
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -980,7 +720,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_copy))
 		{
-			DMSClipboard.put(DMSViewerComp.getDMSContent(), true);
+			DMSClipboard.put((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), true);
 		}
 		else if (event.getTarget().equals(mnu_createLink))
 		{
@@ -988,47 +728,35 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_cut))
 		{
-			DMSClipboard.put(DMSViewerComp.getDMSContent(), false);
+			DMSClipboard.put((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), false);
 		}
 		else if (event.getTarget().equals(mnu_paste) || event.getTarget().equals(mnu_canvasPaste))
 		{
-
 			if (DMSClipboard.get() != null)
 			{
 				MDMSContent sourceContent = DMSClipboard.get();
 				MDMSContent destPasteContent = dirContent;
-				if (sourceContent.get_ID() == destPasteContent.get_ID())
+				if (destPasteContent != null && sourceContent.get_ID() == destPasteContent.get_ID())
 				{
 					FDialog.warn(0, "You cannot Paste into itself");
 				}
 				else
 				{
 					if (DMSClipboard.getIsCopy())
-					{
-						pasteCopyContent(sourceContent, destPasteContent);
-						renderViewer();
-					}
+						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, isTabViewer());
 					else
-					{
-						pasteCutContent(sourceContent, destPasteContent);
-						renderViewer();
-					}
+						dms.pasteCutContent(sourceContent, destPasteContent);
+					renderViewer();
 				}
-
 			}
 		}
 		else if (event.getTarget().equals(mnu_download))
 		{
-			File file = null;
-			file = fileStorageProvider.getFile(contentManager.getPath(dirContent));
-
-			AMedia media = new AMedia(file, "application/octet-stream", null);
-			Filedownload.save(media);
-
+			DMS_ZK_Util.downloadDocument(dms, dirContent);
 		}
 		else if (event.getTarget().equals(mnu_rename))
 		{
-			final WRenameContent renameContent = new WRenameContent(dirContent);
+			final WRenameContent renameContent = new WRenameContent(dms, dirContent);
 			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -1040,19 +768,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					}
 				}
 			});
-
 		}
 		else if (event.getTarget().equals(mnu_delete))
 		{
 			// TODO inactive DMS_content and same change in solr index
-			
+
 			Callback<Boolean> callback = new Callback<Boolean>() {
 				@Override
 				public void onCallback(Boolean result)
 				{
 					if (result)
 					{
-						deleteContent(DMSViewerComp.getDMSContent(), DMSViewerComp.getDMSAssociation());
+						dms.deleteContent((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT),
+								(MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION));
 						try
 						{
 							renderViewer();
@@ -1068,13 +796,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					}
 				}
 			};
-			
-			FDialog.ask(0, this, "Are you sure to delete " + DMSViewerComp.getDMSContent().getName() + "?", callback);
-			
+
+			FDialog.ask(0, this,
+					"Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?", callback);
+
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
-			new WDAssociationType(copyDMSContent, DMSViewerComp.getDMSContent(), getTable_ID(), getRecord_ID(), winContent);
+			new WDAssociationType(dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(),
+					getRecord_ID(), winContent);
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
@@ -1094,19 +824,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			renderBreadCrumb(event);
 		}
-		else if (Events.ON_OK.equals(event.getName())
-				|| (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass()
-						.equals(vsearchBox.getButton().getClass())))
+		else if ((Events.ON_OK.equals(event.getName()) || Events.ON_CLICK.equals(event.getName()))
+				&& event.getTarget().getClass().equals(vsearchBox.getButton().getClass()))
 		{
 			breadRow.getChildren().clear();
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);
 			lblPositionInfo.setValue(null);
-			isGenericSearch = true;
+
 			isSearch = false;
+			isGenericSearch = true;
 			renderViewer();
 		}
-		
+
 		// Disable navigation button based on "isAllowCreateDirectory" check on
 		// client info window
 		if (isTabViewer() && !isAllowCreateDirectory)
@@ -1115,688 +845,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnNext.setEnabled(false);
 		}
 
-	}
-
-	/**
-	 * This will be a soft deletion. System will only inactive the files.
-	 * @param dmsContent
-	 */
-	private void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
-	{
-		// first delete if it is link
-		if (dmsAssociation.getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
-		{
-			inActiveContentAndAssociation(null, dmsAssociation);
-		}
-		else if (dmsContent.getContentBaseType().equalsIgnoreCase(X_DMS_Content.CONTENTBASETYPE_Content))
-		{
-			if (dmsAssociation.getDMS_AssociationType_ID() == 1000000)
-			{
-				// TODO get parent dms_content
-				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(),
-						null);
-				int DMS_Association_ID = DB
-						.getSQLValue(
-								null,
-								"SELECT dms_association_id FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
-								parentContent.getDMS_Content_ID());
-
-				MDMSAssociation parentAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
-				inActiveContentAndAssociation(parentContent, parentAssociation);
-				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(parentContent);
-				for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
-				{
-					MDMSContent content = (MDMSContent) entry.getKey();
-					MDMSAssociation association = (MDMSAssociation) entry.getValue();
-					inActiveContentAndAssociation(content, association);
-				}
-			}
-			else
-			{
-				inActiveContentAndAssociation(dmsContent, dmsAssociation);
-				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(dmsContent);
-				for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
-				{
-					MDMSContent content = (MDMSContent) entry.getKey();
-					MDMSAssociation association = (MDMSAssociation) entry.getValue();
-					inActiveContentAndAssociation(content, association);
-				}
-			}
-		}
-		else if (dmsContent.getContentBaseType().equalsIgnoreCase(X_DMS_Content.CONTENTBASETYPE_Directory))
-		{
-			// Inactive Directory content and its child recursively
-			inActiveContentAndAssociation(dmsContent, dmsAssociation);
-			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(dmsContent);
-			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
-			{
-				MDMSContent content = (MDMSContent) entry.getKey();
-				MDMSAssociation association = (MDMSAssociation) entry.getValue();
-				//recursive call
-				deleteContent(content, association);
-			}
-		}
-	}
-	
-	private void inActiveContentAndAssociation(MDMSContent dmsContent, MDMSAssociation dmsAssociation){
-		if(dmsAssociation != null){
-			dmsAssociation.setIsActive(false);
-			dmsAssociation.saveEx();
-		}
-		if(dmsContent != null){
-			dmsContent.setIsActive(false);
-			dmsContent.saveEx();
-		}
-	}
-	
-	private HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent)
-	{
-
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-		String sql = "SELECT c.DMS_Content_ID, a.DMS_Association_ID FROM DMS_Content c"
-				+ " INNER JOIN DMS_Association a ON c.DMS_Content_ID = a.DMS_Content_ID "
-				+ " WHERE a.DMS_Content_Related_ID = ? AND c.IsActive='Y' AND a.IsActive='Y' ";
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, dmsContent.getDMS_Content_ID());
-			rs = pstmt.executeQuery();
-
-			if (rs != null)
-			{
-				while (rs.next())
-				{
-					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)), (new MDMSAssociation(
-							Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
-				}
-			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "getRelatedContents fetching failure: ", e);
-			throw new AdempiereException("getRelatedContents fetching failure: " + e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-
-		return map;
-	}
-
-	private String pastePhysicalCopiedFolder(MDMSContent copiedContent, MDMSContent destPasteContent)
-	{
-		File dirPath = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
-		String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-
-		File files[] = new File(newFileName).listFiles();
-
-		if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
-			newFileName = newFileName + copiedContent.getName();
-		else
-			newFileName = newFileName + spFileSeprator + copiedContent.getName();
-
-		File newFile = new File(newFileName);
-
-		if (files.length > 0)
-		{
-			for (int i = 0; i < files.length; i++)
-			{
-				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
-				{
-					if (!newFileName.contains(" - copy "))
-						newFileName = newFileName + " - copy ";
-
-					newFile = new File(newFileName);
-
-					if (newFile.exists())
-					{
-						newFileName = Utils.getUniqueFoldername(newFile.getAbsolutePath());
-						newFile = new File(newFileName);
-					}
-				}
-			}
-		}
-
-		try
-		{
-			FileUtils.copyDirectory(dirPath, newFile, DirectoryFileFilter.DIRECTORY);
-		}
-		catch (IOException e)
-		{
-			log.log(Level.SEVERE, "Copy Content Failure.", e);
-			throw new AdempiereException("Copy Content Failure." + e.getLocalizedMessage());
-		}
-
-		return newFile.getName();
-	}
-
-	private String pastePhysicalCopiedContent(MDMSContent copiedContent, MDMSContent destPasteContent, String parentName)
-	{
-		File oldFile = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(copiedContent)));
-		String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-
-		if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
-			newFileName = newFileName + copiedContent.getName();
-		else
-			newFileName = newFileName + spFileSeprator + copiedContent.getName();
-
-		File newFile = new File(newFileName);
-		File parent = new File(newFile.getParent());
-
-		File files[] = parent.listFiles();
-
-		for (int i = 0; i < files.length; i++)
-		{
-			if (newFile.getName().equals(files[i].getName()))
-			{
-				String uniqueName = newFile.getName();
-
-				if (!newFile.getName().contains(" - copy "))
-				{
-					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy ";
-					String ext = FilenameUtils.getExtension(newFile.getName());
-					newFile = new File(parent.getAbsolutePath() + spFileSeprator + uniqueName + "." + ext);
-				}
-				else
-				{
-					newFile = new File(parent.getAbsolutePath() + spFileSeprator + parentName);
-				}
-
-				if (newFile.exists())
-				{
-					uniqueName = Utils.getCopiedUniqueFilename(newFile.getAbsolutePath());
-					newFile = new File(uniqueName);
-				}
-			}
-		}
-
-		try
-		{
-			FileUtils.copyFile(oldFile, newFile);
-		}
-		catch (IOException e)
-		{
-			log.log(Level.SEVERE, "Copy Content Failure.", e);
-			throw new AdempiereException("Copy Content Failure." + e.getLocalizedMessage());
-		}
-
-		return newFile.getName();
-	} // pastePhysicalCopiedContent
-
-	private void pasteCopyContent(MDMSContent copiedContent, MDMSContent destPasteContent) throws IOException,
-			SQLException
-	{
-		if (copiedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-		{
-			int DMS_Association_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created",
-							copiedContent.getDMS_Content_ID());
-
-			String baseURL = null;
-			String renamedURL = null;
-			String contentname = null;
-
-			if (!Util.isEmpty(copiedContent.getParentURL()))
-				baseURL = contentManager.getPath(copiedContent);
-			else
-				baseURL = spFileSeprator + copiedContent.getName();
-
-			if (copiedContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-			{
-				contentname = pastePhysicalCopiedFolder(copiedContent, destPasteContent);
-			}
-			renamedURL = contentManager.getPath(destPasteContent) + spFileSeprator + copiedContent.getName();
-
-			MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), copiedContent.getDMS_Content_ID(), null);
-
-			MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
-
-			PO.copyValues(oldDMSContent, newDMSContent);
-
-			MAttributeSetInstance oldASI = null;
-			MAttributeSetInstance newASI = null;
-			if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
-			{
-				oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), null);
-				newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
-				PO.copyValues(oldASI, newASI);
-				newASI.saveEx();
-				
-				List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
-						"M_AttributeSetInstance_ID = ?", null).setParameters(
-						oldASI.getM_AttributeSetInstance_ID()).list();
-
-				for (MAttributeInstance AI : oldAI)
-				{
-					MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, null);
-					PO.copyValues(AI, newAI);
-					newAI.setM_Attribute_ID(AI.getM_Attribute_ID());
-					newAI.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
-					newAI.saveEx();
-				}
-			}
-			if (newASI != null)
-				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
-
-			newDMSContent.setParentURL(contentManager.getPath(destPasteContent));
-			newDMSContent.setName(contentname);
-			newDMSContent.saveEx();
-
-			MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
-			MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
-
-			PO.copyValues(oldDMSAssociation, newDMSAssociation);
-
-			newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
-			if (destPasteContent != null && destPasteContent.getDMS_Content_ID() > 0)
-			{
-				newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
-			}
-			else
-			{
-				newDMSAssociation.setDMS_Content_Related_ID(0);
-			}
-
-			if (isTabViewer())
-			{
-				newDMSAssociation.setAD_Table_ID(tableID);
-				newDMSAssociation.setRecord_ID(recordID);
-			}
-			newDMSAssociation.saveEx();
-
-			copyContent(copiedContent, baseURL, renamedURL, newDMSContent);
-		}
-		else
-		{
-			pasteCopyFileContent(copiedContent, destPasteContent);
-		}
-	}
-
-	private void copyContent(MDMSContent copiedContent, String baseURL, String renamedURL, MDMSContent destPasteContent)
-			throws IOException
-	{
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-
-		try
-		{
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
-			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setInt(2, copiedContent.getDMS_Content_ID());
-			pstmt.setInt(3, copiedContent.getDMS_Content_ID());
-
-			rs = pstmt.executeQuery();
-
-			while (rs.next())
-			{
-				MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-				if (oldDMSContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-				{
-					MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
-
-					PO.copyValues(oldDMSContent, newDMSContent);
-
-					MAttributeSetInstance oldASI = null;
-					MAttributeSetInstance newASI = null;
-					if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
-					{
-						oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(),
-								null);
-						newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
-						PO.copyValues(oldASI, newASI);
-						newASI.saveEx();
-
-						List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
-								"M_AttributeSetInstance_ID = ?", null).setParameters(
-								oldASI.getM_AttributeSetInstance_ID()).list();
-
-						for (MAttributeInstance AI : oldAI)
-						{
-							MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, null);
-							PO.copyValues(AI, newAI);
-							newAI.setM_Attribute_ID(AI.getM_Attribute_ID());
-							newAI.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
-							newAI.saveEx();
-						}
-					}
-					if (newASI != null)
-						newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
-
-					newDMSContent.saveEx();
-
-					MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(),
-							rs.getInt("DMS_Association_ID"), null);
-					MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
-
-					PO.copyValues(oldDMSAssociation, newDMSAssociation);
-
-					newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
-					newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
-
-					if (isTabViewer())
-					{
-						newDMSAssociation.setAD_Table_ID(tableID);
-						newDMSAssociation.setRecord_ID(recordID);
-					}
-					newDMSAssociation.saveEx();
-
-					if (!Util.isEmpty(oldDMSContent.getParentURL()))
-					{
-						if (oldDMSContent.getParentURL().startsWith(baseURL))
-						{
-							newDMSContent.setParentURL(
-									destPasteContent.getParentURL() + spFileSeprator + copiedContent.getName());
-							newDMSContent.saveEx();
-						}
-						copyContent(oldDMSContent, baseURL, renamedURL, newDMSContent);
-					}
-				}
-				else
-				{
-					pasteCopyFileContent(oldDMSContent, destPasteContent);
-				}
-			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Content renaming failure: ", e);
-			throw new AdempiereException("Content renaming failure: " + e.getLocalizedMessage());
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-
-	}
-
-	private void pasteCopyFileContent(MDMSContent oldDMSContent, MDMSContent destPasteContent) throws SQLException,
-			IOException
-	{
-		int crID = 0;
-		String fileName = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-
-		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(new MDMSContent(Env.getCtx(), oldDMSContent
-				.getDMS_Content_ID(), null));
-
-		String sqlGetAssociation = "SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association "
-				+ " WHERE DMS_Content_Related_ID=? AND DMS_AssociationType_ID=1000000 OR DMS_Content_ID=? "
-				+ " Order By DMS_Association_ID";
-		try
-		{
-			pstmt = DB.prepareStatement(sqlGetAssociation.toString(), null);
-			pstmt.setInt(1, DMS_Content_ID);
-			pstmt.setInt(2, DMS_Content_ID);
-			rs = pstmt.executeQuery();
-
-			while (rs.next())
-			{
-				String baseURL = null;
-				String renamedURL = null;
-
-				oldDMSContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-
-				if (!Util.isEmpty(oldDMSContent.getParentURL()))
-					baseURL = contentManager.getPath(oldDMSContent);
-				else
-					baseURL = spFileSeprator + oldDMSContent.getName();
-
-				baseURL = baseURL.substring(0, baseURL.lastIndexOf(spFileSeprator));
-
-				fileName = pastePhysicalCopiedContent(oldDMSContent, destPasteContent, fileName);
-				renamedURL = contentManager.getPath(destPasteContent);
-
-				MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
-
-				PO.copyValues(oldDMSContent, newDMSContent);
-
-				MAttributeSetInstance oldASI = null;
-				MAttributeSetInstance newASI = null;
-				if (oldDMSContent.getM_AttributeSetInstance_ID() > 0)
-				{
-					oldASI = new MAttributeSetInstance(Env.getCtx(), oldDMSContent.getM_AttributeSetInstance_ID(), null);
-					newASI = new MAttributeSetInstance(Env.getCtx(), 0, null);
-					PO.copyValues(oldASI, newASI);
-					newASI.saveEx();
-
-					List<MAttributeInstance> oldAI = new Query(Env.getCtx(), MAttributeInstance.Table_Name,
-							"M_AttributeSetInstance_ID = ?", null).setParameters(oldASI.getM_AttributeSetInstance_ID())
-							.list();
-
-					for (MAttributeInstance AI : oldAI)
-					{
-						MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, null);
-						PO.copyValues(AI, newAI);
-						newAI.setM_Attribute_ID(AI.getM_Attribute_ID());
-						newAI.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
-						newAI.saveEx();
-					}
-				}
-				if (newASI != null)
-					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
-
-				newDMSContent.setName(fileName);
-				newDMSContent.saveEx();
-
-				MDMSAssociation oldDMSAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-						null);
-				MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
-
-				PO.copyValues(oldDMSAssociation, newDMSAssociation);
-
-				newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
-
-				if (oldDMSAssociation.getDMS_AssociationType_ID() == 1000001)
-				{
-					crID = newDMSContent.getDMS_Content_ID();
-
-					if (destPasteContent != null && destPasteContent.getDMS_Content_ID() > 0)
-						newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
-					else
-						newDMSAssociation.setDMS_Content_Related_ID(0);
-				}
-				else
-					newDMSAssociation.setDMS_Content_Related_ID(crID);
-
-				if (isTabViewer())
-				{
-					newDMSAssociation.setAD_Table_ID(tableID);
-					newDMSAssociation.setRecord_ID(recordID);
-				}
-
-				newDMSAssociation.saveEx();
-
-				if (!Util.isEmpty(oldDMSContent.getParentURL()))
-				{
-					if (oldDMSContent.getParentURL().startsWith(baseURL))
-					{
-						newDMSContent.setParentURL(renamedURL);
-					}
-				}
-				else
-				{
-					newDMSContent.setParentURL(renamedURL);
-				}
-
-				newDMSContent.saveEx();
-				MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), newDMSContent.getDMS_MimeType_ID(), null);
-
-				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(mimeType.getMimeType());
-
-				if (thumbnailGenerator != null)
-					thumbnailGenerator.addThumbnail(newDMSContent,
-							fileStorageProvider.getFile(contentManager.getPath(oldDMSContent)), null);
-
-				String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-				newPath = newPath + spFileSeprator + oldDMSContent.getName();
-
-			}
-		}
-		catch (Exception e)
-		{
-			throw new AdempiereException(e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-	}
-
-	private void pasteCutContent(MDMSContent sourceCutContent, MDMSContent destPasteContent)
-	{
-		if (sourceCutContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-		{
-			int DMS_Association_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? Order by created ",
-							sourceCutContent.getDMS_Content_ID());
-
-			String baseURL = null;
-			String renamedURL = null;
-
-			if (!Util.isEmpty(sourceCutContent.getParentURL()))
-				baseURL = contentManager.getPath(sourceCutContent);
-			else
-				baseURL = spFileSeprator + sourceCutContent.getName();
-
-			File dirPath = new File(fileStorageProvider.getBaseDirectory(contentManager.getPath(sourceCutContent)));
-			String newFileName = fileStorageProvider.getBaseDirectory(contentManager.getPath(destPasteContent));
-
-			File files[] = new File(newFileName).listFiles();
-
-			if (newFileName.charAt(newFileName.length() - 1) == spFileSeprator.charAt(0))
-				newFileName = newFileName + sourceCutContent.getName();
-			else
-				newFileName = newFileName + spFileSeprator + sourceCutContent.getName();
-
-			File newFile = new File(newFileName);
-
-			for (int i = 0; i < files.length; i++)
-			{
-				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
-				{
-					throw new AdempiereException("Directory already exists.");
-				}
-			}
-
-			renamedURL = contentManager.getPath(destPasteContent) + spFileSeprator + sourceCutContent.getName();
-
-			Utils.renameFolder(sourceCutContent, baseURL, renamedURL);
-			dirPath.renameTo(newFile);
-
-			MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), DMS_Association_ID, null);
-			if (destPasteContent != null)
-			{
-				dmsAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
-				sourceCutContent.setParentURL(contentManager.getPath(destPasteContent));
-			}
-			else
-			{
-				dmsAssociation.setDMS_Content_Related_ID(0);
-				sourceCutContent.setParentURL(null);
-			}
-
-			sourceCutContent.saveEx();
-			dmsAssociation.saveEx();
-		}
-		else
-		{
-			int DMS_Content_ID = Utils.getDMS_Content_Related_ID(sourceCutContent);
-
-			PreparedStatement pstmt = null;
-			ResultSet rs = null;
-
-			try
-			{
-				pstmt = DB
-						.prepareStatement(
-								"SELECT DMS_Association_ID,DMS_Content_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? Order By DMS_Association_ID",
-								null);
-
-				pstmt.setInt(1, DMS_Content_ID);
-				pstmt.setInt(2, DMS_Content_ID);
-
-				rs = pstmt.executeQuery();
-
-				while (rs.next())
-				{
-					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-					MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-							null);
-
-					moveFile(dmsContent, destPasteContent);
-					if (dmsAssociation.getDMS_AssociationType_ID() == 1000001)
-					{
-						if (destPasteContent != null && destPasteContent.getDMS_Content_ID() == 0)
-						{
-							destPasteContent = null;
-						}
-
-						if (destPasteContent == null || destPasteContent.getDMS_Content_ID() == 0)
-						{
-							dmsAssociation.setDMS_Content_Related_ID(0);
-							dmsAssociation.saveEx();
-						}
-						else
-						{
-							dmsAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
-							dmsAssociation.saveEx();
-						}
-					}
-
-					dmsContent.setParentURL(contentManager.getPath(destPasteContent));
-					dmsContent.saveEx();
-
-
-				}
-			}
-			catch (SQLException e)
-			{
-				log.log(Level.SEVERE, "Content move failure.", e);
-				throw new AdempiereException("Content move failure." + e.getLocalizedMessage());
-			}
-		}
-	}
-
-	private void moveFile(MDMSContent dmsContent, MDMSContent destContent)
-	{
-		String newPath = fileStorageProvider.getBaseDirectory(contentManager.getPath(destContent));
-		newPath = newPath + spFileSeprator + dmsContent.getName();
-
-		File oldFile = new File(fileStorageProvider.getFile(contentManager.getPath(dmsContent)).getAbsolutePath());
-		File newFile = new File(newPath);
-
-		if (!newFile.exists())
-		{
-			oldFile.renameTo(newFile);
-		}
-	}
+	} // onEvent
 
 	private void renderBreadCrumb(Event event) throws IOException, URISyntaxException
 	{
 		breadCrumbEvent = (BreadCrumbLink) event.getTarget();
-
+		boolean isRoot = breadCrumbEvent.getPathId().equals("0");
 		if (isTabViewer())
 		{
-			if (breadCrumbEvent.getPathId().equals("0"))
+			if (isRoot)
 			{
-				int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? ORDER BY Created desc",
-						String.valueOf(recordID));
-				breadCrumbEvent.setPathId(String.valueOf(DMS_Content_ID));
-
+				MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+				breadCrumbEvent.setPathId(String.valueOf(mountingContent.getDMS_Content_ID()));
 			}
 
 			if (breadCrumbEvent.getImageContent() != null)
@@ -1806,7 +866,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		if (breadCrumbEvent.getPathId().equals("0"))
+		if (isRoot)
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
@@ -1814,9 +874,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnBack.setEnabled(false);
 		}
 
-		int DMS_Content_ID = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE DMS_Content_ID = ? ORDER BY Created desc ",
-				Integer.valueOf(breadCrumbEvent.getPathId()));
-
+		int DMS_Content_ID = Integer.valueOf(breadCrumbEvent.getPathId());
 		currDMSContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 
 		lblPositionInfo.setValue(currDMSContent.getName());
@@ -1829,26 +887,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			while (iterator.hasNext())
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
-				breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
-
+				breadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 				breadRow.appendChild(breadCrumbLink);
 
-				lblShowBreadCrumb = new Label();
-				lblShowBreadCrumb.setValue(" >");
-				breadRow.appendChild(new Space());
-				breadRow.appendChild(lblShowBreadCrumb);
-
 				if (Integer.valueOf(breadCrumbLink.getPathId()) == currDMSContent.getDMS_Content_ID())
-				{
-					breadRow.removeChild(lblShowBreadCrumb);
 					break;
-				}
+
+				breadRow.appendChild(new Space());
+				breadRow.appendChild(new Label(">"));
 				breadRows.appendChild(breadRow);
 				gridBreadCrumb.appendChild(breadRows);
 			}
 		}
 		renderViewer();
-	}
+	} // renderBreadCrumb
 
 	/**
 	 * @throws IOException
@@ -1856,197 +908,35 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public void renderViewer() throws IOException, URISyntaxException
 	{
-		byte[] imgByteData = null;
-		File thumbFile = null;
-
-		Rows rows = new Rows();
-		Row row = new Row();
-		MImage mImage = null;
-		AImage image = null;
-
-		viewerComponents = new ArrayList<DMSViewerComponent>();
-
-		HashMap<I_DMS_Content, I_DMS_Association> dmsContent = null;
+		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = null;
 
 		// Setting current dms content value on label
 		if (isTabViewer())
 		{
-			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;  
+			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;
 			lblPositionInfo.setValue(currContentValue);
 		}
 
 		if (isSearch)
-			dmsContent = renderSearchedContent();
+			contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent);
 		else if (isGenericSearch)
-			dmsContent = getGenericSearchedContent();
+			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
 		else
-			dmsContent = getDMSContents();
+			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent);
 
-		Components.removeAllChildren(grid);
-		for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : dmsContent.entrySet())
-		{
+		// TODO
+		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 
-			thumbFile = thumbnailProvider.getFile(entry.getKey(), "150");
+		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
+		viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 
-			if (thumbFile == null)
-			{
-				if (entry.getKey().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-				{
-					mImage = Utils.getDirThumbnail();
-				}
-				else
-				{
-					mImage = Utils.getMimetypeThumbnail(entry.getKey().getDMS_MimeType_ID());
-				}
-				imgByteData = mImage.getData();
-				if (imgByteData != null)
-					image = new AImage(entry.getKey().getName(), imgByteData);
-			}
-			else
-			{
-				image = new AImage(thumbFile);
-			}
-
-			DMSViewerComponent viewerComponent = null;
-			if (entry.getValue().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID())
-			{
-				viewerComponent = new DMSViewerComponent(entry.getKey(), image, true, entry.getValue());
-			}
-			else
-			{
-				viewerComponent = new DMSViewerComponent(entry.getKey(), image, false, entry.getValue());
-			}
-
-			viewerComponent.addEventListener(Events.ON_DOUBLE_CLICK, this);
-			viewerComponent.addEventListener(Events.ON_CLICK, this);
-			viewerComponent.addEventListener(Events.ON_RIGHT_CLICK, this);
-
-			viewerComponents.add(viewerComponent);
-
-			viewerComponent.setDheight(COMPONENT_HEIGHT);
-			viewerComponent.setDwidth(COMPONENT_WIDTH);
-
-			row.appendChild(viewerComponent);
-		}
-		row.setZclass("none");
-		// row.setWidth(row.getWidth());
-		row.setStyle("display:flex; flex-direction: row; flex-wrap: wrap; height: 100%; overflow: hidden;");
-		rows.appendChild(row);
-
-		grid.appendChild(rows);
 		tabBox.setSelectedIndex(0);
 	}
 
-	private HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent()
-	{
-		StringBuffer query = new StringBuffer();
-		if (!Util.isEmpty(vsearchBox.getTextbox().getValue(), true))
-		{
-			String inputParam = vsearchBox.getTextbox().getValue();
-			query.append("(").append(Utils.NAME).append(":*").append(inputParam).append("*").append(" OR ")
-					.append(Utils.DESCRIPTION).append(":*").append(inputParam).append("*)");
-		}
-		else
-		{
-			query.append("*:*");
-		}
-
-		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
-
-		getHierarchicalContent(hirachicalContent, currDMSContent != null ? currDMSContent.getDMS_Content_ID() : 0);
-
-		if (currDMSContent != null)
-		{
-			hirachicalContent.append(currDMSContent.getDMS_Content_ID()).append(")");
-			query.append(hirachicalContent.toString());
-		}
-		else
-		{
-			if (hirachicalContent.substring(hirachicalContent.length() - 4, hirachicalContent.length()).equals(" OR "))
-			{
-				hirachicalContent.replace(hirachicalContent.length() - 4, hirachicalContent.length(), ")");
-				query.append(hirachicalContent.toString());
-			}
-		}
-		
-		// AD_Client_id append for search client wise 
-		if (!Util.isEmpty(query.toString()))
-			query.append(" AND ");
-		
-		query.append(" AD_Client_ID:(").append(Env.getAD_Client_ID(Env.getCtx())).append(")")
-				.append(" AND Show_InActive : 'false'");
-
-		if (recordID > 0)
-			query.append(" AND Record_ID:" + recordID);
-
-		if (tableID > 0)
-			query.append(" AND AD_Table_ID:" + tableID);
-
-		List<Integer> documentList = indexSeracher.searchIndex(query.toString());
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-
-		for (Integer entry : documentList)
-		{
-			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
-
-			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
-					new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
-		}
-		return map;
-	}
-
 	/**
-	 * get all DMS Contents for rendering
+	 * Clear the grid view components
 	 */
-	private HashMap<I_DMS_Content, I_DMS_Association> getDMSContents()
-	{
-		int contentID = 0;
-
-		if (currDMSContent != null)
-			contentID = currDMSContent.getDMS_Content_ID();
-
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			// select only active records
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE, null);
-			pstmt.setInt(1,Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setInt(2, contentID);
-			pstmt.setInt(3, contentID);
-
-			rs = pstmt.executeQuery();
-
-			if (rs != null)
-			{
-				while (rs.next())
-				{
-					map.put((new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null)), (new MDMSAssociation(
-							Env.getCtx(), rs.getInt("DMS_Association_ID"), null)));
-				}
-			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Content fetching failure: ", e);
-			throw new AdempiereException("Content fetching failure: " + e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-
-		return map;
-	}
-
-	/**
-	 * clear the gridview components
-	 */
-	private void clearComponenets()
+	private void clearComponents()
 	{
 		vsearchBox.setText(null);
 		txtDocumentName.setValue(null);
@@ -2059,7 +949,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		dbUpdatedFrom.setValue(null);
 		dbUpdatedTo.setValue(null);
 		chkInActive.setChecked(false);
-		
 
 		if (m_editors != null)
 		{
@@ -2067,24 +956,23 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				editor.setValue(null);
 		}
 		Components.removeAllChildren(panelAttribute);
-	}
+	} // clearComponents
 
 	/**
 	 * open the Directory OR Content
 	 * 
-	 * @param DMSViewerComp
+	 * @param component - Cell, Row, etc
 	 * @throws IOException
 	 * @throws URISyntaxException
-	 * @throws DocumentException 
-	 * @throws com.itextpdf.text.DocumentException 
+	 * @throws DocumentException
+	 * @throws com.itextpdf.text.DocumentException
 	 */
-	private void openDirectoryORContent(DMSViewerComponent DMSViewerComp) throws IOException, URISyntaxException, DocumentException, com.itextpdf.text.DocumentException
+	private void openDirectoryORContent(Component component) throws IOException, URISyntaxException, DocumentException, com.itextpdf.text.DocumentException
 	{
-		selectedDMSContent.push(DMSViewerComp.getDMSContent());
-		
-		selectedDMSAssociation.push(DMSViewerComp.getDMSAssociation());
+		selectedDMSContent.push((MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
+		selectedDMSAssociation.push((MDMSAssociation) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION));
 
-		if (selectedDMSContent.peek().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
+		if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			currDMSContent = selectedDMSContent.pop();
 			showBreadcumb(currDMSContent);
@@ -2093,17 +981,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);
 		}
-		else if (selectedDMSContent.peek().getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Content))
+		else if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
-			File documentToPreview = null;
-
-			MDMSMimeType mimeType = new MDMSMimeType(Env.getCtx(), selectedDMSContent.peek().getDMS_MimeType_ID(), null);
-
-			documentToPreview = fileStorageProvider.getFile(contentManager.getPath(selectedDMSContent.peek()));
+			MDMSMimeType mimeType = (MDMSMimeType) selectedDMSContent.peek().getDMS_MimeType();
+			File documentToPreview = dms.getFileFromStorage(selectedDMSContent.peek());
 
 			if (documentToPreview != null)
 			{
-				boolean isPreviewError = false;
 				String name = selectedDMSContent.peek().getName();
 
 				if (name.contains("(") && name.contains(")"))
@@ -2111,22 +995,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				try
 				{
-					documentToPreview = convertToPDF(documentToPreview, mimeType);
+					documentToPreview = dms.convertToPDF(documentToPreview, mimeType);
 				}
-				catch(Exception e)
+				catch (Exception e)
 				{
 					selectedDMSContent.pop();
-					isPreviewError = true;
-					log.log(Level.SEVERE, e.getMessage() + e, e);
+					throw new AdempiereException(e);
 				}
-				
-				if (isPreviewError)
-				{
-					FDialog.warn(0, "Can't preview, please download.");
-					return;
 
-				}
-				
 				if (Utils.getContentEditor(mimeType.getMimeType()) != null)
 				{
 					Tab tabData = new Tab(name);
@@ -2134,8 +1010,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					tabs.appendChild(tabData);
 					tabBox.setSelectedTab(tabData);
 
-					WDocumentViewer documentViewer = new WDocumentViewer(tabBox, documentToPreview,
-							selectedDMSContent.peek(), tableID, recordID);
+					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID);
 					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess);
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
@@ -2145,163 +1020,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				else
 				{
-					AMedia media = new AMedia(documentToPreview, "application/octet-stream", null);
-					Filedownload.save(media);
+					DMS_ZK_Util.downloadDocument(documentToPreview);
 				}
-				// Fix for search --> download content --> back (which was navigate to home/root folder)
+				// Fix for search --> download content --> back (which was
+				// navigate to home/root folder)
 				selectedDMSContent.pop();
 			}
 			else
 			{
-				FDialog.error(0, contentManager.getPath(currDMSContent) + " Content missing in storage,");
+				FDialog.error(0, dms.getPathFromContentManager(currDMSContent) + " Content missing in storage,");
 			}
 		}
-	}
-
-	/**
-	 * Convert .docx to .pdf
-	 * convert .doc to .pdf
-	 * 
-	 * @param documentToPreview
-	 * @param mimeType
-	 * @return
-	 * @throws IOException
-	 * @throws FileNotFoundException
-	 * @throws DocumentException
-	 * @throws com.itextpdf.text.DocumentException 
-	 */
-	private File convertToPDF(File documentToPreview, MDMSMimeType mimeType)
-			throws IOException, FileNotFoundException, DocumentException, com.itextpdf.text.DocumentException
-	{
-		if (mimeType.getMimeType()
-				.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
-		{
-			XWPFDocument document = new XWPFDocument(new FileInputStream(documentToPreview));
-			File newDocPDF = File.createTempFile("Zito", "DocxToPDF");
-			OutputStream pdfFile = new FileOutputStream(newDocPDF);
-			PdfOptions options = PdfOptions.create();
-			PdfConverter.getInstance().convert(document, pdfFile, options);
-			return newDocPDF;
-		}
-		else if (mimeType.getMimeType().equals("application/msword"))
-		{
-			HWPFDocument doc = new HWPFDocument(new FileInputStream(documentToPreview));
-			WordExtractor we = new WordExtractor(doc);
-			File newDocPDF   = File.createTempFile("Zito", "DocToPDF");
-			OutputStream pdfFile = new FileOutputStream(newDocPDF);
-			String k = we.getText();
-			Document document = new Document();
-			PdfWriter.getInstance(document, pdfFile);
-			document.open();
-			document.add(new Paragraph(k));
-			document.close();
-			return newDocPDF;
-		}
-		else if (mimeType.getMimeType().equals("application/vnd.ms-excel")
-				|| mimeType.getMimeType().equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
-		{
-			String fileName = documentToPreview.getName();
-			if (fileName != null && fileName.length() > 0)
-			{
-				String extension = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
-				if ("xls".equalsIgnoreCase(extension))
-				{
-					return convertXlsToPDF(documentToPreview);
-				}
-				else if ("xlsx".equalsIgnoreCase(extension))
-				{
-					return convertXlsxToPdf(documentToPreview);
-				}
-			}
-		}
-		
-		return documentToPreview;
-	}
-
-	
-	/**
-	 * Convert xlsx file to pdf file
-	 * 
-	 * @param documentToPreview
-	 * @return
-	 * @throws IOException
-	 * @throws FileNotFoundException
-	 * @throws com.itextpdf.text.DocumentException
-	 */
-	private File convertXlsxToPdf(File documentToPreview)
-			throws IOException, FileNotFoundException, com.itextpdf.text.DocumentException
-	{
-		File newXlsxToHTML = File.createTempFile("Zito", "XlsxToHTML");
-		try
-		{
-			float pdfWidth = 1050;
-			float pdfheight = 900;
-			String sourcePath = documentToPreview.getAbsolutePath();
-			String destinationPath = newXlsxToHTML.getAbsolutePath();
-
-			// Convert .xlsx file to html
-			ConvertXlsxToPdf.convert(sourcePath, destinationPath);
-			InputStream in = new FileInputStream(new File(destinationPath));
-
-			// Convert html to xhtml
-			Tidy tidy = new Tidy();
-			File newHtmlToXhtml = File.createTempFile("Zito", "HtmlToXHtml");
-			tidy.setShowWarnings(false);
-			// tidy.setXmlTags(true);
-			tidy.setXHTML(true);
-			tidy.setMakeClean(true);
-			org.w3c.dom.Document d = tidy.parseDOM(in, null);
-			tidy.pprint(d, new FileOutputStream(newHtmlToXhtml));
-
-			// Convert xhtml to pdf
-			File newXhtmlToPdf = File.createTempFile("Zito", "XHtmlToPdf");
-			com.itextpdf.text.Document document = new com.itextpdf.text.Document();
-			Rectangle size = new Rectangle(pdfWidth, pdfheight);
-			document.setPageSize(size);
-			com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(document,
-					new FileOutputStream(newXhtmlToPdf));
-			document.open();
-
-			XMLWorkerHelper.getInstance().parseXHtml(writer, document, new FileInputStream(newHtmlToXhtml));
-			document.close();
-
-			return newXhtmlToPdf;
-		}
-		catch (InvalidFormatException | ParserConfigurationException | TransformerException e)
-		{
-			throw new AdempiereException(e);
-		}
-	}
-
-	/**
-	 * Convert xls file to pdf
-	 * 
-	 * @param documentToPreview
-	 * @return pdf file
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 * @throws DocumentException
-	 */
-	private File convertXlsToPDF(File documentToPreview) throws FileNotFoundException, IOException, DocumentException
-	{
-		InputStream in = new FileInputStream(documentToPreview);
-		ConvertXlsToPdf test = new ConvertXlsToPdf(in);
-		String html = test.getHTML();
-
-		File newXlsToPdf = File.createTempFile("zito", "XlsToPDF");
-		
-		Document document = new Document(PageSize.A4,20,20,20,20);
-		PdfWriter.getInstance(document,
-				new FileOutputStream(newXlsToPdf));
-		document.open();
-		document.addCreationDate();
-
-		HTMLWorker htmlWorker = new HTMLWorker(document);
-		htmlWorker.parse(new StringReader(html));
-		document.close();
-		
-		return newXlsToPdf;
-	}
+	} // openDirectoryORContent
 
 	/**
 	 * Navigate the Previous Directory.
@@ -2320,13 +1050,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			while (iterator.hasNext())
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
-				breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+				breadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 
 				if (currDMSContent != null && parents.size() > 1)
 				{
+					lblShowBreadCrumb = new Label(">");
 					breadRow.appendChild(breadCrumbLink);
-					lblShowBreadCrumb = new Label();
-					lblShowBreadCrumb.setValue(" >");
 					breadRow.appendChild(new Space());
 					breadRow.appendChild(lblShowBreadCrumb);
 
@@ -2341,7 +1070,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				breadRows.appendChild(breadRow);
 				gridBreadCrumb.appendChild(breadRows);
 			}
-			
+
 			if (currDMSContent == null)
 			{
 				addRootBreadCrumb();
@@ -2354,13 +1083,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		nextDMSContent = currDMSContent;
 
-		if (selectedDMSAssociation != null && !selectedDMSAssociation.isEmpty()
-				&& selectedDMSAssociation.peek().getDMS_AssociationType_ID() == Utils.getDMS_Association_Link_ID()
-				&& currDMSContent != null
+		if (selectedDMSAssociation != null && !selectedDMSAssociation.isEmpty() && Utils.isLink(selectedDMSAssociation.peek()) && currDMSContent != null
 				&& currDMSContent.getDMS_Content_ID() == selectedDMSAssociation.peek().getDMS_Content_ID())
 		{
-			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.peek().getDMS_Content_Related_ID(),
-					null);
+			currDMSContent = new MDMSContent(Env.getCtx(), selectedDMSAssociation.peek().getDMS_Content_Related_ID(), null);
 			lblPositionInfo.setValue(currDMSContent.getName());
 			if (currDMSContent.getParentURL() == null)
 				btnBack.setEnabled(true);
@@ -2369,11 +1095,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (currDMSContent != null)
 		{
-			int DMS_Content_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID IS NULL",
-							currDMSContent.getDMS_Content_ID());
+			int DMS_Content_ID = DB.getSQLValue(null,
+					"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID IS NULL",
+					currDMSContent.getDMS_Content_ID());
 
 			if (DMS_Content_ID <= 0)
 			{
@@ -2402,14 +1126,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (recordID > 0 && tableID > 0)
 		{
-			// Getting latest record if multiple dms content available
-			int id = DB.getSQLValue(null, "SELECT DMS_Content_ID FROM DMS_Content WHERE name = ? AND IsMounting = 'Y' ORDER BY created desc",
-					recordID + "");
-
+			// Getting initial mounting content for disabling back navigation
+			MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
 			if (currDMSContent == null)
 				currDMSContent = selectedDMSContent.peek();
 
-			if (currDMSContent.getDMS_Content_ID() == id)
+			if (currDMSContent.getDMS_Content_ID() == mountingContent.getDMS_Content_ID())
 			{
 				btnBack.setDisabled(true);
 				renderViewer();
@@ -2418,7 +1140,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		btnClear.setEnabled(false);
 
-	}
+	} // backNavigation
 
 	/**
 	 * Move in the Directory
@@ -2431,7 +1153,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		BreadCrumbLink breadCrumbLink = new BreadCrumbLink();
 		breadCrumbLink.setPathId(nextDMSContent.getName());
 		breadCrumbLink.setLabel(nextDMSContent.getName());
-		breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+		breadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 
 		breadRow.appendChild(new Label(" > "));
 		breadRow.appendChild(breadCrumbLink);
@@ -2448,14 +1170,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		btnNext.setEnabled(false);
 		btnBack.setEnabled(true);
-	}
+	} // directoryNavigation
 
 	/**
 	 * Make Directory
 	 */
 	private void createDirectory()
 	{
-		createDirectoryForm = new CreateDirectoryForm(currDMSContent, tableID, recordID);
+		createDirectoryForm = new WCreateDirectoryForm(dms, currDMSContent, tableID, recordID);
 
 		createDirectoryForm.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
@@ -2465,14 +1187,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				renderViewer();
 			}
 		});
-	}
+	} // createDirectory
 
 	/**
 	 * Upload Content
 	 */
 	private void uploadContent()
 	{
-		uploadContent = new WUploadContent(currDMSContent, false, tableID, recordID);
+		uploadContent = new WUploadContent(dms, currDMSContent, false, tableID, recordID);
 
 		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
@@ -2483,96 +1205,78 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		});
 		uploadContent.addEventListener(Events.ON_CLOSE, this);
-	}
+	} // uploadContent
 
 	/**
 	 * Open MenuPopup when Right click on Directory OR Content
 	 * 
-	 * @param DMSViewerCom
+	 * @param compCellRowViewer
 	 */
-	private void openContentContextMenu(final DMSViewerComponent DMSViewerCom)
+	private void openContentContextMenu(final Component compCellRowViewer)
 	{
-		dirContent = DMSViewerCom.getDMSContent();
-		contentContextMenu.setPage(DMSViewerCom.getPage());
+		dirContent = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+		contentContextMenu.setPage(compCellRowViewer.getPage());
 		copyDMSContent = DMSClipboard.get();
 
-		if (!isWindowAccess || (dirContent.isMounting()
-				&& dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)))
+		if (!isWindowAccess || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)))
 		{
-			mnu_associate.setDisabled(true);
-			mnu_copy.setDisabled(true);
-			mnu_createLink.setDisabled(true);
-			mnu_cut.setDisabled(true);
-			mnu_delete.setDisabled(true);
-			mnu_paste.setDisabled(true);
-			mnu_rename.setDisabled(true);
-			mnu_uploadVersion.setDisabled(true);
-			mnu_versionList.setDisabled(true);
-			mnu_download.setDisabled(true);
-			DMSViewerCom.setContext(contentContextMenu);
+			ctxMenuItemDisabled(true);
+
+			((XulElement) compCellRowViewer).setContext(contentContextMenu);
 			contentContextMenu.open(this, "at_pointer");
 			return;
 		}
 		else
 		{
-			mnu_delete.setDisabled(false);
-			mnu_associate.setDisabled(false);
-			mnu_copy.setDisabled(false);
-			mnu_createLink.setDisabled(false);
-			mnu_cut.setDisabled(false);
-			mnu_paste.setDisabled(false);
-			mnu_rename.setDisabled(false);
-			mnu_uploadVersion.setDisabled(false);
-			mnu_versionList.setDisabled(false);
-			mnu_download.setDisabled(false);
+			ctxMenuItemDisabled(false);
 		}
 
 		if (copyDMSContent == null)
 		{
 			mnu_paste.setDisabled(true);
-			mnu_canvasPaste.setDisabled(true);
-			mnu_createLink.setDisabled(true);
 			mnu_associate.setDisabled(true);
+			mnu_createLink.setDisabled(true);
 			mnu_versionList.setDisabled(true);
+			mnu_canvasPaste.setDisabled(true);
 			mnu_uploadVersion.setDisabled(true);
 		}
-		else if (copyDMSContent == DMSViewerCom.getDMSContent())
+		else if (copyDMSContent == dirContent)
 		{
 			mnu_paste.setDisabled(true);
-			mnu_canvasPaste.setDisabled(true);
 			mnu_associate.setDisabled(true);
 			mnu_createLink.setDisabled(true);
+			mnu_canvasPaste.setDisabled(true);
 		}
-		else if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getDMSContent().getContentBaseType()))
+		else if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
 		{
 			mnu_paste.setDisabled(false);
-			mnu_canvasPaste.setDisabled(false);
 			mnu_associate.setDisabled(true);
 			mnu_versionList.setDisabled(true);
+			mnu_canvasPaste.setDisabled(false);
 			mnu_uploadVersion.setDisabled(true);
 		}
 		else
 		{
-			mnu_createLink.setDisabled(false);
 			mnu_associate.setDisabled(false);
+			mnu_createLink.setDisabled(false);
 		}
 
-		if (X_DMS_Content.CONTENTBASETYPE_Content.equals(DMSViewerCom.getContentBaseType()))
+		if (MDMSContent.CONTENTBASETYPE_Content.equals(dirContent.getContentBaseType()))
 		{
-			mnu_versionList.setDisabled(false);
 			mnu_paste.setDisabled(true);
+			mnu_download.setDisabled(false);
+			mnu_createLink.setDisabled(true);
+			mnu_versionList.setDisabled(false);
 			mnu_canvasPaste.setDisabled(true);
 			mnu_uploadVersion.setDisabled(false);
-			mnu_createLink.setDisabled(true);
-			mnu_download.setDisabled(false);
 
-			if (copyDMSContent != null && copyDMSContent != DMSViewerCom.getDMSContent())
+			if (copyDMSContent != null && copyDMSContent != dirContent)
 				mnu_associate.setDisabled(false);
 			else
 				mnu_associate.setDisabled(true);
 		}
 
-		if (X_DMS_Content.CONTENTBASETYPE_Directory.equals(DMSViewerCom.getContentBaseType()))
+		if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
 		{
 			if (copyDMSContent != null)
 				mnu_createLink.setDisabled(false);
@@ -2586,44 +1290,58 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		mnu_copy.setDisabled(false);
-		DMSViewerCom.setContext(contentContextMenu);
+
+		((XulElement) compCellRowViewer).setContext(contentContextMenu);
 		contentContextMenu.open(this, "at_pointer");
-	}
 
-	/**
-	 * select the directory or content
-	 * 
-	 * @param DMSViewerComp
-	 */
-	private void currentCompSelection(DMSViewerComponent DMSViewerComp)
-	{
-		if (prevComponent != null)
+		if (Utils.isLink(((MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION))))
 		{
-			ZkCssHelper.appendStyle(prevComponent.getfLabel(),
-					"background-color:#ffffff; box-shadow: 7px 7px 7px #ffffff");
-		}
-
-		for (DMSViewerComponent viewerComponent : viewerComponents)
-		{
-			if (viewerComponent.getDMSContent().getDMS_Content_ID() == DMSViewerComp.getDMSContent()
-					.getDMS_Content_ID())
+			if (MDMSContent.CONTENTBASETYPE_Content.equals(dirContent.getContentBaseType()))
 			{
-				ZkCssHelper.appendStyle(DMSViewerComp.getfLabel(),
-						"background-color:#99cbff; box-shadow: 7px 7px 7px #888888");
+				mnu_cut.setDisabled(true);
+				mnu_copy.setDisabled(true);
+				mnu_paste.setDisabled(true);
+				mnu_rename.setDisabled(true);
+				mnu_delete.setDisabled(false);
+				mnu_download.setDisabled(false);
+				mnu_associate.setDisabled(true);
+				mnu_createLink.setDisabled(true);
+				mnu_versionList.setDisabled(false);
+				mnu_canvasPaste.setDisabled(true);
+				mnu_uploadVersion.setDisabled(false);
+			}
+			else if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
+			{
+				ctxMenuItemDisabled(true);
 
-				prevComponent = viewerComponent;
-				break;
+				mnu_canvasPaste.setDisabled(true);
 			}
 		}
-	}
+	} // openContentContextMenu
+
+	/**
+	 * @param isDisabled
+	 */
+	public void ctxMenuItemDisabled(boolean isDisabled)
+	{
+		mnu_cut.setDisabled(isDisabled);
+		mnu_copy.setDisabled(isDisabled);
+		mnu_paste.setDisabled(isDisabled);
+		mnu_rename.setDisabled(isDisabled);
+		mnu_delete.setDisabled(isDisabled);
+		mnu_download.setDisabled(isDisabled);
+		mnu_associate.setDisabled(isDisabled);
+		mnu_createLink.setDisabled(isDisabled);
+		mnu_versionList.setDisabled(isDisabled);
+		mnu_uploadVersion.setDisabled(isDisabled);
+	} // ctxMenuItemDisabled
 
 	private void openCanvasContextMenu(Event event)
 	{
-		Cell cell = (Cell) event.getTarget();
-
+		Component compCellRowViewer = event.getTarget();
 		dirContent = currDMSContent;
-		canvasContextMenu.setPage(cell.getPage());
-		cell.setContext(canvasContextMenu);
+		canvasContextMenu.setPage(compCellRowViewer.getPage());
+		((XulElement) compCellRowViewer).setContext(canvasContextMenu);
 
 		if (DMSClipboard.get() == null)
 		{
@@ -2638,23 +1356,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (tableID <= 0 || recordID <= 0)
 		{
-			if (DMSClipboard.get() != null && !DMSClipboard.getIsCopy())
-			{
+			if (DMSClipboard.get() == null || (DMSClipboard.get() != null && !DMSClipboard.getIsCopy()))
 				mnu_canvasPaste.setDisabled(true);
-			}
 			else
-			{
 				mnu_canvasPaste.setDisabled(false);
-			}
-
-			if (DMSClipboard.get() == null)
-			{
-				mnu_canvasPaste.setDisabled(true);
-			}
-			else
-			{
-				mnu_canvasPaste.setDisabled(false);
-			}
 		}
 
 		if (currDMSContent != null)
@@ -2667,512 +1372,213 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		canvasContextMenu.open(this, "at_pointer");
-	}
+	} // openCanvasContextMenu
 
+	// TODO Need check for refactoring
+	/**
+	 * @param DMSContent
+	 * @param isDir
+	 */
 	private void linkCopyDocument(MDMSContent DMSContent, boolean isDir)
 	{
-		boolean isDocPresent = false;
+		String warnMsg = dms.createLink(DMSContent, currDMSContent, DMSClipboard.get(), isDir, tableID, recordID);
+		if (!Util.isEmpty(warnMsg, true))
+			FDialog.warn(0, warnMsg);
 
-		if (DMSClipboard.get() == null)
+		try
 		{
-			return;
+			renderViewer();
 		}
-		
-		if (DMSContent.get_ID() == DMSClipboard.get().get_ID())
+		catch (Exception e)
 		{
-			FDialog.warn(0, "You cannot Link into itself");
-			return;
+			log.log(Level.SEVERE, "Render content problem.", e);
+			throw new AdempiereException("Render content problem: " + e);
 		}
-
-		// IF DMS Tab
-		if (isTabViewer())
-		{
-			int DMS_Association_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID = ? AND AD_Table_ID = ? AND Record_ID = ?",
-							DMSClipboard.get().getDMS_Content_ID(), Utils.getDMS_Association_Record_ID(), tableID,
-							recordID);
-
-			if (DMS_Association_ID == -1)
-			{
-				MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
-				DMSassociation.setDMS_Content_ID(DMSClipboard.get().getDMS_Content_ID());
-
-				int DMS_Content_Related_ID = DB
-						.getSQLValue(
-								null,
-								"SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? "
-										+ "AND DMS_AssociationType_ID IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE UPPER(Name) = UPPER('Parent')",
-								DMSClipboard.get().getDMS_Content_ID());
-
-				if (DMS_Content_Related_ID != 0)
-					DMSassociation.setDMS_Content_Related_ID(DMS_Content_Related_ID);
-				else
-					DMSassociation.setDMS_Content_Related_ID(currDMSContent.getDMS_Content_ID());
-
-				DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Record_ID());
-				DMSassociation.setRecord_ID(recordID);
-				DMSassociation.setAD_Table_ID(tableID);
-				DMSassociation.saveEx();
-
-				try
-				{
-					renderViewer();
-
-					int DMS_Content_ID = DMSassociation.getDMS_Content_Related_ID();
-
-					if (DMS_Content_ID <= 0)
-						DMS_Content_ID = DMSassociation.getDMS_Content_ID();
-					else
-					{
-						MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-
-						if (dmsContent.getContentBaseType().equals(X_DMS_Content.CONTENTBASETYPE_Directory))
-							DMS_Content_ID = DMSassociation.getDMS_Content_ID();
-						else
-							DMS_Content_ID = DMSassociation.getDMS_Content_Related_ID();
-					}
-
-					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-
-					// Here currently we can not able to move index creation logic in model validator
-					// TODO : In future, will find approaches for move index creation logic
-					indexSeracher.indexContent(Utils.createIndexMap(dmsContent, DMSassociation));
-				}
-				catch (Exception e)
-				{
-					log.log(Level.SEVERE, "Render content problem.", e);
-					throw new AdempiereException("Render content problem: " + e);
-				}
-			}
-			else
-			{
-				FDialog.warn(0, "Document already associated.");
-			}
-
-			return;
-		}
-
-		isDocPresent = isDoumentPresent(DMSContent, isDir);
-		if (!isDocPresent)
-		{
-			MDMSAssociation DMSassociation = new MDMSAssociation(Env.getCtx(), 0, null);
-			DMSassociation.setDMS_Content_ID(DMSClipboard.get().getDMS_Content_ID());
-			if (DMSContent != null)
-				DMSassociation.setDMS_Content_Related_ID(DMSContent.getDMS_Content_ID());
-			DMSassociation.setDMS_AssociationType_ID(Utils.getDMS_Association_Link_ID());
-
-			DMSassociation.saveEx();
-
-			try
-			{
-				renderViewer();
-			}
-			catch (Exception e)
-			{
-				log.log(Level.SEVERE, "Render content problem.", e);
-				throw new AdempiereException("Render content problem: " + e);
-			}
-		}
-		else
-		{
-			FDialog.warn(0, "Document already exists.");
-		}
-	}
-
-	private boolean isDoumentPresent(MDMSContent DMSContent, boolean isDir)
-	{
-		StringBuilder query = new StringBuilder();
-		query.append("SELECT count(DMS_Content_ID) FROM DMS_Association where DMS_Content_ID = ");
-		query.append(DMSClipboard.get().getDMS_Content_ID());
-
-		if (currDMSContent == null && !isDir)
-		{
-			query.append(" AND DMS_Content_Related_ID IS NULL");
-		}
-		else
-		{
-			query.append(" AND DMS_Content_Related_ID = ").append(DMSContent.getDMS_Content_ID());
-		}
-
-		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
-	}
+	} // linkCopyDocument
 
 	private HashMap<String, List<Object>> getQueryParamas()
 	{
 		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
-		List<Object> value = new ArrayList<Object>();
 
 		if (!Util.isEmpty(txtDocumentName.getValue(), true))
-		{
-			value.add("*" + txtDocumentName.getValue().toLowerCase() + "*");
-			params.put(Utils.NAME, value);
-
-		}
+			setSearchParams(DMSConstant.NAME, "*" + txtDocumentName.getValue().toLowerCase() + "*", null, params);
 
 		if (!Util.isEmpty(txtDescription.getValue(), true))
-		{
-			value = new ArrayList<Object>();
-			value.add("*" + txtDescription.getValue().toLowerCase() + "*");
-			params.put(Utils.DESCRIPTION, value);
-		}
+			setSearchParams(DMSConstant.DESCRIPTION, "*" + txtDescription.getValue().toLowerCase().trim() + "*", null, params);
 
+		//
 		if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() != null)
 		{
 			if (dbCreatedFrom.getValue().after(dbCreatedTo.getValue()))
 				throw new WrongValueException(dbCreatedFrom, "Invalid Date Range");
 			else
-			{
-				value = new ArrayList<Object>();
-				value.add(dateFormat.format(dbCreatedFrom.getValue()));
-				value.add(dateFormat.format(dbCreatedTo.getValue()));
-				params.put(Utils.CREATED, value);
-			}
+				setSearchParams(DMSConstant.CREATED, dbCreatedFrom.getValue(), dbCreatedTo.getValue(), params);
 		}
 		else if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() == null)
-		{
-			value = new ArrayList<Object>();
-			value.add(dateFormat.format(dbCreatedFrom.getValue()));
-			value.add("*");
-			params.put(Utils.CREATED, value);
-		}
+			setSearchParams(DMSConstant.CREATED, dbCreatedFrom.getValue(), "*", params);
 		else if (dbCreatedTo.getValue() != null && dbCreatedFrom.getValue() == null)
-		{
-			value = new ArrayList<Object>();
-			value.add("*");
-			value.add(dateFormat.format(dbCreatedTo.getValue()));
-			params.put(Utils.CREATED, value);
-		}
+			setSearchParams(DMSConstant.CREATED, "*", dbCreatedTo.getValue(), params);
 
+		//
 		if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() != null)
 		{
 			if (dbUpdatedFrom.getValue().after(dbUpdatedTo.getValue()))
 				throw new WrongValueException(dbUpdatedFrom, "Invalid Date Range");
 			else
-			{
-				value = new ArrayList<Object>();
-				value.add(dateFormat.format(dbUpdatedFrom.getValue()));
-				value.add(dateFormat.format(dbUpdatedTo.getValue()));
-				params.put(Utils.UPDATED, value);
-			}
-
+				setSearchParams(DMSConstant.UPDATED, dbUpdatedFrom.getValue(), dbUpdatedTo.getValue(), params);
 		}
 		else if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() == null)
-		{
-			value = new ArrayList<Object>();
-			value.add(dateFormat.format(dbUpdatedFrom.getValue()));
-			value.add("*");
-			params.put(Utils.UPDATED, value);
-		}
+			setSearchParams(DMSConstant.UPDATED, dbUpdatedFrom.getValue(), "*", params);
 		else if (dbUpdatedTo.getValue() != null && dbUpdatedFrom.getValue() == null)
-		{
-			value = new ArrayList<Object>();
-			value.add("*");
-			value.add(dateFormat.format(dbUpdatedTo.getValue()));
-			params.put(Utils.UPDATED, value);
-		}
+			setSearchParams(DMSConstant.UPDATED, "*", dbUpdatedTo.getValue(), params);
 
 		if (lstboxCreatedBy.getValue() != null)
-		{
-			value = new ArrayList<Object>();
-			value.add(lstboxCreatedBy.getValue());
-			params.put(Utils.CREATEDBY, value);
-		}
+			setSearchParams(DMSConstant.CREATEDBY, lstboxCreatedBy.getValue(), null, params);
 
 		if (lstboxUpdatedBy.getValue() != null)
-		{
-			value = new ArrayList<Object>();
-			value.add(lstboxUpdatedBy.getValue());
-			params.put(Utils.UPDATEDBY, value);
-		}
+			setSearchParams(DMSConstant.UPDATEDBY, lstboxUpdatedBy.getValue(), null, params);
 
 		// if chkInActive = true, display all files
 		// if chkInActive = false, display only active files
 		if (chkInActive != null)
-		{
-			value = new ArrayList<Object>();
-			value.add(chkInActive.isChecked());
-			if (chkInActive.isChecked())
-			{
-				value.add(!chkInActive.isChecked());
-			}
-			params.put(Utils.SHOW_INACTIVE, value);
-		}
-		
+			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false : null, params);
+
+		//
 		if (lstboxContentType.getValue() != null)
 		{
-
-			value = new ArrayList<Object>();
-			value.add(lstboxContentType.getValue());
-			params.put(Utils.CONTENTTYPE, value);
+			setSearchParams(DMSConstant.CONTENTTYPE, lstboxContentType.getValue(), null, params);
 
 			for (WEditor editor : m_editors)
 			{
-				//if (editor.getValue() != null && editor.getValue() != "")
-				//{
-					int displayType = editor.getGridField().getDisplayType();
-					String compName = null;
+				String compName = null;
+				int dt = editor.getGridField().getDisplayType();
 
-					if (displayType == DisplayType.Search || displayType == DisplayType.Table)
-						compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
-					else
-						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
+				if (dt == DisplayType.Search || dt == DisplayType.Table || dt == DisplayType.List)
+					compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
+				else
+					compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
 
-					compName = compName.replaceAll("/", "");
+				compName = compName.replaceAll("/", "");
 
-					if (displayType == DisplayType.Number || displayType == DisplayType.Integer
-							|| displayType == DisplayType.Quantity || displayType == DisplayType.Amount
-							|| displayType == DisplayType.CostPrice)
+				Object from = null;
+				Object to = null;
+
+				if (dt == DisplayType.Number || dt == DisplayType.Integer || dt == DisplayType.Quantity || dt == DisplayType.Amount
+						|| dt == DisplayType.CostPrice)
+				{
+					NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName).getComponent();
+					NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to").getComponent();
+
+					if (fromNumBox.getValue() != null && toNumBox.getValue() != null)
 					{
-						NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName);
-						NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to");
-
-						if (fromNumBox.getValue() != null && toNumBox.getValue() != null)
+						if (dt == DisplayType.Number)
 						{
-							value = new ArrayList<Object>();
-							
-							if(displayType == DisplayType.Number)
-							{
-								value.add(fromNumBox.getValue().doubleValue());
-								value.add(toNumBox.getValue().doubleValue());	
-							}
-							else
-							{
-								value.add(fromNumBox.getValue());
-								value.add(toNumBox.getValue());
-							}
-							params.put(compName, value);
+							from = fromNumBox.getValue().doubleValue();
+							to = toNumBox.getValue().doubleValue();
 						}
-						else if (fromNumBox.getValue() != null && toNumBox.getValue() == null)
-						{
-							value = new ArrayList<Object>();
-							
-							if(displayType == DisplayType.Number)
-							{
-								value.add(fromNumBox.getValue().doubleValue());
-							}
-							else
-							{
-								value.add(fromNumBox.getValue());
-							}
-							value.add("*");
-							params.put(compName, value);
-						}
-						else if (fromNumBox.getValue() == null && toNumBox.getValue() != null)
-						{
-							value = new ArrayList<Object>();
-							value.add("*");
-							if(displayType == DisplayType.Number)
-							{
-								value.add(toNumBox.getValue().doubleValue());
-							}
-							else
-							{
-								value.add(toNumBox.getValue());
-							}
-							params.put(compName, value);
-						}
-					}
-					else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime
-							|| displayType == DisplayType.Time)
-					{
-
-						if (displayType == DisplayType.Date)
-						{
-							Datebox fromDate = (Datebox) ASI_Value.get(compName);
-							Datebox toDate = (Datebox) ASI_Value.get(compName + "to");
-
-							if (fromDate.getValue() != null && toDate.getValue() != null)
-							{
-								if (fromDate.getValue().after(toDate.getValue()))
-								{
-									Clients.scrollIntoView(fromDate);
-									throw new WrongValueException(fromDate, "Invalid Date Range");
-								}
-								else
-								{
-									value = new ArrayList<Object>();
-									value.add(dateFormat.format(fromDate.getValue()));
-									value.add(dateFormat.format(toDate.getValue()));
-									params.put(compName, value);
-								}
-							}
-							else if (fromDate.getValue() != null && toDate.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add(dateFormat.format(fromDate.getValue()));
-								value.add("*");
-								params.put(compName, value);
-							}
-							else if (toDate.getValue() != null && fromDate.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add("*");
-								value.add(dateFormat.format(toDate.getValue()));
-								params.put(compName, value);
-							}
-						}
-						else if (displayType == DisplayType.DateTime)
-						{
-							DatetimeBox fromDatetime = (DatetimeBox) ASI_Value.get(compName);
-							DatetimeBox toDatetime = (DatetimeBox) ASI_Value.get(compName + "to");
-
-							if (fromDatetime.getValue() != null && toDatetime.getValue() != null)
-							{
-								if (fromDatetime.getValue().after(toDatetime.getValue()))
-									throw new WrongValueException(fromDatetime, "Invalid Date Range");
-								else
-								{
-									value = new ArrayList<Object>();
-									value.add(dateFormat.format(fromDatetime.getValue()));
-									value.add(dateFormat.format(toDatetime.getValue()));
-									params.put(compName, value);
-								}
-							}
-							else if (fromDatetime.getValue() != null && toDatetime.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add(dateFormat.format(fromDatetime.getValue()));
-								value.add("*");
-								params.put(compName, value);
-							}
-							else if (toDatetime.getValue() != null && fromDatetime.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add("*");
-								value.add(dateFormat.format(toDatetime.getValue()));
-								params.put(compName, value);
-							}
-
-						}
-						else if (displayType == DisplayType.Time)
-						{
-							Timebox timeboxFrom = (Timebox) ASI_Value.get(compName);
-							Timebox timeboxTo = (Timebox) ASI_Value.get(compName + "to");
-
-							if (timeboxFrom.getValue() != null && timeboxTo.getValue() != null)
-							{
-								if (timeboxFrom.getValue().after(timeboxTo.getValue()))
-									throw new WrongValueException(timeboxFrom, "Invalid Date Range");
-								else
-								{
-									value = new ArrayList<Object>();
-									value.add(dateFormat.format(timeboxFrom.getValue()));
-									value.add(dateFormat.format(timeboxTo.getValue()));
-									params.put(compName, value);
-								}
-							}
-							else if (timeboxFrom.getValue() != null && timeboxTo.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add(dateFormat.format(timeboxFrom.getValue()));
-								value.add("*");
-								params.put(compName, value);
-							}
-							else if (timeboxTo.getValue() != null && timeboxFrom.getValue() == null)
-							{
-								value = new ArrayList<Object>();
-								value.add("*");
-								value.add(dateFormat.format(timeboxTo.getValue()));
-								params.put(compName, value);
-							}
-
-						}
-					}
-					else if (displayType == DisplayType.YesNo)
-					{
-						value = new ArrayList<Object>();
-
-						if ((boolean) editor.getValue())
-							value.add("Y");
 						else
-							value.add("N");
-
-						params.put(compName, value);
-					}
-					else if (displayType == DisplayType.String || displayType == DisplayType.Text)
-					{
-						if(!Util.isEmpty(editor.getValue().toString(), true))
 						{
-						value = new ArrayList<Object>();
-						value.add(editor.getValue().toString().toLowerCase());
-						params.put(compName, value);
+							from = fromNumBox.getValue();
+							to = toNumBox.getValue();
 						}
 					}
-					else if (!Util.isEmpty(editor.getDisplay()))
+					else if (fromNumBox.getValue() != null && toNumBox.getValue() == null)
 					{
-						value = new ArrayList<Object>();
-						value.add(editor.getValue());
-						params.put(compName, value);
+						if (dt == DisplayType.Number)
+							from = fromNumBox.getValue().doubleValue();
+						else
+							from = fromNumBox.getValue();
+						to = "*";
 					}
-				//}
+					else if (fromNumBox.getValue() == null && toNumBox.getValue() != null)
+					{
+						from = "*";
+						if (dt == DisplayType.Number)
+							to = toNumBox.getValue().doubleValue();
+						else
+							to = toNumBox.getValue();
+					}
+				}
+				// Component:Date-Datebox, DateTime-DatetimeBox, Time-Timebox
+				else if (dt == DisplayType.Date || dt == DisplayType.DateTime || dt == DisplayType.Time)
+				{
+					WEditor dataFrom = (WEditor) ASI_Value.get(compName);
+					WEditor dataTo = (WEditor) ASI_Value.get(compName + "to");
+
+					if (dataFrom.getValue() != null && dataTo.getValue() != null)
+					{
+						if (((Date) dataFrom.getValue()).after((Date) dataTo.getValue()))
+						{
+							Clients.scrollIntoView((Component) dataFrom);
+							throw new WrongValueException((Component) dataFrom, "Invalid Date Range");
+						}
+						else
+						{
+							from = dataFrom.getValue();
+							to = dataTo.getValue();
+						}
+					}
+					else if (dataFrom.getValue() != null && dataTo.getValue() == null)
+					{
+						from = dataFrom.getValue();
+						to = "*";
+					}
+					else if (dataTo.getValue() != null && dataFrom.getValue() == null)
+					{
+						from = "*";
+						to = dataTo.getValue();
+					}
+				}
+				else if (dt == DisplayType.YesNo)
+				{
+					from = ((boolean) editor.getValue() ? "Y" : "N");
+					to = null;
+				}
+				else if (dt == DisplayType.String || dt == DisplayType.Text)
+				{
+					if (!Util.isEmpty(editor.getValue().toString(), true))
+					{
+						from = editor.getValue().toString().toLowerCase();
+						to = null;
+					}
+				}
+				else if (!Util.isEmpty(editor.getDisplay()))
+				{
+					from = editor.getValue();
+					to = null;
+				}
+
+				//
+				if (from != null || to != null)
+					setSearchParams(compName, from, to, params);
 			}
 		}
 
 		if (tableID > 0)
-		{
-			value = new ArrayList<Object>();
-			value.add(tableID);
-			params.put(Utils.AD_Table_ID, value);
-		}
+			setSearchParams(DMSConstant.AD_Table_ID, tableID, null, params);
 
 		if (recordID > 0)
-		{
-			value = new ArrayList<Object>();
-			value.add(recordID);
-			params.put(Utils.RECORD_ID, value);
-		}
+			setSearchParams(DMSConstant.RECORD_ID, recordID, null, params);
 
 		return params;
-	}
+	} // getQueryParamas
 
-	private HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent()
+	private void setSearchParams(String searchAttributeName, Object data, Object data2, HashMap<String, List<Object>> params)
 	{
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-		List<Integer> documentList = null;
+		ArrayList<Object> value = new ArrayList<Object>();
 
-		HashMap<String, List<Object>> params = getQueryParamas();
-		String query = indexSeracher.buildSolrSearchQuery(params);
+		if (data instanceof Date || data instanceof Timestamp)
+			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data));
+		else if (data != null)
+			value.add(data);
 
-		// AD_Client_id append for search client wise
-		if (!Util.isEmpty(query))
-			query += " AND ";
+		if (data2 instanceof Date || data2 instanceof Timestamp)
+			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data2));
+		else if (data2 != null)
+			value.add(data2);
 
-		query += "AD_Client_ID :(" + (Env.getAD_Client_ID(Env.getCtx()) + ")");
-
-		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
-
-		getHierarchicalContent(hirachicalContent, currDMSContent != null ? currDMSContent.getDMS_Content_ID() : 0);
-
-		if (currDMSContent != null)
-		{
-			hirachicalContent.append(currDMSContent.getDMS_Content_ID()).append(")");
-			query += " " + hirachicalContent.toString();
-		}
-		else
-		{
-			if (hirachicalContent.substring(hirachicalContent.length() - 4, hirachicalContent.length()).equals(" OR "))
-			{
-				hirachicalContent.replace(hirachicalContent.length() - 4, hirachicalContent.length(), ")");
-				query += " " + hirachicalContent.toString();
-			}
-		}
-
-		documentList = indexSeracher.searchIndex(query);
-
-		for (Integer entry : documentList)
-		{
-			List<Object> latestversion = DB.getSQLValueObjectsEx(null, SQL_LATEST_VERSION, entry, entry);
-			
-			if (latestversion != null)
-			{
-				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null),
-						new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestversion.get(1)).intValue(), null));
-			}
-		}
-		return map;
-	}
+		params.put(searchAttributeName, value);
+	} // setSearchParams
 
 	@Override
 	public void valueChange(ValueChangeEvent event)
@@ -3181,23 +1587,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			Components.removeAllChildren(panelAttribute);
 
-			Grid gridView = GridFactory.newGridLayout();
-
-			gridView.setHeight("100%");
-
 			Columns columns = new Columns();
-
-			Column column = new Column();
-			columns.appendChild(column);
-
-			column = new Column();
-			columns.appendChild(column);
-
-			column = new Column();
-			columns.appendChild(column);
+			columns.appendChild(new Column());
+			columns.appendChild(new Column());
+			columns.appendChild(new Column());
 
 			Rows rows = new Rows();
 
+			Grid gridView = GridFactory.newGridLayout();
+			gridView.setHeight("100%");
 			gridView.appendChild(rows);
 			gridView.appendChild(columns);
 
@@ -3209,109 +1607,75 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				for (WEditor editor : m_editors)
 				{
-					Row row = new Row();
-					rows.appendChild(row);
-
-					int displayType = editor.getGridField().getDisplayType();
 					String compName = null;
+					int dt = editor.getGridField().getDisplayType();
 
-					if (displayType == DisplayType.Search || displayType == DisplayType.Table)
+					if (dt == DisplayType.Search || dt == DisplayType.Table)
 						compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
 					else
 						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
-
 					compName = compName.replaceAll("/", "");
 
-					if (displayType == DisplayType.Number || displayType == DisplayType.Integer
-							|| displayType == DisplayType.Quantity || displayType == DisplayType.Amount
-							|| displayType == DisplayType.CostPrice)
-					{
-						NumberBox numBox = new NumberBox(false);
+					Row row = rows.newRow();
+					row.appendChild(editor.getLabel());
 
-						row.appendChild(editor.getLabel());
+					if (dt == DisplayType.Number || dt == DisplayType.Integer || dt == DisplayType.Quantity || dt == DisplayType.Amount
+							|| dt == DisplayType.CostPrice)
+					{
+						WNumberEditor numBox = new WNumberEditor(compName + "to", false, false, true, dt, "SB");
 						row.appendChild(editor.getComponent());
-						row.appendChild(numBox);
+						row.appendChild(numBox.getComponent());
 
-						ASI_Value.put(compName, editor.getComponent());
+						ASI_Value.put(compName, editor);
 						ASI_Value.put(compName + "to", numBox);
-
 					}
-
-					else if (displayType == DisplayType.Date || displayType == DisplayType.DateTime
-							|| displayType == DisplayType.Time)
+					// Component:Date-Datebox, DateTime-DatetimeBox,
+					// Time-Timebox
+					else if (dt == DisplayType.Date || dt == DisplayType.DateTime || dt == DisplayType.Time)
 					{
+						WEditor compTo = null;
 
-						if (displayType == DisplayType.Date)
+						if (dt == DisplayType.Date)
 						{
-							Datebox dateBox = new Datebox();
-							dateBox.setName(compName + "to");
-							row.appendChild(editor.getLabel());
+							compTo = new WDateEditor(compName + "to", false, false, true, "");
 							row.appendChild(editor.getComponent());
-							row.appendChild(dateBox);
-
-							ASI_Value.put(compName, editor.getComponent());
-							ASI_Value.put(dateBox.getName(), dateBox);
+							row.appendChild(compTo.getComponent());
 						}
-						else if (displayType == DisplayType.Time)
+						else if (dt == DisplayType.Time)
 						{
-							Timebox timebox = new Timebox();
-							timebox.setFormat("h:mm:ss a");
-							timebox.setWidth("100%");
-							timebox.setName(compName + "to");
-							row.appendChild(editor.getLabel());
+							compTo = new WTimeEditor(compName + "to", false, false, true, "");
 							row.appendChild(editor.getComponent());
-							row.appendChild(timebox);
-
-							ASI_Value.put(compName, editor.getComponent());
-							ASI_Value.put(timebox.getName(), timebox);
+							row.appendChild(compTo.getComponent());
+							((Timebox) compTo.getComponent()).setFormat("h:mm:ss a");
+							((Timebox) compTo.getComponent()).setWidth("100%");
 						}
-						else if (displayType == DisplayType.DateTime)
+						else if (dt == DisplayType.DateTime)
 						{
-							DatetimeBox datetimeBox = new DatetimeBox();
-
-							Cell cell = new Cell();
-							cell.setColspan(2);
-
-							row.appendChild(editor.getLabel());
-							cell.appendChild(editor.getComponent());
-							row.appendChild(cell);
-
-							ASI_Value.put(compName, editor.getComponent());
-
-							row = new Row();
-							rows.appendChild(row);
-
+							compTo = new WDatetimeEditor(compName, false, false, true, "");
+							row.appendCellChild(editor.getComponent(), 2);
+							row = rows.newRow();
 							row.appendChild(new Space());
-							cell = new Cell();
-							cell.setColspan(2);
-							cell.appendChild(datetimeBox);
-							row.appendChild(cell);
-
-							ASI_Value.put(compName + "to", datetimeBox);
+							row.appendCellChild(compTo.getComponent(), 2);
 						}
+						ASI_Value.put(compName, editor);
+						ASI_Value.put(compName + "to", compTo);
 					}
 					else
 					{
-						Cell cell = new Cell();
-						cell.setColspan(2);
-						row.appendChild(editor.getLabel());
-						cell.appendChild(editor.getComponent());
-						row.appendChild(cell);
-
-						ASI_Value.put(editor.getLabel().getValue(), editor.getComponent());
+						row.appendCellChild(editor.getComponent(), 2);
+						ASI_Value.put(editor.getLabel().getValue(), editor);
 					}
 				}
 				panelAttribute.appendChild(gridView);
 			}
 		}
-	}
+	} // valueChange
 
 	private void showBreadcumb(MDMSContent breadcumbContent)
 	{
 		Components.removeAllChildren(gridBreadCrumb);
 
-		lblShowBreadCrumb = new Label();
-		lblShowBreadCrumb.setValue(" > ");
+		lblShowBreadCrumb = new Label(">");
 		breadRow.appendChild(new Space());
 		breadRow.appendChild(lblShowBreadCrumb);
 
@@ -3320,12 +1684,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		breadCrumbLink.addEventListener(Events.ON_CLICK, this);
 		// breadCrumbLink.addEventListener(Events.ON_MOUSE_OVER, this);
 		breadCrumbLink.setLabel(breadcumbContent.getName());
-		breadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+		breadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 
 		breadRow.appendChild(breadCrumbLink);
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
-	}
+	} // showBreadcumb
 
 	public List<BreadCrumbLink> getParentLinks()
 	{
@@ -3338,6 +1702,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return parents;
 	}
 
+	// TODO Refactor method by passing table & record id
 	public void addRootBreadCrumb()
 	{
 		BreadCrumbLink rootBreadCrumbLink = new BreadCrumbLink();
@@ -3345,57 +1710,27 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		rootBreadCrumbLink.setImageContent(Utils.getImage("Home24.png"));
 		rootBreadCrumbLink.setPathId(String.valueOf(0));
 		rootBreadCrumbLink.addEventListener(Events.ON_CLICK, this);
-		rootBreadCrumbLink.setStyle("font-weight: bold; font-size: small; padding-left: 15px; color: dimgray;");
+		rootBreadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
 
 		breadRow.appendChild(rootBreadCrumbLink);
-		lblShowBreadCrumb = new Label();
-		// lblShowBreadCrumb.setValue(" > ");
-		breadRow.appendChild(new Space());
-		breadRow.appendChild(lblShowBreadCrumb);
-
+		breadRow.appendChild(new Label());
 		breadRows.appendChild(breadRow);
 		gridBreadCrumb.appendChild(breadRows);
-	}
+	} // addRootBreadCrumb
 
-	private void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID)
+	/**
+	 * Get Current Toggle Action
+	 * 
+	 * @return Toggle Action like Panel, List, etc
+	 */
+	public String getCurrToggleAction()
 	{
-		PreparedStatement pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
-		ResultSet rs = null;
-		try
-		{
-			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setInt(2, DMS_Content_ID);
-			pstmt.setInt(3, DMS_Content_ID);
-			rs = pstmt.executeQuery();
-
-			while (rs.next())
-			{
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-
-				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-					getHierarchicalContent(hierarchicalContent, dmsContent.getDMS_Content_ID());
-				else
-				{
-					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-							null);
-					hierarchicalContent.append(association.getDMS_Content_ID() + " OR ");
-
-					if (association.getDMS_Content_ID() != dmsContent.getDMS_Content_ID())
-						hierarchicalContent.append(dmsContent.getDMS_Content_ID() + " OR ");
-				}
-			}
-
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Fail to get hierarchical Content.", e);
-			throw new AdempiereException("Fail to get hierarchical Content: " + e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			pstmt = null;
-			rs = null;
-		}
+		return currThumbViewerAction;
 	}
+
+	public Row getBreadRow()
+	{
+		return breadRow;
+	}
+
 }

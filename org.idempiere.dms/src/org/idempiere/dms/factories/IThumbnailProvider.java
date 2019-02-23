@@ -33,4 +33,6 @@ public interface IThumbnailProvider
 
 	public String getThumbDirPath(I_DMS_Content dms_content);
 
+	public String getThumbPath(I_DMS_Content content, String size);
+
 }

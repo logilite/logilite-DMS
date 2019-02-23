@@ -15,7 +15,6 @@ package org.idempiere.dms.storage;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Panel;
@@ -63,11 +62,9 @@ public class ImageContentEditor extends Panel implements IContentEditor
 	@Override
 	public Panel initPanel()
 	{
-		this.setHeight("99%");
-		this.setWidth("99%");
+		this.setHeight("100%");
+		this.setWidth("100%");
 		this.setStyle("overflow: auto; -webkit-overflow-scrolling: touch;");
-
-		Iframe iframeContentPriview = new Iframe();
 
 		AMedia media = null;
 
@@ -77,17 +74,15 @@ public class ImageContentEditor extends Panel implements IContentEditor
 		}
 		catch (FileNotFoundException e)
 		{
-			log.log(Level.SEVERE, "Document cannot be displayed:" + e.getLocalizedMessage());
 			throw new AdempiereException("Document cannot be displayed:" + e.getLocalizedMessage());
 		}
 
+		Iframe iframeContentPriview = new Iframe();
 		iframeContentPriview.setContent(media);
 		iframeContentPriview.setWidth("100%");
-		iframeContentPriview.setHeight("100%");
-
+		iframeContentPriview.setHeight("98%");
 		this.appendChild(iframeContentPriview);
 
 		return this;
-	}
-
+	} // initPanel
 }

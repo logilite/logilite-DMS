@@ -49,5 +49,7 @@ Service-Component: OSGI-INF/*.xml
 Export-Package: com.lowagie.text,
  com.lowagie.text.pdf,
  com.lowagie.text.pdf.codec,
+ org.idempiere.dms,
+ org.idempiere.dms.constant,
  org.idempiere.dms.factories,
  org.idempiere.model
