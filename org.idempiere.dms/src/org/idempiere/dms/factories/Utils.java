@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -354,28 +353,20 @@ public class Utils
 	public static int getMimeTypeID(File file)
 	{
 		int dmsMimeType_ID = -1;
-
-		if (file != null && getFileMimeType(file) != null)
-			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE UPPER(MimeType) = '" + getFileMimeType(file).toUpperCase()
-					+ "'");
+		String sql = "SELECT DMS_MimeType_ID FROM DMS_MimeType ";
+		if (file != null)
+		{
+			String ext = FilenameUtils.getExtension(file.getName());
+			if (!Util.isEmpty(ext))
+				dmsMimeType_ID = DB.getSQLValue(null, sql + "WHERE UPPER(FileExtension) = '." + ext.toUpperCase() + "'");
+		}
 
 		if (dmsMimeType_ID != -1)
 			return dmsMimeType_ID;
 		else
-		{
-			dmsMimeType_ID = DB.getSQLValue(null, "SELECT DMS_MimeType_ID FROM DMS_MimeType WHERE name = ?", DMSConstant.DEFAULT);
-		}
+			dmsMimeType_ID = DB.getSQLValue(null, sql + "WHERE Name = ?", DMSConstant.DEFAULT);
 
 		return dmsMimeType_ID;
-	}
-
-	public static String getFileMimeType(File file)
-	{
-
-		// InputStream is = new BufferedInputStream(new FileInputStream(file));
-		// mimeType = URLConnection.guessContentTypeFromStream(is);
-
-		return URLConnection.guessContentTypeFromName(file.getName());
 	}
 
 	/**
