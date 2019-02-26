@@ -155,7 +155,7 @@ public class WDLoadASIPanel extends Panel
 		}
 		else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attribute.getAttributeValueType()))
 		{
-			editor = WebEditorFactory.getEditor(getGridField(attribute), true);
+			editor = WebEditorFactory.getEditor(getReferenceGridField(attribute), true);
 		}
 		else
 		// Text Field
@@ -193,50 +193,41 @@ public class WDLoadASIPanel extends Panel
 		}
 	} // addAttributeLine
 
-	private GridField getGridField(MAttribute attribute)
+	private GridField getReferenceGridField(MAttribute attribute)
 	{
-		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, attribute.getName(),
-				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), attribute.getAD_Reference_ID(),
-				attribute.getAD_Reference_Value_ID(), false, false);
-		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
-		vo.Description = desc != null ? desc : "";
-		GridField gridField = new GridField(vo);
-		return gridField;
-	} // getGridField
+		return getGridField(attribute, attribute.getName(), attribute.getAD_Reference_ID(), attribute.getAD_Reference_Value_ID());
+	} // getReferenceGridField
 
 	private GridField getStringGridField(MAttribute attribute)
 	{
-		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, attribute.getName(),
-				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), DisplayType.String, 0, false, false);
-		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
-		vo.Description = desc != null ? desc : "";
-		GridField gridField = new GridField(vo);
-		return gridField;
+		return getGridField(attribute, attribute.getName(), DisplayType.String, 0);
 	} // getStringGridField
 
 	private GridField getNumberGridField(MAttribute attribute)
 	{
-		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, attribute.getName(),
-				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), DisplayType.Number, 0, false, false);
-		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
-		vo.Description = desc != null ? desc : "";
-		GridField gridField = new GridField(vo);
-		return gridField;
+		return getGridField(attribute, attribute.getName(), DisplayType.Number, 0);
 	} // getNumberGridField
 
 	private GridField getListTypeGridField(MAttribute attribute)
 	{
-		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, "M_AttributeValue_ID",
-				attribute.getName(), DisplayType.TableDir, 0, false, false);
-		vo.ValidationCode = "M_AttributeValue.M_Attribute_ID=" + attribute.get_ID();
-		vo.lookupInfo.ValidationCode = vo.ValidationCode;
-		vo.lookupInfo.IsValidated = true;
-		vo = GridFieldVO.createParameter(vo);
-		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
-		vo.Description = desc != null ? desc : "";
-		GridField gridField = new GridField(vo);
+		GridField gridField = getGridField(attribute, "M_AttributeValue_ID", DisplayType.TableDir, 0);
+
+		gridField.getVO().ValidationCode = "M_AttributeValue.M_Attribute_ID=" + attribute.get_ID();
+		gridField.getVO().lookupInfo.ValidationCode = gridField.getVO().ValidationCode;
+		gridField.getVO().lookupInfo.IsValidated = true;
+		gridField = new GridField(GridFieldVO.createParameter(gridField.getVO()));
 		return gridField;
 	} // getListTypeGridField
+
+	private GridField getGridField(MAttribute attribute, String columnName, int Reference_ID, int Reference_Value_ID)
+	{
+		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
+				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID, Reference_Value_ID, false, false);
+		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
+		vo.Description = desc != null ? desc : "";
+
+		return new GridField(vo);
+	} // getGridField
 
 	private void setEditorAttribute(MAttribute attribute, WEditor editor)
 	{
@@ -248,31 +239,37 @@ public class WDLoadASIPanel extends Panel
 				if (instance.getM_AttributeValue_ID() > 0)
 					editor.setValue(instance.getM_AttributeValue_ID());
 			}
+			else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attribute.getAttributeValueType()))
+			{
+				editor.setValue(instance.getValueNumber().doubleValue());
+			}
+			else if (MAttribute.ATTRIBUTEVALUETYPE_StringMax40.equals(attribute.getAttributeValueType()))
+			{
+				editor.setValue(instance.getValue());
+			}
 			else
 			{
-
-				int displayType = editor.getGridField().getDisplayType();
-				if (displayType == DisplayType.Date || displayType == DisplayType.DateTime || displayType == DisplayType.Time)
+				int dt = editor.getGridField().getDisplayType();
+				if (dt == DisplayType.Date || dt == DisplayType.DateTime || dt == DisplayType.Time)
 				{
 					if (instance.getValueTimeStamp() != null)
 						editor.setValue(instance.getValueTimeStamp());
 				}
-				else if (displayType == DisplayType.Image || displayType == DisplayType.Assignment || displayType == DisplayType.Locator
-						|| displayType == DisplayType.Payment || displayType == DisplayType.TableDir || displayType == DisplayType.Table
-						|| displayType == DisplayType.Search || displayType == DisplayType.Account)
+				else if (dt == DisplayType.Image || dt == DisplayType.Assignment || dt == DisplayType.Locator || dt == DisplayType.Payment
+						|| dt == DisplayType.TableDir || dt == DisplayType.Table || dt == DisplayType.Search || dt == DisplayType.Account)
 				{
 					if (instance.getValueInt() > 0)
 						editor.setValue(instance.getValueInt());
 				}
-				else if (displayType == DisplayType.Number)
+				else if (dt == DisplayType.Number)
 				{
 					editor.setValue(instance.getValueNumber().doubleValue());
 				}
-				else if (displayType == DisplayType.Integer)
+				else if (dt == DisplayType.Integer)
 				{
 					editor.setValue(instance.getValueInt());
 				}
-				else if (DisplayType.isNumeric(displayType))
+				else if (DisplayType.isNumeric(dt))
 				{
 					if (instance.getValueNumber() != null)
 						editor.setValue(instance.getValueNumber());
@@ -288,8 +285,6 @@ public class WDLoadASIPanel extends Panel
 
 	public int saveAttributes()
 	{
-		String mandatory = null;
-
 		MAttributeSetInstance m_masi = new MAttributeSetInstance(Env.getCtx(), asiID, M_AttributeSet_ID, null);
 		m_masi.saveEx();
 
@@ -308,7 +303,6 @@ public class WDLoadASIPanel extends Panel
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
 				{
-					mandatory += " - " + attributes[i].getName();
 					Clients.scrollIntoView(editor.getComponent());
 					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 				}
@@ -323,7 +317,6 @@ public class WDLoadASIPanel extends Panel
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
 				{
-					mandatory += " - " + attributes[i].getName();
 					Clients.scrollIntoView(editor.getComponent());
 					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 				} // setMAttributeInstance doesn't work without decimal point
@@ -334,7 +327,7 @@ public class WDLoadASIPanel extends Panel
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attributes[i].getAttributeValueType()))
 			{
-				mandatory = setEditorValue(mandatory, attributes[i], m_editors.get(i));
+				setEditorValue(attributes[i], m_editors.get(i));
 			}
 			else
 			{
@@ -343,10 +336,7 @@ public class WDLoadASIPanel extends Panel
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && (value == null || value.length() == 0))
-				{
-					mandatory += " - " + attributes[i].getName();
 					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
-				}
 				if (value != null)
 					attributes[i].setMAttributeInstance(asiID, value);
 			}
@@ -372,7 +362,7 @@ public class WDLoadASIPanel extends Panel
 		}
 	}
 
-	private String setEditorValue(String mandatory, MAttribute attributes, WEditor editor)
+	private void setEditorValue(MAttribute attributes, WEditor editor)
 	{
 		int displayType = editor.getGridField().getDisplayType();
 		if (displayType == DisplayType.YesNo)
@@ -385,7 +375,6 @@ public class WDLoadASIPanel extends Panel
 			Timestamp valueTimeStamp = (Timestamp) editor.getValue();
 			if (attributes.isMandatory() && valueTimeStamp == null)
 			{
-				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
@@ -397,7 +386,6 @@ public class WDLoadASIPanel extends Panel
 			Object value = editor.getValue();
 			if (attributes.isMandatory() && value == null)
 			{
-				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
@@ -416,7 +404,6 @@ public class WDLoadASIPanel extends Panel
 			Integer value = (Integer) editor.getValue();
 			if (attributes.isMandatory() && value == null)
 			{
-				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
@@ -435,7 +422,6 @@ public class WDLoadASIPanel extends Panel
 			String value = String.valueOf(editor.getValue());
 			if (attributes.isMandatory() && Util.isEmpty(value))
 			{
-				mandatory += " - " + attributes.getName();
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
@@ -443,7 +429,6 @@ public class WDLoadASIPanel extends Panel
 			if (!Util.isEmpty(value))
 				attributes.setMAttributeInstance(asiID, value);
 		}
-		return mandatory;
 	} // setEditorValue
 
 }

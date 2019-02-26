@@ -1542,6 +1542,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						to = null;
 					}
 				}
+				else if (dt == DisplayType.TableDir)
+				{
+					if (editor.getValue() != null)
+						from = editor.getDisplay();
+					to = null;
+				}
 				else if (!Util.isEmpty(editor.getDisplay()))
 				{
 					from = editor.getValue();
