@@ -637,8 +637,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				lblPositionInfo.setText(null);
 			}
 
-			btnBack.setEnabled(false);
-			btnNext.setEnabled(false);
+//			btnBack.setEnabled(false);
+//			btnNext.setEnabled(false);
 
 			renderViewer();
 		}
@@ -843,6 +843,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			btnBack.setEnabled(false);
 			btnNext.setEnabled(false);
+			btnCreateDir.setDisabled(false);
 		}
 
 	} // onEvent
@@ -866,7 +867,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		if (isRoot)
+		if (breadCrumbEvent.getPathId().equals("0"))
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
