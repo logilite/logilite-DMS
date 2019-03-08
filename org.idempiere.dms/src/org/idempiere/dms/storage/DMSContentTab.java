@@ -28,8 +28,6 @@ import org.compiere.model.DataStatusListener;
 import org.compiere.model.GridTab;
 import org.compiere.model.GridWindow;
 import org.compiere.util.CLogger;
-import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
@@ -44,17 +42,17 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 
 	private static CLogger			log					= CLogger.getCLogger(DMSContentTab.class);
 
-	private AbstractADWindowContent	adWindowContent		= null;
 	private GridTab					gridTab				= null;
-	private int						windowNumber		= 0;
-	private GridWindow				gridWindow			= null;
-	private WDMSPanel				documentViewerPanel	= null;
-	private boolean					activated			= false;
 	private GridView				listPanel			= new GridView();
-	private boolean					detailPaneMode		= false;
+	private WDMSPanel				docDMSPanel			= null;
+	private GridWindow				gridWindow			= null;
 	private DetailPane				detailPane			= null;
+	private AbstractADWindowContent	adWindowContent		= null;
 
-	private IMountingStrategy		mountingStrategy	= null;
+	private boolean					activated			= false;
+	private boolean					detailPaneMode		= false;
+
+	private int						windowNumber		= 0;
 
 	public DMSContentTab()
 	{
@@ -77,15 +75,11 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		if (gridTab.getParentTab() == null)
 			throw new AdempiereException("Parent Tab not found");
 
-		mountingStrategy = Utils.getMountingStrategy(gridTab.getParentTab().getTableName());
+		docDMSPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab().getRecord_ID(), adWindowContent);
+		// renderViewer();
+		this.appendChild(docDMSPanel);
+		// gridTab.addDataStatusListener(this); // Issue while toolbar refreshing
 
-		if (mountingStrategy == null)
-			throw new AdempiereException("Mounting Strategy not found.");
-
-		documentViewerPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab().getRecord_ID(), adWindowContent);
-		renderViewer();
-		this.appendChild(documentViewerPanel);
-		gridTab.addDataStatusListener(this);
 	}
 
 	@Override
@@ -127,15 +121,21 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void createUI()
 	{
-		reload();
+		int tableID = gridTab.getParentTab().getAD_Table_ID();
+		int recordID = gridTab.getParentTab().getRecord_ID();
+		String tableName = gridTab.getParentTab().getTableName();
+
+		docDMSPanel.setTable_ID(tableID);
+		docDMSPanel.setRecord_ID(recordID);
+		docDMSPanel.getDMS().initiateMountingContent(tableName, recordID, tableID);
 	}
 
 	public void reload()
 	{
-		documentViewerPanel.setTable_ID(gridTab.getParentTab().getAD_Table_ID());
-		documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
-		Utils.initiateMountingContent(gridTab.getParentTab().getTableName(), gridTab.getParentTab().getRecord_ID(), gridTab.getParentTab().getAD_Table_ID());
-		documentViewerPanel.setCurrDMSContent(mountingStrategy.getMountingParent(gridTab.getParentTab().getTableName(), gridTab.getParentTab().getRecord_ID()));
+		int recordID = gridTab.getParentTab().getRecord_ID();
+		String tableName = gridTab.getParentTab().getTableName();
+
+		docDMSPanel.setCurrDMSContent(docDMSPanel.getDMS().getMountingStrategy().getMountingParent(tableName, recordID));
 
 		renderViewer();
 	}
@@ -168,8 +168,8 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void refresh()
 	{
-		documentViewerPanel.setTable_ID((gridTab.getParentTab().getAD_Table_ID()));
-		documentViewerPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
+		docDMSPanel.setTable_ID((gridTab.getParentTab().getAD_Table_ID()));
+		docDMSPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
 		renderViewer();
 	}
 
@@ -192,7 +192,6 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void dynamicDisplay(int i)
 	{
-		createUI();
 	}
 
 	@Override
@@ -318,7 +317,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	{
 		try
 		{
-			documentViewerPanel.renderViewer();
+			docDMSPanel.renderViewer();
 		}
 		catch (Exception e)
 		{
@@ -342,7 +341,6 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public List<Button> getToolbarButtons()
 	{
-
 		return null;
 	}
 

@@ -150,9 +150,7 @@ public class FileSystemStorageProvider implements IFileStorageProvider
 	public String getBaseDirectory(String path)
 	{
 		if (!Util.isEmpty(path))
-		{
 			return buildValidPath(path);
-		}
 		else
 			return baseDir;
 	}

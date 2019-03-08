@@ -528,14 +528,14 @@ public class Utils
 
 	public static int getContentTypeID(String contentType, int AD_Client_ID)
 	{
-		Integer contentTypeID = cache_contentType.get(contentType);
+		Integer contentTypeID = cache_contentType.get(AD_Client_ID + "_" + contentType);
 		if (contentTypeID == null || contentTypeID <= 0)
 		{
 			contentTypeID = DB.getSQLValue(null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND AD_Client_ID = ?",
 					contentType, AD_Client_ID);
 
 			if (contentTypeID > 0)
-				cache_contentType.put(contentType, contentTypeID);
+				cache_contentType.put(AD_Client_ID + "_" + contentType, contentTypeID);
 		}
 		return contentTypeID;
 	}
@@ -780,30 +780,33 @@ public class Utils
 		return msg.toString();
 	} // getToolTipTextMsg
 
-	public static void initiateMountingContent(String table_Name, int Record_ID, int AD_Table_ID)
-	{
-		initiateMountingContent(DMSConstant.DMS_MOUNTING_BASE, table_Name, Record_ID, AD_Table_ID);
-	}
-
+	/**
+	 * Initialize Mounting Content
+	 * 
+	 * @param mountingBaseName
+	 * @param table_Name
+	 * @param Record_ID
+	 * @param AD_Table_ID
+	 */
 	public static void initiateMountingContent(String mountingBaseName, String table_Name, int Record_ID, int AD_Table_ID)
 	{
 		IFileStorageProvider fileStorageProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
 		String baseDir = fileStorageProvider.getBaseDirectory(null);
 		File file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName);
 
-		int mountingContent_ID = 0;
+		int mountingContentID = 0;
 		int tableNameContentID = 0;
 		int recordContentID = 0;
 
 		if (!file.exists())
 		{
 			file.mkdirs();
-			mountingContent_ID = createDMSContent(mountingBaseName, MDMSContent.CONTENTBASETYPE_Directory, null, true);
-			createAssociation(mountingContent_ID, 0, Record_ID, AD_Table_ID, 0, 0, null);
+			mountingContentID = createDMSContent(mountingBaseName, MDMSContent.CONTENTBASETYPE_Directory, null, true);
+			createAssociation(mountingContentID, 0, Record_ID, AD_Table_ID, 0, 0, null);
 		}
 		else
 		{
-			mountingContent_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_BASE_CONTENT, mountingBaseName, Env.getAD_Client_ID(Env.getCtx()));
+			mountingContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_BASE_CONTENT, mountingBaseName, Env.getAD_Client_ID(Env.getCtx()));
 		}
 
 		if (!Util.isEmpty(table_Name) && Record_ID > 0)
@@ -814,7 +817,7 @@ public class Utils
 			{
 				file.mkdirs();
 				tableNameContentID = createDMSContent(table_Name, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + mountingBaseName, true);
-				createAssociation(tableNameContentID, mountingContent_ID, Record_ID, AD_Table_ID, 0, 0, null);
+				createAssociation(tableNameContentID, mountingContentID, Record_ID, AD_Table_ID, 0, 0, null);
 			}
 			else
 			{
@@ -1020,8 +1023,8 @@ public class Utils
 	 * @param trxName - Transaction Name
 	 * @return DMS Content
 	 */
-	public static MDMSContent createDirectory(String dirName, MDMSContent content, int AD_Table_ID, int Record_ID, IFileStorageProvider fileStorageProvider,
-			IContentManager contentMngr, boolean errorIfDirExists, String trxName)
+	public static MDMSContent createDirectory(String dirName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
+			IFileStorageProvider fileStorageProvider, IContentManager contentMngr, boolean errorIfDirExists, String trxName)
 	{
 		int contentID = 0;
 
@@ -1033,7 +1036,7 @@ public class Utils
 
 		try
 		{
-			File rootFolder = new File(fileStorageProvider.getBaseDirectory(contentMngr.getPath(content)));
+			File rootFolder = new File(fileStorageProvider.getBaseDirectory(contentMngr.getPath(parentContent)));
 			if (!rootFolder.exists())
 				rootFolder.mkdirs();
 
@@ -1063,12 +1066,12 @@ public class Utils
 								+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
 								+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND COALESCE(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
 
-						if (content == null || (content != null && Util.isEmpty(content.getParentURL(), true)))
+						if (parentContent == null || (parentContent != null && Util.isEmpty(parentContent.getParentURL(), true)))
 							sql += "AND dc.ParentURL IS NULL";
 						else
 						{
 							sql += "AND dc.ParentURL = ? ";
-							params.add(contentMngr.getPath(content));
+							params.add(contentMngr.getPath(parentContent));
 						}
 
 						contentID = DB.getSQLValueEx(trxName, sql, params);
@@ -1081,24 +1084,24 @@ public class Utils
 			if (!newFile.exists())
 			{
 				if (!newFile.mkdir())
-					throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'" + contentMngr.getPath(content)
+					throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'" + contentMngr.getPath(parentContent)
 							+ DMSConstant.FILE_SEPARATOR + newFile.getName() + "'");
 			}
 
 			if (contentID <= 0)
 			{
-				contentID = Utils.createDMSContent(dirName, MDMSContent.CONTENTBASETYPE_Directory, contentMngr.getPath(content), false);
-				Utils.createAssociation(contentID, (content != null) ? content.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0, 0, trxName);
+				contentID = Utils.createDMSContent(dirName, MDMSContent.CONTENTBASETYPE_Directory, contentMngr.getPath(parentContent), false);
+				Utils.createAssociation(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0, 0, trxName);
 			}
 
-			content = new MDMSContent(Env.getCtx(), contentID, trxName);
+			parentContent = new MDMSContent(Env.getCtx(), contentID, trxName);
 		}
 		catch (Exception e)
 		{
 			throw new AdempiereException(e.getLocalizedMessage(), e);
 		}
 
-		return content;
+		return parentContent;
 	} // createDirectory
 
 	/**
@@ -1220,39 +1223,6 @@ public class Utils
 
 		return asiID;
 	} // createASI
-
-	/**
-	 * @param dms
-	 * @param parentContent
-	 * @param file
-	 * @param AD_Table_ID
-	 * @param Record_ID
-	 * @param trxName
-	 * @return TRUE is success
-	 */
-	public static boolean addFile(DMS dms, MDMSContent parentContent, File file, int AD_Table_ID, int Record_ID, String trxName)
-	{
-		if (file == null)
-			throw new AdempiereException(DMSConstant.MSG_FILL_MANDATORY + " file");
-
-		// Create Content
-		int contentID = Utils.createDMSContent(file.getName(), file.getName(), MDMSContent.CONTENTBASETYPE_Content,
-				dms.getContentManager().getPath(parentContent), null, file, 0, 0, false, trxName);
-
-		MDMSContent content = new MDMSContent(Env.getCtx(), contentID, trxName);
-
-		int contentRelatedID = 0;
-		if (parentContent != null)
-			contentRelatedID = parentContent.getDMS_Content_ID();
-
-		// Create Association
-		Utils.createAssociation(contentID, contentRelatedID, Record_ID, AD_Table_ID, MDMSAssociationType.getVersionType(true), 0, trxName);
-
-		// File write on Storage provider and create thumbnail
-		writeFileOnStorageAndThumnail(dms, file, content);
-
-		return true;
-	} // addFile
 
 	/**
 	 * File write on Storage provider and create thumbnail
