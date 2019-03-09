@@ -127,6 +127,12 @@ public class DMSModelValidator implements ModelValidator
 								// Delete and Create Index
 								indexSeracher.deleteIndex(dmsContent.getDMS_Content_ID());
 								indexSeracher.indexContent(solrValue);
+								
+								// Update the value of IsIndexed flag in dmsContent
+								if (!isIndexed)
+								{
+									DB.executeUpdate("UPDATE DMS_Content SET IsIndexed = 'Y' WHERE DMS_Content_ID = ? ", dmsContent.get_ID(), null);
+								}
 							}
 							catch (Exception e)
 							{
@@ -135,12 +141,6 @@ public class DMSModelValidator implements ModelValidator
 								// Content Failure :" + e);
 							}
 
-							// Update the value of IsIndexed flag in dmsContent
-
-							if (!isIndexed)
-							{
-								DB.executeUpdate("UPDATE DMS_Content SET IsIndexed = 'Y' WHERE DMS_Content_ID = ? ", dmsContent.get_ID(), null);
-							}
 						}
 
 						@Override

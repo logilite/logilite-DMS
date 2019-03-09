@@ -25,8 +25,6 @@ import org.adempiere.webui.session.SessionManager;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -35,10 +33,11 @@ import org.zkoss.zul.Window.Mode;
 public class CustomToolbarFactory implements IAction
 {
 
+	private static CLogger			log			= CLogger.getCLogger(CustomToolbarFactory.class);
+
 	private AbstractADWindowContent	winContent	= null;
 	private WDMSPanel				dmsPanel	= null;
 	private Window					dmsWindow	= null;
-	public static CLogger			log			= CLogger.getCLogger(CustomToolbarFactory.class);
 
 	@Override
 	public void execute(Object target)
@@ -75,12 +74,8 @@ public class CustomToolbarFactory implements IAction
 			}
 		});
 
-		Utils.initiateMountingContent(winContent.getADTab().getSelectedGridTab().getTableName(), record_ID, table_ID);
-
 		try
 		{
-			IMountingStrategy mountingStrategy = Utils.getMountingStrategy(winContent.getADTab().getSelectedGridTab().getTableName());
-			dmsPanel.setCurrDMSContent(mountingStrategy.getMountingParent(winContent.getADTab().getSelectedGridTab().getTableName(), record_ID));
 			dmsPanel.renderViewer();
 		}
 		catch (Exception e)
@@ -88,6 +83,7 @@ public class CustomToolbarFactory implements IAction
 			log.log(Level.SEVERE, "Render Component Problem.", e);
 			throw new AdempiereException("Render Component Problem: " + e);
 		}
+
 		SessionManager.getAppDesktop().showWindow(dmsWindow);
-	}
+	} // execute
 }

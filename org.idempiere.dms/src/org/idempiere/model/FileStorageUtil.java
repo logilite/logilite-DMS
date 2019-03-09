@@ -26,8 +26,7 @@ import org.idempiere.dms.factories.Utils;
  */
 public class FileStorageUtil
 {
-	static CCache<String, IFileStorageProvider>	s_cache	= new CCache<String, IFileStorageProvider>(
-																"FileStorageProvider", 2);
+	static CCache<String, IFileStorageProvider>	s_cache	= new CCache<String, IFileStorageProvider>("FileStorageProvider", 2);
 
 	// TODO This util method should be added in MStorageProvider when it ended
 	// into iDempiere core
@@ -39,9 +38,7 @@ public class FileStorageUtil
 		IFileStorageProvider fileStorageProvider = s_cache.get(key);
 
 		if (fileStorageProvider != null)
-		{
 			return fileStorageProvider;
-		}
 
 		if (isThumbStorage)
 			storageProvider = Utils.getThumbnailStorageProvider(AD_Client_ID);
@@ -54,8 +51,7 @@ public class FileStorageUtil
 			if (method == null)
 				throw new AdempiereException("Method is not define on Storage Provider.");
 
-			List<IFileStorageProviderFactory> factories = Service.locator().list(IFileStorageProviderFactory.class)
-					.getServices();
+			List<IFileStorageProviderFactory> factories = Service.locator().list(IFileStorageProviderFactory.class).getServices();
 			for (IFileStorageProviderFactory factory : factories)
 			{
 				fileStorageProvider = factory.get(method);
@@ -68,6 +64,6 @@ public class FileStorageUtil
 			}
 		}
 		return null;
-	}
+	} // get
 
 }

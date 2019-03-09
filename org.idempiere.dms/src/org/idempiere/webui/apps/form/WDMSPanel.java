@@ -237,14 +237,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public WDMSPanel(int Table_ID, int Record_ID, AbstractADWindowContent winContent)
 	{
 		this();
+
 		this.winContent = winContent;
 		this.windowID = winContent.getADWindow().getAD_Window_ID();
-		isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
+		this.isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
 
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
 
-		dms.initMountingStrategy(null);
+		String tableName = winContent.getADTab().getSelectedGridTab().getTableName();
+		dms.initMountingStrategy(tableName);
+		dms.initiateMountingContent(tableName, Record_ID, Table_ID);
+
 		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
 
 		/*
@@ -264,6 +268,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnUploadContent.setEnabled(isWindowAccess);
 	}
 
+	public DMS getDMS()
+	{
+		return dms;
+	}
+
 	public int getRecord_ID()
 	{
 		return recordID;
@@ -279,6 +288,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return tableID;
 	}
 
+	public void setTable_ID(int table_ID)
+	{
+		this.tableID = table_ID;
+	}
+
 	public void setWindow_ID(int AD_Window_ID)
 	{
 		this.windowID = AD_Window_ID;
@@ -287,11 +301,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public int getWindow_ID()
 	{
 		return windowID;
-	}
-
-	public void setTable_ID(int table_ID)
-	{
-		this.tableID = table_ID;
 	}
 
 	public MDMSContent getCurrDMSContent()
@@ -637,8 +646,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				lblPositionInfo.setText(null);
 			}
 
-			btnBack.setEnabled(false);
-			btnNext.setEnabled(false);
+			// btnBack.setEnabled(false);
+			// btnNext.setEnabled(false);
 
 			renderViewer();
 		}
@@ -843,6 +852,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			btnBack.setEnabled(false);
 			btnNext.setEnabled(false);
+			btnCreateDir.setDisabled(false);
 		}
 
 	} // onEvent
@@ -866,7 +876,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		if (isRoot)
+		if (breadCrumbEvent.getPathId().equals("0"))
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
@@ -924,9 +934,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else
 			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent);
 
-		// TODO
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 
+		// Component Viewer
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
 		viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 

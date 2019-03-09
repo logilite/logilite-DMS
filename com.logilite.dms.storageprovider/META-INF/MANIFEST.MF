@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Storageprovider
+Bundle-Name: StorageProvider
 Bundle-SymbolicName: com.logilite.dms.storageprovider;singleton:=true
-Bundle-Version: 1.0.4.qualifier
+Bundle-Version: 3.1.0.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

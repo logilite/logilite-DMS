@@ -12,7 +12,6 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 import org.idempiere.dms.DMS;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSContent;
 
 public class MigrateAttachmentToDMS extends SvrProcess
@@ -52,9 +51,8 @@ public class MigrateAttachmentToDMS extends SvrProcess
 		{
 			MTable table = MTable.get(getCtx(), attachment.getAD_Table_ID());
 
-			Utils.initiateMountingContent(table.getTableName(), attachment.getRecord_ID(), attachment.getAD_Table_ID());
-
 			dms.initMountingStrategy(table.getTableName());
+			dms.initiateMountingContent(table.getTableName(), attachment.getRecord_ID(), attachment.getAD_Table_ID());
 			MDMSContent mountingParent = dms.getMountingStrategy().getMountingParent(table.getTableName(), attachment.getRecord_ID());
 
 			MAttachmentEntry[] attachmentEntries = attachment.getEntries();
@@ -63,7 +61,7 @@ public class MigrateAttachmentToDMS extends SvrProcess
 			{
 				statusUpdate("Backuping Attachment :" + entry.getName());
 
-				boolean inserted = Utils.addFile(dms, mountingParent, entry.getFile(), attachment.getAD_Table_ID(), attachment.getRecord_ID(), get_TrxName());
+				boolean inserted = dms.addFile(mountingParent, entry.getFile(), attachment.getAD_Table_ID(), attachment.getRecord_ID());
 				if (inserted)
 					cntMigrated++;
 			}

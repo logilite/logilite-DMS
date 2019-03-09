@@ -48,6 +48,7 @@ import org.compiere.model.MLookupFactory;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
@@ -294,6 +295,9 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	{
 		if (btnFileUpload.getLabel().equalsIgnoreCase("-"))
 			throw new WrongValueException(btnFileUpload, DMSConstant.MSG_FILL_MANDATORY);
+		
+		if (Util.isEmpty(txtName.getValue(),true))
+			throw new WrongValueException("File name is mandatory");
 
 		File tmpFile = null;
 		try

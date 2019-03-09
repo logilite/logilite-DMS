@@ -36,7 +36,6 @@ import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
@@ -165,23 +164,22 @@ public class ArchiveDMS implements IArchiveStore
 			String tableName = MTable.getTableName(Env.getCtx(), tableID);
 			int recordID = archive.getRecord_ID();
 
-			IMountingStrategy mountingStrategy = null;
 			MDMSContent mountingParent = null;
 			if (Util.isEmpty(tableName) || recordID <= 0)
 			{
 				if (tableName == null)
 					tableName = "";
 				// Generate Mounting Parent
-				Utils.initiateMountingContent(DMSConstant.DMS_MOUNTING_ARCHIVE_BASE, tableName, recordID, tableID);
-				mountingStrategy = Utils.getMountingStrategy(tableName);
-				mountingParent = mountingStrategy.getMountingParentForArchive();
+				dms.initiateMountingContent(DMSConstant.DMS_MOUNTING_ARCHIVE_BASE, tableName, recordID, tableID);
+				dms.initMountingStrategy(tableName);
+				mountingParent = dms.getMountingStrategy().getMountingParentForArchive();
 			}
 			else
 			{
 				// Generate Mounting Parent
-				Utils.initiateMountingContent(tableName, recordID, tableID);
-				mountingStrategy = Utils.getMountingStrategy(tableName);
-				mountingParent = mountingStrategy.getMountingParent(tableName, recordID);
+				dms.initiateMountingContent(tableName, recordID, tableID);
+				dms.initMountingStrategy(tableName);
+				mountingParent = dms.getMountingStrategy().getMountingParent(tableName, recordID);
 			}
 			// Generate File
 			File file = generateFile(archive, inflatedData);
