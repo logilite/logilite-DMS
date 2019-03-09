@@ -1238,7 +1238,7 @@ public class DMS
 				if (DMS_Content_Related_ID != 0) // TODO
 					DMS_Content_Related_ID = content.getDMS_Content_ID();
 
-				int associationID = this.createAssociation(cbContentID, DMS_Content_Related_ID, recordID, recordID, MDMSAssociationType.LINK_ID, 0, null);
+				int associationID = this.createAssociation(cbContentID, DMS_Content_Related_ID, recordID, tableID, MDMSAssociationType.LINK_ID, 0, null);
 				MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
 
 				int DMS_Content_ID = association.getDMS_Content_Related_ID();
