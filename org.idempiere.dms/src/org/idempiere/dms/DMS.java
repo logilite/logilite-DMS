@@ -421,7 +421,7 @@ public class DMS
 		}
 		else
 		{
-			String format = FilenameUtils.getExtension(file.getName());
+			String format = Utils.getFileExtension(file.getName());
 			if (format == null)
 				throw new AdempiereException("Invalid File format:" + file.getName());
 
@@ -650,7 +650,7 @@ public class DMS
 				if (!newFile.getName().contains(" - copy")) // TODO
 				{
 					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy";
-					String ext = FilenameUtils.getExtension(newFile.getName());
+					String ext = Utils.getFileExtension(newFile.getName());
 					newFile = new File(parent.getAbsolutePath() + DMSConstant.FILE_SEPARATOR + uniqueName + ext);
 				}
 
