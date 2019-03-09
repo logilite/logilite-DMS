@@ -356,9 +356,9 @@ public class Utils
 		String sql = "SELECT DMS_MimeType_ID FROM DMS_MimeType ";
 		if (file != null)
 		{
-			String ext = FilenameUtils.getExtension(file.getName());
+			String ext = Utils.getFileExtension(file.getName());
 			if (!Util.isEmpty(ext))
-				dmsMimeType_ID = DB.getSQLValue(null, sql + "WHERE UPPER(FileExtension) = '." + ext.toUpperCase() + "'");
+				dmsMimeType_ID = DB.getSQLValue(null, sql + "WHERE UPPER(FileExtension) = '" + ext.toUpperCase() + "'");
 		}
 
 		if (dmsMimeType_ID != -1)
@@ -368,6 +368,20 @@ public class Utils
 
 		return dmsMimeType_ID;
 	}
+
+	/**
+	 * Get file extension with dot. ie. [.jpg]
+	 * 
+	 * @param name
+	 * @return extension
+	 */
+	public static String getFileExtension(String name)
+	{
+		String ext = FilenameUtils.getExtension(name);
+		if (ext != null)
+			ext = "." + ext;
+		return ext;
+	} // getFileExtension
 
 	/**
 	 * get thumbnail for file
@@ -418,7 +432,7 @@ public class Utils
 			{
 				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.indexOf(0) + 1, fileNameWOExt.indexOf("("));
 			}
-			String ext = FilenameUtils.getExtension(document.getName());
+			String ext = Utils.getFileExtension(document.getName());
 			int n = 1;
 			do
 			{
@@ -443,7 +457,7 @@ public class Utils
 			{
 				fileNameWOExt = fileNameWOExt.substring(fileNameWOExt.lastIndexOf(0) + 1, fileNameWOExt.lastIndexOf("("));
 			}
-			String ext = FilenameUtils.getExtension(document.getName());
+			String ext = Utils.getFileExtension(document.getName());
 			int n = 1;
 			do
 			{
