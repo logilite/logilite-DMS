@@ -358,7 +358,7 @@ public class Utils
 		{
 			String ext = FilenameUtils.getExtension(file.getName());
 			if (!Util.isEmpty(ext))
-				dmsMimeType_ID = DB.getSQLValue(null, sql + "WHERE UPPER(FileExtension) = '." + ext.toUpperCase() + "'");
+				dmsMimeType_ID = DB.getSQLValue(null, sql + "WHERE UPPER(FileExtension) = '" + ext.toUpperCase() + "'");
 		}
 
 		if (dmsMimeType_ID != -1)
@@ -422,7 +422,7 @@ public class Utils
 			int n = 1;
 			do
 			{
-				fullPath = path + fileNameWOExt + "(" + n++ + ")." + ext;
+				fullPath = path + fileNameWOExt + "(" + n++ + ")" + ext;
 				document = new File(fullPath);
 			}
 			while (document.exists());
@@ -447,7 +447,7 @@ public class Utils
 			int n = 1;
 			do
 			{
-				fullPath = path + fileNameWOExt + " (" + n++ + ")." + ext;
+				fullPath = path + fileNameWOExt + " (" + n++ + ")" + ext;
 				document = new File(fullPath);
 			}
 			while (document.exists());

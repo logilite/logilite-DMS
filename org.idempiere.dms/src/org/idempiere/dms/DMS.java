@@ -426,7 +426,7 @@ public class DMS
 				throw new AdempiereException("Invalid File format:" + file.getName());
 
 			if (!fileName.endsWith(format))
-				fileName = fileName + "." + format;
+				fileName = fileName + format;
 
 			parentURL = contentManager.getPath(parentContent);
 
@@ -455,7 +455,7 @@ public class DMS
 		}
 
 		// Create Association
-		Utils.createAssociation(contentID, DMS_Content_Related_ID, Record_ID, AD_Table_ID, DMS_AssociationType_ID, seqNo, trxName);
+		createAssociation(contentID, DMS_Content_Related_ID, Record_ID, AD_Table_ID, DMS_AssociationType_ID, seqNo, trxName);
 
 		// File write on Storage provider and create thumbnail
 		Utils.writeFileOnStorageAndThumnail(this, file, addedContent);
@@ -651,7 +651,7 @@ public class DMS
 				{
 					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy";
 					String ext = FilenameUtils.getExtension(newFile.getName());
-					newFile = new File(parent.getAbsolutePath() + DMSConstant.FILE_SEPARATOR + uniqueName + "." + ext);
+					newFile = new File(parent.getAbsolutePath() + DMSConstant.FILE_SEPARATOR + uniqueName + ext);
 				}
 
 				if (newFile.exists())
