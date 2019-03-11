@@ -128,6 +128,8 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		docDMSPanel.setTable_ID(tableID);
 		docDMSPanel.setRecord_ID(recordID);
 		docDMSPanel.getDMS().initiateMountingContent(tableName, recordID, tableID);
+
+		reload();
 	}
 
 	public void reload()
@@ -309,8 +311,8 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 			reload();
 		}
 
-		documentViewerPanel.getBreadRow().getChildren().clear();
-		documentViewerPanel.addRootBreadCrumb();
+		docDMSPanel.getBreadRow().getChildren().clear();
+		docDMSPanel.addRootBreadCrumb();
 	}
 
 	private void renderViewer()

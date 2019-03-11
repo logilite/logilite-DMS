@@ -225,7 +225,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		try
 		{
 			initForm();
-			renderViewer();
 		}
 		catch (Exception e)
 		{
@@ -754,7 +753,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					if (DMSClipboard.getIsCopy())
 						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, isTabViewer());
 					else
-						dms.pasteCutContent(sourceContent, destPasteContent);
+						dms.pasteCutContent(sourceContent, destPasteContent, tableID, recordID);
 					renderViewer();
 				}
 			}
@@ -765,7 +764,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_rename))
 		{
-			final WRenameContent renameContent = new WRenameContent(dms, dirContent);
+			final WRenameContent renameContent = new WRenameContent(dms, dirContent, tableID, recordID);
 			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -928,11 +927,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		if (isSearch)
-			contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent);
+			contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
 		else if (isGenericSearch)
 			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
 		else
-			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent);
+			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, tableID, recordID);
 
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 
