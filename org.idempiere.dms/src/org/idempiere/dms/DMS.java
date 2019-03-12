@@ -336,7 +336,7 @@ public class DMS
 			String dir = dirs[i].trim();
 			if (!Util.isEmpty(dir, true))
 			{
-				dirContent = Utils.createDirectory(dir, dirContent, AD_Table_ID, Record_ID, fileStorageProvider, contentManager, false, trxName);
+				dirContent = createDirectory(dir, dirContent, AD_Table_ID, Record_ID, false, trxName);
 			}
 		}
 		return dirContent;
@@ -482,9 +482,16 @@ public class DMS
 		return getMountingStrategy().getMountingParent(MTable.getTableName(Env.getCtx(), AD_Table_ID), Record_ID);
 	}
 
-	public MDMSContent createDirectory(String dirName, MDMSContent mDMSContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)
+	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)
 	{
-		return Utils.createDirectory(dirName, mDMSContent, tableID, recordID, fileStorageProvider, contentManager, errorIfDirExists, trxName);
+		return createDirectory(dirName, parentContent, tableID, recordID, errorIfDirExists, true, trxName);
+	}
+
+	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists,
+			boolean isCreateAssociation, String trxName)
+	{
+		return Utils.createDirectory(dirName, parentContent, tableID, recordID, fileStorageProvider, contentManager, errorIfDirExists, isCreateAssociation,
+				trxName);
 	}
 
 	public String getThumbnailURL(I_DMS_Content content, String size)
@@ -718,7 +725,7 @@ public class DMS
 				MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, trx.getTrxName());
 				PO.copyValues(copiedContent, newDMSContent);
 
-				MAttributeSetInstance newASI = Utils.copyASI((MAttributeSetInstance) copiedContent.getM_AttributeSetInstance(), trx.getTrxName());
+				MAttributeSetInstance newASI = Utils.copyASI(copiedContent.getM_AttributeSetInstance_ID(), trx.getTrxName());
 				if (newASI != null)
 					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
@@ -743,20 +750,14 @@ public class DMS
 				else
 					newDMSAssociation.setDMS_Content_Related_ID(crID);
 
-				if (isTabViewer)
-				{
-					newDMSAssociation.setAD_Table_ID(tableID);
-					newDMSAssociation.setRecord_ID(recordID);
-				}
-
+				newDMSAssociation.setAD_Table_ID(tableID);
+				newDMSAssociation.setRecord_ID(recordID);
 				newDMSAssociation.saveEx();
 
 				if (!Util.isEmpty(copiedContent.getParentURL()))
 				{
 					if (copiedContent.getParentURL().startsWith(baseURL))
-					{
 						newDMSContent.setParentURL(renamedURL);
-					}
 				}
 				else
 				{
@@ -813,15 +814,17 @@ public class DMS
 	public void copyContent(MDMSContent copiedContent, String baseURL, String renamedURL, MDMSContent destPasteContent, int tableID, int recordID,
 			boolean isTabViewer)
 	{
-		HashMap<I_DMS_Content, I_DMS_Association> map = this.getDMSContentsWithAssociation(copiedContent, tableID, recordID);
+		MDMSAssociation copiedAssociation = Utils.getAssociationFromContent(copiedContent.getDMS_Content_ID(), null);
+		HashMap<I_DMS_Content, I_DMS_Association> map = this.getDMSContentsWithAssociation(copiedContent, copiedAssociation.getAD_Table_ID(),
+				copiedAssociation.getRecord_ID());
 		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSContent oldDMSContent = (MDMSContent) mapEntry.getKey();
 			if (oldDMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
-				MDMSContent newDMSContent = createDirectory(oldDMSContent.getName(), destPasteContent, tableID, recordID, true, null);
+				MDMSContent newDMSContent = createDirectory(oldDMSContent.getName(), destPasteContent, tableID, recordID, true, false, null);
 
-				MAttributeSetInstance newASI = Utils.copyASI((MAttributeSetInstance) copiedContent.getM_AttributeSetInstance(), null);
+				MAttributeSetInstance newASI = Utils.copyASI(copiedContent.getM_AttributeSetInstance_ID(), null);
 				if (newASI != null)
 					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
@@ -834,11 +837,8 @@ public class DMS
 				newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
 				newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
 
-				if (isTabViewer)
-				{
-					newDMSAssociation.setAD_Table_ID(tableID);
-					newDMSAssociation.setRecord_ID(recordID);
-				}
+				newDMSAssociation.setAD_Table_ID(tableID);
+				newDMSAssociation.setRecord_ID(recordID);
 				newDMSAssociation.saveEx();
 
 				if (!Util.isEmpty(oldDMSContent.getParentURL()))
@@ -879,7 +879,7 @@ public class DMS
 
 			PO.copyValues(oldDMSContent, newDMSContent);
 
-			MAttributeSetInstance newASI = Utils.copyASI((MAttributeSetInstance) oldDMSContent.getM_AttributeSetInstance(), null);
+			MAttributeSetInstance newASI = Utils.copyASI(oldDMSContent.getM_AttributeSetInstance_ID(), null);
 			if (newASI != null)
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
@@ -898,11 +898,8 @@ public class DMS
 			else
 				newDMSAssociation.setDMS_Content_Related_ID(0);
 
-			if (isTabViewer)
-			{
-				newDMSAssociation.setAD_Table_ID(tableID);
-				newDMSAssociation.setRecord_ID(recordID);
-			}
+			newDMSAssociation.setAD_Table_ID(tableID);
+			newDMSAssociation.setRecord_ID(recordID);
 			newDMSAssociation.saveEx();
 
 			copyContent(copied, baseURL, renamedURL, newDMSContent, tableID, recordID, isTabViewer);
