@@ -58,10 +58,15 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private boolean				isCancel			= false;
 
-	public WRenameContent(DMS dms, MDMSContent DMSContent)
+	private int					tableID				= 0;
+	private int					recordID			= 0;
+
+	public WRenameContent(DMS dms, MDMSContent DMSContent, int tableID, int recordID)
 	{
 		this.dms = dms;
 		this.DMSContent = DMSContent;
+		this.tableID = tableID;
+		this.recordID = recordID;
 
 		init();
 	}
@@ -171,7 +176,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		ValidateName();
 
-		dms.renameContent(txtName.getValue(), DMSContent, parent_Content);
+		dms.renameContent(txtName.getValue(), DMSContent, parent_Content, tableID, recordID);
 
 		this.detach();
 	} // renameContent

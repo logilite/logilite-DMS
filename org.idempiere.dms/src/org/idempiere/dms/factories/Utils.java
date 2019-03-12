@@ -58,6 +58,8 @@ import org.compiere.model.MClientInfo;
 import org.compiere.model.MImage;
 import org.compiere.model.MStorageProvider;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -84,57 +86,47 @@ import org.zkoss.util.media.AMedia;
 public class Utils
 {
 
-	private static CLogger						log										= CLogger.getCLogger(Utils.class);
+	private static CLogger						log											= CLogger.getCLogger(Utils.class);
 
-	private static final String					SQL_GET_ASI								= "SELECT REPLACE(a.Name,' ','_') AS Name, ai.Value, ai.ValueTimestamp, ai.ValueNumber, ai.ValueInt FROM M_AttributeInstance ai "
-																								+ " INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
-																								+ " WHERE ai.M_AttributeSetInstance_ID = ?";
+	private static final String					SQL_GET_ASI									= "SELECT REPLACE(a.Name,' ','_') AS Name, ai.Value, ai.ValueTimestamp, ai.ValueNumber, ai.ValueInt FROM M_AttributeInstance ai "
+																									+ " INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
+																									+ " WHERE ai.M_AttributeSetInstance_ID = ?";
 
-	public static final String					SQL_GET_RELATED_FOLDER_CONTENT_COMMON	= "WITH ContentAssociation AS "
-																								+ " ( "
-																								+ " SELECT	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, "
-																								+ " a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
-																								+ " FROM DMS_Association a "
-																								+ " INNER JOIN DMS_Content c	ON (c.DMS_Content_ID = a.DMS_Content_ID  #IsActive#) "
-																								+ " WHERE c.AD_Client_ID=?), "
-																								+ "  VersionRelatedIDs AS ( "
-																								+ "  SELECT DMS_Content_Related_ID, MAX(SeqNo) AS SeqNo FROM DMS_Association a WHERE a.DMS_AssociationType_ID = 1000000 GROUP  BY DMS_Content_Related_ID "
-																								+ " ) "
-																								+ " SELECT "
-																								+ " NVL(( SELECT a.DMS_Content_ID FROM  DMS_Association a INNER JOIN VersionRelatedIDs x ON (x.DMS_Content_Related_ID = a.DMS_Content_Related_ID AND x.SeqNo = a.SeqNo ) WHERE  a.DMS_Content_Related_ID = ca.DMS_Content_ID AND a.DMS_AssociationType_ID = 1000000 "
-																								+ "  ) , DMS_Content_ID ) AS DMS_Content_ID, "
-																								+ " NVL(ca.DMS_Content_Related_ID,DMS_Content_Related_ID) AS DMS_Content_Related_ID ,"
-																								+ " NVL((SELECT DMS_Association_ID FROM (SELECT a.DMS_Association_ID FROM DMS_Association a WHERE a.DMS_Content_Related_ID = DMS_Content_ID AND a.DMS_Association_ID = 1000000 ORDER BY seqno DESC) b #DB_SPECIFIC_CONDITION#), DMS_Association_ID) AS DMS_Association_ID "
-																								+ " FROM ContentAssociation ca "
-																								+ " WHERE "
-																								+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0)) OR "
-																								+ " (NVL(DMS_Content_Related_ID,0) = NVL(?,0) AND ContentBaseType = 'DIR') ";
+	public static final String					SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE		= " WITH ContentAssociation AS ( "
+																									+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
+																									+ " 	FROM 	DMS_Association a "
+																									+ " 	JOIN 	DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) "
+																									+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.AD_Table_ID, 0) = ? AND NVL(a.Record_ID, 0) = ? "
+																									+ " ), "
+																									+ " VersionList AS ( "
+																									+ " 	SELECT 	DMS_Content_Related_ID, DMS_AssociationType_ID, AD_Table_ID, Record_ID, MAX(SeqNo) AS SeqNo "
+																									+ " 	FROM 	DMS_Association a "
+																									+ " 	WHERE 	a.DMS_AssociationType_ID = 1000000 AND a.AD_Client_ID = ? AND NVL(a.AD_Table_ID, 0) = ? AND NVL(a.Record_ID, 0) = ? "
+																									+ " 	GROUP BY DMS_Content_Related_ID, DMS_AssociationType_ID, AD_Table_ID, Record_ID "
+																									+ " ) "
+																									+ " SELECT  NVL(a.DMS_Content_ID, c.DMS_Content_ID) 				AS DMS_Content_ID, "
+																									+ " 		NVL(a.DMS_Content_Related_ID, c.DMS_Content_Related_ID) AS DMS_Content_Related_ID, "
+																									+ " 		NVL(a.DMS_Association_ID, c.DMS_Association_ID) 		AS DMS_Association_ID, "
+																									+ " 		NVL(a.DMS_AssociationType_ID, c.DMS_AssociationType_ID)	AS DMS_AssociationType_ID "
+																									+ " FROM 		ContentAssociation c "
+																									+ " LEFT JOIN 	VersionList v		ON (v.DMS_Content_Related_ID = c.DMS_Content_ID) "
+																									+ " LEFT JOIN 	DMS_Association a 	ON (a.DMS_Content_Related_ID = v.DMS_Content_Related_ID AND a.DMS_AssociationType_ID = v.DMS_AssociationType_ID AND a.SeqNo = v.SeqNo) "
+																									+ " WHERE 		(NVL(c.DMS_Content_Related_ID,0) = ?) OR (NVL(c.DMS_Content_Related_ID,0) = ? AND c.ContentBaseType = 'DIR') ";
 
-	public static final String					SQL_GET_RELATED_CONTENT					= "SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association "
-																								+ " WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? "
-																								+ " ORDER BY DMS_Association_ID";
+	public static final String					SQL_GET_RELATED_CONTENT						= "SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association "
+																									+ " WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? "
+																									+ " ORDER BY DMS_Association_ID";
 
-	public static String						SQL_GET_RELATED_FOLDER_CONTENT			= null;
-	public static String						SQL_GET_RELATED_FOLDER_CONTENT_ALL		= null;
-	public static String						SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE	= null;
+	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#", "");
+	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#",
+																									"AND c.IsActive='Y' AND a.IsActive='Y'");
 
-	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider					= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
-	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator				= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
-	static CCache<Integer, IContentManager>		cache_contentManager					= new CCache<Integer, IContentManager>("ContentManager", 2);
-	static CCache<String, MImage>				cache_dirThumbnail						= new CCache<String, MImage>("DirThumbnail", 2);
-	static CCache<Integer, MImage>				cache_mimetypeThumbnail					= new CCache<Integer, MImage>("MimetypeThumbnail", 2);
-	static CCache<String, Integer>				cache_contentType						= new CCache<String, Integer>("ContentTypeCache", 100);
-
-	// Oracle Database compatible
-	static
-	{
-		SQL_GET_RELATED_FOLDER_CONTENT = SQL_GET_RELATED_FOLDER_CONTENT_COMMON.replace("#DB_SPECIFIC_CONDITION#",
-				DB.isPostgreSQL() == true ? "FETCH FIRST ROW ONLY" : " WHERE rownum <= 1");
-
-		SQL_GET_RELATED_FOLDER_CONTENT_ALL = SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "");
-
-		SQL_GET_RELATED_FOLDER_CONTENT_ACTIVE = SQL_GET_RELATED_FOLDER_CONTENT.replace("#IsActive#", "AND c.IsActive='Y' AND a.IsActive='Y'");
-	}
+	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider						= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
+	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator					= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
+	static CCache<Integer, IContentManager>		cache_contentManager						= new CCache<Integer, IContentManager>("ContentManager", 2);
+	static CCache<String, MImage>				cache_dirThumbnail							= new CCache<String, MImage>("DirThumbnail", 2);
+	static CCache<Integer, MImage>				cache_mimetypeThumbnail						= new CCache<Integer, MImage>("MimetypeThumbnail", 2);
+	static CCache<String, Integer>				cache_contentType							= new CCache<String, Integer>("ContentTypeCache", 100);
 
 	/**
 	 * Factory - Content Editor
@@ -659,19 +651,24 @@ public class Utils
 		}
 
 		return solrValue;
-	}
+	} // createIndexMap
 
-	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL)
+	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID)
 	{
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 
 		try
 		{
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_FOLDER_CONTENT_ALL, null);
-			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setInt(2, content.getDMS_Content_ID());
-			pstmt.setInt(3, content.getDMS_Content_ID());
+			pstmt = DB.prepareStatement(Utils.SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL, null);
+			pstmt.setInt(1, content.getAD_Client_ID());
+			pstmt.setInt(2, tableID);
+			pstmt.setInt(3, recordID);
+			pstmt.setInt(4, content.getAD_Client_ID());
+			pstmt.setInt(5, tableID);
+			pstmt.setInt(6, recordID);
+			pstmt.setInt(7, content.getDMS_Content_ID());
+			pstmt.setInt(8, content.getDMS_Content_ID());
 
 			rs = pstmt.executeQuery();
 
@@ -687,7 +684,7 @@ public class Utils
 						dmsContent.setParentURL(replacePath(baseURL, renamedURL, parentURL));
 						dmsContent.saveEx();
 					}
-					renameFolder(dmsContent, baseURL, renamedURL);
+					Utils.renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID);
 				}
 				else
 				{
@@ -707,6 +704,9 @@ public class Utils
 							content_file.saveEx();
 						}
 					}
+					DB.close(res, ps);
+					res = null;
+					ps = null;
 				}
 			}
 		}
@@ -1285,4 +1285,57 @@ public class Utils
 			throw new AdempiereException("Issue while creating Media file.", e);
 		}
 	} // getMediaFromFile
+
+	/**
+	 * Copy/Duplicate ASI Create
+	 * 
+	 * @param oldASI
+	 * @param trxName
+	 * @return {@link MAttributeSetInstance}
+	 */
+	public static MAttributeSetInstance copyASI(MAttributeSetInstance oldASI, String trxName)
+	{
+		MAttributeSetInstance newASI = null;
+		if (oldASI != null)
+		{
+			newASI = new MAttributeSetInstance(Env.getCtx(), 0, trxName);
+			PO.copyValues(oldASI, newASI);
+			newASI.saveEx();
+
+			List<MAttributeInstance> oldAIList = new Query(Env.getCtx(), MAttributeInstance.Table_Name, "M_AttributeSetInstance_ID = ?", trxName)
+					.setParameters(oldASI.getM_AttributeSetInstance_ID()).list();
+
+			for (MAttributeInstance oldAI : oldAIList)
+			{
+				MAttributeInstance newAI = new MAttributeInstance(Env.getCtx(), 0, trxName);
+				PO.copyValues(oldAI, newAI);
+				newAI.setM_Attribute_ID(oldAI.getM_Attribute_ID());
+				newAI.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
+				newAI.saveEx();
+			}
+		}
+		return newASI;
+	} // copyASI
+
+	/**
+	 * DMS Mounting Base
+	 * 
+	 * @param AD_Client_ID
+	 * @return
+	 */
+	public static String getDMSMountingBase(int AD_Client_ID)
+	{
+		return MSysConfig.getValue(DMSConstant.DMS_MOUNTING_BASE, "Attachment", AD_Client_ID);
+	}
+
+	/**
+	 * DMS Mounting Archive Base
+	 * 
+	 * @param AD_Client_ID
+	 * @return
+	 */
+	public static String getDMSMountingArchiveBase(int AD_Client_ID)
+	{
+		return MSysConfig.getValue(DMSConstant.DMS_MOUNTING_ARCHIVE_BASE, "Archive", AD_Client_ID);
+	}
 }

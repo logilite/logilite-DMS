@@ -225,7 +225,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		try
 		{
 			initForm();
-			renderViewer();
 		}
 		catch (Exception e)
 		{
@@ -585,8 +584,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
-		log.info(event.getName());
-
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (event.getTarget() instanceof Cell || event.getTarget() instanceof Row))
 		{
 			openDirectoryORContent(event.getTarget());
@@ -633,6 +630,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (isTabViewer())
 			{
 				MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+				selectedDMSContent.removeAllElements();
 				setCurrDMSContent(mountingContent);
 
 				if (currDMSContent != null)
@@ -646,8 +644,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				lblPositionInfo.setText(null);
 			}
 
-			// btnBack.setEnabled(false);
-			// btnNext.setEnabled(false);
+			btnBack.setEnabled(false);
+			btnNext.setEnabled(false);
 
 			renderViewer();
 		}
@@ -670,12 +668,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (query.equals("*:*") || query.startsWith("AD_Table_ID"))
 			{
 				isSearch = false;
-				if (currDMSContent != null)
-				{
-					lblPositionInfo.setValue(currDMSContent.getName());
-				}
-				else
-					lblPositionInfo.setValue(null);
+				lblPositionInfo.setValue(currDMSContent != null ? currDMSContent.getName() : null);
 			}
 			else
 			{
@@ -754,7 +747,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					if (DMSClipboard.getIsCopy())
 						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, isTabViewer());
 					else
-						dms.pasteCutContent(sourceContent, destPasteContent);
+						dms.pasteCutContent(sourceContent, destPasteContent, tableID, recordID);
 					renderViewer();
 				}
 			}
@@ -765,7 +758,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_rename))
 		{
-			final WRenameContent renameContent = new WRenameContent(dms, dirContent);
+			final WRenameContent renameContent = new WRenameContent(dms, dirContent, tableID, recordID);
 			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -876,7 +869,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		if (breadCrumbEvent.getPathId().equals("0"))
+		// if (breadCrumbEvent.getPathId().equals("0"))
+		if (isRoot)
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
@@ -928,11 +922,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		if (isSearch)
-			contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent);
+			contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
 		else if (isGenericSearch)
 			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
 		else
-			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent);
+			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, tableID, recordID);
 
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 
@@ -986,7 +980,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			currDMSContent = selectedDMSContent.pop();
 			showBreadcumb(currDMSContent);
+
 			renderViewer();
+
 			lblPositionInfo.setValue(currDMSContent.getName());
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);

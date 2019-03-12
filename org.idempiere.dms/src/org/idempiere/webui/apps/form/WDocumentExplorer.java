@@ -42,6 +42,7 @@ public class WDocumentExplorer extends ADForm
 		try
 		{
 			WDMSPanel docviewer = new WDMSPanel();
+			docviewer.renderViewer();
 			this.appendChild(docviewer);
 		}
 		catch (Exception e)

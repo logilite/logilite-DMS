@@ -35,7 +35,8 @@ public class DefaultMountingStrategy implements IMountingStrategy
 	@Override
 	public String getMountingPath(String Table_Name, int Record_ID)
 	{
-		return DMSConstant.FILE_SEPARATOR + DMSConstant.DMS_MOUNTING_BASE + DMSConstant.FILE_SEPARATOR + Table_Name + DMSConstant.FILE_SEPARATOR + Record_ID;
+		return DMSConstant.FILE_SEPARATOR + Utils.getDMSMountingBase(Env.getAD_Client_ID(Env.getCtx())) + DMSConstant.FILE_SEPARATOR + Table_Name
+				+ DMSConstant.FILE_SEPARATOR + Record_ID;
 	}
 
 	@Override
@@ -47,7 +48,7 @@ public class DefaultMountingStrategy implements IMountingStrategy
 	@Override
 	public MDMSContent getMountingParent(String Table_Name, int Record_ID)
 	{
-		return getMountingParent(MTable.getTable_ID(Table_Name), Record_ID);
+		return getMountingParent(MTable.get(Env.getCtx(), Table_Name).getAD_Table_ID(), Record_ID);
 	}
 
 	@Override
@@ -71,12 +72,12 @@ public class DefaultMountingStrategy implements IMountingStrategy
 	@Override
 	public MDMSContent getMountingParentForArchive()
 	{
-		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_BASE_CONTENT, DMSConstant.DMS_MOUNTING_ARCHIVE_BASE,
-				Env.getAD_Client_ID(Env.getCtx()));
+		int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
+		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_BASE_CONTENT, Utils.getDMSMountingArchiveBase(AD_Client_ID), AD_Client_ID);
 
 		if (DMS_Content_ID > 0)
 			return new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 
 		return null;
-	}
+	} // getMountingParentForArchive
 }
