@@ -222,15 +222,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		dms = new DMS(Env.getAD_Client_ID(Env.getCtx()));
 
-		try
-		{
-			initForm();
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "Render Component Problem.", e);
-			throw new AdempiereException("Render Component Problem: " + e);
-		}
+		initForm();
 	}
 
 	public WDMSPanel(int Table_ID, int Record_ID, AbstractADWindowContent winContent)
@@ -250,6 +242,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
 
+		btnCreateDir.setEnabled(isWindowAccess);
+		btnUploadContent.setEnabled(isWindowAccess);
+
 		/*
 		 * Navigation and createDir buttons are disabled based on
 		 * "IsAllowCreateDirectory" check on client info.
@@ -262,9 +257,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnNext.setEnabled(false);
 			btnCreateDir.setEnabled(false);
 		}
-
-		btnCreateDir.setEnabled(isWindowAccess);
-		btnUploadContent.setEnabled(isWindowAccess);
 	}
 
 	public DMS getDMS()

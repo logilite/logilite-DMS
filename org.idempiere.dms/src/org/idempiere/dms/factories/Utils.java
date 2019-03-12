@@ -1034,11 +1034,12 @@ public class Utils
 	 * @param fileStorageProvider - File Storage Provider
 	 * @param contentMngr - Content Manager
 	 * @param errorIfDirExists - Throw error if directory Exists
+	 * @param isCreateAssociation
 	 * @param trxName - Transaction Name
 	 * @return DMS Content
 	 */
 	public static MDMSContent createDirectory(String dirName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
-			IFileStorageProvider fileStorageProvider, IContentManager contentMngr, boolean errorIfDirExists, String trxName)
+			IFileStorageProvider fileStorageProvider, IContentManager contentMngr, boolean errorIfDirExists, boolean isCreateAssociation, String trxName)
 	{
 		int contentID = 0;
 
@@ -1105,7 +1106,8 @@ public class Utils
 			if (contentID <= 0)
 			{
 				contentID = Utils.createDMSContent(dirName, MDMSContent.CONTENTBASETYPE_Directory, contentMngr.getPath(parentContent), false);
-				Utils.createAssociation(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0, 0, trxName);
+				if (isCreateAssociation)
+					Utils.createAssociation(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0, 0, trxName);
 			}
 
 			parentContent = new MDMSContent(Env.getCtx(), contentID, trxName);
@@ -1289,21 +1291,23 @@ public class Utils
 	/**
 	 * Copy/Duplicate ASI Create
 	 * 
-	 * @param oldASI
+	 * @param asiID
 	 * @param trxName
 	 * @return {@link MAttributeSetInstance}
 	 */
-	public static MAttributeSetInstance copyASI(MAttributeSetInstance oldASI, String trxName)
+	public static MAttributeSetInstance copyASI(int asiID, String trxName)
 	{
+		MAttributeSetInstance oldASI = null;
 		MAttributeSetInstance newASI = null;
-		if (oldASI != null)
+		if (asiID > 0)
 		{
+			oldASI = new MAttributeSetInstance(Env.getCtx(), asiID, trxName);
 			newASI = new MAttributeSetInstance(Env.getCtx(), 0, trxName);
 			PO.copyValues(oldASI, newASI);
 			newASI.saveEx();
 
 			List<MAttributeInstance> oldAIList = new Query(Env.getCtx(), MAttributeInstance.Table_Name, "M_AttributeSetInstance_ID = ?", trxName)
-					.setParameters(oldASI.getM_AttributeSetInstance_ID()).list();
+					.setParameters(asiID).list();
 
 			for (MAttributeInstance oldAI : oldAIList)
 			{
