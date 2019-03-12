@@ -137,6 +137,8 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		int recordID = gridTab.getParentTab().getRecord_ID();
 		String tableName = gridTab.getParentTab().getTableName();
 
+		docDMSPanel.getBreadRow().getChildren().clear();
+		docDMSPanel.addRootBreadCrumb();
 		docDMSPanel.setCurrDMSContent(docDMSPanel.getDMS().getMountingStrategy().getMountingParent(tableName, recordID));
 
 		renderViewer();
@@ -310,9 +312,6 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		{
 			reload();
 		}
-
-		docDMSPanel.getBreadRow().getChildren().clear();
-		docDMSPanel.addRootBreadCrumb();
 	}
 
 	private void renderViewer()

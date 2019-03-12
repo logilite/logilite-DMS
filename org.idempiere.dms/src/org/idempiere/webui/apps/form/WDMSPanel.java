@@ -584,8 +584,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	@Override
 	public void onEvent(Event event) throws Exception
 	{
-		log.info(event.getName());
-
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (event.getTarget() instanceof Cell || event.getTarget() instanceof Row))
 		{
 			openDirectoryORContent(event.getTarget());
@@ -632,6 +630,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (isTabViewer())
 			{
 				MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+				selectedDMSContent.removeAllElements();
 				setCurrDMSContent(mountingContent);
 
 				if (currDMSContent != null)
@@ -645,8 +644,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				lblPositionInfo.setText(null);
 			}
 
-			// btnBack.setEnabled(false);
-			// btnNext.setEnabled(false);
+			btnBack.setEnabled(false);
+			btnNext.setEnabled(false);
 
 			renderViewer();
 		}
@@ -669,12 +668,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (query.equals("*:*") || query.startsWith("AD_Table_ID"))
 			{
 				isSearch = false;
-				if (currDMSContent != null)
-				{
-					lblPositionInfo.setValue(currDMSContent.getName());
-				}
-				else
-					lblPositionInfo.setValue(null);
+				lblPositionInfo.setValue(currDMSContent != null ? currDMSContent.getName() : null);
 			}
 			else
 			{
@@ -875,7 +869,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		if (breadCrumbEvent.getPathId().equals("0"))
+		// if (breadCrumbEvent.getPathId().equals("0"))
+		if (isRoot)
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
@@ -985,7 +980,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			currDMSContent = selectedDMSContent.pop();
 			showBreadcumb(currDMSContent);
+
 			renderViewer();
+
 			lblPositionInfo.setValue(currDMSContent.getName());
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);

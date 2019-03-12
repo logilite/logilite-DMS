@@ -35,7 +35,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
-import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
@@ -170,7 +169,7 @@ public class ArchiveDMS implements IArchiveStore
 				if (tableName == null)
 					tableName = "";
 				// Generate Mounting Parent
-				dms.initiateMountingContent(DMSConstant.DMS_MOUNTING_ARCHIVE_BASE, tableName, recordID, tableID);
+				dms.initiateMountingContent(Utils.getDMSMountingArchiveBase(dms.AD_Client_ID), tableName, recordID, tableID);
 				dms.initMountingStrategy(tableName);
 				mountingParent = dms.getMountingStrategy().getMountingParentForArchive();
 			}

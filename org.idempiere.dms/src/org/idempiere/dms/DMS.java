@@ -1678,7 +1678,7 @@ public class DMS
 
 	public void initiateMountingContent(String tableName, int recordID, int tableID)
 	{
-		this.initiateMountingContent(DMSConstant.DMS_MOUNTING_BASE, tableName, recordID, tableID);
+		this.initiateMountingContent(Utils.getDMSMountingBase(AD_Client_ID), tableName, recordID, tableID);
 	}
 
 	public void initiateMountingContent(String mountingBaseName, String tableName, int recordID, int tableID)

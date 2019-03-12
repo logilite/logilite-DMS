@@ -1316,4 +1316,26 @@ public class Utils
 		}
 		return newASI;
 	} // copyASI
+
+	/**
+	 * DMS Mounting Base
+	 * 
+	 * @param AD_Client_ID
+	 * @return
+	 */
+	public static String getDMSMountingBase(int AD_Client_ID)
+	{
+		return MSysConfig.getValue(DMSConstant.DMS_MOUNTING_BASE, "Attachment", AD_Client_ID);
+	}
+
+	/**
+	 * DMS Mounting Archive Base
+	 * 
+	 * @param AD_Client_ID
+	 * @return
+	 */
+	public static String getDMSMountingArchiveBase(int AD_Client_ID)
+	{
+		return MSysConfig.getValue(DMSConstant.DMS_MOUNTING_ARCHIVE_BASE, "Archive", AD_Client_ID);
+	}
 }
