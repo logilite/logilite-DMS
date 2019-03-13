@@ -148,7 +148,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private ConfirmPanel			confirmPanel			= new ConfirmPanel();
 
 	private Button					btnClear				= confirmPanel.createButton(ConfirmPanel.A_RESET);
-	private Button					btnRefresh				= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
 	private Button					btnCloseTab				= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 	private Button					btnSearch				= new Button();
 	private Button					btnCreateDir			= new Button();
@@ -206,7 +205,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private boolean					isSearch				= false;
 	private boolean					isGenericSearch			= false;
-	private boolean					isAllowCreateDirectory	= true;
 	private boolean					isWindowAccess			= true;
 
 	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
@@ -242,15 +240,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
 
-		btnCreateDir.setEnabled(isWindowAccess);
 		btnUploadContent.setEnabled(isWindowAccess);
 
-		/*
-		 * Navigation and createDir buttons are disabled based on
-		 * "IsAllowCreateDirectory" check on client info.
-		 */
-		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()));
-		isAllowCreateDirectory = clientInfo.get_ValueAsBoolean("IsAllowCreateDirectory");
+		allowToCreateDir();
+	}
+
+	/*
+	 * Navigation and createDir buttons are disabled based on
+	 * "IsAllowCreateDirectory" check on client info.
+	 */
+	public void allowToCreateDir()
+	{
+		boolean isAllowCreateDirectory = MClientInfo.get(Env.getCtx(), dms.AD_Client_ID).get_ValueAsBoolean("IsAllowCreateDirectory");
+
 		if (isTabViewer() && !isAllowCreateDirectory)
 		{
 			btnBack.setEnabled(false);
@@ -487,10 +489,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		//
 		row = rowsSearch.newRow();
 
-		DMS_ZK_Util.setButtonData(btnClear, "Reset24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnClear, "Reset24.png", "Clear", this);
 		DMS_ZK_Util.setButtonData(btnSearch, "Search24.png", DMSConstant.TTT_SEARCH, this);
-		DMS_ZK_Util.setButtonData(btnRefresh, "Refresh24.png", "", this);
-		DMS_ZK_Util.setButtonData(btnCloseTab, "Close24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnCloseTab, "Close24.png", "Clear all & Go to Home Directory", this);
 		DMS_ZK_Util.setButtonData(btnToggleView, "List16.png", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
 
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
@@ -499,7 +500,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox = new Hbox();
 		hbox.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
 		hbox.appendChild(btnSearch);
-		hbox.appendChild(btnRefresh);
 		hbox.appendChild(btnClear);
 		hbox.appendChild(btnCloseTab);
 
@@ -605,15 +605,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			directoryNavigation();
 		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_RESET))
+		else if (event.getTarget().equals(btnClear))
 		{
-			// For solve navigation issue After search and reset button pressed.
-			isGenericSearch = true;
-
+			isGenericSearch = false;
 			isSearch = false;
 			clearComponents();
 		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
+		else if (event.getTarget().equals(btnCloseTab))
 		{
 			isSearch = false;
 			breadRow.getChildren().clear();
@@ -652,7 +650,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			renderViewer();
 		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH) || event.getTarget().equals(btnSearch))
+		else if (event.getTarget().equals(btnSearch))
 		{
 			HashMap<String, List<Object>> params = getQueryParamas();
 			String query = dms.buildSolrSearchQuery(params);
@@ -831,14 +829,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderViewer();
 		}
 
-		// Disable navigation button based on "isAllowCreateDirectory" check on
-		// client info window
-		if (isTabViewer() && !isAllowCreateDirectory)
-		{
-			btnBack.setEnabled(false);
-			btnNext.setEnabled(false);
-			btnCreateDir.setDisabled(false);
-		}
+		allowToCreateDir();
 
 	} // onEvent
 
@@ -1122,7 +1113,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		renderViewer();
 
-		if (recordID > 0 && tableID > 0)
+		if (isTabViewer())
 		{
 			// Getting initial mounting content for disabling back navigation
 			MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
@@ -1136,8 +1127,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			return;
 		}
-		btnClear.setEnabled(false);
-
 	} // backNavigation
 
 	/**
