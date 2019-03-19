@@ -206,6 +206,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private boolean					isSearch				= false;
 	private boolean					isGenericSearch			= false;
 	private boolean					isWindowAccess			= true;
+	private boolean					isDocExplorerWindow		= false;
 
 	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
 
@@ -294,6 +295,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public int getWindow_ID()
 	{
 		return windowID;
+	}
+
+	public boolean isDocExplorerWindow()
+	{
+		return isDocExplorerWindow;
+	}
+
+	public void setDocExplorerWindow(boolean isDocExplorerWindow)
+	{
+		this.isDocExplorerWindow = isDocExplorerWindow;
 	}
 
 	public MDMSContent getCurrDMSContent()
@@ -724,10 +735,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_paste) || event.getTarget().equals(mnu_canvasPaste))
 		{
-			if (DMSClipboard.get() != null)
+			MDMSContent sourceContent = DMSClipboard.get();
+			MDMSContent destPasteContent = dirContent;
+			if (sourceContent != null)
 			{
-				MDMSContent sourceContent = DMSClipboard.get();
-				MDMSContent destPasteContent = dirContent;
 				if (destPasteContent != null && sourceContent.get_ID() == destPasteContent.get_ID())
 				{
 					FDialog.warn(0, "You cannot Paste into itself");
@@ -735,9 +746,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				else
 				{
 					if (DMSClipboard.getIsCopy())
-						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, isTabViewer());
+						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID);
 					else
 						dms.pasteCutContent(sourceContent, destPasteContent, tableID, recordID);
+
 					renderViewer();
 				}
 			}
@@ -909,7 +921,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (isGenericSearch)
 			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
 		else
-			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, tableID, recordID);
+			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, tableID, recordID, isDocExplorerWindow, true);
 
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 
@@ -1343,8 +1355,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (tableID <= 0 || recordID <= 0)
 		{
+			// DMS Tab Level Configured, Allow Cut content to Paste it on
+			// Document Explorer window
 			if (DMSClipboard.get() == null || (DMSClipboard.get() != null && !DMSClipboard.getIsCopy()))
-				mnu_canvasPaste.setDisabled(true);
+				; // mnu_canvasPaste.setDisabled(true);
 			else
 				mnu_canvasPaste.setDisabled(false);
 		}

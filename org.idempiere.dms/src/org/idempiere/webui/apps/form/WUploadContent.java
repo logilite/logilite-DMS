@@ -300,7 +300,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			throw new WrongValueException("File name is mandatory");
 
 		File tmpFile = null;
-		try
+		try	
 		{
 			tmpFile = File.createTempFile(uploadedMedia.getName(), "." + uploadedMedia.getFormat());
 			FileOutputStream os = new FileOutputStream(tmpFile);
@@ -310,7 +310,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			// Adding File
 			if (isVersion)
-				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue());
+				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue(), tableID, recordID);
 			else
 			{
 				int ASI_ID = 0;
