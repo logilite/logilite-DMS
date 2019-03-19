@@ -428,6 +428,14 @@ public class DMS
 				asiID = Utils.createASI(attributeMap, cType.getM_AttributeSet_ID(), trx.getTrxName());
 		}
 
+		try
+		{
+			trx.commit(true);
+		}
+		catch (SQLException e)
+		{
+			throw new AdempiereException("Error while committing transaction:" + e.getLocalizedMessage(), e);
+		}
 		//
 		addFile(dirContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion);
 
@@ -538,9 +546,11 @@ public class DMS
 		}
 		else
 		{
-			String format = Utils.getFileExtension(file.getName());
+			String format = Utils.getFileExtension(fileName);
 			if (format == null)
-				throw new AdempiereException("Invalid File format:" + file.getName());
+				format = Utils.getFileExtension(file.getName());
+			if (format == null)
+				throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
 
 			if (!fileName.endsWith(format))
 				fileName = fileName + format;

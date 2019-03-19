@@ -371,7 +371,9 @@ public class Utils
 	public static String getFileExtension(String name)
 	{
 		String ext = FilenameUtils.getExtension(name);
-		if (ext != null)
+		if (Util.isEmpty(ext, true))
+			ext = null;
+		else
 			ext = "." + ext;
 		return ext;
 	} // getFileExtension
