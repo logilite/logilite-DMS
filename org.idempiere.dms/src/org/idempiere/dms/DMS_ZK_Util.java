@@ -79,7 +79,7 @@ public class DMS_ZK_Util
 	 */
 	public static AImage getThumbImageForContent(DMS dms, I_DMS_Content content, String thumbImgSize)
 	{
-		File thumbFile = dms.getThumbnail(content, thumbImgSize);
+		File thumbFile = dms.getThumbnailFile(content, thumbImgSize);
 		AImage image = null;
 		try
 		{

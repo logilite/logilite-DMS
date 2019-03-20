@@ -148,7 +148,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private ConfirmPanel			confirmPanel			= new ConfirmPanel();
 
 	private Button					btnClear				= confirmPanel.createButton(ConfirmPanel.A_RESET);
-	private Button					btnRefresh				= confirmPanel.createButton(ConfirmPanel.A_REFRESH);
 	private Button					btnCloseTab				= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
 	private Button					btnSearch				= new Button();
 	private Button					btnCreateDir			= new Button();
@@ -206,8 +205,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private boolean					isSearch				= false;
 	private boolean					isGenericSearch			= false;
-	private boolean					isAllowCreateDirectory	= true;
 	private boolean					isWindowAccess			= true;
+	private boolean					isDocExplorerWindow		= false;
+	private boolean					isMountingBaseStructure	= false;
 
 	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
 
@@ -242,20 +242,35 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
 
-		btnCreateDir.setEnabled(isWindowAccess);
 		btnUploadContent.setEnabled(isWindowAccess);
 
-		/*
-		 * Navigation and createDir buttons are disabled based on
-		 * "IsAllowCreateDirectory" check on client info.
-		 */
-		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), Env.getAD_Client_ID(Env.getCtx()));
-		isAllowCreateDirectory = clientInfo.get_ValueAsBoolean("IsAllowCreateDirectory");
+		allowToCreateDir();
+	}
+
+	/*
+	 * Navigation and createDir buttons are disabled based on
+	 * "IsAllowCreateDirectory" check on client info.
+	 */
+	public void allowToCreateDir()
+	{
+		boolean isAllowCreateDirectory = MClientInfo.get(Env.getCtx(), dms.AD_Client_ID).get_ValueAsBoolean("IsAllowCreateDirectory");
+
 		if (isTabViewer() && !isAllowCreateDirectory)
 		{
 			btnBack.setEnabled(false);
 			btnNext.setEnabled(false);
 			btnCreateDir.setEnabled(false);
+		}
+
+		if (isMountingBaseStructure)
+		{
+			btnCreateDir.setEnabled(false);
+			btnUploadContent.setEnabled(false);
+		}
+		else if (isDocExplorerWindow)
+		{
+			btnCreateDir.setEnabled(true);
+			btnUploadContent.setEnabled(true);
 		}
 	}
 
@@ -292,6 +307,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public int getWindow_ID()
 	{
 		return windowID;
+	}
+
+	public boolean isDocExplorerWindow()
+	{
+		return isDocExplorerWindow;
+	}
+
+	public void setDocExplorerWindow(boolean isDocExplorerWindow)
+	{
+		this.isDocExplorerWindow = isDocExplorerWindow;
 	}
 
 	public MDMSContent getCurrDMSContent()
@@ -487,10 +512,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		//
 		row = rowsSearch.newRow();
 
-		DMS_ZK_Util.setButtonData(btnClear, "Reset24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnClear, "Reset24.png", "Clear", this);
 		DMS_ZK_Util.setButtonData(btnSearch, "Search24.png", DMSConstant.TTT_SEARCH, this);
-		DMS_ZK_Util.setButtonData(btnRefresh, "Refresh24.png", "", this);
-		DMS_ZK_Util.setButtonData(btnCloseTab, "Close24.png", "", this);
+		DMS_ZK_Util.setButtonData(btnCloseTab, "Close24.png", "Clear all & Go to Home Directory", this);
 		DMS_ZK_Util.setButtonData(btnToggleView, "List16.png", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
 
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
@@ -499,7 +523,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox = new Hbox();
 		hbox.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
 		hbox.appendChild(btnSearch);
-		hbox.appendChild(btnRefresh);
 		hbox.appendChild(btnClear);
 		hbox.appendChild(btnCloseTab);
 
@@ -599,23 +622,23 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				currDMSContent = null;
 				lblPositionInfo.setValue(null);
 			}
-			backNavigation();
+			navigationBack();
 		}
 		else if (event.getTarget().equals(btnNext))
 		{
-			directoryNavigation();
+			navigationNext();
 		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_RESET))
+		else if (event.getTarget().equals(btnClear))
 		{
-			// For solve navigation issue After search and reset button pressed.
-			isGenericSearch = true;
-
+			isGenericSearch = false;
 			isSearch = false;
 			clearComponents();
 		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
+		else if (event.getTarget().equals(btnCloseTab))
 		{
 			isSearch = false;
+			isGenericSearch = false;
+			isMountingBaseStructure = false;
 			breadRow.getChildren().clear();
 			addRootBreadCrumb();
 
@@ -652,7 +675,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			renderViewer();
 		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH) || event.getTarget().equals(btnSearch))
+		else if (event.getTarget().equals(btnSearch))
 		{
 			HashMap<String, List<Object>> params = getQueryParamas();
 			String query = dms.buildSolrSearchQuery(params);
@@ -726,10 +749,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_paste) || event.getTarget().equals(mnu_canvasPaste))
 		{
-			if (DMSClipboard.get() != null)
+			MDMSContent sourceContent = DMSClipboard.get();
+			MDMSContent destPasteContent = dirContent;
+			if (sourceContent != null)
 			{
-				MDMSContent sourceContent = DMSClipboard.get();
-				MDMSContent destPasteContent = dirContent;
 				if (destPasteContent != null && sourceContent.get_ID() == destPasteContent.get_ID())
 				{
 					FDialog.warn(0, "You cannot Paste into itself");
@@ -737,9 +760,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				else
 				{
 					if (DMSClipboard.getIsCopy())
-						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, isTabViewer());
+						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID);
 					else
 						dms.pasteCutContent(sourceContent, destPasteContent, tableID, recordID);
+
 					renderViewer();
 				}
 			}
@@ -818,8 +842,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			renderBreadCrumb(event);
 		}
-		else if ((Events.ON_OK.equals(event.getName()) || Events.ON_CLICK.equals(event.getName()))
-				&& event.getTarget().getClass().equals(vsearchBox.getButton().getClass()))
+		else if ((Events.ON_OK.equals(event.getName()) || Events.ON_CLICK.equals(event.getName())) && event.getTarget().equals(vsearchBox.getButton()))
 		{
 			breadRow.getChildren().clear();
 			btnBack.setEnabled(true);
@@ -831,14 +854,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderViewer();
 		}
 
-		// Disable navigation button based on "isAllowCreateDirectory" check on
-		// client info window
-		if (isTabViewer() && !isAllowCreateDirectory)
-		{
-			btnBack.setEnabled(false);
-			btnNext.setEnabled(false);
-			btnCreateDir.setDisabled(false);
-		}
+		allowToCreateDir();
 
 	} // onEvent
 
@@ -861,13 +877,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		// if (breadCrumbEvent.getPathId().equals("0"))
 		if (isRoot)
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
 			btnNext.setEnabled(false);
 			btnBack.setEnabled(false);
+
+			isMountingBaseStructure = false;
 		}
 
 		int DMS_Content_ID = Integer.valueOf(breadCrumbEvent.getPathId());
@@ -918,7 +935,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (isGenericSearch)
 			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
 		else
-			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, tableID, recordID);
+			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, tableID, recordID, isDocExplorerWindow, true);
 
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 
@@ -978,6 +995,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			lblPositionInfo.setValue(currDMSContent.getName());
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);
+
+			if (currDMSContent.isMounting() && isDocExplorerWindow)
+				isMountingBaseStructure = true;
 		}
 		else if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
@@ -1009,7 +1029,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					tabBox.setSelectedTab(tabData);
 
 					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID);
-					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess);
+					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure);
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
 					documentViewer.getAttributePanel().addEventListener("onRenameComplete", this);
@@ -1037,7 +1057,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	private void backNavigation() throws IOException, URISyntaxException
+	private void navigationBack() throws IOException, URISyntaxException
 	{
 		List<BreadCrumbLink> parents = getParentLinks();
 		if (!parents.isEmpty())
@@ -1102,6 +1122,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				currDMSContent = null;
 				lblPositionInfo.setValue("");
 				btnBack.setEnabled(false);
+				isMountingBaseStructure = false;
 			}
 			else
 			{
@@ -1115,6 +1136,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else
 		{
 			btnBack.setEnabled(false);
+			isMountingBaseStructure = false;
 		}
 
 		if (!selectedDMSAssociation.isEmpty())
@@ -1122,7 +1144,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		renderViewer();
 
-		if (recordID > 0 && tableID > 0)
+		if (isTabViewer())
 		{
 			// Getting initial mounting content for disabling back navigation
 			MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
@@ -1136,8 +1158,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			return;
 		}
-		btnClear.setEnabled(false);
-
 	} // backNavigation
 
 	/**
@@ -1146,7 +1166,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	private void directoryNavigation() throws IOException, URISyntaxException
+	private void navigationNext() throws IOException, URISyntaxException
 	{
 		BreadCrumbLink breadCrumbLink = new BreadCrumbLink();
 		breadCrumbLink.setPathId(nextDMSContent.getName());
@@ -1166,6 +1186,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderViewer();
 			lblPositionInfo.setValue(currDMSContent.getName());
 		}
+
+		isMountingBaseStructure = isMountingBaseStructure || (currDMSContent.isMounting() && isDocExplorerWindow);
+
 		btnNext.setEnabled(false);
 		btnBack.setEnabled(true);
 	} // directoryNavigation
@@ -1216,7 +1239,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.setPage(compCellRowViewer.getPage());
 		copyDMSContent = DMSClipboard.get();
 
-		if (!isWindowAccess || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)))
+		if (!isWindowAccess || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+				|| isMountingBaseStructure)
 		{
 			ctxMenuItemDisabled(true);
 
@@ -1354,15 +1378,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (tableID <= 0 || recordID <= 0)
 		{
+			// DMS Tab Level Configured, Allow Cut content to Paste it on
+			// Document Explorer window
 			if (DMSClipboard.get() == null || (DMSClipboard.get() != null && !DMSClipboard.getIsCopy()))
-				mnu_canvasPaste.setDisabled(true);
+				; // mnu_canvasPaste.setDisabled(true);
 			else
 				mnu_canvasPaste.setDisabled(false);
 		}
 
 		if (currDMSContent != null)
 		{
-			if (currDMSContent.isMounting() && !currDMSContent.getName().equals(String.valueOf(getRecord_ID())))
+			if (isMountingBaseStructure)
 			{
 				mnu_canvasCreateLink.setDisabled(true);
 				mnu_canvasPaste.setDisabled(true);

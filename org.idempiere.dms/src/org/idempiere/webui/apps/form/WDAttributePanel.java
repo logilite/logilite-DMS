@@ -101,8 +101,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private Textbox				txtDesc					= null;
 
 	private DMS					dms;
-	private MDMSContent			DMS_Content				= null;
-	private MDMSContent			parent_Content			= null;
+	private MDMSContent			content					= null;
+	private MDMSContent			parentContent			= null;
 
 	private Tabbox				tabBox					= null;
 	private ConfirmPanel		confirmPanel			= null;
@@ -112,15 +112,17 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private int					recordId				= 0;
 
 	private boolean				isWindowAccess			= true;
+	private boolean				isMountingBaseStructure	= false;
 
-	public WDAttributePanel(DMS dms, I_DMS_Content DMS_Content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess)
+	public WDAttributePanel(DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure)
 	{
 		this.dms = dms;
-		this.isWindowAccess = isWindowAccess;
-		this.DMS_Content = (MDMSContent) DMS_Content;
 		this.tabBox = tabBox;
 		this.tableId = tableID;
 		this.recordId = recordID;
+		this.content = (MDMSContent) content;
+		this.isWindowAccess = isWindowAccess;
+		this.isMountingBaseStructure = isMountingBaseStructure;
 
 		try
 		{
@@ -163,7 +165,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		lblStatus = new Label();
 		ZkCssHelper.appendStyle(lblStatus, "font-weight: bold;");
 		ZkCssHelper.appendStyle(lblStatus, "align: center;");
-		lblStatus.setValue(MUser.getNameOfUser(DMS_Content.getUpdatedBy()) + " edited at " + DMS_Content.getUpdated());
+		lblStatus.setValue(MUser.getNameOfUser(content.getUpdatedBy()) + " edited at " + content.getUpdated());
 
 		panelAttribute.appendChild(lblStatus);
 		tabBoxAttribute.appendChild(tabsAttribute);
@@ -262,7 +264,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
 
-		btnVersionUpload.setDisabled(!isWindowAccess);
+		btnVersionUpload.setDisabled(!isWindowAccess || isMountingBaseStructure);
 		btnEdit.setDisabled(!isWindowAccess);
 	} // init
 
@@ -288,7 +290,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		try
 		{
 			MDMSContent versionContent = null;
-			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
+			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(content.getDMS_Content_ID(), null);
 
 			pstmt = DB.prepareStatement(DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
 			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());
@@ -353,7 +355,8 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		String[] eventsList = new String[] { Events.ON_DOUBLE_CLICK };
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_VERSION);
-		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT-30, this, eventsList);
+		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this,
+				eventsList);
 
 	} // initVersionHistory
 
@@ -386,9 +389,9 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		txtName.setWidth("100%");
 		txtDesc.setWidth("100%");
 
-		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMS_Content), null);
-		txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
-		txtDesc.setValue(DMS_Content.getDescription());
+		parentContent = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(content), null);
+		txtName.setValue(parentContent.getName().substring(0, parentContent.getName().lastIndexOf(".")));
+		txtDesc.setValue(content.getDescription());
 		txtName.setMaxlength(DMSConstant.MAX_FILENAME_LENGTH);
 
 		txtName.setEnabled(false);
@@ -405,7 +408,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		rows.appendChild(row);
 		tabpanelAttribute.appendChild(commGrid);
 
-		ASIPanel = new WDLoadASIPanel(DMS_Content.getDMS_ContentType_ID(), DMS_Content.getM_AttributeSetInstance_ID());
+		ASIPanel = new WDLoadASIPanel(content.getDMS_ContentType_ID(), content.getM_AttributeSetInstance_ID());
 		ASIPanel.setEditableAttribute(false);
 		ASIPanel.appendChild(btnEdit);
 		ASIPanel.appendChild(btnSave);
@@ -430,13 +433,13 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
-			if (!txtName.getValue().equals(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
+			if (!txtName.getValue().equals(parentContent.getName().substring(0, parentContent.getName().lastIndexOf("."))))
 			{
 				String error = Utils.isValidFileName(txtName.getValue(), false);
 				if (!Util.isEmpty(error, true))
 					throw new WrongValueException(txtName, error);
 
-				dms.updateContent(txtName.getValue(), DMS_Content);
+				dms.updateContent(txtName.getValue(), content);
 			}
 
 			ASIPanel.saveAttributes();
@@ -445,18 +448,18 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			txtName.setEnabled(false);
 			txtDesc.setEnabled(false);
 
-			if ((Util.isEmpty(DMS_Content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
-					|| (!Util.isEmpty(DMS_Content.getDescription()) && !DMS_Content.getDescription().equals(txtDesc.getValue())))
+			if ((Util.isEmpty(content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
+					|| (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
 			{
-				DMS_Content.setDescription(txtDesc.getValue());
-				DMS_Content.save();
+				content.setDescription(txtDesc.getValue());
+				content.save();
 			}
 
-			DMS_Content.load(null);
+			content.load(null);
 
 			Events.sendEvent(new Event("onRenameComplete", this));
 			tabBox.setSelectedTab((Tab) tabBox.getSelectedTab());
-			tabBox.getSelectedTab().setLabel(DMS_Content.getName());
+			tabBox.getSelectedTab().setLabel(content.getName());
 
 			refreshPanel();
 		}
@@ -467,13 +470,13 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		else if (event.getTarget().equals(btnDownload))
 		{
 			// Resolve NPE after file rename and try to download
-			DMS_Content.load(DMS_Content.get_TrxName());
+			content.load(content.get_TrxName());
 			//
-			DMS_ZK_Util.downloadDocument(dms, DMS_Content);
+			DMS_ZK_Util.downloadDocument(dms, content);
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
-			dms.deleteContentWithDocument(DMS_Content);
+			dms.deleteContentWithDocument(content);
 
 			tabBox.getSelectedTab().close();
 		}
@@ -482,7 +485,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			final Tab tab = (Tab) tabBox.getSelectedTab();
 			final WDAttributePanel panel = this;
 
-			WUploadContent uploadContent = new WUploadContent(dms, DMS_Content, true, tableId, recordId);
+			WUploadContent uploadContent = new WUploadContent(dms, content, true, tableId, recordId);
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override

@@ -103,6 +103,8 @@ public class DMS
 	private IContentManager			contentManager				= null;
 	private IIndexSearcher			indexSearcher				= null;
 
+	private boolean					isDocExplorerWindow			= false;
+
 	public int						AD_Client_ID				= 0;
 
 	/**
@@ -136,7 +138,7 @@ public class DMS
 
 		if (indexSearcher == null)
 			throw new AdempiereException("Index server is not found.");
-	}
+	} // Constructor
 
 	/**
 	 * Constructor for initialize provider
@@ -144,16 +146,14 @@ public class DMS
 	public DMS(int AD_Client_ID, String Table_Name)
 	{
 		this(AD_Client_ID);
-
 		initMountingStrategy(Table_Name);
-	}
+	} // Constructor
 
 	public void initMountingStrategy(String Table_Name)
 	{
 		mountingStrategy = Utils.getMountingStrategy(Table_Name);
 	}
 
-	// Get Provider
 	public IFileStorageProvider getThumbnailStorageProvider()
 	{
 		return thumbnailStorageProvider;
@@ -182,6 +182,124 @@ public class DMS
 	public IIndexSearcher getIndexSearcher()
 	{
 		return indexSearcher;
+	}
+
+	public boolean isDocExplorerWindow()
+	{
+		return isDocExplorerWindow;
+	}
+
+	public void setDocExplorerWindow(boolean isDocExplorerWindow)
+	{
+		this.isDocExplorerWindow = isDocExplorerWindow;
+	}
+
+	/*
+	 * Util Methods
+	 */
+	public MDMSContent getRootContent(int AD_Table_ID, int Record_ID)
+	{
+		return getMountingStrategy().getMountingParent(MTable.getTableName(Env.getCtx(), AD_Table_ID), Record_ID);
+	}
+
+	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)
+	{
+		return createDirectory(dirName, parentContent, tableID, recordID, errorIfDirExists, true, trxName);
+	}
+
+	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists,
+			boolean isCreateAssociation, String trxName)
+	{
+		return Utils.createDirectory(dirName, parentContent, tableID, recordID, fileStorageProvider, contentManager, errorIfDirExists, isCreateAssociation,
+				trxName);
+	}
+
+	public String getThumbnailURL(I_DMS_Content content, String size)
+	{
+		return thumbnailProvider.getURL(content, size);
+	}
+
+	public File getThumbnailFile(I_DMS_Content content, String size)
+	{
+		return thumbnailProvider.getFile(content, size);
+	}
+
+	public MImage getDirThumbnail()
+	{
+		return Utils.getDirThumbnail();
+	}
+
+	public MImage getMimetypeThumbnail(int dms_MimeType_ID)
+	{
+		return Utils.getMimetypeThumbnail(dms_MimeType_ID);
+	}
+
+	public String getPathFromContentManager(I_DMS_Content content)
+	{
+		return contentManager.getPath(content);
+	}
+
+	public File getFileFromStorage(I_DMS_Content content)
+	{
+		return fileStorageProvider.getFile(this.getPathFromContentManager(content));
+	}
+
+	public File getFileFromStorage(String path)
+	{
+		return fileStorageProvider.getFile(path);
+	}
+
+	public String getBaseDirPath(MDMSContent content)
+	{
+		return fileStorageProvider.getBaseDirectory(contentManager.getPath(content));
+	}
+
+	public List<Integer> searchIndex(String query)
+	{
+		return indexSearcher.searchIndex(query);
+	}
+
+	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
+	{
+		return indexSearcher.buildSolrSearchQuery(params);
+	}
+
+	public void createIndexContent(MDMSContent content, MDMSAssociation association)
+	{
+		indexSearcher.indexContent(Utils.createIndexMap(content, association));
+	}
+
+	public void initiateMountingContent(String tableName, int recordID, int tableID)
+	{
+		this.initiateMountingContent(Utils.getDMSMountingBase(AD_Client_ID), tableName, recordID, tableID);
+	}
+
+	public void initiateMountingContent(String mountingBaseName, String tableName, int recordID, int tableID)
+	{
+		Utils.initiateMountingContent(mountingBaseName, tableName, recordID, tableID);
+	}
+
+	public int createDMSContent(String name, String value, String contentBaseType, String parentURL, String desc, File file, int contentTypeID, int asiID,
+			boolean isMounting, String trxName)
+	{
+		return Utils.createDMSContent(name, value, contentBaseType, parentURL, desc, file, contentTypeID, asiID, isMounting, trxName);
+	}
+
+	public int createAssociation(int dms_Content_ID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, int seqNo, String trxName)
+	{
+		return Utils.createAssociation(dms_Content_ID, contentRelatedID, Record_ID, AD_Table_ID, associationTypeID, seqNo, trxName);
+	}
+
+	public HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, int tableID, int recordID,
+			boolean isActiveOnly)
+	{
+		return this.getDMSContentsWithAssociation(content, AD_Client_ID, tableID, recordID, false, isActiveOnly);
+	}
+
+	public HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, int tableID, int recordID,
+			boolean isDocExplorerWindow, boolean isActiveOnly)
+	{
+		return Utils.getDMSContentsWithAssociation(content, AD_Client_ID, tableID, recordID, isDocExplorerWindow, isActiveOnly);
 	}
 
 	/*
@@ -298,7 +416,7 @@ public class DMS
 		// Create Directory folder hierarchy OR get leaf DMS-Content
 		if (!Util.isEmpty(dirPath, true) && !dirPath.equals(DMSConstant.FILE_SEPARATOR))
 		{
-			dirContent = createDirHierarchy(dirPath, dirContent, AD_Table_ID, Record_ID, trx.getTrxName());
+			dirContent = this.createDirHierarchy(dirPath, dirContent, AD_Table_ID, Record_ID, trx.getTrxName());
 		}
 
 		if (!isVersion && contentType != null)
@@ -310,37 +428,19 @@ public class DMS
 				asiID = Utils.createASI(attributeMap, cType.getM_AttributeSet_ID(), trx.getTrxName());
 		}
 
+		try
+		{
+			trx.commit(true);
+		}
+		catch (SQLException e)
+		{
+			throw new AdempiereException("Error while committing transaction:" + e.getLocalizedMessage(), e);
+		}
 		//
 		addFile(dirContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion);
 
 		return true;
 	}// addFile
-
-	/**
-	 * Create Directory Hierarchy or Get leaf DMSContent from dirPath
-	 * 
-	 * @param dirPath
-	 * @param dirContent
-	 * @param AD_Table_ID
-	 * @param Record_ID
-	 * @param trxName
-	 * @return {@link MDMSContent} - Leaf node
-	 */
-	public MDMSContent createDirHierarchy(String dirPath, MDMSContent dirContent, int AD_Table_ID, int Record_ID, String trxName)
-	{
-		// For Ref '\\' = '\', "\\" = "\\\\"
-		String[] dirs = dirPath.split(DMSConstant.FILE_SEPARATOR);
-
-		for (int i = 0; i < dirs.length; i++)
-		{
-			String dir = dirs[i].trim();
-			if (!Util.isEmpty(dir, true))
-			{
-				dirContent = createDirectory(dir, dirContent, AD_Table_ID, Record_ID, false, trxName);
-			}
-		}
-		return dirContent;
-	} // createDirHierarchy
 
 	/**
 	 * @param parentContent
@@ -398,6 +498,32 @@ public class DMS
 		return true;
 	} // addFile
 
+	/**
+	 * Create Directory Hierarchy or Get leaf DMSContent from dirPath
+	 * 
+	 * @param dirPath
+	 * @param dirContent
+	 * @param AD_Table_ID
+	 * @param Record_ID
+	 * @param trxName
+	 * @return {@link MDMSContent} - Leaf node
+	 */
+	public MDMSContent createDirHierarchy(String dirPath, MDMSContent dirContent, int AD_Table_ID, int Record_ID, String trxName)
+	{
+		// For Ref '\\' = '\', "\\" = "\\\\"
+		String[] dirs = dirPath.split(DMSConstant.FILE_SEPARATOR);
+
+		for (int i = 0; i < dirs.length; i++)
+		{
+			String dir = dirs[i].trim();
+			if (!Util.isEmpty(dir, true))
+			{
+				dirContent = this.createDirectory(dir, dirContent, AD_Table_ID, Record_ID, false, trxName);
+			}
+		}
+		return dirContent;
+	} // createDirHierarchy
+
 	public boolean createContentAssociationFileStoreAndThumnail(MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID,
 			int asiID, int AD_Table_ID, int Record_ID, boolean isVersion, String trxName)
 	{
@@ -420,9 +546,11 @@ public class DMS
 		}
 		else
 		{
-			String format = Utils.getFileExtension(file.getName());
+			String format = Utils.getFileExtension(fileName);
 			if (format == null)
-				throw new AdempiereException("Invalid File format:" + file.getName());
+				format = Utils.getFileExtension(file.getName());
+			if (format == null)
+				throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
 
 			if (!fileName.endsWith(format))
 				fileName = fileName + format;
@@ -477,101 +605,6 @@ public class DMS
 		return null;
 	} // selectContent
 
-	public MDMSContent getRootContent(int AD_Table_ID, int Record_ID)
-	{
-		return getMountingStrategy().getMountingParent(MTable.getTableName(Env.getCtx(), AD_Table_ID), Record_ID);
-	}
-
-	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)
-	{
-		return createDirectory(dirName, parentContent, tableID, recordID, errorIfDirExists, true, trxName);
-	}
-
-	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists,
-			boolean isCreateAssociation, String trxName)
-	{
-		return Utils.createDirectory(dirName, parentContent, tableID, recordID, fileStorageProvider, contentManager, errorIfDirExists, isCreateAssociation,
-				trxName);
-	}
-
-	public String getThumbnailURL(I_DMS_Content content, String size)
-	{
-		return thumbnailProvider.getURL(content, size);
-	}
-
-	public File getThumbnail(I_DMS_Content content, String size)
-	{
-		return thumbnailProvider.getFile(content, size);
-	}
-
-	public MImage getDirThumbnail()
-	{
-		return Utils.getDirThumbnail();
-	}
-
-	public MImage getMimetypeThumbnail(int dms_MimeType_ID)
-	{
-		return Utils.getMimetypeThumbnail(dms_MimeType_ID);
-	}
-
-	public String getPathFromContentManager(I_DMS_Content content)
-	{
-		return contentManager.getPath(content);
-	}
-
-	public File getFileFromStorage(I_DMS_Content content)
-	{
-		return fileStorageProvider.getFile(this.getPathFromContentManager(content));
-	}
-
-	/**
-	 * Get File from Path
-	 * 
-	 * @param path
-	 * @return {@link File}
-	 */
-	public File getFileFromStorage(String path)
-	{
-		return fileStorageProvider.getFile(path);
-	} // getFile
-
-	/**
-	 * Get base directory Path of given content
-	 * 
-	 * @param content
-	 * @return path
-	 */
-	public String getBaseDirPath(MDMSContent content)
-	{
-		return fileStorageProvider.getBaseDirectory(contentManager.getPath(content));
-	} // getBaseDirPath
-
-	public List<Integer> searchIndex(String query)
-	{
-		return indexSearcher.searchIndex(query);
-	}
-
-	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
-	{
-		return indexSearcher.buildSolrSearchQuery(params);
-	}
-
-	public void createIndexContent(MDMSContent content, MDMSAssociation association)
-	{
-		indexSearcher.indexContent(Utils.createIndexMap(content, association));
-	}
-
-	public int createDMSContent(String name, String value, String contentBaseType, String parentURL, String desc, File file, int contentTypeID, int asiID,
-			boolean isMounting, String trxName)
-	{
-		return Utils.createDMSContent(name, value, contentBaseType, parentURL, desc, file, contentTypeID, asiID, isMounting, trxName);
-	}
-
-	public int createAssociation(int dms_Content_ID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, int seqNo, String trxName)
-	{
-		return Utils.createAssociation(dms_Content_ID, contentRelatedID, Record_ID, AD_Table_ID, associationTypeID, seqNo, trxName);
-	}
-
 	/**
 	 * Paste copied folder into physical storage
 	 * 
@@ -615,23 +648,20 @@ public class DMS
 		}
 
 		// TODO Stopped to Copy whole folder directory
-		// try
-		// {
 		if (!newFile.mkdir())
 			throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'" + newFileName + "'");
-		// FileUtils.copyDirectory(dirPath, newFile,
-		// DirectoryFileFilter.DIRECTORY);
-		// }
-		// catch (IOException e)
-		// {
-		// log.log(Level.SEVERE, "Copy Content Failure.", e);
-		// throw new AdempiereException("Copy Content Failure." +
-		// e.getLocalizedMessage());
-		// }
 
 		return newFile.getName();
 	} // pastePhysicalCopiedFolder
 
+	/**
+	 * Paste Physical Copied content
+	 *
+	 * @param copiedContent - Copied Content
+	 * @param destPasteContent - Destination Content
+	 * @param fileName - FileName
+	 * @return FileName
+	 */
 	public String pastePhysicalCopiedContent(MDMSContent copiedContent, MDMSContent destPasteContent, String fileName)
 	{// TODO ERROR
 		File oldFile = new File(this.getBaseDirPath(copiedContent));
@@ -682,7 +712,15 @@ public class DMS
 		return newFile.getName();
 	} // pastePhysicalCopiedContent
 
-	public void pasteCopyFileContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID, boolean isTabViewer)
+	/**
+	 * Paste copy file content
+	 * 
+	 * @param copiedContent - Copied File Content
+	 * @param destContent - Destination Content
+	 * @param tableID - AD_Table_ID
+	 * @param recordID - Record_ID
+	 */
+	public void pasteCopyFileContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID)
 	{
 		int crID = 0;
 		String fileName = null;
@@ -750,9 +788,7 @@ public class DMS
 				else
 					newDMSAssociation.setDMS_Content_Related_ID(crID);
 
-				newDMSAssociation.setAD_Table_ID(tableID);
-				newDMSAssociation.setRecord_ID(recordID);
-				newDMSAssociation.saveEx();
+				Utils.updateTableRecordRef(newDMSAssociation, tableID, recordID);
 
 				if (!Util.isEmpty(copiedContent.getParentURL()))
 				{
@@ -786,12 +822,18 @@ public class DMS
 		}
 	} // pasteCopyFileContent
 
-	public void moveFile(MDMSContent dmsContent, MDMSContent destContent)
+	/**
+	 * Move File
+	 * 
+	 * @param contentFrom
+	 * @param destContent
+	 */
+	public void moveFile(MDMSContent contentFrom, MDMSContent destContent)
 	{
 		String newPath = this.getBaseDirPath(destContent);
-		newPath = newPath + DMSConstant.FILE_SEPARATOR + dmsContent.getName();
+		newPath = newPath + DMSConstant.FILE_SEPARATOR + contentFrom.getName();
 
-		File oldFile = new File(this.getFileFromStorage(dmsContent).getAbsolutePath());
+		File oldFile = new File(this.getFileFromStorage(contentFrom).getAbsolutePath());
 		File newFile = new File(newPath);
 
 		if (!newFile.exists())
@@ -801,22 +843,20 @@ public class DMS
 	} // moveFile
 
 	/**
-	 * Copy Content
+	 * Paste the Copy Directory Content
 	 * 
-	 * @param copiedContent
-	 * @param baseURL
-	 * @param renamedURL
-	 * @param destPasteContent
-	 * @param tableID
-	 * @param recordID
-	 * @param isTabViewer
+	 * @param copiedContent - Content From
+	 * @param destPasteContent - Content To
+	 * @param baseURL - Base URL
+	 * @param renamedURL - Renamed URL
+	 * @param tableID - AD_Table_ID
+	 * @param recordID - Record_ID
 	 */
-	public void copyContent(MDMSContent copiedContent, String baseURL, String renamedURL, MDMSContent destPasteContent, int tableID, int recordID,
-			boolean isTabViewer)
+	public void pasteCopyDirContent(MDMSContent copiedContent, MDMSContent destPasteContent, String baseURL, String renamedURL, int tableID, int recordID)
 	{
 		MDMSAssociation copiedAssociation = Utils.getAssociationFromContent(copiedContent.getDMS_Content_ID(), null);
-		HashMap<I_DMS_Content, I_DMS_Association> map = this.getDMSContentsWithAssociation(copiedContent, copiedAssociation.getAD_Table_ID(),
-				copiedAssociation.getRecord_ID());
+		HashMap<I_DMS_Content, I_DMS_Association> map = this.getDMSContentsWithAssociation(copiedContent, AD_Client_ID, copiedAssociation.getAD_Table_ID(),
+				copiedAssociation.getRecord_ID(), true);
 		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSContent oldDMSContent = (MDMSContent) mapEntry.getKey();
@@ -837,9 +877,7 @@ public class DMS
 				newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
 				newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
 
-				newDMSAssociation.setAD_Table_ID(tableID);
-				newDMSAssociation.setRecord_ID(recordID);
-				newDMSAssociation.saveEx();
+				Utils.updateTableRecordRef(newDMSAssociation, tableID, recordID);
 
 				if (!Util.isEmpty(oldDMSContent.getParentURL()))
 				{
@@ -848,33 +886,43 @@ public class DMS
 						newDMSContent.setParentURL(this.getPathFromContentManager(destPasteContent));
 						newDMSContent.saveEx();
 					}
-					copyContent(oldDMSContent, baseURL, renamedURL, newDMSContent, tableID, recordID, isTabViewer);
+					this.pasteCopyDirContent(oldDMSContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 				}
 			}
 			else
 			{
-				this.pasteCopyFileContent(oldDMSContent, destPasteContent, tableID, recordID, isTabViewer);
+				this.pasteCopyFileContent(oldDMSContent, destPasteContent, tableID, recordID);
 			}
 		}
-	} // copyContent
+	} // pasteCopyDirContent
 
-	public void pasteCopyContent(MDMSContent copied, MDMSContent destContent, int tableID, int recordID, boolean isTabViewer) throws IOException, SQLException
+	/**
+	 * Paste the content [ Copy Operation ]
+	 * 
+	 * @param copiedContent - Content From
+	 * @param destContent - Content To
+	 * @param tableID - AD_Table_ID
+	 * @param recordID - Record_ID
+	 * @throws IOException
+	 * @throws SQLException
+	 */
+	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID) throws IOException, SQLException
 	{
-		if (copied.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+		if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			String baseURL = null;
 			String renamedURL = null;
 			String contentname = null;
 
-			if (!Util.isEmpty(copied.getParentURL()))
-				baseURL = getPathFromContentManager(copied);
+			if (!Util.isEmpty(copiedContent.getParentURL()))
+				baseURL = getPathFromContentManager(copiedContent);
 			else
-				baseURL = DMSConstant.FILE_SEPARATOR + copied.getName();
+				baseURL = DMSConstant.FILE_SEPARATOR + copiedContent.getName();
 
-			contentname = pastePhysicalCopiedFolder(copied, destContent);
-			renamedURL = getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + copied.getName();
+			contentname = pastePhysicalCopiedFolder(copiedContent, destContent);
+			renamedURL = getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + copiedContent.getName();
 
-			MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), copied.getDMS_Content_ID(), null);
+			MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), copiedContent.getDMS_Content_ID(), null);
 			MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
 
 			PO.copyValues(oldDMSContent, newDMSContent);
@@ -887,7 +935,7 @@ public class DMS
 			newDMSContent.setName(contentname);
 			newDMSContent.saveEx();
 
-			MDMSAssociation oldDMSAssociation = Utils.getAssociationFromContent(copied.getDMS_Content_ID(), null);
+			MDMSAssociation oldDMSAssociation = Utils.getAssociationFromContent(copiedContent.getDMS_Content_ID(), null);
 			MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 
 			PO.copyValues(oldDMSAssociation, newDMSAssociation);
@@ -898,18 +946,24 @@ public class DMS
 			else
 				newDMSAssociation.setDMS_Content_Related_ID(0);
 
-			newDMSAssociation.setAD_Table_ID(tableID);
-			newDMSAssociation.setRecord_ID(recordID);
-			newDMSAssociation.saveEx();
+			Utils.updateTableRecordRef(newDMSAssociation, tableID, recordID);
 
-			copyContent(copied, baseURL, renamedURL, newDMSContent, tableID, recordID, isTabViewer);
+			pasteCopyDirContent(copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 		}
 		else
 		{
-			pasteCopyFileContent(copied, destContent, tableID, recordID, isTabViewer);
+			pasteCopyFileContent(copiedContent, destContent, tableID, recordID);
 		}
 	} // pasteCopyContent
 
+	/**
+	 * Paste the content [ Cut operation ]
+	 * 
+	 * @param cutContent - Content From
+	 * @param destContent - Content To
+	 * @param tableID - AD_Table_ID
+	 * @param recordID - Record_ID
+	 */
 	public void pasteCutContent(MDMSContent cutContent, MDMSContent destContent, int tableID, int recordID)
 	{
 		if (cutContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
@@ -942,23 +996,22 @@ public class DMS
 
 			renamedURL = this.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + cutContent.getName();
 
-			Utils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID);
+			Utils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
 			dirPath.renameTo(newFile);
 
-			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(cutContent.getDMS_Content_ID(), null);
+			MDMSAssociation association = Utils.getAssociationFromContent(cutContent.getDMS_Content_ID(), null);
 			if (destContent != null)
 			{
-				dmsAssociation.setDMS_Content_Related_ID(destContent.getDMS_Content_ID());
+				association.setDMS_Content_Related_ID(destContent.getDMS_Content_ID());
 				cutContent.setParentURL(this.getPathFromContentManager(destContent));
 			}
 			else
 			{
-				dmsAssociation.setDMS_Content_Related_ID(0);
+				association.setDMS_Content_Related_ID(0);
 				cutContent.setParentURL(null);
 			}
-
 			cutContent.saveEx();
-			dmsAssociation.saveEx();
+			Utils.updateTableRecordRef(association, tableID, recordID);
 		}
 		else
 		{
@@ -966,9 +1019,10 @@ public class DMS
 
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
-
 			try
 			{
+				// TODO Need to Test Cut paste option for Association Type is
+				// newly created
 				pstmt = DB.prepareStatement("SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association "
 						+ "WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? ORDER BY DMS_Association_ID", null);
 
@@ -978,21 +1032,21 @@ public class DMS
 				while (rs.next())
 				{
 					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-					MDMSAssociation dmsAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 
 					this.moveFile(dmsContent, destContent);
 
-					if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID)
+					if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID)
 					{
 						if (destContent != null && destContent.getDMS_Content_ID() == 0)
 							destContent = null;
 
 						if (destContent == null)
-							dmsAssociation.setDMS_Content_Related_ID(0);
+							association.setDMS_Content_Related_ID(0);
 						else
-							dmsAssociation.setDMS_Content_Related_ID(destContent.getDMS_Content_ID());
-						dmsAssociation.saveEx();
+							association.setDMS_Content_Related_ID(destContent.getDMS_Content_ID());
 					}
+					Utils.updateTableRecordRef(association, tableID, recordID);
 
 					dmsContent.setParentURL(this.getPathFromContentManager(destContent));
 					dmsContent.saveEx();
@@ -1006,17 +1060,26 @@ public class DMS
 		}
 	} // pasteCutContent
 
-	public void renameContent(String fileName, MDMSContent DMSContent, MDMSContent parent_Content, int tableID, int recordID)
+	/**
+	 * Rename Content File/Directory
+	 * 
+	 * @param fileName
+	 * @param content
+	 * @param parent_Content
+	 * @param tableID
+	 * @param recordID
+	 */
+	public void renameContent(String fileName, MDMSContent content, MDMSContent parent_Content, int tableID, int recordID)
 	{
 		fileName = fileName.trim();
 
-		if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			if (!fileName.equalsIgnoreCase(parent_Content.getName()))
 			{
-				String baseURL = this.getPathFromContentManager(DMSContent);
+				String baseURL = this.getPathFromContentManager(content);
 
-				String newFileName = this.getBaseDirPath(DMSContent);
+				String newFileName = this.getBaseDirPath(content);
 				File dirPath = new File(newFileName);
 				newFileName = newFileName.substring(0, newFileName.lastIndexOf(DMSConstant.FILE_SEPARATOR));
 
@@ -1036,33 +1099,37 @@ public class DMS
 				}
 
 				String renamedURL = null;
-				if (!Util.isEmpty(DMSContent.getParentURL()))
-					renamedURL = DMSContent.getParentURL() + DMSConstant.FILE_SEPARATOR + fileName;
+				if (!Util.isEmpty(content.getParentURL()))
+					renamedURL = content.getParentURL() + DMSConstant.FILE_SEPARATOR + fileName;
 				else
 					renamedURL = DMSConstant.FILE_SEPARATOR + fileName;
 
 				if (!dirPath.renameTo(newFile))
 					throw new AdempiereException("Invalid File Name.");
 
-				Utils.renameFolder(DMSContent, baseURL, renamedURL, tableID, recordID);
-				DMSContent.setName(fileName);
-				DMSContent.saveEx();
+				Utils.renameFolder(content, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
+				content.setName(fileName);
+				content.saveEx();
 			}
 		}
 		else
 		{
 			if (!fileName.equalsIgnoreCase(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 			{
-				updateContent(fileName, DMSContent);
+				updateContent(fileName, content);
 			}
 		}
 	} // renameContent
 
+	/**
+	 * Update File Content
+	 * 
+	 * @param fileName
+	 * @param DMSContent
+	 */
 	public void updateContent(String fileName, MDMSContent DMSContent)
 	{
 		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(DMSContent);
-		MDMSContent content = null;
-		MDMSAssociation association = null;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -1075,8 +1142,8 @@ public class DMS
 
 			while (rs.next())
 			{
-				content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-				association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+				MDMSContent content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 				this.renameFile(content, association, fileName, true);
 			}
 		}
@@ -1198,6 +1265,12 @@ public class DMS
 		return null;
 	} // createLink
 
+	/**
+	 * @param currDMSContent - Current DMS Content
+	 * @param DMSContent - Related Content
+	 * @param isDir - is Directory
+	 * @return true if Document exists in DB
+	 */
 	public boolean isDocumentPresent(MDMSContent currDMSContent, MDMSContent DMSContent, boolean isDir)
 	{
 		StringBuilder query = new StringBuilder();
@@ -1211,57 +1284,6 @@ public class DMS
 
 		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
 	} // isDocumentPresent
-
-	/**
-	 * get all DMS Contents for rendering
-	 * 
-	 * @param recordID
-	 * @param tableID
-	 */
-	public HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int tableID, int recordID)
-	{
-		int contentID = 0;
-		if (content != null)
-			contentID = content.getDMS_Content_ID();
-
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			// select only active records
-			pstmt = DB.prepareStatement(Utils.SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE, null);
-			pstmt.setInt(1, AD_Client_ID);
-			pstmt.setInt(2, tableID);
-			pstmt.setInt(3, recordID);
-			pstmt.setInt(4, AD_Client_ID);
-			pstmt.setInt(5, tableID);
-			pstmt.setInt(6, recordID);
-			pstmt.setInt(7, contentID);
-			pstmt.setInt(8, contentID);
-
-			rs = pstmt.executeQuery();
-			while (rs.next())
-			{
-				map.put(new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null), new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-						null));
-			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Content directory level wise fetching failure: ", e);
-			throw new AdempiereException("Content directory level wise fetching failure: " + e, e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-
-		return map;
-	} // getDMSContents
 
 	public void deleteContentWithDocument(MDMSContent content) throws IOException
 	{
@@ -1443,46 +1465,23 @@ public class DMS
 
 	private void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int tableID, int recordID)
 	{
-		PreparedStatement pstmt = DB.prepareStatement(Utils.SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL, null);
-		ResultSet rs = null;
-		try
+		MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+		HashMap<I_DMS_Content, I_DMS_Association> map = this
+				.getDMSContentsWithAssociation(content, AD_Client_ID, tableID, recordID, isDocExplorerWindow, false);
+		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
-			pstmt.setInt(1, AD_Client_ID);
-			pstmt.setInt(2, tableID);
-			pstmt.setInt(3, recordID);
-			pstmt.setInt(4, AD_Client_ID);
-			pstmt.setInt(5, tableID);
-			pstmt.setInt(6, recordID);
-			pstmt.setInt(7, DMS_Content_ID);
-			pstmt.setInt(8, DMS_Content_ID);
+			MDMSContent dmsContent = (MDMSContent) mapEntry.getKey();
 
-			rs = pstmt.executeQuery();
-			while (rs.next())
+			if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+				this.getHierarchicalContent(hierarchicalContent, dmsContent.getDMS_Content_ID(), tableID, recordID);
+			else
 			{
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				MDMSAssociation association = (MDMSAssociation) mapEntry.getValue();
+				hierarchicalContent.append(association.getDMS_Content_ID() + " OR ");
 
-				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-					this.getHierarchicalContent(hierarchicalContent, dmsContent.getDMS_Content_ID(), tableID, recordID);
-				else
-				{
-					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-					hierarchicalContent.append(association.getDMS_Content_ID() + " OR ");
-
-					if (association.getDMS_Content_ID() != dmsContent.getDMS_Content_ID())
-						hierarchicalContent.append(dmsContent.getDMS_Content_ID() + " OR ");
-				}
+				if (association.getDMS_Content_ID() != dmsContent.getDMS_Content_ID())
+					hierarchicalContent.append(dmsContent.getDMS_Content_ID() + " OR ");
 			}
-		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Fail to get hierarchical Content.", e);
-			throw new AdempiereException("Fail to get hierarchical Content: " + e, e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			pstmt = null;
-			rs = null;
 		}
 	} // getHierarchicalContent
 
@@ -1672,15 +1671,5 @@ public class DMS
 			throw new AdempiereException(e);
 		}
 	} // convertXlsxToPdf
-
-	public void initiateMountingContent(String tableName, int recordID, int tableID)
-	{
-		this.initiateMountingContent(Utils.getDMSMountingBase(AD_Client_ID), tableName, recordID, tableID);
-	}
-
-	public void initiateMountingContent(String mountingBaseName, String tableName, int recordID, int tableID)
-	{
-		Utils.initiateMountingContent(mountingBaseName, tableName, recordID, tableID);
-	}
 
 }

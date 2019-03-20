@@ -32,6 +32,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -96,12 +97,12 @@ public class Utils
 																									+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																									+ " 	FROM 	DMS_Association a "
 																									+ " 	JOIN 	DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) "
-																									+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.AD_Table_ID, 0) = ? AND NVL(a.Record_ID, 0) = ? "
+																									+ " 	WHERE 	c.AD_Client_ID = ? AND (NVL(a.AD_Table_ID, 0) = ? OR 0 = ? ) AND (NVL(a.Record_ID, 0) = ? OR 0 = ?) "
 																									+ " ), "
 																									+ " VersionList AS ( "
 																									+ " 	SELECT 	DMS_Content_Related_ID, DMS_AssociationType_ID, AD_Table_ID, Record_ID, MAX(SeqNo) AS SeqNo "
 																									+ " 	FROM 	DMS_Association a "
-																									+ " 	WHERE 	a.DMS_AssociationType_ID = 1000000 AND a.AD_Client_ID = ? AND NVL(a.AD_Table_ID, 0) = ? AND NVL(a.Record_ID, 0) = ? "
+																									+ " 	WHERE 	a.AD_Client_ID = ? AND (NVL(a.AD_Table_ID, 0) = ? OR 0 = ? ) AND (NVL(a.Record_ID, 0) = ? OR 0 = ?) AND a.DMS_AssociationType_ID = 1000000 "
 																									+ " 	GROUP BY DMS_Content_Related_ID, DMS_AssociationType_ID, AD_Table_ID, Record_ID "
 																									+ " ) "
 																									+ " SELECT  NVL(a.DMS_Content_ID, c.DMS_Content_ID) 				AS DMS_Content_ID, "
@@ -370,7 +371,9 @@ public class Utils
 	public static String getFileExtension(String name)
 	{
 		String ext = FilenameUtils.getExtension(name);
-		if (ext != null)
+		if (Util.isEmpty(ext, true))
+			ext = null;
+		else
 			ext = "." + ext;
 		return ext;
 	} // getFileExtension
@@ -653,75 +656,111 @@ public class Utils
 		return solrValue;
 	} // createIndexMap
 
-	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID)
+	/**
+	 * Rename Folder
+	 * 
+	 * @param content
+	 * @param baseURL
+	 * @param renamedURL
+	 * @param tableID
+	 * @param recordID
+	 * @param isDocExplorerWindow
+	 */
+	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID, boolean isDocExplorerWindow)
 	{
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
+		MDMSAssociation association = Utils.getAssociationFromContent(content.getDMS_Content_ID(), null);
+		HashMap<I_DMS_Content, I_DMS_Association> map = Utils.getDMSContentsWithAssociation(content, content.getAD_Client_ID(), association.getAD_Table_ID(),
+				association.getRecord_ID(), isDocExplorerWindow, false);
 
-		try
+		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
-			pstmt = DB.prepareStatement(Utils.SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL, null);
-			pstmt.setInt(1, content.getAD_Client_ID());
-			pstmt.setInt(2, tableID);
-			pstmt.setInt(3, recordID);
-			pstmt.setInt(4, content.getAD_Client_ID());
-			pstmt.setInt(5, tableID);
-			pstmt.setInt(6, recordID);
-			pstmt.setInt(7, content.getDMS_Content_ID());
-			pstmt.setInt(8, content.getDMS_Content_ID());
+			MDMSContent dmsContent = (MDMSContent) mapEntry.getKey();
 
-			rs = pstmt.executeQuery();
-
-			while (rs.next())
+			if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-
-				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+				String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
+				if (parentURL.startsWith(baseURL))
 				{
-					String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
-					if (parentURL.startsWith(baseURL))
-					{
-						dmsContent.setParentURL(replacePath(baseURL, renamedURL, parentURL));
-						dmsContent.saveEx();
-					}
-					Utils.renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID);
+					dmsContent.setParentURL(replacePath(baseURL, renamedURL, parentURL));
+					dmsContent.saveEx();
 				}
-				else
+				Utils.renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
+				MDMSAssociation associationDir = Utils.getAssociationFromContent(dmsContent.getDMS_Content_ID(), null);
+				Utils.updateTableRecordRef(associationDir, tableID, recordID);
+			}
+			else
+			{
+				PreparedStatement pstmt = null;
+				ResultSet rs = null;
+				try
 				{
-					PreparedStatement ps = DB.prepareStatement(SQL_GET_RELATED_CONTENT, null);
-					ps.setInt(1, dmsContent.getDMS_Content_ID());
-					ps.setInt(2, dmsContent.getDMS_Content_ID());
+					pstmt = DB.prepareStatement(SQL_GET_RELATED_CONTENT, null);
+					pstmt.setInt(1, dmsContent.getDMS_Content_ID());
+					pstmt.setInt(2, dmsContent.getDMS_Content_ID());
 
-					ResultSet res = ps.executeQuery();
-
-					while (res.next())
+					rs = pstmt.executeQuery();
+					while (rs.next())
 					{
-						MDMSContent content_file = new MDMSContent(Env.getCtx(), res.getInt("DMS_Content_ID"), null);
-
-						if (content_file.getParentURL().startsWith(baseURL))
-						{
-							content_file.setParentURL(replacePath(baseURL, renamedURL, content_file.getParentURL()));
-							content_file.saveEx();
-						}
+						MDMSContent contentFile = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+						Utils.updateAllVersions(baseURL, renamedURL, tableID, recordID, contentFile, dmsContent);
 					}
-					DB.close(res, ps);
-					res = null;
-					ps = null;
+				}
+				catch (Exception e)
+				{
+				}
+				finally
+				{
+					DB.close(rs, pstmt);
+					rs = null;
+					pstmt = null;
 				}
 			}
 		}
-		catch (SQLException e)
-		{
-			log.log(Level.SEVERE, "Content renaming failure: ", e);
-			throw new AdempiereException("Content renaming failure: " + e.getLocalizedMessage());
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
 	} // renameFolder
+
+	/**
+	 * @param baseURL
+	 * @param renamedURL
+	 * @param tableID
+	 * @param recordID
+	 * @param contentFile
+	 * @param parentContent
+	 */
+	public static void updateAllVersions(String baseURL, String renamedURL, int tableID, int recordID, MDMSContent contentFile, MDMSContent parentContent)
+	{
+		if (contentFile.getParentURL().startsWith(baseURL))
+		{
+			contentFile.setParentURL(replacePath(baseURL, renamedURL, contentFile.getParentURL()));
+			contentFile.saveEx();
+		}
+
+		MDMSAssociation associationFile = Utils.getAssociationFromContent(contentFile.getDMS_Content_ID(), null);
+		Utils.updateTableRecordRef(associationFile, tableID, recordID);
+
+		contentFile = (MDMSContent) associationFile.getDMS_Content_Related();
+		MDMSAssociation as = Utils.getAssociationFromContent(contentFile.getDMS_Content_ID(), null);
+		if (contentFile.getDMS_Content_ID() != parentContent.getDMS_Content_ID()
+				&& (as.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID || as.getDMS_AssociationType_ID() == MDMSAssociationType.VERSION_ID))
+		{
+			Utils.updateAllVersions(baseURL, renamedURL, tableID, recordID, contentFile, parentContent);
+		}
+	}
+
+	/**
+	 * Update Table & Record Reference and Save it
+	 * 
+	 * @param association
+	 * @param tableID
+	 * @param recordID
+	 */
+	public static void updateTableRecordRef(MDMSAssociation association, int tableID, int recordID)
+	{
+		association.setAD_Table_ID(tableID);
+		association.setRecord_ID(recordID);
+		association.saveEx();
+		System.out.println("C = " + association.getDMS_Content_ID() + " A = " + association.getDMS_Association_ID() + " Path = "
+				+ association.getDMS_Content().getParentURL());
+	} // updateTableRecordRef
 
 	public static String replacePath(String baseURL, String renamedURL, String parentURL)
 	{
@@ -1342,4 +1381,64 @@ public class Utils
 	{
 		return MSysConfig.getValue(DMSConstant.DMS_MOUNTING_ARCHIVE_BASE, "Archive", AD_Client_ID);
 	}
+
+	/**
+	 * get all DMS Contents for rendering
+	 * 
+	 * @param content
+	 * @param tableID
+	 * @param recordID
+	 * @param isDocExplorerWindow
+	 * @param isActiveOnly
+	 * @return map of DMS content and association
+	 */
+	public static HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, int tableID, int recordID,
+			boolean isDocExplorerWindow, boolean isActiveOnly)
+	{
+		int contentID = 0;
+		if (content != null)
+			contentID = content.getDMS_Content_ID();
+
+		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
+
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			// select only active records
+			pstmt = DB.prepareStatement(isActiveOnly ? SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE : SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL, null);
+			pstmt.setInt(1, AD_Client_ID);
+			pstmt.setInt(2, tableID);
+			pstmt.setInt(3, tableID);
+			pstmt.setInt(4, recordID);
+			pstmt.setInt(5, recordID);
+			pstmt.setInt(6, AD_Client_ID);
+			pstmt.setInt(7, tableID);
+			pstmt.setInt(8, tableID);
+			pstmt.setInt(9, recordID);
+			pstmt.setInt(10, recordID);
+			pstmt.setInt(11, contentID);
+			pstmt.setInt(12, contentID);
+
+			rs = pstmt.executeQuery();
+			while (rs.next())
+			{
+				map.put(new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null), new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
+						null));
+			}
+		}
+		catch (SQLException e)
+		{
+			DMS.log.log(Level.SEVERE, "Content directory level wise fetching failure: ", e);
+			throw new AdempiereException("Content directory level wise fetching failure: " + e, e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+
+		return map;
+	} // getDMSContents
 }
