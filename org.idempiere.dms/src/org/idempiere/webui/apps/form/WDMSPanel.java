@@ -207,6 +207,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private boolean					isGenericSearch			= false;
 	private boolean					isWindowAccess			= true;
 	private boolean					isDocExplorerWindow		= false;
+	private boolean					isMountingBaseStructure	= false;
 
 	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
 
@@ -259,6 +260,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnBack.setEnabled(false);
 			btnNext.setEnabled(false);
 			btnCreateDir.setEnabled(false);
+		}
+
+		if (isMountingBaseStructure)
+		{
+			btnCreateDir.setEnabled(false);
+			btnUploadContent.setEnabled(false);
+		}
+		else if (isDocExplorerWindow)
+		{
+			btnCreateDir.setEnabled(true);
+			btnUploadContent.setEnabled(true);
 		}
 	}
 
@@ -610,11 +622,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				currDMSContent = null;
 				lblPositionInfo.setValue(null);
 			}
-			backNavigation();
+			navigationBack();
 		}
 		else if (event.getTarget().equals(btnNext))
 		{
-			directoryNavigation();
+			navigationNext();
 		}
 		else if (event.getTarget().equals(btnClear))
 		{
@@ -625,6 +637,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(btnCloseTab))
 		{
 			isSearch = false;
+			isGenericSearch = false;
+			isMountingBaseStructure = false;
 			breadRow.getChildren().clear();
 			addRootBreadCrumb();
 
@@ -828,8 +842,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			renderBreadCrumb(event);
 		}
-		else if ((Events.ON_OK.equals(event.getName()) || Events.ON_CLICK.equals(event.getName()))
-				&& event.getTarget().getClass().equals(vsearchBox.getButton().getClass()))
+		else if ((Events.ON_OK.equals(event.getName()) || Events.ON_CLICK.equals(event.getName())) && event.getTarget().equals(vsearchBox.getButton()))
 		{
 			breadRow.getChildren().clear();
 			btnBack.setEnabled(true);
@@ -864,13 +877,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		// if (breadCrumbEvent.getPathId().equals("0"))
 		if (isRoot)
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
 			btnNext.setEnabled(false);
 			btnBack.setEnabled(false);
+
+			isMountingBaseStructure = false;
 		}
 
 		int DMS_Content_ID = Integer.valueOf(breadCrumbEvent.getPathId());
@@ -981,6 +995,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			lblPositionInfo.setValue(currDMSContent.getName());
 			btnBack.setEnabled(true);
 			btnNext.setEnabled(false);
+
+			if (currDMSContent.isMounting() && isDocExplorerWindow)
+				isMountingBaseStructure = true;
 		}
 		else if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
@@ -1012,7 +1029,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					tabBox.setSelectedTab(tabData);
 
 					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID);
-					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess);
+					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure);
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
 					documentViewer.getAttributePanel().addEventListener("onRenameComplete", this);
@@ -1040,7 +1057,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	private void backNavigation() throws IOException, URISyntaxException
+	private void navigationBack() throws IOException, URISyntaxException
 	{
 		List<BreadCrumbLink> parents = getParentLinks();
 		if (!parents.isEmpty())
@@ -1105,6 +1122,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				currDMSContent = null;
 				lblPositionInfo.setValue("");
 				btnBack.setEnabled(false);
+				isMountingBaseStructure = false;
 			}
 			else
 			{
@@ -1118,6 +1136,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else
 		{
 			btnBack.setEnabled(false);
+			isMountingBaseStructure = false;
 		}
 
 		if (!selectedDMSAssociation.isEmpty())
@@ -1147,7 +1166,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 */
-	private void directoryNavigation() throws IOException, URISyntaxException
+	private void navigationNext() throws IOException, URISyntaxException
 	{
 		BreadCrumbLink breadCrumbLink = new BreadCrumbLink();
 		breadCrumbLink.setPathId(nextDMSContent.getName());
@@ -1167,6 +1186,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderViewer();
 			lblPositionInfo.setValue(currDMSContent.getName());
 		}
+
+		isMountingBaseStructure = isMountingBaseStructure || (currDMSContent.isMounting() && isDocExplorerWindow);
+
 		btnNext.setEnabled(false);
 		btnBack.setEnabled(true);
 	} // directoryNavigation
@@ -1217,7 +1239,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.setPage(compCellRowViewer.getPage());
 		copyDMSContent = DMSClipboard.get();
 
-		if (!isWindowAccess || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)))
+		if (!isWindowAccess || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+				|| isMountingBaseStructure)
 		{
 			ctxMenuItemDisabled(true);
 
@@ -1365,7 +1388,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (currDMSContent != null)
 		{
-			if (currDMSContent.isMounting() && !currDMSContent.getName().equals(String.valueOf(getRecord_ID())))
+			if (isMountingBaseStructure)
 			{
 				mnu_canvasCreateLink.setDisabled(true);
 				mnu_canvasPaste.setDisabled(true);

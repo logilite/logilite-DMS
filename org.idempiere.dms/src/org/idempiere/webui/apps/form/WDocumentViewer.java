@@ -66,7 +66,7 @@ public class WDocumentViewer extends Window
 		return attributePanel;
 	}
 
-	public Tabpanel initForm(boolean isWindowAccess)
+	public Tabpanel initForm(boolean isWindowAccess, boolean isMountingBaseStructure)
 	{
 		this.setHeight("100%");
 		this.setWidth("100%");
@@ -92,7 +92,7 @@ public class WDocumentViewer extends Window
 		// Content attribute view
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		attributePanel = new WDAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess);
+		attributePanel = new WDAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure);
 		cellCPreview.appendChild(attributePanel);
 
 		Hbox boxViewSeparator = new Hbox();
