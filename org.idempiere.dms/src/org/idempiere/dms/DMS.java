@@ -860,6 +860,7 @@ public class DMS
 		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSContent oldDMSContent = (MDMSContent) mapEntry.getKey();
+			MDMSAssociation oldDMSAssociation = (MDMSAssociation) mapEntry.getValue();
 			if (oldDMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
 				MDMSContent newDMSContent = createDirectory(oldDMSContent.getName(), destPasteContent, tableID, recordID, true, false, null);
@@ -871,7 +872,6 @@ public class DMS
 				newDMSContent.saveEx();
 
 				// Copy Association
-				MDMSAssociation oldDMSAssociation = (MDMSAssociation) mapEntry.getValue();
 				MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 				PO.copyValues(oldDMSAssociation, newDMSAssociation);
 				newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
@@ -888,6 +888,11 @@ public class DMS
 					}
 					this.pasteCopyDirContent(oldDMSContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 				}
+			}
+			else if (oldDMSAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
+			{
+				createAssociation(oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), recordID, tableID, MDMSAssociationType.LINK_ID,
+						0, null);
 			}
 			else
 			{
