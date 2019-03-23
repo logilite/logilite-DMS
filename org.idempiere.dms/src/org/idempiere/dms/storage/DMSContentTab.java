@@ -125,6 +125,8 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		int recordID = gridTab.getParentTab().getRecord_ID();
 		String tableName = gridTab.getParentTab().getTableName();
 
+		docDMSPanel.clearComponents();
+		docDMSPanel.setNavigationButtonEnabled(false);
 		docDMSPanel.setTable_ID(tableID);
 		docDMSPanel.setRecord_ID(recordID);
 		docDMSPanel.getDMS().initiateMountingContent(tableName, recordID, tableID);
