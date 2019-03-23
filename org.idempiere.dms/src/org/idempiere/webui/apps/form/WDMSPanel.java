@@ -257,8 +257,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (isTabViewer() && !isAllowCreateDirectory)
 		{
-			btnBack.setEnabled(false);
-			btnNext.setEnabled(false);
+			setNavigationButtonEnabled(false);
 			btnCreateDir.setEnabled(false);
 		}
 
@@ -630,8 +629,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(btnClear))
 		{
-			isGenericSearch = false;
-			isSearch = false;
 			clearComponents();
 		}
 		else if (event.getTarget().equals(btnCloseTab))
@@ -659,8 +656,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				lblPositionInfo.setText(null);
 			}
 
-			btnBack.setEnabled(false);
-			btnNext.setEnabled(false);
+			setNavigationButtonEnabled(false);
 
 			renderViewer();
 		}
@@ -872,8 +868,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			if (breadCrumbEvent.getImageContent() != null)
 			{
-				btnBack.setEnabled(false);
-				btnNext.setEnabled(false);
+				setNavigationButtonEnabled(false);
 			}
 		}
 
@@ -881,8 +876,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			selectedDMSContent.removeAllElements();
 			selectedDMSAssociation.removeAllElements();
-			btnNext.setEnabled(false);
-			btnBack.setEnabled(false);
+			setNavigationButtonEnabled(false);
 
 			isMountingBaseStructure = false;
 		}
@@ -949,9 +943,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	/**
 	 * Clear the grid view components
 	 */
-	private void clearComponents()
+	public void clearComponents()
 	{
+		isSearch = false;
+		isGenericSearch = false;
+
 		vsearchBox.setText(null);
+
 		txtDocumentName.setValue(null);
 		txtDescription.setValue(null);
 		lstboxContentType.setValue(null);
@@ -1763,4 +1761,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return breadRow;
 	}
 
+	/**
+	 * Set enabled Back & Next button
+	 * 
+	 * @param isEnabled
+	 */
+	public void setNavigationButtonEnabled(boolean isEnabled)
+	{
+		btnBack.setEnabled(isEnabled);
+		btnNext.setEnabled(isEnabled);
+	}
 }
