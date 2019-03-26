@@ -889,7 +889,7 @@ public class DMS
 					this.pasteCopyDirContent(oldDMSContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 				}
 			}
-			else if (oldDMSAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
+			else if (Utils.isLink(oldDMSAssociation))
 			{
 				createAssociation(oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), recordID, tableID, MDMSAssociationType.LINK_ID,
 						0, null);

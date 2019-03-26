@@ -114,7 +114,7 @@ public class Utils
 																									+ " LEFT JOIN 	DMS_Association a 	ON (a.DMS_Content_Related_ID = v.DMS_Content_Related_ID AND a.DMS_AssociationType_ID = v.DMS_AssociationType_ID AND a.SeqNo = v.SeqNo) "
 																									+ " WHERE 		(NVL(c.DMS_Content_Related_ID,0) = ?) OR (NVL(c.DMS_Content_Related_ID,0) = ? AND c.ContentBaseType = 'DIR') ";
 
-	public static final String					SQL_GET_RELATED_CONTENT						= "SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association "
+	public static final String					SQL_GET_RELATED_CONTENT						= "SELECT DMS_Association_ID, DMS_Content_ID, DMS_AssociationType_ID	FROM DMS_Association "
 																									+ " WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? "
 																									+ " ORDER BY DMS_Association_ID";
 
@@ -675,6 +675,11 @@ public class Utils
 		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSContent dmsContent = (MDMSContent) mapEntry.getKey();
+			MDMSAssociation associationWithContent = (MDMSAssociation) mapEntry.getValue();
+
+			// Do not change association type is link for the content
+			if (Utils.isLink(associationWithContent))
+				continue;
 
 			if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
@@ -701,8 +706,13 @@ public class Utils
 					rs = pstmt.executeQuery();
 					while (rs.next())
 					{
-						MDMSContent contentFile = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-						Utils.updateAllVersions(baseURL, renamedURL, tableID, recordID, contentFile, dmsContent);
+						int contentID = rs.getInt("DMS_Content_ID");
+						int assTypeID = rs.getInt("DMS_AssociationType_ID");
+						if (!Utils.isLink(assTypeID))
+						{
+							MDMSContent contentFile = new MDMSContent(Env.getCtx(), contentID, null);
+							Utils.updateAllVersions(baseURL, renamedURL, tableID, recordID, contentFile, dmsContent);
+						}
 					}
 				}
 				catch (Exception e)
@@ -771,7 +781,7 @@ public class Utils
 			baseURL = baseURL.replaceAll("\\\\", "\\\\\\\\");
 			renamedURL = renamedURL.replaceAll("\\\\", "\\\\\\\\");
 			setParentURL = parentURL.replaceFirst(Pattern.quote(baseURL), renamedURL);
-			setParentURL = setParentURL.replaceAll(Pattern.quote("\\\\\\\\"), "\\\\");
+			setParentURL = setParentURL.replaceAll(Pattern.quote("\\\\"), "\\\\");
 		}
 		else
 		{
@@ -974,6 +984,17 @@ public class Utils
 
 		return association.getDMS_Association_ID();
 	} // createAssociation
+
+	/**
+	 * Check Association Type is Link
+	 * 
+	 * @param associationTypeID
+	 * @return TRUE if Link
+	 */
+	public static boolean isLink(int associationTypeID)
+	{
+		return associationTypeID == MDMSAssociationType.LINK_ID;
+	} // isLink
 
 	/**
 	 * Check Association Type is Link
