@@ -44,13 +44,15 @@ public class CustomToolbarFactory implements IAction
 	{
 		ADWindow window = (ADWindow) target;
 		winContent = window.getADWindowContent();
-		int record_ID = winContent.getADTab().getSelectedGridTab().getRecord_ID();
-		int table_ID = winContent.getADTab().getSelectedGridTab().getAD_Table_ID();
+		int tableID = winContent.getADTab().getSelectedGridTab().getAD_Table_ID();
+		int recordID = winContent.getADTab().getSelectedGridTab().getRecord_ID();
+		String tableName = winContent.getADTab().getSelectedGridTab().getTableName();
 
-		if (record_ID == -1 || table_ID == -1)
+		if (recordID == -1 || tableID == -1)
 			return;
 
-		dmsPanel = new WDMSPanel(table_ID, record_ID, winContent);
+		dmsPanel = new WDMSPanel(tableID, recordID, winContent);
+		dmsPanel.setCurrDMSContent(dmsPanel.getDMS().getMountingStrategy().getMountingParent(tableName, recordID));
 
 		dmsWindow = new Window();
 		dmsWindow.setHeight("80%");
@@ -76,6 +78,7 @@ public class CustomToolbarFactory implements IAction
 
 		try
 		{
+
 			dmsPanel.renderViewer();
 		}
 		catch (Exception e)
