@@ -61,8 +61,8 @@ public class MigrateAttachmentToDMS extends SvrProcess
 			{
 				statusUpdate("Backuping Attachment :" + entry.getName());
 
-				boolean inserted = dms.addFile(mountingParent, entry.getFile(), attachment.getAD_Table_ID(), attachment.getRecord_ID());
-				if (inserted)
+				int contentID = dms.addFile(mountingParent, entry.getFile(), attachment.getAD_Table_ID(), attachment.getRecord_ID());
+				if (contentID > 0)
 					cntMigrated++;
 			}
 

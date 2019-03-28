@@ -306,42 +306,42 @@ public class DMS
 	 * Adding files and File Version
 	 */
 
-	public boolean addFile(File file)
+	public int addFile(File file)
 	{
 		return addFile(null, file);
 	}
 
-	public boolean addFile(String dirPath, File file)
+	public int addFile(String dirPath, File file)
 	{
 		return addFile(dirPath, file, file.getName());
 	}
 
-	public boolean addFile(String dirPath, File file, String fileName)
+	public int addFile(String dirPath, File file, String fileName)
 	{
 		return addFile(dirPath, file, fileName, 0, 0);
 	}
 
-	public boolean addFile(String dirPath, File file, String fileName, int AD_Table_ID, int Record_ID)
+	public int addFile(String dirPath, File file, String fileName, int AD_Table_ID, int Record_ID)
 	{
 		return addFile(dirPath, file, fileName, null, null, AD_Table_ID, Record_ID);
 	}
 
-	public boolean addFile(String dirPath, File file, String fileName, String contentType, Map<String, String> attributeMap)
+	public int addFile(String dirPath, File file, String fileName, String contentType, Map<String, String> attributeMap)
 	{
 		return addFile(dirPath, file, fileName, contentType, attributeMap, 0, 0);
 	}
 
-	public boolean addFile(String dirPath, File file, String fileName, String contentType, Map<String, String> attributeMap, int AD_Table_ID, int Record_ID)
+	public int addFile(String dirPath, File file, String fileName, String contentType, Map<String, String> attributeMap, int AD_Table_ID, int Record_ID)
 	{
 		return addFile(dirPath, file, fileName, null, contentType, attributeMap, AD_Table_ID, Record_ID, false);
 	}
 
-	public boolean addFile(MDMSContent parentContent, File file, int AD_Table_ID, int Record_ID)
+	public int addFile(MDMSContent parentContent, File file, int AD_Table_ID, int Record_ID)
 	{
 		return addFile(parentContent, file, file.getName(), null, 0, 0, AD_Table_ID, Record_ID);
 	}
 
-	public boolean addFile(MDMSContent parentContent, File file, String name, String desc, int contentTypeID, int asiID, int AD_Table_ID, int Record_ID)
+	public int addFile(MDMSContent parentContent, File file, String name, String desc, int contentTypeID, int asiID, int AD_Table_ID, int Record_ID)
 	{
 		return addFile(parentContent, file, name, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, false);
 	}
@@ -349,23 +349,23 @@ public class DMS
 	/*
 	 * Add Version File
 	 */
-	public boolean addFileVersion(int DMS_Content_ID, File file)
+	public int addFileVersion(int DMS_Content_ID, File file)
 	{
 		MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(DMS_Content_ID, null);
 		return addFileVersion(content, file, null);
 	}
 
-	public boolean addFileVersion(MDMSContent content, File file)
+	public int addFileVersion(MDMSContent content, File file)
 	{
 		return addFileVersion(content, file, null);
 	}
 
-	public boolean addFileVersion(MDMSContent content, File file, String desc)
+	public int addFileVersion(MDMSContent content, File file, String desc)
 	{
 		return addFileVersion(content, file, desc, 0, 0);
 	}
 
-	public boolean addFileVersion(MDMSContent content, File file, String desc, int AD_Table_ID, int Record_ID)
+	public int addFileVersion(MDMSContent content, File file, String desc, int AD_Table_ID, int Record_ID)
 	{
 		return addFile(content, file, null, desc, 0, 0, AD_Table_ID, Record_ID, true);
 	}
@@ -382,36 +382,19 @@ public class DMS
 	 * @param AD_Table_ID
 	 * @param Record_ID
 	 * @param isVersion
-	 * @return TRUE if success
+	 * @return New contentID
 	 */
-	private boolean addFile(String dirPath, File file, String fileName, String desc, String contentType, Map<String, String> attributeMap, int AD_Table_ID,
+	private int addFile(String dirPath, File file, String fileName, String desc, String contentType, Map<String, String> attributeMap, int AD_Table_ID,
 			int Record_ID, boolean isVersion)
 	{
 		int asiID = 0;
 		int contentTypeID = 0;
-
-		Trx trx = null;
-
-		if (file == null)
-			throw new AdempiereException("File not found.");
-
 		MDMSContent dirContent = getMountingStrategy().getMountingParent(AD_Table_ID, Record_ID);
 
-		if (!isVersion)
-		{
-			if (Util.isEmpty(fileName, true))
-				fileName = file.getName();
-
-			Utils.isValidFileName(fileName, false); // TODO
-		}
-		else
-		{
-			if (Utils.getMimeTypeID(file) != dirContent.getDMS_MimeType_ID())
-				throw new AdempiereException("Mime type not matched, please upload same mime type version document.");
-		}
+		fileName = Utils.validateFileName(dirContent, file, fileName, isVersion);
 
 		String trxName = Trx.createTrxName("AddFiles");
-		trx = Trx.get(trxName, true);
+		Trx trx = Trx.get(trxName, true);
 
 		// Create Directory folder hierarchy OR get leaf DMS-Content
 		if (!Util.isEmpty(dirPath, true) && !dirPath.equals(DMSConstant.FILE_SEPARATOR))
@@ -437,14 +420,13 @@ public class DMS
 			throw new AdempiereException("Error while committing transaction:" + e.getLocalizedMessage(), e);
 		}
 		//
-		addFile(dirContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion);
+		return addFile(dirContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion);
 
-		return true;
 	}// addFile
 
 	/**
 	 * @param parentContent
-	 * @param media
+	 * @param file
 	 * @param fileName
 	 * @param desc
 	 * @param contentTypeID
@@ -452,25 +434,12 @@ public class DMS
 	 * @param AD_Table_ID
 	 * @param Record_ID
 	 * @param isVersion
-	 * @return TRUE if success
+	 * @return New ContentID
 	 */
-	private boolean addFile(MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID, int AD_Table_ID, int Record_ID,
+	private int addFile(MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID, int AD_Table_ID, int Record_ID,
 			boolean isVersion)
 	{
-		if (file == null)
-			throw new AdempiereException("File not found.");
-
-		if (!isVersion)
-		{
-			if (Util.isEmpty(fileName, true))
-				fileName = file.getName();
-			Utils.isValidFileName(fileName, false); // TODO
-		}
-		else
-		{
-			if (Utils.getMimeTypeID(file) != parentContent.getDMS_MimeType_ID())
-				throw new AdempiereException("Mime type not matched, please upload same mime type version document.");
-		}
+		fileName = Utils.validateFileName(parentContent, file, fileName, isVersion);
 
 		String trxName = Trx.createTrxName("UploadFile");
 		Trx trx = Trx.get(trxName, true);
@@ -478,10 +447,8 @@ public class DMS
 		// Create Content, Association, Store File & Thumbnail generate
 		try
 		{
-			createContentAssociationFileStoreAndThumnail(parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion,
+			return createContentAssociationFileStoreAndThumnail(parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion,
 					trx.getTrxName());
-
-			trx.commit(); // Transaction commit
 		}
 		catch (Exception e)
 		{
@@ -492,10 +459,11 @@ public class DMS
 		finally
 		{
 			if (trx != null)
+			{
+				trx.commit(); // Transaction commit
 				trx.close();
+			}
 		}
-
-		return true;
 	} // addFile
 
 	/**
@@ -524,8 +492,24 @@ public class DMS
 		return dirContent;
 	} // createDirHierarchy
 
-	public boolean createContentAssociationFileStoreAndThumnail(MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID,
-			int asiID, int AD_Table_ID, int Record_ID, boolean isVersion, String trxName)
+	/**
+	 * Create DMS Content, Association, File store in StorageProvider and
+	 * Thumbnail generate
+	 * 
+	 * @param parentContent
+	 * @param file
+	 * @param fileName
+	 * @param desc
+	 * @param contentTypeID
+	 * @param asiID
+	 * @param AD_Table_ID
+	 * @param Record_ID
+	 * @param isVersion
+	 * @param trxName
+	 * @return New ContentID
+	 */
+	public int createContentAssociationFileStoreAndThumnail(MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID,
+			int AD_Table_ID, int Record_ID, boolean isVersion, String trxName)
 	{
 		int seqNo = 0;
 		int DMS_Content_Related_ID = 0;
@@ -587,7 +571,7 @@ public class DMS
 		// File write on Storage provider and create thumbnail
 		Utils.writeFileOnStorageAndThumnail(this, file, addedContent);
 
-		return true;
+		return contentID;
 	} // createContentAssociationFileStoreAndThumnail
 
 	/*
@@ -889,7 +873,7 @@ public class DMS
 					this.pasteCopyDirContent(oldDMSContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 				}
 			}
-			else if (oldDMSAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.LINK_ID)
+			else if (Utils.isLink(oldDMSAssociation))
 			{
 				createAssociation(oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), recordID, tableID, MDMSAssociationType.LINK_ID,
 						0, null);
