@@ -1462,4 +1462,35 @@ public class Utils
 
 		return map;
 	} // getDMSContents
+
+	/**
+	 * Return validated file name
+	 * 
+	 * @param parentContent
+	 * @param file
+	 * @param fileName
+	 * @param isVersion
+	 * @return file name
+	 */
+	public static String validateFileName(MDMSContent parentContent, File file, String fileName, boolean isVersion)
+	{
+		if (file == null)
+			throw new AdempiereException("File not found.");
+
+		if (!isVersion)
+		{
+			if (Util.isEmpty(fileName, true))
+				fileName = file.getName();
+
+			String errMsg = Utils.isValidFileName(fileName, false);
+			if (!Util.isEmpty(errMsg, true))
+				throw new AdempiereException("FileName: " + fileName + " : " + errMsg);
+		}
+		else
+		{
+			if (Utils.getMimeTypeID(file) != parentContent.getDMS_MimeType_ID())
+				throw new AdempiereException("Mime type not matched, please upload same mime type version document.");
+		}
+		return fileName;
+	} // validateFileName
 }
