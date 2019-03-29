@@ -824,11 +824,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			linkCopyDocument(currDMSContent, false);
 		}
-		else if (event.getName().equals("onUploadComplete"))
+		else if (event.getName().equals(DMSConstant.EVENT_ON_UPLOAD_COMPLETE))
 		{
 			renderViewer();
 		}
-		else if (event.getName().equals("onRenameComplete"))
+		else if (event.getName().equals(DMSConstant.EVENT_ON_RENAME_COMPLETE))
 		{
 			Tab tab = (Tab) tabBox.getSelectedTab();
 			renderViewer();
@@ -1029,8 +1029,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID);
 					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure);
 					tabPanels.appendChild(tabPanel);
-					documentViewer.getAttributePanel().addEventListener("onUploadComplete", this);
-					documentViewer.getAttributePanel().addEventListener("onRenameComplete", this);
+					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
+					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_RENAME_COMPLETE, this);
 
 					this.appendChild(tabBox);
 				}
