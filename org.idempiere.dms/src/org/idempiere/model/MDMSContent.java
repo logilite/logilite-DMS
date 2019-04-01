@@ -21,8 +21,10 @@ import java.util.List;
 import java.util.Properties;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 
@@ -97,5 +99,19 @@ public class MDMSContent extends X_DMS_Content
 
 		return contentList;
 	} // getVersionHistory
+
+	/**
+	 * Get DMS content from Content UU
+	 * 
+	 * @param DMS_Content_UU
+	 * @return {@link I_DMS_Content}
+	 */
+	public static I_DMS_Content getContent(String DMS_Content_UU)
+	{
+		if (Util.isEmpty(DMS_Content_UU, true))
+			return null;
+
+		return (I_DMS_Content) new Query(Env.getCtx(), MDMSContent.Table_Name, " DMS_Content_UU ILIKE ? ", null).setParameters(DMS_Content_UU).first();
+	} // getContent
 
 }

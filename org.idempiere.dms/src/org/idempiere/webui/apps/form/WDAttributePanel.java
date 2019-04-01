@@ -103,6 +103,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private DMS					dms;
 	private MDMSContent			content					= null;
 	private MDMSContent			parentContent			= null;
+	private MDMSContent			contentVersionSeleted	= null;
 
 	private Tabbox				tabBox					= null;
 	private ConfirmPanel		confirmPanel			= null;
@@ -298,48 +299,11 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			pstmt.setInt(3, dmsAssociation.getDMS_Content_Related_ID());
 
 			rs = pstmt.executeQuery();
-			// if (rs.isBeforeFirst())
-			// {
 			while (rs.next())
 			{
 				versionContent = new MDMSContent(Env.getCtx(), rs.getInt(1), null);
 				contentsMap.put(versionContent, dmsAssociation);
-
-				// viewerComponenet = (AbstractDMSViewerComp)
-				// DMS_ZK_Util.getDMSCompViewer("");
-				// viewerComponenet.init(dms, versionContent,
-				// dmsAssociation);
-				// viewerComponenet.addEventListener(Events.ON_DOUBLE_CLICK,
-				// this);
-				// viewerComponenet.setDheight(100);
-				// viewerComponenet.setDwidth(100);
-				//
-				// Cell cell = new Cell();
-				// cell.setRowspan(1);
-				// cell.appendChild(new Label(DMSConstant.MSG_CREATED + ": "
-				// + versionContent.getCreated()));
-				// cell.appendChild(new Label(DMSConstant.MSG_CREATEDBY +
-				// ": " +
-				// MUser.getNameOfUser(versionContent.getCreatedBy())));
-				// cell.appendChild(new Label(DMSConstant.MSG_FILESIZE +
-				// ": " + versionContent.getDMS_FileSize()));
-				//
-				// row = new Row();
-				// row.appendChild(viewerComponenet);
-				// row.appendChild(cell);
-				// rows.appendChild(row);
 			}
-			// }
-			// else
-			// {
-			// // Cell cell = new Cell();
-			// // cell.setColspan(2);
-			// // cell.appendChild(new
-			// // Label(DMSConstant.MSG_NO_VERSION_DOC_EXISTS));
-			// // row = new Row();
-			// // row.appendChild(cell);
-			// // rows.appendChild(row);
-			// }
 		}
 		catch (Exception e)
 		{
@@ -352,7 +316,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			pstmt = null;
 		}
 
-		String[] eventsList = new String[] { Events.ON_DOUBLE_CLICK };
+		String[] eventsList = new String[] { Events.ON_CLICK, Events.ON_DOUBLE_CLICK };
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_VERSION);
 		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this,
@@ -457,7 +421,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 			content.load(null);
 
-			Events.sendEvent(new Event("onRenameComplete", this));
+			Events.sendEvent(new Event(DMSConstant.EVENT_ON_RENAME_COMPLETE, this));
 			tabBox.setSelectedTab((Tab) tabBox.getSelectedTab());
 			tabBox.getSelectedTab().setLabel(content.getName());
 
@@ -472,7 +436,10 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 			// Resolve NPE after file rename and try to download
 			content.load(content.get_TrxName());
 			//
-			DMS_ZK_Util.downloadDocument(dms, content);
+			if (contentVersionSeleted != null)
+				DMS_ZK_Util.downloadDocument(dms, contentVersionSeleted);
+			else
+				DMS_ZK_Util.downloadDocument(dms, content);
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
@@ -491,7 +458,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event arg0) throws Exception
 				{
-					Events.sendEvent(new Event("onUploadComplete", panel));
+					Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, panel));
 					tabBox.setSelectedTab(tab);
 				}
 			});
@@ -501,9 +468,15 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		{
 			refreshPanel();
 		}
-		else if (event.getTarget().getClass().equals(Row.class))
+		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Row.class))
 		{
-			DMS_ZK_Util.downloadDocument(dms, (MDMSContent) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
+			contentVersionSeleted = (MDMSContent) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+			DMS_ZK_Util.downloadDocument(dms, contentVersionSeleted);
+		}
+		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Row.class))
+		{
+			contentVersionSeleted = (MDMSContent) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+
 		}
 	} // onEvent
 

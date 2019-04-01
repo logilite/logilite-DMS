@@ -97,13 +97,14 @@ public class Utils
 																									+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																									+ " 	FROM 	DMS_Association a "
 																									+ " 	JOIN 	DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) "
-																									+ " 	WHERE 	c.AD_Client_ID = ? AND (NVL(a.AD_Table_ID, 0) = ? OR 0 = ? ) AND (NVL(a.Record_ID, 0) = ? OR 0 = ?) "
+																									+ " 	WHERE 	c.AD_Client_ID = ? AND COALESCE(a.DMS_Content_Related_ID, 0) = ? "
 																									+ " ), "
 																									+ " VersionList AS ( "
-																									+ " 	SELECT 	DMS_Content_Related_ID, DMS_AssociationType_ID, AD_Table_ID, Record_ID, MAX(SeqNo) AS SeqNo "
+																									+ " 	SELECT 	a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID, MAX(a.SeqNo) AS SeqNo "
 																									+ " 	FROM 	DMS_Association a "
-																									+ " 	WHERE 	a.AD_Client_ID = ? AND (NVL(a.AD_Table_ID, 0) = ? OR 0 = ? ) AND (NVL(a.Record_ID, 0) = ? OR 0 = ?) AND a.DMS_AssociationType_ID = 1000000 "
-																									+ " 	GROUP BY DMS_Content_Related_ID, DMS_AssociationType_ID, AD_Table_ID, Record_ID "
+																									+ "		JOIN 	ContentAssociation ca ON ( ca.DMS_Content_ID = a.DMS_Content_Related_ID OR ca.DMS_Content_Related_ID = a.DMS_Content_Related_ID ) "
+																									+ " 	WHERE 	a.AD_Client_ID = ? AND a.DMS_AssociationType_ID = 1000000 "
+																									+ " 	GROUP BY a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																									+ " ) "
 																									+ " SELECT  NVL(a.DMS_Content_ID, c.DMS_Content_ID) 				AS DMS_Content_ID, "
 																									+ " 		NVL(a.DMS_Content_Related_ID, c.DMS_Content_Related_ID) AS DMS_Content_Related_ID, "
@@ -561,7 +562,7 @@ public class Utils
 			return DMS_Content.getDMS_Content_ID();
 		else
 		{
-			MDMSAssociation DMSAssociation = getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
+			MDMSAssociation DMSAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
 			if (DMSAssociation.getDMS_Content_Related_ID() > 0)
 			{
@@ -668,9 +669,7 @@ public class Utils
 	 */
 	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID, boolean isDocExplorerWindow)
 	{
-		MDMSAssociation association = Utils.getAssociationFromContent(content.getDMS_Content_ID(), null);
-		HashMap<I_DMS_Content, I_DMS_Association> map = Utils.getDMSContentsWithAssociation(content, content.getAD_Client_ID(), association.getAD_Table_ID(),
-				association.getRecord_ID(), isDocExplorerWindow, false);
+		HashMap<I_DMS_Content, I_DMS_Association> map = Utils.getDMSContentsWithAssociation(content, content.getAD_Client_ID(), false);
 
 		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
@@ -837,6 +836,7 @@ public class Utils
 			msg.append("\nSize: ").append(content.getDMS_FileSize());
 		}
 
+		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL());
 		msg.append("\nCreated: ").append(DMSConstant.SDF.format(new Date(content.getCreated().getTime())));
 		msg.append("\nUpdated: ").append(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
 
@@ -1404,17 +1404,14 @@ public class Utils
 	}
 
 	/**
-	 * get all DMS Contents for rendering
+	 * Get DMS Contents for rendering for specific level wise.
 	 * 
 	 * @param content
-	 * @param tableID
-	 * @param recordID
-	 * @param isDocExplorerWindow
+	 * @param AD_Client_ID
 	 * @param isActiveOnly
 	 * @return map of DMS content and association
 	 */
-	public static HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, int tableID, int recordID,
-			boolean isDocExplorerWindow, boolean isActiveOnly)
+	public static HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, boolean isActiveOnly)
 	{
 		int contentID = 0;
 		if (content != null)
@@ -1426,20 +1423,13 @@ public class Utils
 		ResultSet rs = null;
 		try
 		{
-			// select only active records
+			int i = 1;
 			pstmt = DB.prepareStatement(isActiveOnly ? SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE : SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL, null);
-			pstmt.setInt(1, AD_Client_ID);
-			pstmt.setInt(2, tableID);
-			pstmt.setInt(3, tableID);
-			pstmt.setInt(4, recordID);
-			pstmt.setInt(5, recordID);
-			pstmt.setInt(6, AD_Client_ID);
-			pstmt.setInt(7, tableID);
-			pstmt.setInt(8, tableID);
-			pstmt.setInt(9, recordID);
-			pstmt.setInt(10, recordID);
-			pstmt.setInt(11, contentID);
-			pstmt.setInt(12, contentID);
+			pstmt.setInt(i++, AD_Client_ID);
+			pstmt.setInt(i++, contentID);
+			pstmt.setInt(i++, AD_Client_ID);
+			pstmt.setInt(i++, contentID);
+			pstmt.setInt(i++, contentID);
 
 			rs = pstmt.executeQuery();
 			while (rs.next())
@@ -1461,7 +1451,7 @@ public class Utils
 		}
 
 		return map;
-	} // getDMSContents
+	} // getDMSContentsWithAssociation
 
 	/**
 	 * Return validated file name

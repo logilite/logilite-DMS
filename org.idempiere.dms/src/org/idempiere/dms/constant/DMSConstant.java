@@ -178,5 +178,8 @@ public final class DMSConstant
 	public static final String				SQL_FETCH_CONTENT_VERSION_LIST			= "SELECT DISTINCT DMS_Content_ID, SeqNo FROM DMS_Association a WHERE DMS_Content_Related_ID = ? AND a.DMS_AssociationType_ID = ? "
 																							+ " UNION "
 																							+ "SELECT DMS_Content_ID, null FROM DMS_Content WHERE DMS_Content_ID = ? AND ContentBaseType <> 'DIR' ORDER BY DMS_Content_ID DESC";
+	// Event
+	public static final String				EVENT_ON_RENAME_COMPLETE				= "onRenameComplete";
+	public static final String				EVENT_ON_UPLOAD_COMPLETE				= "onUploadComplete";
 
 }
