@@ -421,7 +421,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 			content.load(null);
 
-			Events.sendEvent(new Event("onRenameComplete", this));
+			Events.sendEvent(new Event(DMSConstant.EVENT_ON_RENAME_COMPLETE, this));
 			tabBox.setSelectedTab((Tab) tabBox.getSelectedTab());
 			tabBox.getSelectedTab().setLabel(content.getName());
 
@@ -458,7 +458,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 				@Override
 				public void onEvent(Event arg0) throws Exception
 				{
-					Events.sendEvent(new Event("onUploadComplete", panel));
+					Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, panel));
 					tabBox.setSelectedTab(tab);
 				}
 			});

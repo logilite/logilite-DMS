@@ -929,7 +929,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (isGenericSearch)
 			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
 		else
-			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, tableID, recordID, isDocExplorerWindow, true);
+			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, true);
 
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 

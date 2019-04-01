@@ -290,16 +290,14 @@ public class DMS
 		return Utils.createAssociation(dms_Content_ID, contentRelatedID, Record_ID, AD_Table_ID, associationTypeID, seqNo, trxName);
 	}
 
-	public HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, int tableID, int recordID,
-			boolean isActiveOnly)
+	public MDMSAssociation getAssociationFromContent(int contentID)
 	{
-		return this.getDMSContentsWithAssociation(content, AD_Client_ID, tableID, recordID, false, isActiveOnly);
+		return Utils.getAssociationFromContent(contentID, null);
 	}
 
-	public HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, int tableID, int recordID,
-			boolean isDocExplorerWindow, boolean isActiveOnly)
+	public HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, boolean isActiveOnly)
 	{
-		return Utils.getDMSContentsWithAssociation(content, AD_Client_ID, tableID, recordID, isDocExplorerWindow, isActiveOnly);
+		return Utils.getDMSContentsWithAssociation(content, AD_Client_ID, isActiveOnly);
 	}
 
 	/*
@@ -838,9 +836,7 @@ public class DMS
 	 */
 	public void pasteCopyDirContent(MDMSContent copiedContent, MDMSContent destPasteContent, String baseURL, String renamedURL, int tableID, int recordID)
 	{
-		MDMSAssociation copiedAssociation = Utils.getAssociationFromContent(copiedContent.getDMS_Content_ID(), null);
-		HashMap<I_DMS_Content, I_DMS_Association> map = this.getDMSContentsWithAssociation(copiedContent, AD_Client_ID, copiedAssociation.getAD_Table_ID(),
-				copiedAssociation.getRecord_ID(), true);
+		HashMap<I_DMS_Content, I_DMS_Association> map = this.getDMSContentsWithAssociation(copiedContent, AD_Client_ID, true);
 		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSContent oldDMSContent = (MDMSContent) mapEntry.getKey();
@@ -1455,8 +1451,7 @@ public class DMS
 	private void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int tableID, int recordID)
 	{
 		MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-		HashMap<I_DMS_Content, I_DMS_Association> map = this
-				.getDMSContentsWithAssociation(content, AD_Client_ID, tableID, recordID, isDocExplorerWindow, false);
+		HashMap<I_DMS_Content, I_DMS_Association> map = this.getDMSContentsWithAssociation(content, AD_Client_ID, false);
 		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSContent dmsContent = (MDMSContent) mapEntry.getKey();
