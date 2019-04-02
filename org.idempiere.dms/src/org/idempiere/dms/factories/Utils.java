@@ -846,7 +846,7 @@ public class Utils
 			msg.append("\nSize: ").append(content.getDMS_FileSize());
 		}
 
-		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL() + "  --  " + content.getDMS_Content_ID());
+		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL());
 		msg.append("\nCreated: ").append(DMSConstant.SDF.format(new Date(content.getCreated().getTime())));
 		msg.append("\nUpdated: ").append(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
 
