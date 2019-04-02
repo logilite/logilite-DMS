@@ -749,9 +749,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			MDMSContent destPasteContent = dirContent;
 			if (sourceContent != null)
 			{
-				if (destPasteContent != null && sourceContent.get_ID() == destPasteContent.get_ID())
+				boolean isContentIDExists = dms.isHierarchyContentExists(destPasteContent.get_ID(), sourceContent.get_ID());
+
+				if (destPasteContent != null && sourceContent.get_ID() == destPasteContent.get_ID() || isContentIDExists)
 				{
-					FDialog.warn(0, "You cannot Paste into itself");
+					FDialog.warn(0, "You cannot copy a folder into itself");
 				}
 				else
 				{

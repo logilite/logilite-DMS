@@ -122,6 +122,16 @@ public class Utils
 	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#", "");
 	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#",
 																									"AND c.IsActive='Y' AND a.IsActive='Y'");
+	
+	// Restrict copy paste while parent directory copy paste into itself or it's child directory.
+	public static String						SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY		= " WITH RECURSIVE ContentHierarchy AS "
+																									+ " (	SELECT DMS_Content_ID,DMS_Content_Related_ID FROM DMS_Association "
+																									+ "		WHERE  AD_Client_ID = ? AND DMS_Content_ID = ? "
+																									+ "	 UNION"
+																									+ "		SELECT a.DMS_Content_ID, a.DMS_Content_Related_ID FROM DMS_Association a "
+																									+ " 	JOIN ContentHierarchy h ON (h.DMS_Content_Related_ID = a.DMS_Content_ID)"
+																									+ " ) SELECT DMS_Content_ID FROM ContentHierarchy WHERE DMS_Content_ID = ? ";
+	
 
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider						= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
 	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator					= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
@@ -836,7 +846,7 @@ public class Utils
 			msg.append("\nSize: ").append(content.getDMS_FileSize());
 		}
 
-		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL());
+		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL() + "  --  " + content.getDMS_Content_ID());
 		msg.append("\nCreated: ").append(DMSConstant.SDF.format(new Date(content.getCreated().getTime())));
 		msg.append("\nUpdated: ").append(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
 

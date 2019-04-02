@@ -1655,5 +1655,19 @@ public class DMS
 			throw new AdempiereException(e);
 		}
 	} // convertXlsxToPdf
+	
+	/**
+	 * Check copy/cut content exists in same Hierarchy.
+	 * 
+	 * @param destContentID
+	 * @param sourceContentID
+	 * @return true if copy/cut content exists in same Hierarchy.
+	 */
+	public boolean isHierarchyContentExists(int destContentID, int sourceContentID)
+	{
+		int contentID = DB.getSQLValue(null, Utils.SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY, Env.getAD_Client_ID(Env.getCtx()), destContentID, sourceContentID);
+		return contentID > 0;
+
+	} // isHierarchyContentExists
 
 }
