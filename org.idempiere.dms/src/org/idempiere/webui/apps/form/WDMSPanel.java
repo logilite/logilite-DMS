@@ -1398,6 +1398,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
+		// Restrict creating link
+		if (DMSClipboard.get() != null && !DMSClipboard.getIsCopy())
+			mnu_canvasCreateLink.setDisabled(true);
+
 		canvasContextMenu.open(this, "at_pointer");
 	} // openCanvasContextMenu
 
