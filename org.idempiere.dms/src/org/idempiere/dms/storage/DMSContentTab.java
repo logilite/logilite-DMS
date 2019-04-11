@@ -13,6 +13,7 @@
 
 package org.idempiere.dms.storage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -218,7 +219,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public boolean isGridView()
 	{
-		return listPanel.isVisible();
+		return false;
 	}
 
 	@Override
@@ -344,7 +345,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public List<Button> getToolbarButtons()
 	{
-		return null;
+		return new ArrayList<Button>();
 	}
 
 	@Override

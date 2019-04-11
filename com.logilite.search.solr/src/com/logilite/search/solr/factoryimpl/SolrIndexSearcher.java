@@ -53,16 +53,15 @@ import org.compiere.util.CLogger;
 import com.idempiere.model.MIndexingConfig;
 import com.logilite.search.factory.IIndexSearcher;
 
+@SuppressWarnings("deprecation")
 public class SolrIndexSearcher implements IIndexSearcher
 {
 
 	public static CLogger	log				= CLogger.getCLogger(SolrIndexSearcher.class);
 
-	@SuppressWarnings("deprecation")
 	private HttpSolrServer	server			= null;
 	private MIndexingConfig	indexingConfig	= null;
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public void init(MIndexingConfig indexingConfig)
 	{
@@ -70,8 +69,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 		try
 		{
 			this.indexingConfig = indexingConfig;
-			PoolingClientConnectionManager cxMgr = new PoolingClientConnectionManager(
-					SchemeRegistryFactory.createDefault());
+			PoolingClientConnectionManager cxMgr = new PoolingClientConnectionManager(SchemeRegistryFactory.createDefault());
 			cxMgr.setMaxTotal(100);
 			cxMgr.setDefaultMaxPerRoute(20);
 
@@ -179,7 +177,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Searching content failure:", e);
-			//throw new AdempiereException("Searching content failure:" + e);
+			// throw new AdempiereException("Searching content failure:" + e);
 		}
 
 		return dmsContentList;
@@ -255,7 +253,6 @@ public class SolrIndexSearcher implements IIndexSearcher
 	private class PreemptiveAuthInterceptor implements HttpRequestInterceptor
 	{
 
-		@SuppressWarnings("deprecation")
 		public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException
 		{
 			AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
@@ -264,11 +261,9 @@ public class SolrIndexSearcher implements IIndexSearcher
 			// preemptively
 			if (authState.getAuthScheme() == null)
 			{
-				CredentialsProvider credsProvider = (CredentialsProvider) context
-						.getAttribute(ClientContext.CREDS_PROVIDER);
+				CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(ClientContext.CREDS_PROVIDER);
 				HttpHost targetHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
-				Credentials creds = credsProvider.getCredentials(new AuthScope(targetHost.getHostName(), targetHost
-						.getPort()));
+				Credentials creds = credsProvider.getCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()));
 				if (creds == null)
 					throw new HttpException("No credentials for preemptive authentication");
 				authState.setAuthScheme(new BasicScheme());
@@ -276,10 +271,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 			}
 
 		}
-
 	}
 
-	@SuppressWarnings("null")
 	@Override
 	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
 	{
@@ -298,8 +291,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 				} // Handle condition when two boolean value passed.
 				else if (value.get(0) instanceof Boolean || value.get(1) instanceof Boolean)
 				{
-					query.append(" AND (").append(key + ":" + value.get(0) + " OR ")
-							.append(key + ":" + value.get(1) + ")");
+					query.append(" AND (").append(key + ":" + value.get(0) + " OR ").append(key + ":" + value.get(1) + ")");
 				}
 				else if (value.get(1).equals("*"))
 					query.append(" AND (").append(key + ":[\"" + value.get(0) + "\" TO " + value.get(1) + " ])");

@@ -54,7 +54,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.factories.IThumbnailGenerator;
@@ -353,19 +352,19 @@ public class DMS
 		return addFileVersion(content, file, null);
 	}
 
-	public int addFileVersion(MDMSContent content, File file)
+	public int addFileVersion(MDMSContent parentContent, File file)
 	{
-		return addFileVersion(content, file, null);
+		return addFileVersion(parentContent, file, null);
 	}
 
-	public int addFileVersion(MDMSContent content, File file, String desc)
+	public int addFileVersion(MDMSContent parentContent, File file, String desc)
 	{
-		return addFileVersion(content, file, desc, 0, 0);
+		return addFileVersion(parentContent, file, desc, 0, 0);
 	}
 
-	public int addFileVersion(MDMSContent content, File file, String desc, int AD_Table_ID, int Record_ID)
+	public int addFileVersion(MDMSContent parentContent, File file, String desc, int AD_Table_ID, int Record_ID)
 	{
-		return addFile(content, file, null, desc, 0, 0, AD_Table_ID, Record_ID, true);
+		return addFile(parentContent, file, null, desc, 0, 0, AD_Table_ID, Record_ID, true);
 	}
 
 	/**
@@ -893,6 +892,13 @@ public class DMS
 	 */
 	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID) throws IOException, SQLException
 	{
+		if (destContent != null)
+		{
+			MDMSAssociation destAssociation = this.getAssociationFromContent(destContent.getDMS_Content_ID());
+			tableID = destAssociation.getAD_Table_ID();
+			recordID = destAssociation.getRecord_ID();
+		}
+
 		if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			String baseURL = null;
@@ -920,7 +926,7 @@ public class DMS
 			newDMSContent.setName(contentname);
 			newDMSContent.saveEx();
 
-			MDMSAssociation oldDMSAssociation = Utils.getAssociationFromContent(copiedContent.getDMS_Content_ID(), null);
+			MDMSAssociation oldDMSAssociation = this.getAssociationFromContent(copiedContent.getDMS_Content_ID());
 			MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 
 			PO.copyValues(oldDMSAssociation, newDMSAssociation);
@@ -951,6 +957,13 @@ public class DMS
 	 */
 	public void pasteCutContent(MDMSContent cutContent, MDMSContent destContent, int tableID, int recordID)
 	{
+		if (destContent != null && destContent.getDMS_Content_ID() > 0)
+		{
+			MDMSAssociation destAssociation = this.getAssociationFromContent(destContent.getDMS_Content_ID());
+			tableID = destAssociation.getAD_Table_ID();
+			recordID = destAssociation.getRecord_ID();
+		}
+
 		if (cutContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			String baseURL = null;
@@ -984,8 +997,8 @@ public class DMS
 			Utils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
 			dirPath.renameTo(newFile);
 
-			MDMSAssociation association = Utils.getAssociationFromContent(cutContent.getDMS_Content_ID(), null);
-			if (destContent != null)
+			MDMSAssociation association = this.getAssociationFromContent(cutContent.getDMS_Content_ID());
+			if (destContent != null && destContent.getDMS_Content_ID() > 0)
 			{
 				association.setDMS_Content_Related_ID(destContent.getDMS_Content_ID());
 				cutContent.setParentURL(this.getPathFromContentManager(destContent));
@@ -1172,13 +1185,12 @@ public class DMS
 		content.saveEx();
 	} // renameFile
 
-	public String createLink(MDMSContent content, MDMSContent currContent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
+	public String createLink(MDMSContent content, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
 	{
-		boolean isDocPresent = this.isDocumentPresent(currContent, content, isDir);
 		if (clipboardContent == null)
-		{
 			return "";
-		}
+
+		boolean isDocPresent = this.isDocumentPresent(content, clipboardContent, isDir);
 
 		int cbContentID = clipboardContent.getDMS_Content_ID();
 		if (content != null && content.get_ID() == cbContentID)
@@ -1193,55 +1205,39 @@ public class DMS
 		// For Tab viewer
 		if (tableID > 0 && recordID > 0)
 		{
-			int DMS_Association_ID = DB
-					.getSQLValue(
-							null,
-							"SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID = ? AND AD_Table_ID = ? AND Record_ID = ?",
-							cbContentID, MDMSAssociationType.RECORD_ID, tableID, recordID);
+			int DMS_Content_Related_ID = 0;
+			if (content != null)
+				DMS_Content_Related_ID = content.getDMS_Content_ID();
 
-			if (DMS_Association_ID == -1)
-			{
-				int DMS_Content_Related_ID = DB.getSQLValue(null, "SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? "
-						+ "AND DMS_AssociationType_ID = ?", cbContentID, MDMSAssociationType.PARENT_ID);
+			int associationID = this.createAssociation(cbContentID, DMS_Content_Related_ID, recordID, tableID, MDMSAssociationType.LINK_ID, 0, null);
+			MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
 
-				if (DMS_Content_Related_ID != 0) // TODO
-					DMS_Content_Related_ID = content.getDMS_Content_ID();
+			int DMS_Content_ID = association.getDMS_Content_Related_ID();
 
-				int associationID = this.createAssociation(cbContentID, DMS_Content_Related_ID, recordID, tableID, MDMSAssociationType.LINK_ID, 0, null);
-				MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
-
-				int DMS_Content_ID = association.getDMS_Content_Related_ID();
-
-				if (DMS_Content_ID <= 0)
-					DMS_Content_ID = association.getDMS_Content_ID();
-				else
-				{
-					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-
-					if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-						DMS_Content_ID = association.getDMS_Content_ID();
-					else
-						DMS_Content_ID = association.getDMS_Content_Related_ID();
-				}
-
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-
-				// Here currently we can not able to move index creation logic
-				// in model validator
-				// TODO : In future, will find approaches for move index
-				// creation logic
-				this.createIndexContent(dmsContent, association);
-			}
+			if (DMS_Content_ID <= 0)
+				DMS_Content_ID = association.getDMS_Content_ID();
 			else
 			{
-				return "Document already associated.";
+				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+
+				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+					DMS_Content_ID = association.getDMS_Content_ID();
+				else
+					DMS_Content_ID = association.getDMS_Content_Related_ID();
 			}
+
+			MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+
+			// Here currently we can not able to move index creation logic
+			// in model validator
+			// TODO : In future, will find approaches for move index
+			// creation logic
+			this.createIndexContent(dmsContent, association);
 		}
 		else
 		{
-			//
 			int DMS_Content_Related_ID = 0;
-			if (content != null)
+			if (content != null && content.getDMS_Content_ID() > 0)
 				DMS_Content_Related_ID = content.getDMS_Content_ID();
 
 			this.createAssociation(cbContentID, DMS_Content_Related_ID, 0, 0, MDMSAssociationType.LINK_ID, 0, null);
@@ -1252,20 +1248,20 @@ public class DMS
 
 	/**
 	 * @param currDMSContent - Current DMS Content
-	 * @param DMSContent - Related Content
+	 * @param clipboardContent - Copied Content
 	 * @param isDir - is Directory
 	 * @return true if Document exists in DB
 	 */
-	public boolean isDocumentPresent(MDMSContent currDMSContent, MDMSContent DMSContent, boolean isDir)
+	public boolean isDocumentPresent(MDMSContent currDMSContent, MDMSContent clipboardContent, boolean isDir)
 	{
 		StringBuilder query = new StringBuilder();
 		query.append("SELECT count(DMS_Content_ID) FROM DMS_Association WHERE DMS_Content_ID = ");
-		query.append(DMSClipboard.get().getDMS_Content_ID());
+		query.append(clipboardContent.getDMS_Content_ID());
 
 		if (currDMSContent == null && !isDir)
 			query.append(" AND DMS_Content_Related_ID IS NULL");
 		else
-			query.append(" AND DMS_Content_Related_ID = ").append(DMSContent.getDMS_Content_ID());
+			query.append(" AND DMS_Content_Related_ID = ").append(currDMSContent.getDMS_Content_ID());
 
 		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
 	} // isDocumentPresent
@@ -1300,31 +1296,26 @@ public class DMS
 		}
 		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Content))
 		{
+			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = null;
 			if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.VERSION_ID)
 			{
 				// TODO get parent dms_content
 				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
-				MDMSAssociation parentAssociation = Utils.getAssociationFromContent(parentContent.getDMS_Content_ID(), null);
+				MDMSAssociation parentAssociation = this.getAssociationFromContent(parentContent.getDMS_Content_ID());
 				setContentAndAssociationInActive(parentContent, parentAssociation);
-
-				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(parentContent);
-				for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
-				{
-					MDMSContent content = (MDMSContent) entry.getKey();
-					MDMSAssociation association = (MDMSAssociation) entry.getValue();
-					setContentAndAssociationInActive(content, association);
-				}
+				relatedContentList = getRelatedContents(parentContent);
 			}
 			else
 			{
 				setContentAndAssociationInActive(dmsContent, dmsAssociation);
-				HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = getRelatedContents(dmsContent);
-				for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
-				{
-					MDMSContent content = (MDMSContent) entry.getKey();
-					MDMSAssociation association = (MDMSAssociation) entry.getValue();
-					setContentAndAssociationInActive(content, association);
-				}
+				relatedContentList = getRelatedContents(dmsContent);
+			}
+
+			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
+			{
+				MDMSContent content = (MDMSContent) entry.getKey();
+				MDMSAssociation association = (MDMSAssociation) entry.getValue();
+				setContentAndAssociationInActive(content, association);
 			}
 		}
 		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Directory))
@@ -1655,7 +1646,7 @@ public class DMS
 			throw new AdempiereException(e);
 		}
 	} // convertXlsxToPdf
-	
+
 	/**
 	 * Check copy/cut content exists in same Hierarchy.
 	 * 

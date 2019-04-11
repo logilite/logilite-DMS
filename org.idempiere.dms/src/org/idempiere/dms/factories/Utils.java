@@ -97,7 +97,7 @@ public class Utils
 																									+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																									+ " 	FROM 	DMS_Association a "
 																									+ " 	JOIN 	DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) "
-																									+ " 	WHERE 	c.AD_Client_ID = ? AND COALESCE(a.DMS_Content_Related_ID, 0) = ? "
+																									+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.DMS_Content_Related_ID, 0) = ? "
 																									+ " ), "
 																									+ " VersionList AS ( "
 																									+ " 	SELECT 	a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID, MAX(a.SeqNo) AS SeqNo "
@@ -131,7 +131,6 @@ public class Utils
 																									+ "		SELECT a.DMS_Content_ID, a.DMS_Content_Related_ID FROM DMS_Association a "
 																									+ " 	JOIN ContentHierarchy h ON (h.DMS_Content_Related_ID = a.DMS_Content_ID)"
 																									+ " ) SELECT DMS_Content_ID FROM ContentHierarchy WHERE DMS_Content_ID = ? ";
-	
 
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider						= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
 	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator					= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
@@ -598,7 +597,9 @@ public class Utils
 	{
 		int DMS_Association_ID = DB.getSQLValue(trxName, DMSConstant.SQL_GET_ASSOCIATION_ID_FROM_CONTENT, contentID);
 
-		return new MDMSAssociation(Env.getCtx(), DMS_Association_ID, trxName);
+		if (DMS_Association_ID > 0)
+			return new MDMSAssociation(Env.getCtx(), DMS_Association_ID, trxName);
+		return null;
 	} // getAssociationFromContent
 
 	/**
@@ -777,8 +778,6 @@ public class Utils
 		association.setAD_Table_ID(tableID);
 		association.setRecord_ID(recordID);
 		association.saveEx();
-		System.out.println("C = " + association.getDMS_Content_ID() + " A = " + association.getDMS_Association_ID() + " Path = "
-				+ association.getDMS_Content().getParentURL());
 	} // updateTableRecordRef
 
 	public static String replacePath(String baseURL, String renamedURL, String parentURL)
@@ -1149,7 +1148,7 @@ public class Utils
 
 						String sql = "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
 								+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-								+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND COALESCE(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
+								+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
 
 						if (parentContent == null || (parentContent != null && Util.isEmpty(parentContent.getParentURL(), true)))
 							sql += "AND dc.ParentURL IS NULL";

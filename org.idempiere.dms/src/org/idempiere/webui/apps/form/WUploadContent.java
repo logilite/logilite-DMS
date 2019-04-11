@@ -52,6 +52,7 @@ import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
+import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.zkoss.util.media.AMedia;
@@ -295,12 +296,12 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	{
 		if (btnFileUpload.getLabel().equalsIgnoreCase("-"))
 			throw new WrongValueException(btnFileUpload, DMSConstant.MSG_FILL_MANDATORY);
-		
-		if (Util.isEmpty(txtName.getValue(),true))
+
+		if (Util.isEmpty(txtName.getValue(), true))
 			throw new WrongValueException("File name is mandatory");
 
 		File tmpFile = null;
-		try	
+		try
 		{
 			tmpFile = File.createTempFile(uploadedMedia.getName(), "." + uploadedMedia.getFormat());
 			FileOutputStream os = new FileOutputStream(tmpFile);
@@ -308,9 +309,18 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			os.flush();
 			os.close();
 
+			if (DMSContent != null && DMSContent.getDMS_Content_ID() > 0)
+			{
+				MDMSAssociation destAssociation = dms.getAssociationFromContent(DMSContent.getDMS_Content_ID());
+				tableID = destAssociation.getAD_Table_ID();
+				recordID = destAssociation.getRecord_ID();
+			}
+
 			// Adding File
 			if (isVersion)
+			{
 				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue(), tableID, recordID);
+			}
 			else
 			{
 				int ASI_ID = 0;

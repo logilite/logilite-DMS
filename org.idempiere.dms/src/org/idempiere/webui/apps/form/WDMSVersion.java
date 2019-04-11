@@ -29,7 +29,6 @@ import org.idempiere.componenet.AbstractComponentIconViewer;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
@@ -89,7 +88,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 	public void renderDMSVersion(MDMSContent DMS_Content) throws IOException
 	{
-		MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
+		MDMSAssociation dmsAssociation = dms.getAssociationFromContent(DMS_Content.getDMS_Content_ID());
 
 		List<I_DMS_Content> contentList = MDMSContent.getVersionHistory(DMS_Content);
 		if (contentList.size() == 0)
