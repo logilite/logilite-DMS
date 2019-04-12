@@ -299,6 +299,11 @@ public class DMS
 		return Utils.getDMSContentsWithAssociation(content, AD_Client_ID, isActiveOnly);
 	}
 
+	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(I_DMS_Content content)
+	{
+		return Utils.getLinkableAssociationWithContentRelated(content);
+	}
+
 	/*
 	 * Adding files and File Version
 	 */
@@ -1266,7 +1271,7 @@ public class DMS
 		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
 	} // isDocumentPresent
 
-	public void deleteContentWithDocument(MDMSContent content) throws IOException
+	public void deleteContentWithPhysicalDocument(MDMSContent content) throws IOException
 	{
 		File document = this.getFileFromStorage(content);
 		if (document.exists())
@@ -1279,27 +1284,28 @@ public class DMS
 
 		DB.executeUpdate("DELETE FROM DMS_Association WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
 		DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
-	} // deleteContentWithDocument
+	} // deleteContentWithPhysicalDocument
 
 	/**
 	 * This will be a soft deletion. System will only inactive the files.
 	 * 
 	 * @param dmsContent
 	 * @param dmsAssociation
+	 * @param isDeleteLinkableRefs - Is Delete References of Links to another
+	 *            place
 	 */
-	public void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation)
+	public void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isDeleteLinkableRefs)
 	{
-		// first delete if it is link
 		if (Utils.isLink(dmsAssociation))
 		{
 			setContentAndAssociationInActive(null, dmsAssociation);
+			return;
 		}
 		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Content))
 		{
 			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = null;
 			if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.VERSION_ID)
 			{
-				// TODO get parent dms_content
 				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
 				MDMSAssociation parentAssociation = this.getAssociationFromContent(parentContent.getDMS_Content_ID());
 				setContentAndAssociationInActive(parentContent, parentAssociation);
@@ -1328,7 +1334,19 @@ public class DMS
 				MDMSContent content = (MDMSContent) entry.getKey();
 				MDMSAssociation association = (MDMSAssociation) entry.getValue();
 				// recursive call
-				deleteContent(content, association);
+				deleteContent(content, association, isDeleteLinkableRefs);
+			}
+		}
+
+		// Linkable association references to set as InActive
+		if (isDeleteLinkableRefs)
+		{
+			HashMap<I_DMS_Association, I_DMS_Content> linkRefs = this.getLinkableAssociationWithContentRelated(dmsContent);
+			for (Entry<I_DMS_Association, I_DMS_Content> linkRef : linkRefs.entrySet())
+			{
+				MDMSAssociation linkAssociation = (MDMSAssociation) linkRef.getKey();
+				linkAssociation.setIsActive(false);
+				linkAssociation.save();
 			}
 		}
 	} // deleteContent
@@ -1347,6 +1365,53 @@ public class DMS
 			dmsContent.saveEx();
 		}
 	} // setContentAndAssociationInActive
+
+	/**
+	 * Get info about linkable docs of the given content
+	 * 
+	 * @param content
+	 * @param association
+	 * @return Information about content and its linkable references path
+	 */
+	public String hasLinkableDocs(I_DMS_Content content, I_DMS_Association association)
+	{
+		String name = "";
+		if (Utils.isLink(association))
+			;
+		else
+		{
+			int count = 0;
+			HashMap<I_DMS_Association, I_DMS_Content> linkRefs = this.getLinkableAssociationWithContentRelated(content);
+			for (Entry<I_DMS_Association, I_DMS_Content> linkRef : linkRefs.entrySet())
+			{
+				String contentName = content.getName();
+				String contentBaseType = content.getContentBaseType();
+				String currentParentURL = content.getParentURL();
+				String linkableContentURL = null;
+				if (linkRef.getValue() != null)
+					linkableContentURL = linkRef.getValue().getParentURL() + DMSConstant.FILE_SEPARATOR + linkRef.getValue().getName();
+
+				if (count == 0)
+				{
+					name += "\n\n <b>" + contentBaseType + " : </b>" + contentName;
+					name += "\n <b>Current Path : </b>" + currentParentURL;
+				}
+				name += "\n <b>Link ref : </b>" + (linkableContentURL == null ? "Root at Document Explorer" : linkableContentURL);
+
+				count++;
+			}
+
+			if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+			{
+				HashMap<I_DMS_Content, I_DMS_Association> childContents = this.getDMSContentsWithAssociation((MDMSContent) content, AD_Client_ID, true);
+				for (Entry<I_DMS_Content, I_DMS_Association> children : childContents.entrySet())
+				{
+					name += hasLinkableDocs(children.getKey(), children.getValue());
+				}
+			}
+		}
+		return name;
+	} // hasLinkableDocs
 
 	private HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent)
 	{

@@ -443,7 +443,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
-			dms.deleteContentWithDocument(content);
+			dms.deleteContentWithPhysicalDocument(content);
 
 			tabBox.getSelectedTab().close();
 		}

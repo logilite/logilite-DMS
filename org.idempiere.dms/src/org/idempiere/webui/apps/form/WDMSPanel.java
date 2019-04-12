@@ -762,22 +762,38 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(mnu_delete))
 		{
 			// TODO inactive DMS_content and same change in solr index
-
 			Callback<Boolean> callback = new Callback<Boolean>() {
 				@Override
 				public void onCallback(Boolean result)
 				{
 					if (result)
 					{
-						dms.deleteContent((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT),
-								(MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION));
-						try
+						final MDMSContent deletableContent = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+						final MDMSAssociation deletableAssociation = (MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION);
+
+						String warningMsg = dms.hasLinkableDocs(deletableContent, deletableAssociation);
+						if (!Util.isEmpty(warningMsg, true))
 						{
-							renderViewer();
+							Callback<Boolean> callbackWarning = new Callback<Boolean>() {
+
+								@Override
+								public void onCallback(Boolean result)
+								{
+									if (result)
+									{
+										dms.deleteContent(deletableContent, deletableAssociation, true);
+										renderViewer();
+									}
+								}
+							};
+
+							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete,
+									"<b> Are you want to delete linkable documents associated with actual docs ? </b>" + warningMsg, callbackWarning);
 						}
-						catch (Exception e)
+						else
 						{
-							throw new AdempiereException(e);
+							dms.deleteContent(deletableContent, deletableAssociation, false);
+							renderViewer();
 						}
 					}
 					else

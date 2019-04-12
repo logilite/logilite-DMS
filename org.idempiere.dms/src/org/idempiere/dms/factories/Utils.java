@@ -848,6 +848,7 @@ public class Utils
 		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL());
 		msg.append("\nCreated: ").append(DMSConstant.SDF.format(new Date(content.getCreated().getTime())));
 		msg.append("\nUpdated: ").append(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
+		msg.append("\nContent ID: ").append(content.getDMS_Content_ID());
 
 		return msg.toString();
 	} // getToolTipTextMsg
@@ -1461,6 +1462,48 @@ public class Utils
 
 		return map;
 	} // getDMSContentsWithAssociation
+
+	/**
+	 * Get linkable Association and its Content related references
+	 * 
+	 * @param content
+	 * @return {@code Map<I_DMS_Association, I_DMS_Content>}
+	 */
+	public static HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(I_DMS_Content content)
+	{
+		HashMap<I_DMS_Association, I_DMS_Content> map = new LinkedHashMap<I_DMS_Association, I_DMS_Content>();
+
+		String sql = "SELECT DMS_Association_ID, DMS_Content_Related_ID 	 FROM DMS_Association "
+				+ " WHERE IsActive = 'Y' AND DMS_Content_ID = ? AND DMS_AssociationType_ID = ? ";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement(sql, null);
+			pstmt.setInt(1, content.getDMS_Content_ID());
+			pstmt.setInt(2, MDMSAssociationType.LINK_ID);
+			rs = pstmt.executeQuery();
+			while (rs.next())
+			{
+				int contentRelatedID = rs.getInt("DMS_Content_Related_ID");
+				MDMSAssociation linkableAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+				MDMSContent contentRelated = (contentRelatedID > 0 ? new MDMSContent(Env.getCtx(), contentRelatedID, null) : null);
+
+				map.put(linkableAssociation, contentRelated);
+			}
+		}
+		catch (SQLException e)
+		{
+			throw new AdempiereException("Error while fetching list of linkable documents for content " + content.getName());
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+		return map;
+	} // getLinkableAssociationWithContentRelated
 
 	/**
 	 * Return validated file name
