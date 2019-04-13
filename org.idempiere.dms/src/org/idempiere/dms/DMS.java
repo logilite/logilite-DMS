@@ -897,7 +897,7 @@ public class DMS
 	 */
 	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID) throws IOException, SQLException
 	{
-		if (destContent != null)
+		if (destContent != null && destContent.getDMS_Content_ID() > 0)
 		{
 			MDMSAssociation destAssociation = this.getAssociationFromContent(destContent.getDMS_Content_ID());
 			tableID = destAssociation.getAD_Table_ID();

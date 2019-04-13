@@ -106,10 +106,11 @@ public class Utils
 																									+ " 	WHERE 	a.AD_Client_ID = ? AND a.DMS_AssociationType_ID = 1000000 "
 																									+ " 	GROUP BY a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																									+ " ) "
-																									+ " SELECT  NVL(a.DMS_Content_ID, c.DMS_Content_ID) 				AS DMS_Content_ID, "
-																									+ " 		NVL(a.DMS_Content_Related_ID, c.DMS_Content_Related_ID) AS DMS_Content_Related_ID, "
-																									+ " 		NVL(a.DMS_Association_ID, c.DMS_Association_ID) 		AS DMS_Association_ID, "
-																									+ " 		NVL(a.DMS_AssociationType_ID, c.DMS_AssociationType_ID)	AS DMS_AssociationType_ID "
+																									+ " SELECT  NVL(a.DMS_Content_ID, c.DMS_Content_ID) 				AS DMS_Content_ID, 			"
+																									+ " 		NVL(a.DMS_Content_Related_ID, c.DMS_Content_Related_ID) AS DMS_Content_Related_ID,	"
+																									+ " 		NVL(a.DMS_Association_ID, c.DMS_Association_ID) 		AS DMS_Association_ID, 		"
+																									+ " 		NVL(a.DMS_AssociationType_ID, c.DMS_AssociationType_ID)	AS DMS_AssociationType_ID, 	"
+																									+ " 		a.SeqNo 																			"
 																									+ " FROM 		ContentAssociation c "
 																									+ " LEFT JOIN 	VersionList v		ON (v.DMS_Content_Related_ID = c.DMS_Content_ID) "
 																									+ " LEFT JOIN 	DMS_Association a 	ON (a.DMS_Content_Related_ID = v.DMS_Content_Related_ID AND a.DMS_AssociationType_ID = v.DMS_AssociationType_ID AND a.SeqNo = v.SeqNo) "
@@ -122,8 +123,9 @@ public class Utils
 	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#", "");
 	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#",
 																									"AND c.IsActive='Y' AND a.IsActive='Y'");
-	
-	// Restrict copy paste while parent directory copy paste into itself or it's child directory.
+
+	// Restrict copy paste while parent directory copy paste into itself or it's
+	// child directory.
 	public static String						SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY		= " WITH RECURSIVE ContentHierarchy AS "
 																									+ " (	SELECT DMS_Content_ID,DMS_Content_Related_ID FROM DMS_Association "
 																									+ "		WHERE  AD_Client_ID = ? AND DMS_Content_ID = ? "
@@ -848,7 +850,7 @@ public class Utils
 		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL());
 		msg.append("\nCreated: ").append(DMSConstant.SDF.format(new Date(content.getCreated().getTime())));
 		msg.append("\nUpdated: ").append(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
-//		msg.append("\nContent ID: ").append(content.getDMS_Content_ID());
+		// msg.append("\nContent ID: ").append(content.getDMS_Content_ID());
 
 		return msg.toString();
 	} // getToolTipTextMsg
@@ -1444,8 +1446,11 @@ public class Utils
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
-				map.put(new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null), new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-						null));
+				MDMSAssociation associationChild = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+				MDMSContent contentChild = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				contentChild.setSeqNo(rs.getString("SeqNo"));
+
+				map.put(contentChild, associationChild);
 			}
 		}
 		catch (SQLException e)
