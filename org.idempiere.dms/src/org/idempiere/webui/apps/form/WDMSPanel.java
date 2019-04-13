@@ -240,14 +240,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		btnUploadContent.setEnabled(isWindowAccess);
 
-		allowToCreateDir();
+		allowUserToCreateDir();
 	}
 
 	/*
 	 * Navigation and createDir buttons are disabled based on
 	 * "IsAllowCreateDirectory" check on client info.
 	 */
-	public void allowToCreateDir()
+	public void allowUserToCreateDir()
 	{
 		boolean isAllowCreateDirectory = MClientInfo.get(Env.getCtx(), dms.AD_Client_ID).get_ValueAsBoolean("IsAllowCreateDirectory");
 
@@ -259,15 +259,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (isMountingBaseStructure)
 		{
-			btnCreateDir.setEnabled(false);
-			btnUploadContent.setEnabled(false);
+			setButtonsContentCreationEnabled(false);
 		}
 		else if (isDocExplorerWindow)
 		{
-			btnCreateDir.setEnabled(true);
-			btnUploadContent.setEnabled(true);
+			setButtonsContentCreationEnabled(true);
 		}
-	}
+	} // allowUserToCreateDir
 
 	public DMS getDMS()
 	{
@@ -628,8 +626,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			isMountingBaseStructure = false;
 			breadRow.getChildren().clear();
 			addRootBreadCrumb();
-			btnCreateDir.setEnabled(true);
-			btnUploadContent.setEnabled(true);
+			setButtonsContentCreationEnabled(true);
 
 			if (isTabViewer())
 			{
@@ -831,7 +828,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderBreadCrumb(event);
 		}
 
-		allowToCreateDir();
+		allowUserToCreateDir();
 
 		// Event for Searching content Simple or Adavance level
 		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().equals(vsearchBox.getButton()))
@@ -858,8 +855,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		breadRow.getChildren().clear();
 		lblPositionInfo.setValue(null);
 
-		btnCreateDir.setEnabled(false);
-		btnUploadContent.setEnabled(false);
+		setButtonsContentCreationEnabled(false);
 
 		setNavigationButtonEnabled(false);
 
@@ -1765,5 +1761,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		btnBack.setEnabled(isEnabled);
 		btnNext.setEnabled(isEnabled);
+	}
+
+	/**
+	 * Set enabled Create Dir & Upload content button
+	 * 
+	 * @param isEnabled
+	 */
+	public void setButtonsContentCreationEnabled(boolean isEnabled)
+	{
+		btnCreateDir.setEnabled(isEnabled);
+		btnUploadContent.setEnabled(isEnabled);
 	}
 }

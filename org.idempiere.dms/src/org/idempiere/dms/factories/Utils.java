@@ -848,7 +848,7 @@ public class Utils
 		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL());
 		msg.append("\nCreated: ").append(DMSConstant.SDF.format(new Date(content.getCreated().getTime())));
 		msg.append("\nUpdated: ").append(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
-		msg.append("\nContent ID: ").append(content.getDMS_Content_ID());
+//		msg.append("\nContent ID: ").append(content.getDMS_Content_ID());
 
 		return msg.toString();
 	} // getToolTipTextMsg
