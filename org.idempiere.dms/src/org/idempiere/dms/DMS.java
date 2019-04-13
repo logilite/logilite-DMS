@@ -1195,13 +1195,13 @@ public class DMS
 		if (clipboardContent == null)
 			return "";
 
+		if (isHierarchyContentExists(content.getDMS_Content_ID(), clipboardContent.getDMS_Content_ID()))
+		{
+			return "You can't create link of parent content into itself or its children content";
+		}
+
 		boolean isDocPresent = this.isDocumentPresent(content, clipboardContent, isDir);
 
-		int cbContentID = clipboardContent.getDMS_Content_ID();
-		if (content != null && content.get_ID() == cbContentID)
-		{
-			return "You cannot Link into itself";
-		}
 		if (isDocPresent)
 		{
 			return "Document already exists.";
@@ -1214,7 +1214,8 @@ public class DMS
 			if (content != null)
 				DMS_Content_Related_ID = content.getDMS_Content_ID();
 
-			int associationID = this.createAssociation(cbContentID, DMS_Content_Related_ID, recordID, tableID, MDMSAssociationType.LINK_ID, 0, null);
+			int associationID = this.createAssociation(clipboardContent.getDMS_Content_ID(), DMS_Content_Related_ID, recordID, tableID,
+					MDMSAssociationType.LINK_ID, 0, null);
 			MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
 
 			int DMS_Content_ID = association.getDMS_Content_Related_ID();
@@ -1245,7 +1246,7 @@ public class DMS
 			if (content != null && content.getDMS_Content_ID() > 0)
 				DMS_Content_Related_ID = content.getDMS_Content_ID();
 
-			this.createAssociation(cbContentID, DMS_Content_Related_ID, 0, 0, MDMSAssociationType.LINK_ID, 0, null);
+			this.createAssociation(clipboardContent.getDMS_Content_ID(), DMS_Content_Related_ID, 0, 0, MDMSAssociationType.LINK_ID, 0, null);
 		}
 
 		return null;
