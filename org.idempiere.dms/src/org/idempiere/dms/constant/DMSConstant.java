@@ -163,8 +163,8 @@ public final class DMSConstant
 	public static final String				CSS_HIGHLIGHT_LABEL						= "font-weight: bold; text-align: center; border: 4px double #909090; padding: 4px 0px;";
 
 	// Queries
-	public static final String				SQL_GET_CONTENT_LATEST_VERSION			= "SELECT DMS_Content_ID, DMS_Association_ID FROM DMS_Association "
-																							+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID = ? "
+	public static final String				SQL_GET_CONTENT_LATEST_VERSION_NONLINK	= "SELECT DMS_Content_ID, DMS_Association_ID FROM DMS_Association "
+																							+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID = ? AND DMS_AssociationType_ID <> 1000003"
 																							+ "GROUP BY DMS_Content_ID, DMS_Association_ID 	ORDER BY MAX(SeqNo) DESC ";
 
 	public static final String				SQL_GET_ASSOCIATION_ID_FROM_CONTENT		= "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? ORDER BY Created";

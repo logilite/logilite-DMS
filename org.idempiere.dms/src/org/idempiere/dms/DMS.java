@@ -1026,6 +1026,8 @@ public class DMS
 			{
 				// TODO Need to Test Cut paste option for Association Type is
 				// newly created
+
+				// Moving Versioning Content and its association
 				pstmt = DB.prepareStatement("SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association "
 						+ "WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = 1000000 OR DMS_Content_ID = ? ORDER BY DMS_Association_ID", null);
 
@@ -1051,6 +1053,8 @@ public class DMS
 					}
 					Utils.updateTableRecordRef(association, tableID, recordID);
 
+					// Note: Must save association first other wise creating
+					// issue of wrong info in solr indexing entry
 					dmsContent.setParentURL(this.getPathFromContentManager(destContent));
 					dmsContent.saveEx();
 				}
@@ -1195,7 +1199,7 @@ public class DMS
 		if (clipboardContent == null)
 			return "";
 
-		if (isHierarchyContentExists(content.getDMS_Content_ID(), clipboardContent.getDMS_Content_ID()))
+		if (content != null && isHierarchyContentExists(content.getDMS_Content_ID(), clipboardContent.getDMS_Content_ID()))
 		{
 			return "You can't create link of parent content into itself or its children content";
 		}
@@ -1204,7 +1208,7 @@ public class DMS
 
 		if (isDocPresent)
 		{
-			return "Document already exists.";
+			return "Document already exists at same position.";
 		}
 
 		// For Tab viewer
@@ -1253,25 +1257,30 @@ public class DMS
 	} // createLink
 
 	/**
-	 * @param currDMSContent - Current DMS Content
-	 * @param clipboardContent - Copied Content
+	 * Check Clipboard/Copied Document already exists in same position for Copy
+	 * to CreateLink operation
+	 * 
+	 * @param currContent - Current DMS Content
+	 * @param copiedContent - Copied Content
 	 * @param isDir - is Directory
-	 * @return true if Document exists in DB
+	 * @return true if Document exists in same level
 	 */
-	public boolean isDocumentPresent(MDMSContent currDMSContent, MDMSContent clipboardContent, boolean isDir)
+	public boolean isDocumentPresent(MDMSContent currContent, MDMSContent copiedContent, boolean isDir)
 	{
-		StringBuilder query = new StringBuilder();
-		query.append("SELECT count(DMS_Content_ID) FROM DMS_Association WHERE DMS_Content_ID = ");
-		query.append(clipboardContent.getDMS_Content_ID());
+		String sql = "	SELECT COUNT(DMS_Content_ID)	FROM DMS_Association 																			"
+				+ "		WHERE 	(DMS_Content_ID = ? OR DMS_Content_ID IN ( 																				"
+				+ "					SELECT DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND DMS_AssociationType_ID = 1000000 ) 	"
+				+ "				) AND DMS_Content_Related_ID " + ((currContent == null && !isDir) ? "IS NULL" : " = " + currContent.getDMS_Content_ID());
 
-		if (currDMSContent == null && !isDir)
-			query.append(" AND DMS_Content_Related_ID IS NULL");
-		else
-			query.append(" AND DMS_Content_Related_ID = ").append(currDMSContent.getDMS_Content_ID());
-
-		return DB.getSQLValue(null, query.toString()) > 0 ? true : false;
+		return DB.getSQLValue(null, sql.toString(), copiedContent.getDMS_Content_ID(), copiedContent.getDMS_Content_ID()) > 0 ? true : false;
 	} // isDocumentPresent
 
+	/**
+	 * Delete Content from Storage and DB entry
+	 * 
+	 * @param content
+	 * @throws IOException
+	 */
 	public void deleteContentWithPhysicalDocument(MDMSContent content) throws IOException
 	{
 		File document = this.getFileFromStorage(content);
@@ -1283,8 +1292,8 @@ public class DMS
 		if (thumbnails.exists())
 			FileUtils.deleteDirectory(thumbnails);
 
-		DB.executeUpdate("DELETE FROM DMS_Association WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
-		DB.executeUpdate("DELETE FROM DMS_Content WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
+		DB.executeUpdate("DELETE FROM DMS_Association 	WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
+		DB.executeUpdate("DELETE FROM DMS_Content 		WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
 	} // deleteContentWithPhysicalDocument
 
 	/**
@@ -1492,18 +1501,31 @@ public class DMS
 		if (tableID > 0)
 			query.append(" AND AD_Table_ID:" + tableID);
 
-		List<Integer> documentList = this.searchIndex(query.toString());
+		return fillSearchedContentMap(this.searchIndex(query.toString()));
+	} // getGenericSearchedContent
+
+	/**
+	 * Fill searched content on map with latest version if exists
+	 * 
+	 * @param searchedList
+	 * @return Map of searched Content with Association
+	 */
+	public HashMap<I_DMS_Content, I_DMS_Association> fillSearchedContentMap(List<Integer> searchedList)
+	{
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
 
-		for (Integer entry : documentList)
+		for (Integer entry : searchedList)
 		{
-			List<Object> latestversion = DB.getSQLValueObjectsEx(null, DMSConstant.SQL_GET_CONTENT_LATEST_VERSION, entry, entry);
+			List<Object> latestVersion = DB.getSQLValueObjectsEx(null, DMSConstant.SQL_GET_CONTENT_LATEST_VERSION_NONLINK, entry, entry);
 
-			map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null), new MDMSAssociation(Env.getCtx(),
-					((BigDecimal) latestversion.get(1)).intValue(), null));
+			if (latestVersion != null)
+			{
+				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestVersion.get(0)).intValue(), null), new MDMSAssociation(Env.getCtx(),
+						((BigDecimal) latestVersion.get(1)).intValue(), null));
+			}
 		}
 		return map;
-	} // getGenericSearchedContent
+	} // fillSearchedContentMap
 
 	private void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int tableID, int recordID)
 	{
@@ -1518,10 +1540,10 @@ public class DMS
 			else
 			{
 				MDMSAssociation association = (MDMSAssociation) mapEntry.getValue();
-				hierarchicalContent.append(association.getDMS_Content_ID() + " OR ");
+				hierarchicalContent.append(association.getDMS_Content_ID()).append(" OR ");
 
 				if (association.getDMS_Content_ID() != dmsContent.getDMS_Content_ID())
-					hierarchicalContent.append(dmsContent.getDMS_Content_ID() + " OR ");
+					hierarchicalContent.append(dmsContent.getDMS_Content_ID()).append(" OR ");
 			}
 		}
 	} // getHierarchicalContent
@@ -1529,9 +1551,6 @@ public class DMS
 	public HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent(HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
 			int recordID)
 	{
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
-		List<Integer> documentList = null;
-
 		String query = this.buildSolrSearchQuery(queryParamas);
 
 		// AD_Client_id append for search client wise
@@ -1558,19 +1577,7 @@ public class DMS
 			}
 		}
 
-		documentList = this.searchIndex(query);
-
-		for (Integer entry : documentList)
-		{
-			List<Object> latestversion = DB.getSQLValueObjectsEx(null, DMSConstant.SQL_GET_CONTENT_LATEST_VERSION, entry, entry);
-
-			if (latestversion != null)
-			{
-				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestversion.get(0)).intValue(), null), new MDMSAssociation(Env.getCtx(),
-						((BigDecimal) latestversion.get(1)).intValue(), null));
-			}
-		}
-		return map;
+		return fillSearchedContentMap(this.searchIndex(query));
 	}
 
 	/**
