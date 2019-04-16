@@ -11,7 +11,6 @@ import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
-import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
@@ -96,14 +95,9 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	public String getContentName(I_DMS_Content content, String version)
 	{
 		String name = content.getName();
-		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-			name = name.replace("\\(.*\\d\\)", "");
-
-		if (name.contains("(") && name.contains(")"))
-			name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
 
 		if (version != null)
-			name = name + " (V" + version + ")";
+			name = name + " - V" + version;
 
 		return name;
 	} // getContentName

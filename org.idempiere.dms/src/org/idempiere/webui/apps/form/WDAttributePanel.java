@@ -291,7 +291,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		try
 		{
 			MDMSContent versionContent = null;
-			MDMSAssociation dmsAssociation = Utils.getAssociationFromContent(content.getDMS_Content_ID(), null);
+			MDMSAssociation dmsAssociation = dms.getAssociationFromContent(content.getDMS_Content_ID());
 
 			pstmt = DB.prepareStatement(DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
 			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());
@@ -443,7 +443,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
-			dms.deleteContentWithDocument(content);
+			dms.deleteContentWithPhysicalDocument(content);
 
 			tabBox.getSelectedTab().close();
 		}

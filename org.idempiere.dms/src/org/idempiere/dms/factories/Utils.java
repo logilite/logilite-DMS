@@ -97,7 +97,7 @@ public class Utils
 																									+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																									+ " 	FROM 	DMS_Association a "
 																									+ " 	JOIN 	DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) "
-																									+ " 	WHERE 	c.AD_Client_ID = ? AND COALESCE(a.DMS_Content_Related_ID, 0) = ? "
+																									+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.DMS_Content_Related_ID, 0) = ? "
 																									+ " ), "
 																									+ " VersionList AS ( "
 																									+ " 	SELECT 	a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID, MAX(a.SeqNo) AS SeqNo "
@@ -106,10 +106,11 @@ public class Utils
 																									+ " 	WHERE 	a.AD_Client_ID = ? AND a.DMS_AssociationType_ID = 1000000 "
 																									+ " 	GROUP BY a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
 																									+ " ) "
-																									+ " SELECT  NVL(a.DMS_Content_ID, c.DMS_Content_ID) 				AS DMS_Content_ID, "
-																									+ " 		NVL(a.DMS_Content_Related_ID, c.DMS_Content_Related_ID) AS DMS_Content_Related_ID, "
-																									+ " 		NVL(a.DMS_Association_ID, c.DMS_Association_ID) 		AS DMS_Association_ID, "
-																									+ " 		NVL(a.DMS_AssociationType_ID, c.DMS_AssociationType_ID)	AS DMS_AssociationType_ID "
+																									+ " SELECT  NVL(a.DMS_Content_ID, c.DMS_Content_ID) 				AS DMS_Content_ID, 			"
+																									+ " 		NVL(a.DMS_Content_Related_ID, c.DMS_Content_Related_ID) AS DMS_Content_Related_ID,	"
+																									+ " 		NVL(a.DMS_Association_ID, c.DMS_Association_ID) 		AS DMS_Association_ID, 		"
+																									+ " 		NVL(a.DMS_AssociationType_ID, c.DMS_AssociationType_ID)	AS DMS_AssociationType_ID, 	"
+																									+ " 		a.SeqNo 																			"
 																									+ " FROM 		ContentAssociation c "
 																									+ " LEFT JOIN 	VersionList v		ON (v.DMS_Content_Related_ID = c.DMS_Content_ID) "
 																									+ " LEFT JOIN 	DMS_Association a 	ON (a.DMS_Content_Related_ID = v.DMS_Content_Related_ID AND a.DMS_AssociationType_ID = v.DMS_AssociationType_ID AND a.SeqNo = v.SeqNo) "
@@ -122,6 +123,16 @@ public class Utils
 	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#", "");
 	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#",
 																									"AND c.IsActive='Y' AND a.IsActive='Y'");
+
+	// Restrict copy paste while parent directory copy paste into itself or it's
+	// child directory.
+	public static String						SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY		= " WITH RECURSIVE ContentHierarchy AS "
+																									+ " (	SELECT DMS_Content_ID,DMS_Content_Related_ID FROM DMS_Association "
+																									+ "		WHERE  AD_Client_ID = ? AND DMS_Content_ID = ? "
+																									+ "	 UNION"
+																									+ "		SELECT a.DMS_Content_ID, a.DMS_Content_Related_ID FROM DMS_Association a "
+																									+ " 	JOIN ContentHierarchy h ON (h.DMS_Content_Related_ID = a.DMS_Content_ID)"
+																									+ " ) SELECT DMS_Content_ID FROM ContentHierarchy WHERE DMS_Content_ID = ? ";
 
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider						= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
 	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator					= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
@@ -588,7 +599,9 @@ public class Utils
 	{
 		int DMS_Association_ID = DB.getSQLValue(trxName, DMSConstant.SQL_GET_ASSOCIATION_ID_FROM_CONTENT, contentID);
 
-		return new MDMSAssociation(Env.getCtx(), DMS_Association_ID, trxName);
+		if (DMS_Association_ID > 0)
+			return new MDMSAssociation(Env.getCtx(), DMS_Association_ID, trxName);
+		return null;
 	} // getAssociationFromContent
 
 	/**
@@ -767,8 +780,6 @@ public class Utils
 		association.setAD_Table_ID(tableID);
 		association.setRecord_ID(recordID);
 		association.saveEx();
-		System.out.println("C = " + association.getDMS_Content_ID() + " A = " + association.getDMS_Association_ID() + " Path = "
-				+ association.getDMS_Content().getParentURL());
 	} // updateTableRecordRef
 
 	public static String replacePath(String baseURL, String renamedURL, String parentURL)
@@ -839,6 +850,7 @@ public class Utils
 		msg.append("\nParent URL: ").append(content.getParentURL() == null ? "" : content.getParentURL());
 		msg.append("\nCreated: ").append(DMSConstant.SDF.format(new Date(content.getCreated().getTime())));
 		msg.append("\nUpdated: ").append(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
+		// msg.append("\nContent ID: ").append(content.getDMS_Content_ID());
 
 		return msg.toString();
 	} // getToolTipTextMsg
@@ -1139,7 +1151,7 @@ public class Utils
 
 						String sql = "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
 								+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-								+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND COALESCE(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
+								+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
 
 						if (parentContent == null || (parentContent != null && Util.isEmpty(parentContent.getParentURL(), true)))
 							sql += "AND dc.ParentURL IS NULL";
@@ -1434,8 +1446,11 @@ public class Utils
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
-				map.put(new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null), new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
-						null));
+				MDMSAssociation associationChild = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+				MDMSContent contentChild = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				contentChild.setSeqNo(rs.getString("SeqNo"));
+
+				map.put(contentChild, associationChild);
 			}
 		}
 		catch (SQLException e)
@@ -1452,6 +1467,48 @@ public class Utils
 
 		return map;
 	} // getDMSContentsWithAssociation
+
+	/**
+	 * Get linkable Association and its Content related references
+	 * 
+	 * @param content
+	 * @return {@code Map<I_DMS_Association, I_DMS_Content>}
+	 */
+	public static HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(I_DMS_Content content)
+	{
+		HashMap<I_DMS_Association, I_DMS_Content> map = new LinkedHashMap<I_DMS_Association, I_DMS_Content>();
+
+		String sql = "SELECT DMS_Association_ID, DMS_Content_Related_ID 	 FROM DMS_Association "
+				+ " WHERE IsActive = 'Y' AND DMS_Content_ID = ? AND DMS_AssociationType_ID = ? ";
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement(sql, null);
+			pstmt.setInt(1, content.getDMS_Content_ID());
+			pstmt.setInt(2, MDMSAssociationType.LINK_ID);
+			rs = pstmt.executeQuery();
+			while (rs.next())
+			{
+				int contentRelatedID = rs.getInt("DMS_Content_Related_ID");
+				MDMSAssociation linkableAssociation = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
+				MDMSContent contentRelated = (contentRelatedID > 0 ? new MDMSContent(Env.getCtx(), contentRelatedID, null) : null);
+
+				map.put(linkableAssociation, contentRelated);
+			}
+		}
+		catch (SQLException e)
+		{
+			throw new AdempiereException("Error while fetching list of linkable documents for content " + content.getName());
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+		return map;
+	} // getLinkableAssociationWithContentRelated
 
 	/**
 	 * Return validated file name

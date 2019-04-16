@@ -13,6 +13,7 @@
 
 package org.idempiere.dms.storage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -76,9 +77,8 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 			throw new AdempiereException("Parent Tab not found");
 
 		docDMSPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab().getRecord_ID(), adWindowContent);
-		// renderViewer();
+
 		this.appendChild(docDMSPanel);
-		// gridTab.addDataStatusListener(this); // Issue while toolbar refreshing
 
 	}
 
@@ -126,6 +126,8 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		String tableName = gridTab.getParentTab().getTableName();
 
 		docDMSPanel.clearComponents();
+		docDMSPanel.setButtonsContentCreationEnabled(true);
+		docDMSPanel.allowUserToCreateDir();
 		docDMSPanel.setNavigationButtonEnabled(false);
 		docDMSPanel.setTable_ID(tableID);
 		docDMSPanel.setRecord_ID(recordID);
@@ -218,7 +220,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public boolean isGridView()
 	{
-		return listPanel.isVisible();
+		return false;
 	}
 
 	@Override
@@ -344,7 +346,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public List<Button> getToolbarButtons()
 	{
-		return null;
+		return new ArrayList<Button>();
 	}
 
 	@Override

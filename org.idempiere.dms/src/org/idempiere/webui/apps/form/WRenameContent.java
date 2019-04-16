@@ -28,6 +28,7 @@ import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
+import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -58,15 +59,10 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private boolean				isCancel			= false;
 
-	private int					tableID				= 0;
-	private int					recordID			= 0;
-
 	public WRenameContent(DMS dms, MDMSContent DMSContent, int tableID, int recordID)
 	{
 		this.dms = dms;
 		this.DMSContent = DMSContent;
-		this.tableID = tableID;
-		this.recordID = recordID;
 
 		init();
 	}
@@ -176,7 +172,8 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		ValidateName();
 
-		dms.renameContent(txtName.getValue(), DMSContent, parent_Content, tableID, recordID);
+		MDMSAssociation parentAssociation = dms.getAssociationFromContent(parent_Content.getDMS_Content_ID());
+		dms.renameContent(txtName.getValue(), DMSContent, parent_Content, parentAssociation.getAD_Table_ID(), parentAssociation.getRecord_ID());
 
 		this.detach();
 	} // renameContent
