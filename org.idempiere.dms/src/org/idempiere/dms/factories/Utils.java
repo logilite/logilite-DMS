@@ -573,6 +573,7 @@ public class Utils
 			return DMS_Content.getDMS_Content_ID();
 		else
 		{
+			// TODO if Link Association returning
 			MDMSAssociation DMSAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
 			if (DMSAssociation.getDMS_Content_Related_ID() > 0)
@@ -589,16 +590,38 @@ public class Utils
 	}
 
 	/**
-	 * Get association from content ID
+	 * Get association from content ID with referring linkable association
+	 * 
+	 * @param contentID
+	 * @return {@link MDMSAssociation} - Linkable association
+	 */
+	public static MDMSAssociation getLinkableAssociationFromContent(int contentID)
+	{
+		return Utils.getAssociationFromContent(contentID, true, null);
+	} // getLinkableAssociationFromContent
+
+	/**
+	 * Get association from content ID without referring linkable association
 	 * 
 	 * @param contentID
 	 * @param trxName
-	 * @return {@link MDMSAssociation}
+	 * @return {@link MDMSAssociation} - Non-Linkable Association
 	 */
 	public static MDMSAssociation getAssociationFromContent(int contentID, String trxName)
 	{
-		int DMS_Association_ID = DB.getSQLValue(trxName, DMSConstant.SQL_GET_ASSOCIATION_ID_FROM_CONTENT, contentID);
+		return Utils.getAssociationFromContent(contentID, false, trxName);
+	} // getAssociationFromContent
 
+	/**
+	 * @param contentID
+	 * @param isLinkAssociationOnly - True if only Get Linkable Association
+	 * @param trxName
+	 * @return
+	 */
+	public static MDMSAssociation getAssociationFromContent(int contentID, boolean isLinkAssociationOnly, String trxName)
+	{
+		String sql = DMSConstant.SQL_GET_ASSOCIATION_ID_FROM_CONTENT + (isLinkAssociationOnly ? " = " : " <> " + MDMSAssociationType.LINK_ID);
+		int DMS_Association_ID = DB.getSQLValue(trxName, sql, contentID);
 		if (DMS_Association_ID > 0)
 			return new MDMSAssociation(Env.getCtx(), DMS_Association_ID, trxName);
 		return null;
@@ -625,7 +648,7 @@ public class Utils
 		solrValue.put(DMSConstant.DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
 		solrValue.put(DMSConstant.AD_Table_ID, DMSAssociation.getAD_Table_ID());
 		solrValue.put(DMSConstant.RECORD_ID, DMSAssociation.getRecord_ID());
-		solrValue.put(DMSConstant.SHOW_INACTIVE, !DMSContent.isActive());
+		solrValue.put(DMSConstant.SHOW_INACTIVE, !(DMSContent.isActive() && DMSAssociation.isActive()));
 
 		if (DMSContent.getM_AttributeSetInstance_ID() > 0)
 		{
@@ -697,13 +720,15 @@ public class Utils
 			{
 				String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
 				if (parentURL.startsWith(baseURL))
-				{
 					dmsContent.setParentURL(replacePath(baseURL, renamedURL, parentURL));
-					dmsContent.saveEx();
-				}
 				Utils.renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
+
 				MDMSAssociation associationDir = Utils.getAssociationFromContent(dmsContent.getDMS_Content_ID(), null);
 				Utils.updateTableRecordRef(associationDir, tableID, recordID);
+
+				// Note: Must save association first other wise creating
+				// issue of wrong info in solr indexing entry
+				dmsContent.saveEx();
 			}
 			else
 			{
@@ -751,13 +776,14 @@ public class Utils
 	public static void updateAllVersions(String baseURL, String renamedURL, int tableID, int recordID, MDMSContent contentFile, MDMSContent parentContent)
 	{
 		if (contentFile.getParentURL().startsWith(baseURL))
-		{
 			contentFile.setParentURL(replacePath(baseURL, renamedURL, contentFile.getParentURL()));
-			contentFile.saveEx();
-		}
 
 		MDMSAssociation associationFile = Utils.getAssociationFromContent(contentFile.getDMS_Content_ID(), null);
 		Utils.updateTableRecordRef(associationFile, tableID, recordID);
+
+		// Note: Must save association first other wise creating
+		// issue of wrong info in solr indexing entry
+		contentFile.saveEx();
 
 		contentFile = (MDMSContent) associationFile.getDMS_Content_Related();
 		MDMSAssociation as = Utils.getAssociationFromContent(contentFile.getDMS_Content_ID(), null);

@@ -294,6 +294,11 @@ public class DMS
 		return Utils.getAssociationFromContent(contentID, null);
 	}
 
+	public MDMSAssociation getAssociationFromContent(int contentID, boolean isLinkAssociationOnly)
+	{
+		return Utils.getAssociationFromContent(contentID, isLinkAssociationOnly, null);
+	}
+
 	public HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, boolean isActiveOnly)
 	{
 		return Utils.getDMSContentsWithAssociation(content, AD_Client_ID, isActiveOnly);
@@ -568,13 +573,35 @@ public class DMS
 		}
 
 		// Create Association
-		createAssociation(contentID, DMS_Content_Related_ID, Record_ID, AD_Table_ID, DMS_AssociationType_ID, seqNo, trxName);
+		int associationID = createAssociation(contentID, DMS_Content_Related_ID, Record_ID, AD_Table_ID, DMS_AssociationType_ID, seqNo, trxName);
 
 		// File write on Storage provider and create thumbnail
 		Utils.writeFileOnStorageAndThumnail(this, file, addedContent);
 
+		//
+		if (isVersion)
+		{
+			updateLinkRefOfVersionContent(addedContent, associationID, trxName);
+		}
+
 		return contentID;
 	} // createContentAssociationFileStoreAndThumnail
+
+	private void updateLinkRefOfVersionContent(MDMSContent addedContent, int associationID, String trxName)
+	{
+		MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, trxName);
+		int[] linkAssociationIDs = DB.getIDsEx(trxName, DMSConstant.SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT, MDMSAssociationType.VERSION_ID,
+				association.getDMS_Content_Related_ID(), association.getDMS_Content_Related_ID(), MDMSAssociationType.VERSION_ID);
+		for (int linkAssociationID : linkAssociationIDs)
+		{
+			MDMSAssociation associationLink = new MDMSAssociation(Env.getCtx(), linkAssociationID, trxName);
+			associationLink.setDMS_Content_ID(association.getDMS_Content_ID());
+			associationLink.save();
+
+			// For re-sync index of linkable docs
+			addedContent.setSyncIndexForLinkableDocs(true);
+		}
+	} // updateLinkRefOfVersionContent
 
 	/*
 	 * Select Content
@@ -853,8 +880,6 @@ public class DMS
 				if (newASI != null)
 					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
-				newDMSContent.saveEx();
-
 				// Copy Association
 				MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 				PO.copyValues(oldDMSAssociation, newDMSAssociation);
@@ -862,6 +887,10 @@ public class DMS
 				newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
 
 				Utils.updateTableRecordRef(newDMSAssociation, tableID, recordID);
+
+				// Note: Must save association first other wise creating
+				// issue of wrong info in solr indexing entry
+				newDMSContent.saveEx();
 
 				if (!Util.isEmpty(oldDMSContent.getParentURL()))
 				{
@@ -875,8 +904,10 @@ public class DMS
 			}
 			else if (Utils.isLink(oldDMSAssociation))
 			{
-				createAssociation(oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), recordID, tableID, MDMSAssociationType.LINK_ID,
-						0, null);
+				int associationID = createAssociation(oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), recordID, tableID,
+						MDMSAssociationType.LINK_ID, 0, null);
+
+				createIndexforLinkableContent(oldDMSAssociation.getDMS_Content().getContentBaseType(), oldDMSAssociation.getDMS_Content_ID(), associationID);
 			}
 			else
 			{
@@ -928,7 +959,6 @@ public class DMS
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
 			newDMSContent.setParentURL(getPathFromContentManager(destContent));
-			newDMSContent.setName(contentname);
 			newDMSContent.saveEx();
 
 			MDMSAssociation oldDMSAssociation = this.getAssociationFromContent(copiedContent.getDMS_Content_ID());
@@ -943,6 +973,11 @@ public class DMS
 				newDMSAssociation.setDMS_Content_Related_ID(0);
 
 			Utils.updateTableRecordRef(newDMSAssociation, tableID, recordID);
+
+			// Note: Must save association first other wise creating
+			// issue of wrong info in solr indexing entry
+			newDMSContent.setName(contentname);
+			newDMSContent.saveEx();
 
 			pasteCopyDirContent(copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 		}
@@ -1013,8 +1048,12 @@ public class DMS
 				association.setDMS_Content_Related_ID(0);
 				cutContent.setParentURL(null);
 			}
-			cutContent.saveEx();
+
 			Utils.updateTableRecordRef(association, tableID, recordID);
+
+			// Note: Must save association first other wise creating
+			// issue of wrong info in solr indexing entry
+			cutContent.saveEx();
 		}
 		else
 		{
@@ -1191,70 +1230,94 @@ public class DMS
 
 		content.setName(newFile.getAbsolutePath().substring(newFile.getAbsolutePath().lastIndexOf(DMSConstant.FILE_SEPARATOR) + 1,
 				newFile.getAbsolutePath().length()));
+
+		// Renaming to correct if any linkable docs exists for re-indexing
+		content.setSyncIndexForLinkableDocs(true);
+
 		content.saveEx();
 	} // renameFile
 
-	public String createLink(MDMSContent content, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
+	public String createLink(MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
 	{
 		if (clipboardContent == null)
 			return "";
 
-		if (content != null && isHierarchyContentExists(content.getDMS_Content_ID(), clipboardContent.getDMS_Content_ID()))
+		if (contentParent != null && isHierarchyContentExists(contentParent.getDMS_Content_ID(), clipboardContent.getDMS_Content_ID()))
 		{
 			return "You can't create link of parent content into itself or its children content";
 		}
 
-		boolean isDocPresent = this.isDocumentPresent(content, clipboardContent, isDir);
-
+		boolean isDocPresent = this.isDocumentPresent(contentParent, clipboardContent, isDir);
 		if (isDocPresent)
 		{
 			return "Document already exists at same position.";
 		}
 
+		int latestVerContentID = clipboardContent.getDMS_Content_ID();
+		if (clipboardContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
+		{
+			// Get latest versioning contentID for Link referencing
+			List<Object> latestVersion = DB.getSQLValueObjectsEx(null, DMSConstant.SQL_GET_CONTENT_LATEST_VERSION_NONLINK,
+					clipboardContent.getDMS_Content_ID(), clipboardContent.getDMS_Content_ID());
+			if (latestVersion != null)
+				latestVerContentID = ((BigDecimal) latestVersion.get(0)).intValue();
+		}
+
+		int contentID = 0;
+		int associationID = 0;
+		int contentRelatedID = 0;
+
+		if (contentParent != null && contentParent.getDMS_Content_ID() > 0)
+			contentRelatedID = contentParent.getDMS_Content_ID();
+
 		// For Tab viewer
 		if (tableID > 0 && recordID > 0)
 		{
-			int DMS_Content_Related_ID = 0;
-			if (content != null)
-				DMS_Content_Related_ID = content.getDMS_Content_ID();
-
-			int associationID = this.createAssociation(clipboardContent.getDMS_Content_ID(), DMS_Content_Related_ID, recordID, tableID,
-					MDMSAssociationType.LINK_ID, 0, null);
+			associationID = this.createAssociation(latestVerContentID, contentRelatedID, recordID, tableID, MDMSAssociationType.LINK_ID, 0, null);
 			MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
 
-			int DMS_Content_ID = association.getDMS_Content_Related_ID();
+			contentID = association.getDMS_Content_Related_ID();
 
-			if (DMS_Content_ID <= 0)
-				DMS_Content_ID = association.getDMS_Content_ID();
+			if (contentID <= 0)
+				contentID = association.getDMS_Content_ID();
 			else
 			{
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
+				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), contentID, null);
 
 				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-					DMS_Content_ID = association.getDMS_Content_ID();
+					contentID = association.getDMS_Content_ID();
 				else
-					DMS_Content_ID = association.getDMS_Content_Related_ID();
+					contentID = association.getDMS_Content_Related_ID();
 			}
-
-			MDMSContent dmsContent = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-
-			// Here currently we can not able to move index creation logic
-			// in model validator
-			// TODO : In future, will find approaches for move index
-			// creation logic
-			this.createIndexContent(dmsContent, association);
 		}
 		else
 		{
-			int DMS_Content_Related_ID = 0;
-			if (content != null && content.getDMS_Content_ID() > 0)
-				DMS_Content_Related_ID = content.getDMS_Content_ID();
-
-			this.createAssociation(clipboardContent.getDMS_Content_ID(), DMS_Content_Related_ID, 0, 0, MDMSAssociationType.LINK_ID, 0, null);
+			contentID = latestVerContentID;
+			associationID = this.createAssociation(latestVerContentID, contentRelatedID, 0, 0, MDMSAssociationType.LINK_ID, 0, null);
 		}
+
+		createIndexforLinkableContent(clipboardContent.getContentBaseType(), contentID, associationID);
 
 		return null;
 	} // createLink
+
+	/**
+	 * @param clipboardContent
+	 * @param contentID
+	 * @param associationID
+	 */
+	public void createIndexforLinkableContent(String contentBaseType, int contentID, int associationID)
+	{
+		// Here currently we can not able to move index creation logic in model
+		// validator
+		// TODO : In future, will find approaches for move index creation logic
+		if (MDMSContent.CONTENTBASETYPE_Content.equals(contentBaseType))
+		{
+			MDMSContent contentLink = new MDMSContent(Env.getCtx(), contentID, null);
+			MDMSAssociation associationLink = new MDMSAssociation(Env.getCtx(), associationID, null);
+			this.createIndexContent(contentLink, associationLink);
+		}
+	}
 
 	/**
 	 * Check Clipboard/Copied Document already exists in same position for Copy

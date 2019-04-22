@@ -24,7 +24,9 @@ import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.window.FDialog;
 import org.compiere.util.CLogger;
+import org.compiere.util.Util;
 import org.idempiere.componenet.AbstractComponentIconViewer;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
@@ -64,9 +66,12 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		try
 		{
 			init();
-			renderDMSVersion(content);
 
-			AEnv.showCenterScreen(this);
+			String msg = renderDMSVersion(content);
+			if (!Util.isEmpty(msg))
+				FDialog.info(0, this, msg);
+			else
+				AEnv.showCenterScreen(this);
 		}
 		catch (IOException e)
 		{
@@ -86,14 +91,14 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		gridView.setStyle("width: 100%; height: 95%; position: relative; overflow: auto;");
 	} // init
 
-	public void renderDMSVersion(MDMSContent DMS_Content) throws IOException
+	public String renderDMSVersion(MDMSContent DMS_Content) throws IOException
 	{
 		MDMSAssociation dmsAssociation = dms.getAssociationFromContent(DMS_Content.getDMS_Content_ID());
 
 		List<I_DMS_Content> contentList = MDMSContent.getVersionHistory(DMS_Content);
 		if (contentList.size() == 0)
 		{
-			throw new AdempiereException("No versions are available.");
+			return DMSConstant.MSG_NO_VERSION_DOC_EXISTS;
 		}
 
 		HashMap<I_DMS_Content, I_DMS_Association> contentMap = new HashMap<I_DMS_Content, I_DMS_Association>();
@@ -104,6 +109,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_LARGE);
 		viewerComponent.init(dms, contentMap, gridView, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+		return null;
 
 	} // renderDMSVersion
 

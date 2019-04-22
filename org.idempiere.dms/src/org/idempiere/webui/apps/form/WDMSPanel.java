@@ -778,6 +778,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 								{
 									if (result)
 									{
+										// For re-index of inActive linkable ref
+										deletableContent.setSyncIndexForLinkableDocs(true);
+										//
 										dms.deleteContent(deletableContent, deletableAssociation, true);
 										renderViewer();
 									}
