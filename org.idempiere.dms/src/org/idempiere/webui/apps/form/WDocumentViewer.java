@@ -45,7 +45,7 @@ public class WDocumentViewer extends Window
 	private DMS					dms;
 	private MDMSContent			mDMSContent			= null;
 	private MDMSMimeType		mimeType			= null;
-	private WDAttributePanel	attributePanel		= null;
+	private WDMSAttributePanel	attributePanel		= null;
 
 	private int					tableID				= 0;
 	private int					recordID			= 0;
@@ -61,7 +61,7 @@ public class WDocumentViewer extends Window
 		this.recordID = recordID;
 	}
 
-	public WDAttributePanel getAttributePanel()
+	public WDMSAttributePanel getAttributePanel()
 	{
 		return attributePanel;
 	}
@@ -92,7 +92,7 @@ public class WDocumentViewer extends Window
 		// Content attribute view
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		attributePanel = new WDAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure);
+		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure);
 		cellCPreview.appendChild(attributePanel);
 
 		Hbox boxViewSeparator = new Hbox();

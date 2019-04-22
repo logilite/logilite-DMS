@@ -14,6 +14,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.TrxEventListener;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 
 import com.logilite.search.factory.IIndexSearcher;
@@ -76,7 +77,6 @@ public class DMSModelValidator implements ModelValidator
 				content.setIsIndexed(false);
 				content.saveEx();
 			}
-
 		}
 
 		/*
@@ -97,14 +97,11 @@ public class DMSModelValidator implements ModelValidator
 		 */
 		if (MDMSContent.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE))
 		{
-			final MDMSContent dmsContent = (MDMSContent) po;
+			final MDMSContent content = (MDMSContent) po;
 
-			String contentType = dmsContent.getContentBaseType();
-			final boolean isIndexed = dmsContent.isIndexed();
-
-			if (MDMSContent.CONTENTBASETYPE_Content.equals(contentType) && !isIndexed)
+			if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !content.isIndexed())
 			{
-				Trx trx = Trx.get(dmsContent.get_TrxName(), false);
+				Trx trx = Trx.get(content.get_TrxName(), false);
 				if (trx != null)
 				{
 					trx.addTrxEventListener(new TrxEventListener() {
@@ -112,52 +109,58 @@ public class DMSModelValidator implements ModelValidator
 						@Override
 						public void afterCommit(Trx trx, boolean success)
 						{
-							MDMSAssociation DMSAssociation = Utils.getAssociationFromContent(dmsContent.getDMS_Content_ID(), null);
+							MDMSAssociation association = Utils.getAssociationFromContent(content.getDMS_Content_ID(), null);
 
-							try
+							Map<String, Object> solrValue = Utils.createIndexMap(content, association);
+							IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+
+							if (indexSeracher == null)
 							{
-								Map<String, Object> solrValue = Utils.createIndexMap(dmsContent, DMSAssociation);
-								IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-
-								if (indexSeracher == null)
-								{
-									throw new AdempiereException("Index Server not found");
-								}
-
-								// Delete and Create Index
-								indexSeracher.deleteIndex(dmsContent.getDMS_Content_ID());
-								indexSeracher.indexContent(solrValue);
-								
-								// Update the value of IsIndexed flag in dmsContent
-								if (!isIndexed)
-								{
-									DB.executeUpdate("UPDATE DMS_Content SET IsIndexed = 'Y' WHERE DMS_Content_ID = ? ", dmsContent.get_ID(), null);
-								}
-							}
-							catch (Exception e)
-							{
-								log.log(Level.SEVERE, "RE-Indexing of Content Failure :", e);
-								// throw new AdempiereException("RE-Indexing of
-								// Content Failure :" + e);
+								throw new AdempiereException("Index Server not found");
 							}
 
+							// Delete and Create Index
+							indexSeracher.deleteIndex(content.getDMS_Content_ID());
+							indexSeracher.indexContent(solrValue);
+
+							// Update the value of IsIndexed flag in Content
+							if (!content.isIndexed())
+							{
+								DB.executeUpdate("UPDATE DMS_Content SET IsIndexed = 'Y' WHERE DMS_Content_ID = ? ", content.get_ID(), null);
+							}
+
+							if (content.isSyncIndexForLinkableDocs())
+							{
+								// Create index of Linkable docs is exists
+								int[] linkAssociationIDs = DB.getIDsEx(null, DMSConstant.SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT,
+										MDMSAssociationType.VERSION_ID, content.getDMS_Content_ID(), content.getDMS_Content_ID(),
+										MDMSAssociationType.VERSION_ID);
+
+								for (int linkAssociationID : linkAssociationIDs)
+								{
+									MDMSAssociation associationLink = new MDMSAssociation(Env.getCtx(), linkAssociationID, null);
+
+									solrValue = Utils.createIndexMap(content, associationLink);
+
+									indexSeracher.indexContent(solrValue);
+								}
+							}
 						}
 
 						@Override
 						public void afterRollback(Trx trx, boolean success)
 						{
-							// TODO Auto-generated method stub
 						}
 
 						@Override
 						public void afterClose(Trx trx)
 						{
-							// TODO Auto-generated method stub
 						}
 					});
 				}
 			}
 		}
+
 		return null;
 	} // modelChange
 

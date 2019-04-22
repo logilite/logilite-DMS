@@ -13,9 +13,8 @@
 
 package org.idempiere.webui.apps.form;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.webui.component.Button;
@@ -39,7 +38,6 @@ import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.theme.ThemeManager;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.componenet.AbstractComponentIconViewer;
@@ -50,7 +48,6 @@ import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
@@ -60,14 +57,14 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.South;
 
-public class WDAttributePanel extends Panel implements EventListener<Event>
+public class WDMSAttributePanel extends Panel implements EventListener<Event>
 {
 
 	/**
 	 * 
 	 */
 	private static final long	serialVersionUID		= 5200959427619624094L;
-	private static CLogger		log						= CLogger.getCLogger(WDAttributePanel.class);
+	private static CLogger		log						= CLogger.getCLogger(WDMSAttributePanel.class);
 
 	private Panel				panelAttribute			= new Panel();
 	private Panel				panelFooterButtons		= new Panel();
@@ -115,7 +112,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 	private boolean				isWindowAccess			= true;
 	private boolean				isMountingBaseStructure	= false;
 
-	public WDAttributePanel(DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure)
+	public WDMSAttributePanel(DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure)
 	{
 		this.dms = dms;
 		this.tabBox = tabBox;
@@ -285,35 +282,13 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 
 		tabpanelVersionHitory.appendChild(versionGrid);
 
+		MDMSAssociation dmsAssociation = dms.getAssociationFromContent(content.getDMS_Content_ID());
+
 		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = new HashMap<I_DMS_Content, I_DMS_Association>();
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
+		List<I_DMS_Content> contentVersions = MDMSContent.getVersionHistory(content);
+		for (I_DMS_Content contentVersion : contentVersions)
 		{
-			MDMSContent versionContent = null;
-			MDMSAssociation dmsAssociation = dms.getAssociationFromContent(content.getDMS_Content_ID());
-
-			pstmt = DB.prepareStatement(DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE, null);
-			pstmt.setInt(1, dmsAssociation.getDMS_Content_Related_ID());
-			pstmt.setInt(2, MDMSAssociationType.VERSION_ID);
-			pstmt.setInt(3, dmsAssociation.getDMS_Content_Related_ID());
-
-			rs = pstmt.executeQuery();
-			while (rs.next())
-			{
-				versionContent = new MDMSContent(Env.getCtx(), rs.getInt(1), null);
-				contentsMap.put(versionContent, dmsAssociation);
-			}
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "Version listing failure", e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
+			contentsMap.put(contentVersion, dmsAssociation);
 		}
 
 		String[] eventsList = new String[] { Events.ON_CLICK, Events.ON_DOUBLE_CLICK };
@@ -450,7 +425,7 @@ public class WDAttributePanel extends Panel implements EventListener<Event>
 		else if (event.getTarget().equals(btnVersionUpload))
 		{
 			final Tab tab = (Tab) tabBox.getSelectedTab();
-			final WDAttributePanel panel = this;
+			final WDMSAttributePanel panel = this;
 
 			WUploadContent uploadContent = new WUploadContent(dms, content, true, tableId, recordId);
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {

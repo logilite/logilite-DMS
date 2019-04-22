@@ -573,6 +573,7 @@ public class Utils
 			return DMS_Content.getDMS_Content_ID();
 		else
 		{
+			// TODO if Link Association returning
 			MDMSAssociation DMSAssociation = Utils.getAssociationFromContent(DMS_Content.getDMS_Content_ID(), null);
 
 			if (DMSAssociation.getDMS_Content_Related_ID() > 0)
@@ -589,16 +590,38 @@ public class Utils
 	}
 
 	/**
-	 * Get association from content ID
+	 * Get association from content ID with referring linkable association
+	 * 
+	 * @param contentID
+	 * @return {@link MDMSAssociation} - Linkable association
+	 */
+	public static MDMSAssociation getLinkableAssociationFromContent(int contentID)
+	{
+		return Utils.getAssociationFromContent(contentID, true, null);
+	} // getLinkableAssociationFromContent
+
+	/**
+	 * Get association from content ID without referring linkable association
 	 * 
 	 * @param contentID
 	 * @param trxName
-	 * @return {@link MDMSAssociation}
+	 * @return {@link MDMSAssociation} - Non-Linkable Association
 	 */
 	public static MDMSAssociation getAssociationFromContent(int contentID, String trxName)
 	{
-		int DMS_Association_ID = DB.getSQLValue(trxName, DMSConstant.SQL_GET_ASSOCIATION_ID_FROM_CONTENT, contentID);
+		return Utils.getAssociationFromContent(contentID, false, trxName);
+	} // getAssociationFromContent
 
+	/**
+	 * @param contentID
+	 * @param isLinkAssociationOnly - True if only Get Linkable Association
+	 * @param trxName
+	 * @return
+	 */
+	public static MDMSAssociation getAssociationFromContent(int contentID, boolean isLinkAssociationOnly, String trxName)
+	{
+		String sql = DMSConstant.SQL_GET_ASSOCIATION_ID_FROM_CONTENT + (isLinkAssociationOnly ? " = " : " <> " + MDMSAssociationType.LINK_ID);
+		int DMS_Association_ID = DB.getSQLValue(trxName, sql, contentID);
 		if (DMS_Association_ID > 0)
 			return new MDMSAssociation(Env.getCtx(), DMS_Association_ID, trxName);
 		return null;
