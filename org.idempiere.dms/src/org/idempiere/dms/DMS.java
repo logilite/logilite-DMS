@@ -880,8 +880,6 @@ public class DMS
 				if (newASI != null)
 					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
-				newDMSContent.saveEx();
-
 				// Copy Association
 				MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 				PO.copyValues(oldDMSAssociation, newDMSAssociation);
@@ -889,6 +887,10 @@ public class DMS
 				newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
 
 				Utils.updateTableRecordRef(newDMSAssociation, tableID, recordID);
+
+				// Note: Must save association first other wise creating
+				// issue of wrong info in solr indexing entry
+				newDMSContent.saveEx();
 
 				if (!Util.isEmpty(oldDMSContent.getParentURL()))
 				{
@@ -902,8 +904,10 @@ public class DMS
 			}
 			else if (Utils.isLink(oldDMSAssociation))
 			{
-				createAssociation(oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), recordID, tableID, MDMSAssociationType.LINK_ID,
-						0, null);
+				int associationID = createAssociation(oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), recordID, tableID,
+						MDMSAssociationType.LINK_ID, 0, null);
+
+				createIndexforLinkableContent(oldDMSAssociation.getDMS_Content().getContentBaseType(), oldDMSAssociation.getDMS_Content_ID(), associationID);
 			}
 			else
 			{
@@ -955,7 +959,6 @@ public class DMS
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
 			newDMSContent.setParentURL(getPathFromContentManager(destContent));
-			newDMSContent.setName(contentname);
 			newDMSContent.saveEx();
 
 			MDMSAssociation oldDMSAssociation = this.getAssociationFromContent(copiedContent.getDMS_Content_ID());
@@ -970,6 +973,11 @@ public class DMS
 				newDMSAssociation.setDMS_Content_Related_ID(0);
 
 			Utils.updateTableRecordRef(newDMSAssociation, tableID, recordID);
+
+			// Note: Must save association first other wise creating
+			// issue of wrong info in solr indexing entry
+			newDMSContent.setName(contentname);
+			newDMSContent.saveEx();
 
 			pasteCopyDirContent(copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 		}
@@ -1040,8 +1048,12 @@ public class DMS
 				association.setDMS_Content_Related_ID(0);
 				cutContent.setParentURL(null);
 			}
-			cutContent.saveEx();
+
 			Utils.updateTableRecordRef(association, tableID, recordID);
+
+			// Note: Must save association first other wise creating
+			// issue of wrong info in solr indexing entry
+			cutContent.saveEx();
 		}
 		else
 		{

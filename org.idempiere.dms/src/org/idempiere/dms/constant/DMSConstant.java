@@ -198,10 +198,10 @@ public final class DMSConstant
 	/*
 	 * Get Link Association ID from Any with/without Versioning Content
 	 */
-	public static final String				SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT	= "SELECT DMS_Association_ID 		FROM DMS_Association 				"
-																									+ "	WHERE 	IsActive = 'Y' AND DMS_AssociationType_ID = 1000003 "
-																									+ "			AND DMS_Content_ID IN (	SELECT DMS_Content_ID FROM ("
+	public static final String				SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT	= "SELECT DMS_Association_ID 		FROM DMS_Association 			"
+																									+ "	WHERE 	DMS_AssociationType_ID = 1000003 AND 			"
+																									+ "			DMS_Content_ID IN (	SELECT DMS_Content_ID FROM ("
 																									+ DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST
-																									+ " ) AS DATA )													";
+																									+ " ) AS DATA )												";
 
 }

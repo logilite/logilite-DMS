@@ -38,8 +38,8 @@ public class DMSModelValidator implements ModelValidator
 		}
 
 		engine.addModelChange(MDMSContent.Table_Name, this);
+		engine.addModelChange(MDMSAssociation.Table_Name, this);
 		engine.addModelChange(MAttributeInstance.Table_Name, this);
-
 	}
 
 	@Override
@@ -158,6 +158,19 @@ public class DMSModelValidator implements ModelValidator
 						}
 					});
 				}
+			}
+		}
+		else if (MDMSAssociation.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE))
+		{
+			// For index changes of deleting linkable content.
+			MDMSAssociation association = (MDMSAssociation) po;
+			if (Utils.isLink(association) && association.getDMS_Content().isActive() && association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)
+					&& !association.isActive())
+			{
+				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
+				linkContent.setIsIndexed(false);
+				linkContent.setSyncIndexForLinkableDocs(true);
+				linkContent.saveEx();
 			}
 		}
 

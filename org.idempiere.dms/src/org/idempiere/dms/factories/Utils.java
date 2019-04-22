@@ -648,7 +648,7 @@ public class Utils
 		solrValue.put(DMSConstant.DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
 		solrValue.put(DMSConstant.AD_Table_ID, DMSAssociation.getAD_Table_ID());
 		solrValue.put(DMSConstant.RECORD_ID, DMSAssociation.getRecord_ID());
-		solrValue.put(DMSConstant.SHOW_INACTIVE, !DMSContent.isActive());
+		solrValue.put(DMSConstant.SHOW_INACTIVE, !(DMSContent.isActive() && DMSAssociation.isActive()));
 
 		if (DMSContent.getM_AttributeSetInstance_ID() > 0)
 		{
@@ -720,13 +720,15 @@ public class Utils
 			{
 				String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
 				if (parentURL.startsWith(baseURL))
-				{
 					dmsContent.setParentURL(replacePath(baseURL, renamedURL, parentURL));
-					dmsContent.saveEx();
-				}
 				Utils.renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
+
 				MDMSAssociation associationDir = Utils.getAssociationFromContent(dmsContent.getDMS_Content_ID(), null);
 				Utils.updateTableRecordRef(associationDir, tableID, recordID);
+
+				// Note: Must save association first other wise creating
+				// issue of wrong info in solr indexing entry
+				dmsContent.saveEx();
 			}
 			else
 			{
@@ -774,13 +776,14 @@ public class Utils
 	public static void updateAllVersions(String baseURL, String renamedURL, int tableID, int recordID, MDMSContent contentFile, MDMSContent parentContent)
 	{
 		if (contentFile.getParentURL().startsWith(baseURL))
-		{
 			contentFile.setParentURL(replacePath(baseURL, renamedURL, contentFile.getParentURL()));
-			contentFile.saveEx();
-		}
 
 		MDMSAssociation associationFile = Utils.getAssociationFromContent(contentFile.getDMS_Content_ID(), null);
 		Utils.updateTableRecordRef(associationFile, tableID, recordID);
+
+		// Note: Must save association first other wise creating
+		// issue of wrong info in solr indexing entry
+		contentFile.saveEx();
 
 		contentFile = (MDMSContent) associationFile.getDMS_Content_Related();
 		MDMSAssociation as = Utils.getAssociationFromContent(contentFile.getDMS_Content_ID(), null);
