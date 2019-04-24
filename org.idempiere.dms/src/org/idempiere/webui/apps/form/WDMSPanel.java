@@ -1021,8 +1021,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				catch (Exception e)
 				{
-					selectedDMSContent.pop();
-					throw new AdempiereException(e);
+					String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
+					log.log(Level.SEVERE, errorMsg, e);
+					FDialog.warn(windowID, errorMsg, "Document preview issue...");
 				}
 
 				if (Utils.getContentEditor(mimeType.getMimeType()) != null)

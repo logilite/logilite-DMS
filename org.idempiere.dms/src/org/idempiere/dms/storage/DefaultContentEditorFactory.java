@@ -20,7 +20,7 @@ import org.idempiere.dms.factories.IContentEditorFactory;
 
 public class DefaultContentEditorFactory implements IContentEditorFactory
 {
-    private static ArrayList<String> listMimeType = new ArrayList<String>();
+	private static ArrayList<String>	listMimeType	= new ArrayList<String>();
 
 	static
 	{
@@ -31,7 +31,6 @@ public class DefaultContentEditorFactory implements IContentEditorFactory
 		listMimeType.add("application/vnd.ms-excel");
 		listMimeType.add("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 	}
-
 
 	@Override
 	public IContentEditor get(String mimeType)
@@ -44,7 +43,9 @@ public class DefaultContentEditorFactory implements IContentEditorFactory
 		{
 			return new ImageContentEditor();
 		}
-		return null;
+		else
+		{
+			return new DefaultContentEditor();
+		}
 	}
-
 }

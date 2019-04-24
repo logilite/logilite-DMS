@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.adempiere.base.Service;
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Menupopup;
 import org.adempiere.webui.component.Row;
@@ -102,7 +103,7 @@ public class DMS_ZK_Util
 		}
 		catch (IOException e)
 		{
-			e.printStackTrace();
+			throw new AdempiereException("ERROR: unable to get thumbnail image due to exception " + e, e);
 		}
 
 		return image;
