@@ -988,7 +988,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private void openDirectoryORContent(Component component) throws FileNotFoundException
 	{
 		selectedDMSContent.push((MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
-
+		MDMSAssociation selectedAssociation = (MDMSAssociation) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION);
 		if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			currDMSContent = selectedDMSContent.pop();
@@ -1034,7 +1034,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					tabBox.setSelectedTab(tabData);
 
 					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID);
-					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure);
+					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure, Utils.isLink(selectedAssociation));
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
 					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_RENAME_COMPLETE, this);
@@ -1521,8 +1521,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					{
 						if (((Date) dataFrom.getValue()).after((Date) dataTo.getValue()))
 						{
-							Clients.scrollIntoView((Component) dataFrom);
-							throw new WrongValueException((Component) dataFrom, "Invalid Date Range");
+							Clients.scrollIntoView(dataFrom.getComponent());
+							throw new WrongValueException(dataFrom.getComponent(), "Invalid Date Range");
 						}
 						else
 						{
