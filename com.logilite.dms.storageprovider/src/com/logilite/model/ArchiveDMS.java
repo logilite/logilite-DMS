@@ -35,6 +35,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
@@ -279,6 +280,7 @@ public class ArchiveDMS implements IArchiveStore
 		{
 			archiveName = archiveName.trim();
 			archiveName = archiveName.replaceAll(" ", "");
+			archiveName = archiveName.replace(DMSConstant.FILE_SEPARATOR, "_");
 			if (recordID > 0)
 				archiveName = recordID + " " + archiveName;
 		}
