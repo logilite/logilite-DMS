@@ -37,7 +37,6 @@ public class PDFContentEditor extends Panel implements IContentEditor
 	File						file				= null;
 	I_DMS_Content				content				= null;
 	I_AD_StorageProvider		provider;
-	String						baseDir;
 
 	@Override
 	public void setFile(File file)
@@ -55,7 +54,6 @@ public class PDFContentEditor extends Panel implements IContentEditor
 	public void init(I_AD_StorageProvider storageProvider)
 	{
 		provider = storageProvider;
-		baseDir = storageProvider.getFolder();
 	}
 
 	@Override

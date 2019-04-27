@@ -111,8 +111,10 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 
 	private boolean				isWindowAccess			= true;
 	private boolean				isMountingBaseStructure	= false;
+	private boolean				isLink					= false;
 
-	public WDMSAttributePanel(DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure)
+	public WDMSAttributePanel(DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess,
+			boolean isMountingBaseStructure, boolean isLink)
 	{
 		this.dms = dms;
 		this.tabBox = tabBox;
@@ -121,6 +123,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		this.content = (MDMSContent) content;
 		this.isWindowAccess = isWindowAccess;
 		this.isMountingBaseStructure = isMountingBaseStructure;
+		this.isLink = isLink;
 
 		try
 		{
@@ -131,8 +134,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		{
 			log.log(Level.SEVERE, "Issue while opening content attribute panel. " + e.getLocalizedMessage(), e);
 		}
-
-	}
+	} // Constructor
 
 	/**
 	 * initialize components
@@ -263,7 +265,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		mainLayout.appendChild(south);
 
 		btnVersionUpload.setDisabled(!isWindowAccess || isMountingBaseStructure);
-		btnEdit.setDisabled(!isWindowAccess);
+		btnEdit.setDisabled(!isWindowAccess || isMountingBaseStructure || isLink);
 	} // init
 
 	/**
