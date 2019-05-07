@@ -59,6 +59,7 @@ import org.adempiere.webui.editor.WDateEditor;
 import org.adempiere.webui.editor.WDatetimeEditor;
 import org.adempiere.webui.editor.WEditor;
 import org.adempiere.webui.editor.WNumberEditor;
+import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.editor.WTimeEditor;
 import org.adempiere.webui.event.DialogEvents;
@@ -158,8 +159,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Textbox					txtDescription			= new Textbox();
 
 	private WTableDirEditor			lstboxContentType		= null;
-	private WTableDirEditor			lstboxCreatedBy			= null;
-	private WTableDirEditor			lstboxUpdatedBy			= null;
+	private WSearchEditor			lstboxCreatedBy			= null;
+	private WSearchEditor			lstboxUpdatedBy			= null;
 	private Checkbox				chkInActive				= new Checkbox();
 
 	private DMS						dms						= null;
@@ -407,8 +408,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		MLookup lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MUser.COLUMNNAME_AD_User_ID, 0, true, "");
-			lstboxCreatedBy = new WTableDirEditor(MUser.COLUMNNAME_AD_User_ID, false, false, true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.Search, lang, MUser.COLUMNNAME_AD_User_ID, 0, true, "");
+			lstboxCreatedBy = new WSearchEditor(MUser.COLUMNNAME_AD_User_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
@@ -427,8 +428,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		lookup = null;
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MUser.COLUMNNAME_AD_User_ID, 0, true, "");
-			lstboxUpdatedBy = new WTableDirEditor(MUser.COLUMNNAME_AD_User_ID, false, false, true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.Search, lang, MUser.COLUMNNAME_AD_User_ID, 0, true, "");
+			lstboxUpdatedBy = new WSearchEditor(MUser.COLUMNNAME_AD_User_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
 		{
