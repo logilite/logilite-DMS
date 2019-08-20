@@ -422,8 +422,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendChild(lblCreatedBy);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxCreatedBy.getComponent());
 		lblCreatedBy.setStyle("float: left;");
-		lstboxCreatedBy.getComponent().setWidth("100%");
-
+		lstboxCreatedBy.getComponent().setHflex("1");
+		
 		Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		lookup = null;
 		try
@@ -442,7 +442,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendChild(lblUpdatedBy);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxUpdatedBy.getComponent());
 		lblUpdatedBy.setStyle("float: left;");
-		lstboxUpdatedBy.getComponent().setWidth("100%");
+		lstboxUpdatedBy.getComponent().setHflex("1");
 
 		dbCreatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
 		dbUpdatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
