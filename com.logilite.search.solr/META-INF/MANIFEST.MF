@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Solr
 Bundle-SymbolicName: com.logilite.search.solr
-Bundle-Version: 1.0.1.qualifier
+Bundle-Version: 6.0.0.qualifier
 Bundle-Activator: com.logilite.search.solr.Activator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

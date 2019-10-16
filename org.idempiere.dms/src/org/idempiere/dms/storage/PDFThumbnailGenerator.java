@@ -34,7 +34,7 @@ import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
 
-import sun.misc.Cleaner;
+import jdk.internal.ref.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
 import com.sun.pdfview.PDFFile;
