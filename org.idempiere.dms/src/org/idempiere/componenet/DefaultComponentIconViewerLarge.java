@@ -36,7 +36,7 @@ import org.zkoss.zul.Vbox;
  */
 public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 {
-	private Row	row;
+	private Row row;
 
 	@Override
 	public void createHeaderPart()
@@ -60,8 +60,9 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 
 		// Content Label
 		Label lblName = new Label(getContentName(content, ((MDMSContent) content).getSeqNo()));
-		lblName.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 15px; width: " + (compWidth - 10)
-				+ "px; display: inline-block;");
+		lblName.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 15px; width: "
+								+ (compWidth - 10)
+								+ "px; display: inline-block;");
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
@@ -95,12 +96,10 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 
 		if (Utils.isLink(association))
 		{
-			Image linkImg = new Image();
-			linkImg = (Image) LinkImage.clone();
-			linkImg.setStyle("background: #ffffff80;");
+			Component icon = getLinkIconComponent(association);
 
 			Div mimeIcon = new Div();
-			mimeIcon.appendChild(linkImg);
+			mimeIcon.appendChild(icon);
 			mimeIcon.setStyle("position: absolute; bottom: 24%;");
 			vbox.appendChild(mimeIcon);
 		}

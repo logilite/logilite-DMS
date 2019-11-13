@@ -6,4 +6,5 @@ Bundle-Version: 3.1.0.qualifier
 Fragment-Host: org.adempiere.ui.zk;bundle-version="3.1.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: .,
- dmsimages/
+ dmsimages/,
+ css/

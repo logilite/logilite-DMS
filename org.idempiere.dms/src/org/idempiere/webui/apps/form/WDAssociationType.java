@@ -39,7 +39,6 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.WrongValueException;
@@ -81,7 +80,7 @@ public class WDAssociationType extends Window implements EventListener<Event>
 	 * @param winContent
 	 */
 	public WDAssociationType(DMS dms, MDMSContent copyDMSContent, MDMSContent associateContent, int AD_Table_ID, int Record_ID,
-			AbstractADWindowContent winContent)
+	                         AbstractADWindowContent winContent)
 	{
 		this.dms = dms;
 		this.copyDMSContent = copyDMSContent;
@@ -125,8 +124,8 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		try
 		{
 			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
-					MDMSAssociationType.COLUMNNAME_DMS_AssociationType_ID, 0, true,
-					"DMS_AssociationType.DMS_AssociationType_ID NOT IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE EntityType = 'D')");
+			                            MDMSAssociationType.COLUMNNAME_DMS_AssociationType_ID, 0, true,
+			                            "DMS_AssociationType.DMS_AssociationType_ID NOT IN (SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE EntityType = 'D')");
 
 			associationType = new WTableDirEditor(MDMSAssociationType.COLUMNNAME_DMS_AssociationType_ID, true, false, true, lookup);
 		}
@@ -174,8 +173,6 @@ public class WDAssociationType extends Window implements EventListener<Event>
 
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
-		btnOk.setImageContent(Utils.getImage("Ok24.png"));
-		btnClose.setImageContent(Utils.getImage("Cancel24.png"));
 
 		AEnv.showCenterScreen(this);
 	}
@@ -194,13 +191,14 @@ public class WDAssociationType extends Window implements EventListener<Event>
 				throw new WrongValueException(associationType.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 
 			int countAssociations = DB.getSQLValue(null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE DMS_Content_ID = ?"
-					+ "  AND DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ?", associateContent.getDMS_Content_ID(),
-					copyDMSContent.getDMS_Content_ID(), (Integer) associationType.getValue());
+			                                             + "  AND DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ?",
+			                                       associateContent.getDMS_Content_ID(), copyDMSContent.getDMS_Content_ID(),
+			                                       (Integer) associationType.getValue());
 
 			if (countAssociations == 0)
 			{
 				dms.createAssociation(associateContent.getDMS_Content_ID(), copyDMSContent.getDMS_Content_ID(), Record_ID, AD_Table_ID,
-						(int) associationType.getValue(), 0, null);
+				                      (int) associationType.getValue(), 0, null);
 
 				if (AD_Table_ID > 0 && Record_ID > 0)
 					winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed(true);

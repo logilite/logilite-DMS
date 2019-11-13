@@ -25,7 +25,6 @@ import org.adempiere.webui.component.Window;
 import org.compiere.util.CLogger;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.WrongValueException;
@@ -130,8 +129,8 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		mainLayout.appendChild(south);
 		south.appendChild(confirmPanel);
 
-		confirmPanel.getButton(ConfirmPanel.A_OK).setImageContent(Utils.getImage("Ok24.png"));
-		confirmPanel.getButton(ConfirmPanel.A_CANCEL).setImageContent(Utils.getImage("Cancel24.png"));
+		confirmPanel.getButton(ConfirmPanel.A_OK);
+		confirmPanel.getButton(ConfirmPanel.A_CANCEL);
 		confirmPanel.addActionListener(Events.ON_CLICK, this);
 
 		AEnv.showCenterScreen(this);

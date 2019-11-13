@@ -334,6 +334,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void initForm()
 	{
+		// Load DMS CSS file content and attach as style tag in Head tab
+		DMS_ZK_Util.loadDMSThemeCSSFile();
+
 		this.setHeight("100%");
 		this.setWidth("100%");
 		this.appendChild(tabBox);
@@ -350,7 +353,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		Rows rowsBtn = btnGrid.newRows();
 
 		// Row Navigation Button
-		DMS_ZK_Util.setButtonData(btnBack, "Left24.png", DMSConstant.TTT_PREVIOUS_RECORD, this);
+		DMS_ZK_Util.setButtonData(btnBack, "PreviousRecord", DMSConstant.TTT_PREVIOUS_RECORD, this);
 		btnBack.setEnabled(false);
 
 		lblPositionInfo.setHflex("1");
@@ -358,7 +361,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		btnNext.setEnabled(false);
 		btnNext.setStyle("float:right;");
-		DMS_ZK_Util.setButtonData(btnNext, "Right24.png", DMSConstant.TTT_NEXT_RECORD, this);
+		DMS_ZK_Util.setButtonData(btnNext, "NextRecord", DMSConstant.TTT_NEXT_RECORD, this);
 
 		Row row = rowsBtn.newRow();
 		row.appendChild(btnBack);
@@ -366,8 +369,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendChild(btnNext);
 
 		// Row Operation - Create Directory, Upload Content
-		DMS_ZK_Util.setButtonData(btnCreateDir, "Folder24.png", DMSConstant.MSG_CREATE_DIRECTORY, this);
-		DMS_ZK_Util.setButtonData(btnUploadContent, "Upload24.png", DMSConstant.MSG_UPLOAD_CONTENT, this);
+		DMS_ZK_Util.setButtonData(btnCreateDir, "Folder", DMSConstant.MSG_CREATE_DIRECTORY, this);
+		DMS_ZK_Util.setButtonData(btnUploadContent, "UploadFile", DMSConstant.MSG_UPLOAD_CONTENT, this);
 
 		row = rowsBtn.newRow();
 		Hbox hbox = new Hbox();
@@ -385,7 +388,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		DMS_ZK_Util.createCellUnderRow(row, 1, 3, vsearchBox);
 
-		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search16.png", DMSConstant.TTT_SEARCH, this);
+		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search", DMSConstant.TTT_SEARCH, this);
 		vsearchBox.addEventListener(Events.ON_OK, this);
 
 		row = rowsSearch.newRow();
@@ -423,7 +426,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxCreatedBy.getComponent());
 		lblCreatedBy.setStyle("float: left;");
 		lstboxCreatedBy.getComponent().setHflex("1");
-		
+
 		Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		lookup = null;
 		try
@@ -507,10 +510,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		//
 		row = rowsSearch.newRow();
 
-		DMS_ZK_Util.setButtonData(btnClear, "Reset24.png", "Clear", this);
-		DMS_ZK_Util.setButtonData(btnSearch, "Search24.png", DMSConstant.TTT_SEARCH, this);
-		DMS_ZK_Util.setButtonData(btnCloseTab, "Close24.png", "Clear all & Go to Home Directory", this);
-		DMS_ZK_Util.setButtonData(btnToggleView, "List16.png", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
+		DMS_ZK_Util.setButtonData(btnClear, "Reset", "Clear", this);
+		DMS_ZK_Util.setButtonData(btnSearch, "Search", DMSConstant.TTT_SEARCH, this);
+		DMS_ZK_Util.setButtonData(btnCloseTab, "Home", "Clear all & Go to Home Directory", this);
+		DMS_ZK_Util.setButtonData(btnToggleView, "List", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
 
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
 		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important;");
@@ -533,8 +536,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		cell_layout.appendChild(gridBreadCrumb);
 		cell_layout.appendChild(grid);
 
-		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; min-height: 32px; "
-				+ "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px;");
+		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; min-height: 32px; max-height: 50px; "
+		                        + "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px; overflow-y: scroll;");
 
 		breadRow.setZclass("none");
 		breadRow.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
@@ -570,20 +573,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		tabs.appendChild(new Tab(DMSConstant.MSG_EXPLORER));
 
 		// Context Menu item for Right click on DMSContent
-		mnu_cut = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CUT, "Cut24.png", this);
-		mnu_copy = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_COPY, "Copy24.png", this);
-		mnu_paste = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PASTE, "Paste24.png", this);
-		mnu_rename = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_RENAME, "Rename24.png", this);
-		mnu_delete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DELETE, "Delete24.png", this);
-		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Downloads24.png", this);
-		mnu_associate = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ASSOCIATE, "Associate24.png", this);
-		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link24.png", this);
-		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Versions24.png", this);
-		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "uploadversion24.png", this);
+		mnu_cut = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CUT, "Cut", this);
+		mnu_copy = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_COPY, "Copy", this);
+		mnu_paste = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
+		mnu_rename = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_RENAME, "Rename", this);
+		mnu_delete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DELETE, "Delete", this);
+		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Download", this);
+		mnu_associate = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ASSOCIATE, "Associate", this);
+		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link", this);
+		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
+		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
 
 		// Context Menu item for Right click on Canvas area
-		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_PASTE, "Paste24.png", this);
-		mnu_canvasCreateLink = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link24.png", this);
+		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
+		mnu_canvasCreateLink = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link", this);
 
 		//
 		DMSConstant.SDF_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -668,7 +671,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			openCanvasContextMenu(event);
 		}
 		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
-				&& (event.getTarget().getClass().equals(Cell.class) || event.getTarget().getClass().equals(Row.class)))
+		         && (event.getTarget().getClass().equals(Cell.class) || event.getTarget().getClass().equals(Row.class)))
 		{
 			compCellRowViewer = event.getTarget();
 			openContentContextMenu(compCellRowViewer);
@@ -789,7 +792,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							};
 
 							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete,
-									"<b> Are you want to delete linkable documents associated with actual docs ? </b>" + warningMsg, callbackWarning);
+							            "<b> Are you want to delete linkable documents associated with actual docs ? </b>" + warningMsg, callbackWarning);
 						}
 						else
 						{
@@ -805,13 +808,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			};
 
 			FDialog.ask(0, this,
-					"Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?", callback);
+			            "Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
+			            callback);
 
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
 			new WDAssociationType(dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(),
-					getRecord_ID(), winContent);
+			                      getRecord_ID(), winContent);
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
@@ -931,7 +935,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// Setting current dms content value on label
 		if (isTabViewer())
 		{
-			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;
+			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName())
+			                                                 : null;
 			lblPositionInfo.setValue(currContentValue);
 		}
 
@@ -1224,8 +1229,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		contentContextMenu.setPage(compCellRowViewer.getPage());
 		copyDMSContent = DMSClipboard.get();
 
-		if (!isWindowAccess || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-				|| isMountingBaseStructure)
+		if (!isWindowAccess
+		    || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+		    || isMountingBaseStructure)
 		{
 			ctxMenuItemDisabled(true);
 
@@ -1454,7 +1460,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// if chkInActive = true, display all files
 		// if chkInActive = false, display only active files
 		if (chkInActive != null)
-			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false : null, params);
+			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false
+			                                                                                            : null,
+			                params);
 
 		//
 		if (lstboxContentType.getValue() != null)
@@ -1476,8 +1484,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				Object from = null;
 				Object to = null;
 
-				if (dt == DisplayType.Number || dt == DisplayType.Integer || dt == DisplayType.Quantity || dt == DisplayType.Amount
-						|| dt == DisplayType.CostPrice)
+				if (dt == DisplayType.Number
+				    || dt == DisplayType.Integer
+				    || dt == DisplayType.Quantity
+				    || dt == DisplayType.Amount
+				    || dt == DisplayType.CostPrice)
 				{
 					NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName).getComponent();
 					NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to").getComponent();
@@ -1544,7 +1555,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				else if (dt == DisplayType.YesNo)
 				{
-					from = ((boolean) editor.getValue() ? "Y" : "N");
+					from = ((boolean) editor.getValue() ? "Y"
+					                                    : "N");
 					to = null;
 				}
 				else if (dt == DisplayType.String || dt == DisplayType.Text)
@@ -1639,8 +1651,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					Row row = rows.newRow();
 					row.appendChild(editor.getLabel());
 
-					if (dt == DisplayType.Number || dt == DisplayType.Integer || dt == DisplayType.Quantity || dt == DisplayType.Amount
-							|| dt == DisplayType.CostPrice)
+					if (dt == DisplayType.Number
+					    || dt == DisplayType.Integer
+					    || dt == DisplayType.Quantity
+					    || dt == DisplayType.Amount
+					    || dt == DisplayType.CostPrice)
 					{
 						WNumberEditor numBox = new WNumberEditor(compName + "to", false, false, true, dt, "SB");
 						row.appendChild(editor.getComponent());
@@ -1731,7 +1746,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		BreadCrumbLink rootBreadCrumbLink = new BreadCrumbLink();
 
-		rootBreadCrumbLink.setImageContent(Utils.getImage("Home24.png"));
+		DMS_ZK_Util.setFontOrImageAsIcon("Home", rootBreadCrumbLink);
 		rootBreadCrumbLink.setPathId(String.valueOf(0));
 		rootBreadCrumbLink.addEventListener(Events.ON_CLICK, this);
 		rootBreadCrumbLink.setStyle(DMSConstant.CSS_BREAD_CRUMB_LINK);
