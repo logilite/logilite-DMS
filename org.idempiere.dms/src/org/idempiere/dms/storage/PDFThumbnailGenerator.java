@@ -34,9 +34,6 @@ import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
 
-import jdk.internal.ref.Cleaner;
-import sun.nio.ch.DirectBuffer;
-
 import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
 
@@ -88,11 +85,11 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 			}
 			// Window OS Issue - Rename of file is not working after immediate
 			// upload.
-			if (mbBuffer != null)
+			/*if (mbBuffer != null)
 			{
 				Cleaner cleaner = ((DirectBuffer) mbBuffer).cleaner();
 				cleaner.clean();
-			}
+			}*/
 			if (fileChannel != null)
 				fileChannel.close();
 			if (raf != null)

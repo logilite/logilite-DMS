@@ -193,7 +193,7 @@ public class ConvertXlsToPdf {
         out.append("style='");
         final HSSFCellStyle style = cell.getCellStyle();
         // Text alignment
-        switch (style.getAlignment()) {
+       /* switch (style.getAlignment()) {
         case CellStyle.ALIGN_LEFT:
             out.append("text-align: left; ");
             break;
@@ -205,10 +205,10 @@ public class ConvertXlsToPdf {
             break;
         default:
             break;
-        }
+        }*/
         // Font style, size and weight
         final HSSFFont font = style.getFont(book);
-        if (font.getBoldweight() == HSSFFont.BOLDWEIGHT_BOLD) {
+        if (font.getBold()) {
             out.append("font-weight: bold; ");
         }
         if (font.getItalic()) {
@@ -238,7 +238,7 @@ public class ConvertXlsToPdf {
                     .append(");");
         }
         // Border
-        if (style.getBorderTop() != HSSFCellStyle.BORDER_NONE) {
+       /* if (style.getBorderTop() != HSSFCellStyle.BORDER_NONE) {
             out.append("border-top-style: solid; ");
         }
         if (style.getBorderRight() != HSSFCellStyle.BORDER_NONE) {
@@ -249,10 +249,10 @@ public class ConvertXlsToPdf {
         }
         if (style.getBorderLeft() != HSSFCellStyle.BORDER_NONE) {
             out.append("border-left-style: solid; ");
-        }
+        }*/
         out.append("'>");
         String val = "";
-        try {
+        /*try {
             switch (cell.getCellType()) {
             case HSSFCell.CELL_TYPE_STRING:
                 val = cell.getStringCellValue();
@@ -296,7 +296,7 @@ public class ConvertXlsToPdf {
             }
         } catch (final Exception e) {
             val = e.getMessage();
-        }
+        }*/
         if ("null".equals(val)) {
             val = "";
         }
