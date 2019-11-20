@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry exported="true" kind="lib" path="lib/commons-collections4-4.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-compress-1.19.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/poi-4.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/poi-ooxml-4.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/poi-ooxml-schemas-4.1.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/xmlbeans-3.1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/itextpdf-5.4.1.jar"/>
 	<classpathentry kind="lib" path="lib/xmlworker-5.4.1.1_LLP.jar"/>
-	<classpathentry kind="lib" path="lib/poi-3.9.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
 		<attributes>
 			<attribute name="module" value="true"/>
@@ -19,11 +24,8 @@
 	<classpathentry exported="true" kind="lib" path="lib/ooxml-schemas-1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/org.apache.poi.xwpf.converter.core-1.0.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/org.apache.poi.xwpf.converter.pdf-1.0.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/poi-ooxml-3.9.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/poi-ooxml-schemas-3.9.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/stax-api-1.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xml-apis-1.0.b2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/xmlbeans-2.3.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/pdf-renderer-1.0.5.jar" sourcepath="/tmp/.org.sf.feeling.decompiler1524479205911/source/pdf-renderer-1.0.5-sources-1524572719125.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/imgscalr-lib-4.2.jar"/>
 	<classpathentry kind="output" path="bin"/>

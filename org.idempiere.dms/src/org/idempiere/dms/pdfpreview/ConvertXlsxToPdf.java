@@ -1,6 +1,5 @@
 package org.idempiere.dms.pdfpreview;
 
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -12,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -20,20 +20,32 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
+import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hwpf.converter.HtmlDocumentFacade;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFRichTextString;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCol;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCols;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 
 public class ConvertXlsxToPdf
 {
@@ -287,12 +299,9 @@ public class ConvertXlsxToPdf
 		}
 		else
 		{
-			switch (cell.getCellType())
-			{
-				case Cell.CELL_TYPE_BLANK:
+			if(CellType.BLANK.equals(cell.getCellType())) {
 					value = "\u00a0";
-					break;
-				case Cell.CELL_TYPE_NUMERIC:
+			}else if(CellType.NUMERIC.equals(cell.getCellType())){
 					if (DateUtil.isCellDateFormatted(cell))
 					{
 						// to display date format
@@ -303,12 +312,10 @@ public class ConvertXlsxToPdf
 					{
 						value = cell.getNumericCellValue();
 					}
-					break;
-				case Cell.CELL_TYPE_BOOLEAN:
+			}else if(CellType.BOOLEAN.equals(cell.getCellType())) {
 					value = cell.getBooleanCellValue();
-					break;
-				case Cell.CELL_TYPE_FORMULA:
-					if (cell.getCachedFormulaResultType() == Cell.CELL_TYPE_ERROR)
+			}else if(CellType.FORMULA.equals(cell.getCellType())) {
+					if (CellType.ERROR.equals(cell.getCachedFormulaResultType()))
 					{
 						value = cell.getCellFormula();
 					}
@@ -319,10 +326,8 @@ public class ConvertXlsxToPdf
 						DataFormatter fmt = new DataFormatter();
 						value = fmt.formatCellValue(cell, formulaEvalutor);
 					}
-					break;
-				default:
+			}else {
 					value = cell.getRichStringCellValue();
-					break;
 			}
 			if (value instanceof XSSFRichTextString)
 			{
@@ -363,7 +368,7 @@ public class ConvertXlsxToPdf
 				}
 				if (font.getBold())
 				{
-					sb.append("font-weight:").append(font.getBoldweight()).append(";");
+					sb.append("font-weight:bold;");
 				}
 				if (font.getStrikeout())
 				{
@@ -371,7 +376,7 @@ public class ConvertXlsxToPdf
 				}
 			}
 		}
-		if (style.getAlignment() != 1)
+		/*if (style.getAlignment() != 1)
 		{
 			switch (style.getAlignment())
 			{
@@ -400,7 +405,7 @@ public class ConvertXlsxToPdf
 		if (style.getBorderRight() != 0)
 		{
 			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
-		}
+		}*/
 
 		// if (style.getFillBackgroundXSSFColor() != null) {
 		// XSSFColor color = style.getFillBackgroundXSSFColor();
