@@ -21,16 +21,16 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hwpf.converter.HtmlDocumentFacade;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -44,8 +44,6 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCol;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCols;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 
 public class ConvertXlsxToPdf
 {
@@ -376,36 +374,30 @@ public class ConvertXlsxToPdf
 				}
 			}
 		}
-		/*if (style.getAlignment() != 1)
-		{
-			switch (style.getAlignment())
-			{
-				case 2:
-					sb.append("text-align:").append("center;");
-					break;
-				case 3:
-					sb.append("text-align:").append("right;");
-					break;
-			}
-		}
+		if (HorizontalAlignment.CENTER.equals(style.getAlignment()))
+			sb.append("text-align:").append("center;");
+
+		if (HorizontalAlignment.RIGHT.equals(style.getAlignment()))
+			sb.append("text-align:").append("right;");
+			
 
 		// TODO: set correct value for type and width of border.
-		if (style.getBorderBottom() != 0)
+		if (style.getBorderBottom() != BorderStyle.NONE)
 		{
 			sb.append("border-bottom:solid; ").append(style.getBorderBottom()).append("px;");
 		}
-		if (style.getBorderLeft() != 0)
+		if (style.getBorderLeft() != BorderStyle.NONE)
 		{
 			sb.append("border-left:solid; ").append(style.getBorderLeft()).append("px;");
 		}
-		if (style.getBorderTop() != 0)
+		if (style.getBorderTop() != BorderStyle.NONE)
 		{
 			sb.append("border-top:solid; ").append(style.getBorderTop()).append("px;");
 		}
-		if (style.getBorderRight() != 0)
+		if (style.getBorderRight() != BorderStyle.NONE)
 		{
 			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
-		}*/
+		}
 
 		// if (style.getFillBackgroundXSSFColor() != null) {
 		// XSSFColor color = style.getFillBackgroundXSSFColor();
@@ -447,7 +439,7 @@ public class ConvertXlsxToPdf
 		
 		serializer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 		serializer.setOutputProperty(OutputKeys.INDENT, "yes");
-		serializer.setOutputProperty(OutputPropertiesFactory.S_KEY_INDENT_AMOUNT, "2");
+		serializer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
 		serializer.setOutputProperty(OutputKeys.METHOD, "html");
 		// serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "");
 		serializer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");

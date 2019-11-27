@@ -24,8 +24,9 @@ import org.apache.poi.hssf.usermodel.HSSFShape;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -238,26 +239,26 @@ public class ConvertXlsToPdf {
                     .append(");");
         }
         // Border
-       /* if (style.getBorderTop() != HSSFCellStyle.BORDER_NONE) {
+        if (style.getBorderTop() != BorderStyle.NONE) {
             out.append("border-top-style: solid; ");
         }
-        if (style.getBorderRight() != HSSFCellStyle.BORDER_NONE) {
+        if (style.getBorderRight() != BorderStyle.NONE) {
             out.append("border-right-style: solid; ");
         }
-        if (style.getBorderBottom() != HSSFCellStyle.BORDER_NONE) {
+        if (style.getBorderBottom() != BorderStyle.NONE) {
             out.append("border-bottom-style: solid; ");
         }
-        if (style.getBorderLeft() != HSSFCellStyle.BORDER_NONE) {
+        if (style.getBorderLeft() != BorderStyle.NONE) {
             out.append("border-left-style: solid; ");
-        }*/
+        }
         out.append("'>");
         String val = "";
-        /*try {
+        try {
             switch (cell.getCellType()) {
-            case HSSFCell.CELL_TYPE_STRING:
+            case STRING:
                 val = cell.getStringCellValue();
                 break;
-            case HSSFCell.CELL_TYPE_NUMERIC:
+            case NUMERIC:
                 // POI does not distinguish between integer and double, thus:
                 final double original = cell.getNumericCellValue(),
                 rounded = Math.round(original);
@@ -267,21 +268,21 @@ public class ConvertXlsToPdf {
                     val = String.valueOf(original);
                 }
                 break;
-            case HSSFCell.CELL_TYPE_FORMULA:
+            case FORMULA:
                 final CellValue cv = evaluator.evaluate(cell);
                 switch (cv.getCellType()) {
-                case Cell.CELL_TYPE_BOOLEAN:
+                case BOOLEAN:
                     out.append(cv.getBooleanValue());
                     break;
-                case Cell.CELL_TYPE_NUMERIC:
+                case NUMERIC:
                     out.append(cv.getNumberValue());
                     break;
-                case Cell.CELL_TYPE_STRING:
+                case STRING:
                     out.append(cv.getStringValue());
                     break;
-                case Cell.CELL_TYPE_BLANK:
+                case BLANK:
                     break;
-                case Cell.CELL_TYPE_ERROR:
+                case ERROR:
                     break;
                 default:
                     break;
@@ -296,7 +297,7 @@ public class ConvertXlsToPdf {
             }
         } catch (final Exception e) {
             val = e.getMessage();
-        }*/
+        }
         if ("null".equals(val)) {
             val = "";
         }
