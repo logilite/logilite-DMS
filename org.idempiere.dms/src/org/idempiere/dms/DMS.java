@@ -446,6 +446,7 @@ public class DMS
 	private int addFile(MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID, int AD_Table_ID, int Record_ID,
 			boolean isVersion)
 	{
+		boolean isError = false;
 		fileName = Utils.validateFileName(parentContent, file, fileName, isVersion);
 
 		String trxName = Trx.createTrxName("UploadFile");
@@ -459,15 +460,21 @@ public class DMS
 		}
 		catch (Exception e)
 		{
-			if (trx != null)
-				trx.rollback();
+			isError = true;
 			throw new AdempiereException("Upload Content Failure:\n" + e.getLocalizedMessage());
 		}
 		finally
 		{
 			if (trx != null)
 			{
-				trx.commit(); // Transaction commit
+				if (isError)
+				{
+					trx.rollback();
+				}
+				else
+				{
+					trx.commit(); 
+				}
 				trx.close();
 			}
 		}
