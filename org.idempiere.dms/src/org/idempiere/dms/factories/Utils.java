@@ -81,6 +81,9 @@ import org.idempiere.model.MDMSContentType;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 
+import com.logilite.search.factory.IIndexSearcher;
+import com.logilite.search.factory.ServiceUtils;
+
 /**
  * @author deepak@logilite.com
  */
@@ -690,6 +693,17 @@ public class Utils
 			}
 		}
 
+		// File Content
+		if (ServiceUtils.isAllowDocumentContentSearch())
+		{
+			IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
+			StringBuffer query = new StringBuffer("(").append(DMSConstant.DMS_CONTENT_ID).append(":\"").append(DMSContent.get_ID()).append("\")");
+			if (DMSContent.get_ID() > 0)
+			{
+				String fileContent = (String) indexSeracher.getColumnValue(query.toString(), ServiceUtils.FILE_CONTENT);
+				solrValue.put(ServiceUtils.FILE_CONTENT, fileContent);
+			}
+		}
 		return solrValue;
 	} // createIndexMap
 

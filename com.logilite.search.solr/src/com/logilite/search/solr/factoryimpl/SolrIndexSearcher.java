@@ -12,10 +12,14 @@
 
 package com.logilite.search.solr.factoryimpl;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -48,10 +52,21 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.BodyContentHandler;
 import org.compiere.util.CLogger;
+import org.compiere.util.Util;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
 
 import com.idempiere.model.MIndexingConfig;
 import com.logilite.search.factory.IIndexSearcher;
+import com.logilite.search.factory.ServiceUtils;
 
 @SuppressWarnings("deprecation")
 public class SolrIndexSearcher implements IIndexSearcher
@@ -65,7 +80,6 @@ public class SolrIndexSearcher implements IIndexSearcher
 	@Override
 	public void init(MIndexingConfig indexingConfig)
 	{
-
 		try
 		{
 			this.indexingConfig = indexingConfig;
@@ -83,7 +97,6 @@ public class SolrIndexSearcher implements IIndexSearcher
 			server.setAllowCompression(true);
 
 			server.ping();
-
 		}
 		catch (SolrServerException e)
 		{
@@ -100,10 +113,14 @@ public class SolrIndexSearcher implements IIndexSearcher
 			log.log(Level.SEVERE, "Fail to initialize solr Server OR Invalid Username or Password ", e);
 			throw new AdempiereException("Fail to initialize solr Server OR Invalid Username or Password ");
 		}
-	}
+	} // init
 
-	@Override
-	public List<Integer> searchIndex(String query)
+	/**
+	 * Check Server is Up and running
+	 * 
+	 * @throws AdempiereException
+	 */
+	public void checkServerIsUp() throws AdempiereException
 	{
 		try
 		{
@@ -115,11 +132,17 @@ public class SolrIndexSearcher implements IIndexSearcher
 			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
 			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
 		}
+	} // checkServerIsUp
+
+	@Override
+	public List <Integer> searchIndex(String query)
+	{
+		checkServerIsUp();
 
 		SolrQuery solrQuery = new SolrQuery();
 		QueryResponse response = new QueryResponse();
 		SolrDocumentList documentList = null;
-		List<Integer> dmsContentList = new ArrayList<Integer>();
+		List <Integer> dmsContentList = new ArrayList <Integer>();
 
 		long numbFound = 0;
 		int current = 0;
@@ -134,35 +157,28 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 			while (current < numbFound)
 			{
-				ListIterator<SolrDocument> iterator = documentList.listIterator();
+				ListIterator <SolrDocument> iterator = documentList.listIterator();
 
 				while (iterator.hasNext())
 				{
 					current++;
 
 					SolrDocument document = iterator.next();
-
-					Map<String, Collection<Object>> searchedContent = document.getFieldValuesMap();
-
-					Iterator<String> fields = document.getFieldNames().iterator();
-
+					Map <String, Collection <Object>> searchedContent = document.getFieldValuesMap();
+					Iterator <String> fields = document.getFieldNames().iterator();
 					while (fields.hasNext())
 					{
 						String field = fields.next();
 
-						if (field.equalsIgnoreCase("DMS_Content_ID"))
+						if (field.equalsIgnoreCase(ServiceUtils.DMS_CONTENT_ID))
 						{
-							Collection<Object> values = searchedContent.get(field);
-							Iterator<Object> value = values.iterator();
+							Collection <Object> values = searchedContent.get(field);
+							Iterator <Object> value = values.iterator();
 
 							while (value.hasNext())
 							{
 								Long obj = (Long) value.next();
-
-								if (field.equalsIgnoreCase("DMS_Content_ID"))
-								{
-									DMS_Content_ID = obj.intValue();
-								}
+								DMS_Content_ID = obj.intValue();
 							}
 						}
 					}
@@ -179,35 +195,42 @@ public class SolrIndexSearcher implements IIndexSearcher
 			log.log(Level.SEVERE, "Searching content failure:", e);
 			// throw new AdempiereException("Searching content failure:" + e);
 		}
-
 		return dmsContentList;
 	}
 
 	@Override
-	public void indexContent(Map<String, Object> indexValue)
+	public void indexContent(Map <String, Object> indexValue)
 	{
+		indexContent(indexValue, null);
+	}
+
+	@Override
+	public void indexContent(Map <String, Object> indexValue, File file)
+	{
+		checkServerIsUp();
+
 		try
 		{
-			try
-			{
-				if (server.ping() == null)
-					init(indexingConfig);
-			}
-			catch (SolrServerException | IOException e)
-			{
-				log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-				throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
-			}
-
+			String content = (String) indexValue.get(ServiceUtils.FILE_CONTENT);
 			SolrInputDocument document = new SolrInputDocument();
 
-			for (Entry<String, Object> row : indexValue.entrySet())
+			for (Entry <String, Object> row : indexValue.entrySet())
 			{
 				if (row.getKey() != null && row.getValue() != null)
 				{
 					document.addField(row.getKey(), row.getValue());
 				}
 			}
+
+			// Inside document content searching
+			if (ServiceUtils.isAllowDocumentContentSearch() && Util.isEmpty(content) && file != null)
+			{
+				// Read content from file
+				content = processDocument(file);
+
+				document.addField(ServiceUtils.FILE_CONTENT, content);
+			}
+
 			server.add(document);
 			server.commit();
 		}
@@ -216,25 +239,16 @@ public class SolrIndexSearcher implements IIndexSearcher
 			log.log(Level.SEVERE, "Indexing failure: ", e);
 			throw new AdempiereException("Indexing failure: " + e.getLocalizedMessage());
 		}
-	}
+	} // indexContent
 
 	@Override
-	public void deleteIndex(int id)
+	public void deleteIndex(int content_ID)
 	{
+		checkServerIsUp();
+
 		try
 		{
-			try
-			{
-				if (server.ping() == null)
-					init(indexingConfig);
-			}
-			catch (SolrServerException | IOException e)
-			{
-				log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-				throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
-			}
-
-			server.deleteByQuery("DMS_Content_ID:" + id);
+			server.deleteByQuery("DMS_Content_ID:" + content_ID);
 			server.commit();
 		}
 		catch (SolrServerException e)
@@ -247,41 +261,17 @@ public class SolrIndexSearcher implements IIndexSearcher
 			log.log(Level.SEVERE, "Solr Document delete failure: ", e);
 			throw new AdempiereException("Solr Document delete failure:  " + e.getLocalizedMessage());
 		}
-
-	}
-
-	private class PreemptiveAuthInterceptor implements HttpRequestInterceptor
-	{
-
-		public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException
-		{
-			AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
-
-			// If no auth scheme avaialble yet, try to initialize it
-			// preemptively
-			if (authState.getAuthScheme() == null)
-			{
-				CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(ClientContext.CREDS_PROVIDER);
-				HttpHost targetHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
-				Credentials creds = credsProvider.getCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()));
-				if (creds == null)
-					throw new HttpException("No credentials for preemptive authentication");
-				authState.setAuthScheme(new BasicScheme());
-				authState.setCredentials(creds);
-			}
-
-		}
-	}
+	} // deleteIndex
 
 	@Override
-	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
+	public String buildSolrSearchQuery(HashMap <String, List <Object>> params)
 	{
 		StringBuffer query = new StringBuffer();
 
-		for (Entry<String, List<Object>> row : params.entrySet())
+		for (Entry <String, List <Object>> row : params.entrySet())
 		{
 			String key = row.getKey();
-			List<Object> value = row.getValue();
+			List <Object> value = row.getValue();
 
 			if (value.size() == 2)
 			{
@@ -313,6 +303,114 @@ public class SolrIndexSearcher implements IIndexSearcher
 			query.append("*:*");
 
 		return query.toString();
-	}
+	} // buildSolrSearchQuery
 
+	@Override
+	public String getColumnValue(String query, String columnName)
+	{
+		checkServerIsUp();
+
+		String content = "";
+		try
+		{
+			SolrQuery solrQuery = new SolrQuery();
+			QueryResponse response = new QueryResponse();
+
+			solrQuery.setQuery(query);
+			response = server.query(solrQuery);
+			SolrDocumentList documentList = response.getResults();
+			ListIterator <SolrDocument> iterator = documentList.listIterator();
+			while (iterator.hasNext())
+			{
+				SolrDocument document = iterator.next();
+				Map <String, Collection <Object>> searchedContent = document.getFieldValuesMap();
+				Iterator <String> fields = document.getFieldNames().iterator();
+				while (fields.hasNext())
+				{
+					String field = fields.next();
+					if (field.equalsIgnoreCase(columnName))
+					{
+						Collection <Object> values = searchedContent.get(field);
+						Iterator <Object> value = values.iterator();
+
+						while (value.hasNext())
+						{
+							String obj = (String) value.next();
+							content = obj.toString();
+						}
+					}
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Searching content failure:", e);
+		}
+
+		return content;
+	} // getColumnValue
+
+	/**
+	 * @param file
+	 * @return
+	 */
+	private String processDocument(File file)
+	{
+		try
+		{
+			Metadata metadata = new Metadata();
+			ContentHandler handler = new BodyContentHandler(-1);
+			TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
+			AutoDetectParser parser = new AutoDetectParser(tikaConfig);
+			TikaInputStream stream = TikaInputStream.get(new FileInputStream(file));
+
+			parser.parse(stream, handler, metadata, new ParseContext());
+			stream.close();
+
+			return handler.toString();
+		}
+		catch (FileNotFoundException e)
+		{
+			log.log(Level.SEVERE, "File Not Found: ", e);
+			throw new AdempiereException("File Not Found: " + e.getLocalizedMessage());
+		}
+		catch (IOException e)
+		{
+			log.log(Level.SEVERE, "Fail to read file: ", e);
+			throw new AdempiereException("Fail to read file: " + e.getLocalizedMessage());
+		}
+		catch (SAXException e)
+		{
+			log.log(Level.SEVERE, "Can not parse file content: ", e);
+			throw new AdempiereException("Can not parse file content: " + e.getLocalizedMessage());
+		}
+		catch (TikaException e)
+		{
+			log.log(Level.SEVERE, "Can not parse file content: ", e);
+			throw new AdempiereException("Can not parse file content: " + e.getLocalizedMessage());
+		}
+	} // processDocument
+
+	/**
+	 * Class PreemptiveAuthInterceptor
+	 */
+	private class PreemptiveAuthInterceptor implements HttpRequestInterceptor
+	{
+		public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException
+		{
+			AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
+
+			// If no auth scheme available yet, try to initialize it preemptively
+			if (authState.getAuthScheme() == null)
+			{
+				CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(ClientContext.CREDS_PROVIDER);
+				HttpHost targetHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
+				Credentials creds = credsProvider.getCredentials(new AuthScope(targetHost.getHostName(), targetHost.getPort()));
+				if (creds == null)
+					throw new HttpException("No credentials for preemptive authentication");
+				authState.setAuthScheme(new BasicScheme());
+				authState.setCredentials(creds);
+			}
+		} // process
+	} // PreemptiveAuthInterceptor
 }

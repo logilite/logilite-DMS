@@ -1532,9 +1532,17 @@ public class DMS
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
 		{
-			String inputParam = searchText;
-			query.append("(").append(DMSConstant.NAME).append(":*").append(inputParam).append("*").append(" OR ").append(DMSConstant.DESCRIPTION).append(":*")
-					.append(inputParam).append("*)");
+			String inputParam = searchText.toLowerCase().trim().replaceAll(" +", " ");
+			query.append("(").append(DMSConstant.NAME).append(":*").append(inputParam).append("*");
+			query.append(" OR ").append(DMSConstant.DESCRIPTION).append(":*").append(inputParam).append("*");
+
+			// Lookup from file content
+			if (ServiceUtils.isAllowDocumentContentSearch())					
+			{
+				query.append(" OR ").append(ServiceUtils.FILE_CONTENT).append(":*").append(inputParam).append("*");
+			}
+
+			query.append(")");
 		}
 		else
 		{
