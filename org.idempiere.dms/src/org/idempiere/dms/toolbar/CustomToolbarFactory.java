@@ -24,6 +24,7 @@ import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.session.SessionManager;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
@@ -42,6 +43,10 @@ public class CustomToolbarFactory implements IAction
 	@Override
 	public void execute(Object target)
 	{
+		// Load DMS CSS file content and attach as style tag in Head tab
+		DMS_ZK_Util.loadDMSThemeCSSFile();
+
+		//
 		ADWindow window = (ADWindow) target;
 		winContent = window.getADWindowContent();
 		int tableID = winContent.getADTab().getSelectedGridTab().getAD_Table_ID();
@@ -69,8 +74,9 @@ public class CustomToolbarFactory implements IAction
 			public void onEvent(Event arg0) throws Exception
 			{
 				int associateRecords = DB.getSQLValue(null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
-						+ " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL", winContent.getADTab()
-						.getSelectedGridTab().getAD_Table_ID(), winContent.getADTab().getSelectedGridTab().getRecord_ID());
+				                                            + " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
+				        winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
+				        winContent.getADTab().getSelectedGridTab().getRecord_ID());
 
 				winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed((associateRecords > 0));
 			}

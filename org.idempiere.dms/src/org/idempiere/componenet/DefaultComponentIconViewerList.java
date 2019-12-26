@@ -40,7 +40,7 @@ import org.zkoss.zul.Image;
  */
 public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 {
-	private Row	row;
+	private Row row;
 
 	@Override
 	public void createHeaderPart()
@@ -78,11 +78,9 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		Label lblSize = new Label(content.getDMS_FileSize());
 		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
 		Label lblFileType = new Label(content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory) ? DMSConstant.MSG_FILE_FOLDER : content
-				.getDMS_MimeType().getName());
+		        .getDMS_MimeType().getName());
 		Label lblModifiedBy = new Label(MUser.get(Env.getCtx(), content.getUpdatedBy()).getName());
-		Image linkImg = new Image();
-		if (Utils.isLink(association))
-			linkImg = (Image) LinkImage.clone();
+		Component linkIcon = getLinkIconComponent(association);
 
 		Hbox hbox = new Hbox();
 		hbox.appendChild(thumbImg);
@@ -93,7 +91,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		row.appendCellChild(lblUpdated);
 		row.appendCellChild(lblFileType);
 		row.appendCellChild(lblModifiedBy);
-		row.appendCellChild(linkImg);
+		row.appendCellChild(linkIcon);
 
 		//
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, content);

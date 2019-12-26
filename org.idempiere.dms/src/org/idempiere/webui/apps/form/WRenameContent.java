@@ -110,11 +110,9 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		btnOk = confirmpanel.createButton(ConfirmPanel.A_OK);
 		btnOk.addEventListener(Events.ON_CLICK, this);
-		btnOk.setImageContent(Utils.getImage("Ok24.png"));
 
 		btnCancel = confirmpanel.createButton(ConfirmPanel.A_CANCEL);
 		btnCancel.addEventListener(Events.ON_CLICK, this);
-		btnCancel.setImageContent(Utils.getImage("Cancel24.png"));
 
 		Rows rows = gridView.newRows();
 

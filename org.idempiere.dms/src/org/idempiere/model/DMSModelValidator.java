@@ -63,14 +63,16 @@ public class DMSModelValidator implements ModelValidator
 		 * change of attribute value
 		 */
 		if (MAttributeInstance.Table_Name.equals(po.get_TableName())
-				&& type == TYPE_BEFORE_CHANGE
-				&& (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value) || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueTimeStamp)
-						|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber) || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueInt)))
+		    && type == TYPE_BEFORE_CHANGE
+		    && (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value)
+		        || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueTimeStamp)
+		        || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber)
+		        || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueInt)))
 		{
 			MAttributeInstance attributeInstance = (MAttributeInstance) po;
 
 			int dmsContentID = DB.getSQLValue(po.get_TrxName(), "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ",
-					attributeInstance.getM_AttributeSetInstance_ID());
+			                                  attributeInstance.getM_AttributeSetInstance_ID());
 
 			if (dmsContentID > 0)
 			{
@@ -85,9 +87,11 @@ public class DMSModelValidator implements ModelValidator
 		 * index again
 		 */
 		if (MDMSContent.Table_Name.equals(po.get_TableName())
-				&& type == TYPE_BEFORE_CHANGE
-				&& (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name) || po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
-						|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description) || po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)))
+		    && type == TYPE_BEFORE_CHANGE
+		    && (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
+		        || po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
+		        || po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
+		        || po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)))
 		{
 			MDMSContent dmsContent = (MDMSContent) po;
 			dmsContent.setIsIndexed(false);
@@ -142,8 +146,8 @@ public class DMSModelValidator implements ModelValidator
 							{
 								// Create index of Linkable docs is exists
 								int[] linkAssociationIDs = DB.getIDsEx(null, DMSConstant.SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT,
-										MDMSAssociationType.VERSION_ID, content.getDMS_Content_ID(), content.getDMS_Content_ID(),
-										MDMSAssociationType.VERSION_ID);
+								                                       MDMSAssociationType.VERSION_ID, content.getDMS_Content_ID(), content.getDMS_Content_ID(),
+								                                       MDMSAssociationType.VERSION_ID);
 
 								for (int linkAssociationID : linkAssociationIDs)
 								{
@@ -173,8 +177,10 @@ public class DMSModelValidator implements ModelValidator
 		{
 			// For index changes of deleting linkable content.
 			MDMSAssociation association = (MDMSAssociation) po;
-			if (Utils.isLink(association) && association.getDMS_Content().isActive() && association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)
-					&& !association.isActive())
+			if (Utils.isLink(association)
+			    && association.getDMS_Content().isActive()
+			    && association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)
+			    && !association.isActive())
 			{
 				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 				linkContent.setIsIndexed(false);

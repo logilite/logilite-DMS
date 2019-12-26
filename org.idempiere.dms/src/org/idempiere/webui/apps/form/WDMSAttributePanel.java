@@ -35,7 +35,6 @@ import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.event.DialogEvents;
-import org.adempiere.webui.theme.ThemeManager;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -114,7 +113,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 	private boolean				isLink					= false;
 
 	public WDMSAttributePanel(DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess,
-			boolean isMountingBaseStructure, boolean isLink)
+	                          boolean isMountingBaseStructure, boolean isLink)
 	{
 		this.dms = dms;
 		this.tabBox = tabBox;
@@ -215,13 +214,12 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		btnDelete = confirmPanel.createButton(ConfirmPanel.A_DELETE);
 		btnDelete.setEnabled(false);
 
-		btnDownload = new Button();
+		btnDownload = confirmPanel.createButton(ConfirmPanel.A_EXPORT);
 		btnDownload.setTooltiptext(DMSConstant.TTT_DOWNLOAD);
-		btnDownload.setImage(ThemeManager.getThemeResource("images/Export24.png"));
 
 		btnVersionUpload = new Button();
 		btnVersionUpload.setTooltiptext(DMSConstant.TTT_UPLOAD_VERSION);
-		btnVersionUpload.setImage(ThemeManager.getThemeResource("images/Assignment24.png"));
+		DMS_ZK_Util.setFontOrImageAsIcon("UploadVersion", btnVersionUpload);
 
 		btnRequery = confirmPanel.createButton(ConfirmPanel.A_REFRESH);
 
@@ -230,12 +228,12 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 
 		btnEdit = new Button();
 		btnEdit.setTooltiptext(DMSConstant.TTT_EDIT);
-		btnEdit.setImageContent(Utils.getImage("Edit24.png"));
+		DMS_ZK_Util.setFontOrImageAsIcon("Edit", btnEdit);
 
 		btnSave = new Button();
 		btnSave.setVisible(false);
 		btnSave.setTooltiptext(DMSConstant.TTT_SAVE);
-		btnSave.setImageContent(Utils.getImage("Save24.png"));
+		DMS_ZK_Util.setFontOrImageAsIcon("Save", btnSave);
 
 		btnSave.addEventListener(Events.ON_CLICK, this);
 		btnDelete.addEventListener(Events.ON_CLICK, this);
@@ -254,12 +252,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
 		panelFooterButtons.setStyle("display: inline-flex; padding-top: 5px;");
-
-		btnVersionUpload.setImageContent(Utils.getImage("uploadversion24.png"));
-		btnDelete.setImageContent(Utils.getImage("Delete24.png"));
-		btnRequery.setImageContent(Utils.getImage("Refresh24.png"));
-		btnDownload.setImageContent(Utils.getImage("Downloads24.png"));
-		btnClose.setImageContent(Utils.getImage("Close24.png"));
 
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
@@ -297,7 +289,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_VERSION);
 		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this,
-				eventsList);
+		                     eventsList);
 
 	} // initVersionHistory
 
@@ -390,7 +382,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 			txtDesc.setEnabled(false);
 
 			if ((Util.isEmpty(content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
-					|| (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
+			    || (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
 			{
 				content.setDescription(txtDesc.getValue());
 				content.save();
