@@ -694,7 +694,7 @@ public class Utils
 		}
 
 		// File Content
-		if (MSysConfig.getBooleanValue(ServiceUtils.DMS_ALLOW_DOCUMENT_CONTENT_SEARCH, false, Env.getAD_Client_ID(Env.getCtx())))
+		if (ServiceUtils.isAllowDocumentContentSearch())
 		{
 			IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
 			StringBuffer query = new StringBuffer("(").append(DMSConstant.DMS_CONTENT_ID).append(":\"").append(DMSContent.get_ID()).append("\")");

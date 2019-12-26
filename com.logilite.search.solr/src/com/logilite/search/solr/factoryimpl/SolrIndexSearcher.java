@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -58,9 +59,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
-import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
-import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -224,8 +223,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 			}
 
 			// Inside document content searching
-			boolean isAllowDocCntSrch = MSysConfig.getBooleanValue(ServiceUtils.DMS_ALLOW_DOCUMENT_CONTENT_SEARCH, false, Env.getAD_Client_ID(Env.getCtx()));
-			if (isAllowDocCntSrch && Util.isEmpty(content) && file != null)
+			if (ServiceUtils.isAllowDocumentContentSearch() && Util.isEmpty(content) && file != null)
 			{
 				// Read content from file
 				content = processDocument(file);

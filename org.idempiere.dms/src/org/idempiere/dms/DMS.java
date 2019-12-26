@@ -1538,7 +1538,8 @@ public class DMS
 			query.append(" OR ").append(DMSConstant.DESCRIPTION).append(":*").append(inputParam).append("*");
 
 			// Lookup from file content
-			if (MSysConfig.getBooleanValue(ServiceUtils.DMS_ALLOW_DOCUMENT_CONTENT_SEARCH, false, Env.getAD_Client_ID(Env.getCtx())))
+			if (ServiceUtils.isAllowDocumentContentSearch()
+					
 			{
 				query.append(" OR ").append(ServiceUtils.FILE_CONTENT).append(":*").append(inputParam).append("*");
 			}

@@ -3,13 +3,14 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Solr
 Bundle-SymbolicName: com.logilite.search.solr
 Bundle-Version: 1.0.1.qualifier
-Bundle-Activator: com.logilite.search.solr.Activator
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: org.osgi.framework;version="1.3.0"
 Bundle-ActivationPolicy: lazy
 Require-Bundle: com.logilite.search;bundle-version="1.0.2",
- org.adempiere.base;bundle-version="3.1.0"
+ org.adempiere.base;bundle-version="3.1.0",
+ org.adempiere.plugin.utils;bundle-version="3.1.0"
 Bundle-ClassPath: .,
  lib/solr-solrj-5.5.0.jar,
  lib/commons-codec-1.6.jar,

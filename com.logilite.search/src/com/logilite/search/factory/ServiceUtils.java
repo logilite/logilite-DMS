@@ -18,6 +18,7 @@ import java.util.List;
 import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MClientInfo;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.CCache;
 import org.compiere.util.Env;
 
@@ -72,4 +73,9 @@ public class ServiceUtils
 
 		return indexSearcher;
 	}
+
+	public static boolean isAllowDocumentContentSearch()
+	{
+		return MSysConfig.getBooleanValue(ServiceUtils.DMS_ALLOW_DOCUMENT_CONTENT_SEARCH, false, Env.getAD_Client_ID(Env.getCtx()));
+	} // isAllowDocumentContentSearch
 }
