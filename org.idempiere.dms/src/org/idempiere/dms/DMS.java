@@ -46,7 +46,6 @@ import org.apache.poi.xwpf.converter.pdf.PdfOptions;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MImage;
-import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
@@ -1538,8 +1537,7 @@ public class DMS
 			query.append(" OR ").append(DMSConstant.DESCRIPTION).append(":*").append(inputParam).append("*");
 
 			// Lookup from file content
-			if (ServiceUtils.isAllowDocumentContentSearch()
-					
+			if (ServiceUtils.isAllowDocumentContentSearch())					
 			{
 				query.append(" OR ").append(ServiceUtils.FILE_CONTENT).append(":*").append(inputParam).append("*");
 			}
