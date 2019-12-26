@@ -46,6 +46,7 @@ import org.apache.poi.xwpf.converter.pdf.PdfOptions;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MImage;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
@@ -1532,9 +1533,17 @@ public class DMS
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
 		{
-			String inputParam = searchText;
-			query.append("(").append(DMSConstant.NAME).append(":*").append(inputParam).append("*").append(" OR ").append(DMSConstant.DESCRIPTION).append(":*")
-					.append(inputParam).append("*)");
+			String inputParam = searchText.toLowerCase().trim().replaceAll(" +", " ");
+			query.append("(").append(DMSConstant.NAME).append(":*").append(inputParam).append("*");
+			query.append(" OR ").append(DMSConstant.DESCRIPTION).append(":*").append(inputParam).append("*");
+
+			// Lookup from file content
+			if (MSysConfig.getBooleanValue(ServiceUtils.DMS_ALLOW_DOCUMENT_CONTENT_SEARCH, false, Env.getAD_Client_ID(Env.getCtx())))
+			{
+				query.append(" OR ").append(ServiceUtils.FILE_CONTENT).append(":*").append(inputParam).append("*");
+			}
+
+			query.append(")");
 		}
 		else
 		{
