@@ -80,6 +80,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 	public static final String	SOLR_FIELDTYPE_TLONGS	= "tlongs";
 
+	public static final String	SOLR_FIELD_DESCRIPTION	= "description";
+
 	private HttpSolrServer		server					= null;
 	private MIndexingConfig		indexingConfig			= null;
 
@@ -125,6 +127,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 				// Create Fields in schema if not exists
 				createOrCheckFieldsInSolrSchema(ServiceUtils.DMS_CONTENT_ID);
 				createOrCheckFieldsInSolrSchema(ServiceUtils.FILE_CONTENT);
+				createOrCheckFieldsInSolrSchema(SOLR_FIELD_DESCRIPTION);
 			}
 			catch (Exception e)
 			{
@@ -239,6 +242,11 @@ public class SolrIndexSearcher implements IIndexSearcher
 		{
 			mapAttribute.put("name", ServiceUtils.DMS_CONTENT_ID);
 			mapAttribute.put("type", SOLR_FIELDTYPE_TLONGS);
+		}
+		else if (fieldName.equalsIgnoreCase(SOLR_FIELD_DESCRIPTION) && !fieldSet.contains(SOLR_FIELD_DESCRIPTION))
+		{
+			mapAttribute.put("name", SOLR_FIELD_DESCRIPTION);
+			mapAttribute.put("type", "text_general");
 		}
 
 		if (mapAttribute.size() > 0)
