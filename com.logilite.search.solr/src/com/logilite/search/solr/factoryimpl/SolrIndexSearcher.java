@@ -48,7 +48,11 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.BinaryRequestWriter;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.request.schema.FieldTypeDefinition;
+import org.apache.solr.client.solrj.request.schema.SchemaRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.response.schema.FieldTypeRepresentation;
+import org.apache.solr.client.solrj.response.schema.SchemaResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
@@ -72,10 +76,15 @@ import com.logilite.search.factory.ServiceUtils;
 public class SolrIndexSearcher implements IIndexSearcher
 {
 
-	public static CLogger	log				= CLogger.getCLogger(SolrIndexSearcher.class);
+	public static CLogger		log						= CLogger.getCLogger(SolrIndexSearcher.class);
 
-	private HttpSolrServer	server			= null;
-	private MIndexingConfig	indexingConfig	= null;
+	public static final String	SOLR_FIELDTYPE_TLONGS	= "tlongs";
+
+	private HttpSolrServer		server					= null;
+	private MIndexingConfig		indexingConfig			= null;
+
+	public HashSet <String>		fieldSet				= new HashSet <String>();
+	public HashSet <String>		fieldTypeSet			= new HashSet <String>();
 
 	@Override
 	public void init(MIndexingConfig indexingConfig)
@@ -97,6 +106,31 @@ public class SolrIndexSearcher implements IIndexSearcher
 			server.setAllowCompression(true);
 
 			server.ping();
+
+			try
+			{
+				/*
+				 * Build Schema Fields Type set
+				 */
+				buildSolrSchemaFieldsTypeSet();
+
+				// Create Fields Type in schema if not exists
+				createOrCheckFieldsTypeInSolrSchema(SOLR_FIELDTYPE_TLONGS);
+
+				/*
+				 * Build Schema Fields set
+				 */
+				buildSolrSchemaFieldsSet();
+
+				// Create Fields in schema if not exists
+				createOrCheckFieldsInSolrSchema(ServiceUtils.DMS_CONTENT_ID);
+				createOrCheckFieldsInSolrSchema(ServiceUtils.FILE_CONTENT);
+			}
+			catch (Exception e)
+			{
+				log.log(Level.SEVERE, "Issue while build/create fieldtype/field in solr schema : ", e.getLocalizedMessage());
+				throw new AdempiereException("Issue while build/create fieldtype/field in solr schema : " + e.getLocalizedMessage());
+			}
 		}
 		catch (SolrServerException e)
 		{
@@ -114,6 +148,108 @@ public class SolrIndexSearcher implements IIndexSearcher
 			throw new AdempiereException("Fail to initialize solr Server OR Invalid Username or Password ");
 		}
 	} // init
+
+	/**
+	 * Build Solr schema for Fields
+	 * 
+	 * @throws SolrServerException
+	 * @throws IOException
+	 */
+	public void buildSolrSchemaFieldsSet() throws SolrServerException, IOException
+	{
+		final SchemaRequest.Fields fieldsSchemaRequest = new SchemaRequest.Fields();
+		SchemaResponse.FieldsResponse fieldsResponse1 = fieldsSchemaRequest.process(server);
+		List <Map <String, Object>> fields = fieldsResponse1.getFields();
+		for (Map <String, Object> map : fields)
+		{
+			fieldSet.add((String) map.get("name"));
+		}
+	} // buildSolrSchemaFieldsMap
+
+	/**
+	 * Build Solr schema for FieldType
+	 * 
+	 * @throws SolrServerException
+	 * @throws IOException
+	 */
+	public void buildSolrSchemaFieldsTypeSet() throws SolrServerException, IOException
+	{
+		SchemaRequest.FieldTypes fTypes = new SchemaRequest.FieldTypes();
+		SchemaResponse.FieldTypesResponse ftRes = fTypes.process(server);
+
+		List <FieldTypeRepresentation> fieldTypes = ftRes.getFieldTypes();
+		for (FieldTypeRepresentation ftRepr : fieldTypes)
+		{
+			Map <String, Object> ftAttrib = ftRepr.getAttributes();
+			fieldTypeSet.add(ftAttrib.get("name").toString());
+		}
+	} // buildSolrSchemaFieldsTypeSet
+
+	/**
+	 * Create FieldType if not exists in solr schema
+	 * 
+	 * @param fieldTypeName
+	 * @throws SolrServerException
+	 * @throws IOException
+	 */
+	public void createOrCheckFieldsTypeInSolrSchema(String fieldTypeName) throws SolrServerException, IOException
+	{
+		Map <String, Object> mapAttribute = new HashMap <String, Object>();
+		if (!fieldTypeSet.contains(fieldTypeName) && SOLR_FIELDTYPE_TLONGS.equals(fieldTypeName))
+		{
+			mapAttribute.put("name", SOLR_FIELDTYPE_TLONGS);
+			mapAttribute.put("class", "solr.TrieLongField");
+			mapAttribute.put("precisionStep", "8");
+			mapAttribute.put("multiValued", "true");
+			mapAttribute.put("positionIncrementGap", "0");
+		}
+
+		if (mapAttribute.size() > 0)
+		{
+			FieldTypeDefinition ftDefinition = new FieldTypeDefinition();
+			ftDefinition.setAttributes(mapAttribute);
+
+			SchemaRequest.AddFieldType ft = new SchemaRequest.AddFieldType(ftDefinition);
+			ft.process(server);
+
+			//
+			buildSolrSchemaFieldsTypeSet();
+		}
+	} // createOrCheckFieldsTypeInSolrSchema
+
+	/**
+	 * Create Field if not exists in solr schema
+	 * 
+	 * @param fieldName
+	 * @throws SolrServerException
+	 * @throws IOException
+	 */
+	public void createOrCheckFieldsInSolrSchema(String fieldName) throws SolrServerException, IOException
+	{
+		Map <String, Object> mapAttribute = new HashMap <String, Object>();
+		if (fieldName.equalsIgnoreCase(ServiceUtils.FILE_CONTENT) && !fieldSet.contains(ServiceUtils.FILE_CONTENT))
+		{
+			mapAttribute.put("name", ServiceUtils.FILE_CONTENT);
+			mapAttribute.put("type", "text_general");
+			mapAttribute.put("indexed", true);
+			mapAttribute.put("stored", false);
+			mapAttribute.put("multiValued", true);
+		}
+		else if (fieldName.equalsIgnoreCase(ServiceUtils.DMS_CONTENT_ID) && !fieldSet.contains(ServiceUtils.DMS_CONTENT_ID))
+		{
+			mapAttribute.put("name", ServiceUtils.DMS_CONTENT_ID);
+			mapAttribute.put("type", SOLR_FIELDTYPE_TLONGS);
+		}
+
+		if (mapAttribute.size() > 0)
+		{
+			SchemaRequest.AddField schemaRequest = new SchemaRequest.AddField(mapAttribute);
+			schemaRequest.process(server);
+
+			//
+			buildSolrSchemaFieldsSet();
+		}
+	} // createOrCheckFieldsInSolrSchema
 
 	/**
 	 * Check Server is Up and running
