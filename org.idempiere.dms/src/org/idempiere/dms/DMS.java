@@ -41,8 +41,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.xwpf.converter.pdf.PdfConverter;
-import org.apache.poi.xwpf.converter.pdf.PdfOptions;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MImage;
@@ -82,6 +80,9 @@ import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.html.simpleparser.HTMLWorker;
 import com.lowagie.text.pdf.PdfWriter;
+
+import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
 
 /**
  * DMS API SUPPORT

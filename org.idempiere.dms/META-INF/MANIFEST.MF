@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS
 Bundle-SymbolicName: org.idempiere.dms;singleton:=true
-Bundle-Version: 6.0.3.qualifier
+Bundle-Version: 6.0.4.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: org.apache.commons.io;version="2.2.0",
@@ -31,11 +31,8 @@ Bundle-ClassPath: .,
  lib/stax-api-1.0.1.jar,
  lib/xml-apis-1.0.b2.jar,
  lib/dom4j-1.6.1.jar,
- lib/fr.opensagres.xdocreport.itext.extension-1.0.3.jar,
  lib/itext-2.1.7.jar,
  lib/ooxml-schemas-1.1.jar,
- lib/org.apache.poi.xwpf.converter.core-1.0.3.jar,
- lib/org.apache.poi.xwpf.converter.pdf-1.0.3.jar,
  lib/commons-codec-1.5.jar,
  lib/poi-scratchpad-3.9.jar,
  lib/tidy.jar,
@@ -46,7 +43,10 @@ Bundle-ClassPath: .,
  lib/poi-ooxml-schemas-4.1.0.jar,
  lib/xmlbeans-3.1.0.jar,
  lib/commons-collections4-4.3.jar,
- lib/commons-compress-1.19.jar
+ lib/commons-compress-1.19.jar,
+ lib/fr.opensagres.poi.xwpf.converter.core-2.0.2.jar,
+ lib/fr.opensagres.poi.xwpf.converter.pdf-2.0.1.jar,
+ lib/fr.opensagres.xdocreport.itext.extension-2.0.1.jar
 Service-Component: OSGI-INF/*.xml
 Export-Package: com.lowagie.text,
  com.lowagie.text.pdf,
