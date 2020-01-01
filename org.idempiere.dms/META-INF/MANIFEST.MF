@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS
 Bundle-SymbolicName: org.idempiere.dms;singleton:=true
-Bundle-Version: 6.0.2.qualifier
+Bundle-Version: 6.0.3.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: org.apache.commons.io;version="2.2.0",

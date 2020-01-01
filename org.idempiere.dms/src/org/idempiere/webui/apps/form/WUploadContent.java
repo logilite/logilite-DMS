@@ -51,7 +51,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
@@ -168,7 +167,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		try
 		{
 			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
-					MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
+			                            MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
 			contentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 		}
 		catch (Exception e)
@@ -240,12 +239,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 		row = rows.newRow();
 		confirmPanel = new ConfirmPanel();
-
 		btnOk = confirmPanel.createButton(ConfirmPanel.A_OK);
-		btnOk.setImageContent(Utils.getImage("Ok24.png"));
-
 		btnClose = confirmPanel.createButton(ConfirmPanel.A_CANCEL);
-		btnClose.setImageContent(Utils.getImage("Cancel24.png"));
 
 		cell = new Cell();
 		cell.setAlign("right");

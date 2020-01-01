@@ -1,0 +1,51 @@
+.z-icon-Cut:before {
+	content: "\f0c4";
+}
+
+.z-icon-Paste:before {
+	content: "\f0ea";
+}
+
+.z-icon-Rename:before {
+	content: "\f040";
+}
+
+.z-icon-Download:before {
+	content: "\f019";
+}
+
+.z-icon-Associate:before {
+	content: "\f1e6";
+}
+
+.z-icon-Link:before {
+	content: "\f1e0";
+}
+
+.z-icon-Version:before {
+	content: "\f0e8";
+}
+
+.z-icon-UploadVersion:before {
+	content: "\f126";
+}
+
+.z-icon-Close:before {
+	content: "\f00a";
+}
+
+.z-icon-List:before {
+	content: "\f00b";
+}
+
+.z-icon-UploadFile:before {
+	content: "\f15b";
+}
+
+.z-icon-Home:before {
+	content: "\f015";
+	font-size: large;
+}
+.z-icon-org_idempiere_dms_toolbar_CustomToolbarFactory:before {
+	content: "\f15b";
+}
