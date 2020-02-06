@@ -838,7 +838,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		allowUserToCreateDir();
 
-		// Event for Searching content Simple or Adavance level
+		// Event for Searching content Simple or Advance level
 		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().equals(vsearchBox.getButton()))
 		{
 			searchContents(false);
