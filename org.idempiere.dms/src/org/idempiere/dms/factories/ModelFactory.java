@@ -19,19 +19,22 @@ import org.adempiere.base.IModelFactory;
 import org.compiere.model.PO;
 import org.compiere.util.Env;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
 
 public class ModelFactory implements IModelFactory
 {
 
 	@Override
-	public Class<?> getClass(String tableName)
+	public Class <?> getClass(String tableName)
 	{
 		if (tableName.equals(MDMSMimeType.Table_Name))
 			return MDMSMimeType.class;
-		if (tableName.equals(MDMSContent.Table_Name))
+		else if (tableName.equals(MDMSContent.Table_Name))
 			return MDMSContent.class;
-		
+		else if (tableName.equals(MDMSContentType.Table_Name))
+			return MDMSContentType.class;
+
 		return null;
 	}
 
@@ -40,9 +43,11 @@ public class ModelFactory implements IModelFactory
 	{
 		if (tableName.equals(MDMSMimeType.Table_Name))
 			return new MDMSMimeType(Env.getCtx(), Record_ID, trxName);
-		if (tableName.equals(MDMSContent.Table_Name))
+		else if (tableName.equals(MDMSContent.Table_Name))
 			return new MDMSContent(Env.getCtx(), Record_ID, trxName);
-		
+		else if (tableName.equals(MDMSContentType.Table_Name))
+			return new MDMSContentType(Env.getCtx(), Record_ID, trxName);
+
 		return null;
 	}
 
@@ -51,10 +56,11 @@ public class ModelFactory implements IModelFactory
 	{
 		if (tableName.equals(MDMSMimeType.Table_Name))
 			return new MDMSMimeType(Env.getCtx(), rs, trxName);
-		if (tableName.equals(MDMSContent.Table_Name))
+		else if (tableName.equals(MDMSContent.Table_Name))
 			return new MDMSContent(Env.getCtx(), rs, trxName);
-		
+		else if (tableName.equals(MDMSContentType.Table_Name))
+			return new MDMSContentType(Env.getCtx(), rs, trxName);
+
 		return null;
 	}
-
 }

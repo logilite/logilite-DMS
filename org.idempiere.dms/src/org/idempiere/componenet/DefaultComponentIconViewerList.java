@@ -48,10 +48,11 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		Columns columns = new Columns();
 		columns.setSizable(true);
 		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, "35%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, "15%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, "10%", "Left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, "15%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "15%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, "20%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "10%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, "10%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_LINK, "5%", "center"));
 
 		grid.appendChild(columns);
@@ -75,6 +76,9 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
 		Label lblName = new Label(getContentName(content, ((MDMSContent) content).getSeqNo()));
+		Label lblCType = new Label("");
+		if (content.getDMS_ContentType_ID() > 0)
+			lblCType.setText(content.getDMS_ContentType().getName());
 		Label lblSize = new Label(content.getDMS_FileSize());
 		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
 		Label lblFileType = new Label(content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory) ? DMSConstant.MSG_FILE_FOLDER : content
@@ -89,6 +93,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		hbox.appendChild(lblName);
 
 		row.appendCellChild(hbox);
+		row.appendCellChild(lblCType);
 		row.appendCellChild(lblSize);
 		row.appendCellChild(lblUpdated);
 		row.appendCellChild(lblFileType);
