@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,12 +37,14 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.apache.commons.compress.compressors.FileNameUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.compiere.Adempiere;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MImage;
 import org.compiere.model.MTable;
@@ -106,6 +109,7 @@ public class DMS
 	private boolean					isDocExplorerWindow			= false;
 
 	public int						AD_Client_ID				= 0;
+	public static final String					UNDERSCORE_STR								= "_";
 
 	/**
 	 * Constructor for initialize provider
@@ -236,7 +240,7 @@ public class DMS
 
 	public String getPathFromContentManager(I_DMS_Content content)
 	{
-		return contentManager.getPath(content);
+		return contentManager.getPathByValue(content);
 	}
 
 	public File getFileFromStorage(I_DMS_Content content)
@@ -251,7 +255,7 @@ public class DMS
 
 	public String getBaseDirPath(MDMSContent content)
 	{
-		return fileStorageProvider.getBaseDirectory(contentManager.getPath(content));
+		return fileStorageProvider.getBaseDirectory(contentManager.getPathByValue(content));
 	}
 
 	public List<Integer> searchIndex(String query)
@@ -494,8 +498,15 @@ public class DMS
 	public MDMSContent createDirHierarchy(String dirPath, MDMSContent dirContent, int AD_Table_ID, int Record_ID, String trxName)
 	{
 		// For Ref '\\' = '\', "\\" = "\\\\"
-		String[] dirs = dirPath.split(DMSConstant.FILE_SEPARATOR);
-
+		String[] dirs;
+		if (Adempiere.getOSInfo().startsWith("Windows"))
+		{
+			dirs = dirPath.split("\\\\");
+		}
+		else
+		{
+			dirs = dirPath.split(DMSConstant.FILE_SEPARATOR);
+		}
 		for (int i = 0; i < dirs.length; i++)
 		{
 			String dir = dirs[i].trim();
@@ -526,14 +537,22 @@ public class DMS
 	public int createContentAssociationFileStoreAndThumnail(MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID,
 			int AD_Table_ID, int Record_ID, boolean isVersion, String trxName)
 	{
-		int seqNo = 0;
+ 		int seqNo = 0;
 		int DMS_Content_Related_ID = 0;
 		int DMS_AssociationType_ID = 0;
-
+		String actualFileName = fileName;
 		String parentURL;
+		int dms_content_id = 0;
+		
+		String format = Utils.getFileExtension(fileName);
+		if (format == null)
+			format = Utils.getFileExtension(file.getName());
+		if (format == null)
+			throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
 
 		if (isVersion)
 		{
+			actualFileName = contentManager.getContentName(fileStorageProvider,DMSConstant.CONTNET_FILE,parentContent, null, null, DMSConstant.CONTENT_TYPE_VERSION, DMSConstant.OPERATION_CREATE);
 			fileName = parentContent.getName();
 			parentURL = parentContent.getParentURL();
 			asiID = parentContent.getM_AttributeSetInstance_ID();
@@ -545,54 +564,51 @@ public class DMS
 		}
 		else
 		{
-			String format = Utils.getFileExtension(fileName);
-			if (format == null)
-				format = Utils.getFileExtension(file.getName());
-			if (format == null)
-				throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
-
 			if (!fileName.endsWith(format))
+			{
+				actualFileName = contentManager.getContentName(fileStorageProvider,DMSConstant.CONTNET_FILE,parentContent, fileName, format, DMSConstant.CONTENT_TYPE_PARENT, DMSConstant.OPERATION_CREATE);
 				fileName = fileName + format;
-
-			parentURL = contentManager.getPath(parentContent);
+			}
+			else {
+				actualFileName = contentManager.getContentName(fileStorageProvider,DMSConstant.CONTNET_FILE,parentContent, FilenameUtils.getBaseName(fileName), format, DMSConstant.CONTENT_TYPE_PARENT, DMSConstant.OPERATION_CREATE);
+			}
+			parentURL = contentManager.getPathByValue(parentContent);
 
 			if (parentContent != null)
 				DMS_Content_Related_ID = parentContent.getDMS_Content_ID();
 			DMS_AssociationType_ID = MDMSAssociationType.getVersionType(true);
 		}
-
-		// Create Content
-		int contentID = Utils.createDMSContent(fileName, fileName, MDMSContent.CONTENTBASETYPE_Content, parentURL, desc, file, contentTypeID, asiID, false,
-				trxName);
-
-		MDMSContent addedContent = new MDMSContent(Env.getCtx(), contentID, trxName);
-
-		// For Association
+		
+		//check if file exists
 		if (!isVersion)
 		{
-			// Display an error when trying to upload same name file
-			String path = fileStorageProvider.getBaseDirectory(contentManager.getPath(addedContent));
-			File fileCheck = new File(path);
-			if (fileCheck.exists())
+			dms_content_id = MDMSContent.checkFileDirExists(parentURL, fileName); 
+		}
+		if(dms_content_id > 0)
+			throw new AdempiereException(
+					"File already exists, either rename or upload as a version. \n (Either same file name content exist in inActive mode)");
+		else {
+			// Create Content
+
+			int contentID = Utils.createDMSContent(fileName,actualFileName, MDMSContent.CONTENTBASETYPE_Content, parentURL, desc, file, contentTypeID, asiID, false,
+					trxName);
+					
+			MDMSContent addedContent = new MDMSContent(Env.getCtx(), contentID, trxName);
+
+			// Create Association
+			int associationID = createAssociation(contentID, DMS_Content_Related_ID, Record_ID, AD_Table_ID, DMS_AssociationType_ID, seqNo, trxName);
+
+			// File write on Storage provider and create thumbnail
+			Utils.writeFileOnStorageAndThumnail(this, file, addedContent);
+
+			//
+			if (isVersion)
 			{
-				throw new AdempiereException(
-						"File already exists, either rename or upload as a version. \n (Either same file name content exist in inActive mode)");
+				updateLinkRefOfVersionContent(addedContent, associationID, trxName);
 			}
+
+			return contentID;
 		}
-
-		// Create Association
-		int associationID = createAssociation(contentID, DMS_Content_Related_ID, Record_ID, AD_Table_ID, DMS_AssociationType_ID, seqNo, trxName);
-
-		// File write on Storage provider and create thumbnail
-		Utils.writeFileOnStorageAndThumnail(this, file, addedContent);
-
-		//
-		if (isVersion)
-		{
-			updateLinkRefOfVersionContent(addedContent, associationID, trxName);
-		}
-
-		return contentID;
 	} // createContentAssociationFileStoreAndThumnail
 
 	private void updateLinkRefOfVersionContent(MDMSContent addedContent, int associationID, String trxName)
@@ -633,46 +649,18 @@ public class DMS
 	 * @param destPasteContent - Paste Content Destination
 	 * @return FileName
 	 */
-	public String pastePhysicalCopiedFolder(MDMSContent copiedContent, MDMSContent destPasteContent)
+	
+	public String pastePhysicalCopiedFolder(MDMSContent copiedContent, MDMSContent destPasteContent , String actualName)
 	{
-		// File dirPath = new File(this.getBaseDirPath(copiedContent));
 		String newFileName = this.getBaseDirPath(destPasteContent);
 
-		File files[] = new File(newFileName).listFiles();
-
-		if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
-			newFileName += copiedContent.getName();
-		else
-			newFileName += DMSConstant.FILE_SEPARATOR + copiedContent.getName();
-
-		File newFile = new File(newFileName);
-
-		if (files.length > 0)
-		{
-			for (int i = 0; i < files.length; i++)
-			{
-				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
-				{
-					if (!newFileName.contains(" - copy")) // TODO
-						newFileName = newFileName + " - copy";
-
-					newFile = new File(newFileName);
-
-					if (newFile.exists())
-					{
-						newFileName = Utils.getUniqueFolderName(newFile.getAbsolutePath());
-						newFile = new File(newFileName);
-						break;
-					}
-				}
-			}
-		}
+		File newFile = new File(newFileName + DMSConstant.FILE_SEPARATOR + actualName);
 
 		// TODO Stopped to Copy whole folder directory
 		if (!newFile.mkdir())
 			throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'" + newFileName + "'");
 
-		return newFile.getName();
+		return actualName;
 	} // pastePhysicalCopiedFolder
 
 	/**
@@ -686,39 +674,17 @@ public class DMS
 	public String pastePhysicalCopiedContent(MDMSContent copiedContent, MDMSContent destPasteContent, String fileName)
 	{// TODO ERROR
 		File oldFile = new File(this.getBaseDirPath(copiedContent));
+		String actualFileName = "";
 		String newFileName = this.getBaseDirPath(destPasteContent);
 
 		if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
-			newFileName += copiedContent.getName();
+			actualFileName += copiedContent.getValue();
 		else
-			newFileName += DMSConstant.FILE_SEPARATOR + copiedContent.getName();
-
-		File newFile = new File(newFileName);
-		File parent = new File(newFile.getParent());
-
-		File files[] = parent.listFiles();
-
-		for (int i = 0; i < files.length; i++)
-		{
-			if (newFile.getName().equals(files[i].getName()))
-			{
-				String uniqueName = newFile.getName();
-
-				if (!newFile.getName().contains(" - copy")) // TODO
-				{
-					uniqueName = FilenameUtils.getBaseName(newFile.getName()) + " - copy";
-					String ext = Utils.getFileExtension(newFile.getName());
-					newFile = new File(parent.getAbsolutePath() + DMSConstant.FILE_SEPARATOR + uniqueName + ext);
-				}
-
-				if (newFile.exists())
-				{
-					uniqueName = Utils.getCopiedUniqueFileName(newFile.getAbsolutePath());
-					newFile = new File(uniqueName);
-					break;
-				}
-			}
-		}
+			actualFileName += DMSConstant.FILE_SEPARATOR + copiedContent.getValue();
+		
+		actualFileName = contentManager.getContentName(fileStorageProvider, DMSConstant.CONTNET_FILE, destPasteContent, copiedContent.getName(), "", "", DMSConstant.OPERATION_COPY);
+		
+		File newFile = new File(newFileName + DMSConstant.FILE_SEPARATOR + actualFileName);
 
 		try
 		{
@@ -772,14 +738,14 @@ public class DMS
 				copiedContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), trx.getTrxName());
 
 				if (!Util.isEmpty(copiedContent.getParentURL()))
-					baseURL = contentManager.getPath(copiedContent);
+					baseURL = contentManager.getPathByValue(copiedContent);
 				else
 					baseURL = DMSConstant.FILE_SEPARATOR + copiedContent.getName();
 
 				baseURL = baseURL.substring(0, baseURL.lastIndexOf(DMSConstant.FILE_SEPARATOR));
 
 				fileName = this.pastePhysicalCopiedContent(copiedContent, destContent, fileName);
-				renamedURL = contentManager.getPath(destContent);
+				renamedURL = contentManager.getPathByValue(destContent);
 
 				MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, trx.getTrxName());
 				PO.copyValues(copiedContent, newDMSContent);
@@ -788,7 +754,9 @@ public class DMS
 				if (newASI != null)
 					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 
-				newDMSContent.setName(fileName);
+				newDMSContent.setValue(fileName);
+				
+				//Check if file exists with same name
 				newDMSContent.saveEx();
 
 				// Copy Association
@@ -820,14 +788,23 @@ public class DMS
 				{
 					newDMSContent.setParentURL(renamedURL);
 				}
-
+				String contentType = MDMSContent.getContentAttributeType(copiedContent.getDMS_Content_ID());
+				String name = "";
+				if(contentType.equals("Parent")) {
+					//name = getContentName(destContent == null ? null :destContent.getParentURL() == null ?  destContent.getValue() == null ? null : File.separator + destContent.getValue() : destContent.getParentURL() + File.separator + destContent.getValue(),copiedContent.getName(),copiedContent.getName());
+					name = Utils.getCopyFileContentName(destContent == null ? null :destContent.getParentURL() == null ?  destContent.getValue() == null ? null : File.separator + destContent.getValue() : destContent.getParentURL() + File.separator + destContent.getValue(),copiedContent.getName(),copiedContent.getName());
+				}
+				else {
+					name = MDMSContent.getCopiedContentParentName(crID);
+				}
+				newDMSContent.setName(name);
 				newDMSContent.saveEx();
 				trx.commit();
 
 				IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(this, newDMSContent.getDMS_MimeType().getMimeType());
 
 				if (thumbnailGenerator != null)
-					thumbnailGenerator.addThumbnail(newDMSContent, fileStorageProvider.getFile(contentManager.getPath(copiedContent)), null);
+					thumbnailGenerator.addThumbnail(newDMSContent, fileStorageProvider.getFile(contentManager.getPathByValue(copiedContent)), null);
 			}
 		}
 		catch (Exception e)
@@ -953,9 +930,14 @@ public class DMS
 				baseURL = getPathFromContentManager(copiedContent);
 			else
 				baseURL = DMSConstant.FILE_SEPARATOR + copiedContent.getName();
-
-			contentname = pastePhysicalCopiedFolder(copiedContent, destContent);
-			renamedURL = getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + copiedContent.getName();
+			
+			//check name exists
+			
+			String newName = Utils.getCopyDirContentName(destContent, copiedContent.getName());
+			String newActualName = contentManager.getContentName(fileStorageProvider, DMSConstant.CONTENT_DIR, destContent, copiedContent.getName(), "", "",DMSConstant.OPERATION_COPY);
+			
+			contentname = pastePhysicalCopiedFolder(copiedContent, destContent, newActualName);
+			renamedURL = getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + copiedContent.getValue();
 
 			MDMSContent oldDMSContent = new MDMSContent(Env.getCtx(), copiedContent.getDMS_Content_ID(), null);
 			MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
@@ -984,7 +966,8 @@ public class DMS
 
 			// Note: Must save association first other wise creating
 			// issue of wrong info in solr indexing entry
-			newDMSContent.setName(contentname);
+			newDMSContent.setValue(contentname);
+			newDMSContent.setName(newName);
 			newDMSContent.saveEx();
 
 			pasteCopyDirContent(copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
@@ -1005,6 +988,13 @@ public class DMS
 	 */
 	public void pasteCutContent(MDMSContent cutContent, MDMSContent destContent, int tableID, int recordID)
 	{
+		//check if exists..
+		int DMS_Content_ID = MDMSContent.checkFileDirExists(destContent.getParentURL() ==null?  destContent.getName() == null? null :DMSConstant.FILE_SEPARATOR + destContent.getName() : destContent.getName() == null ? null :DMSConstant.FILE_SEPARATOR + destContent.getParentURL()+  destContent.getName() , cutContent.getName());
+		if (DMS_Content_ID > 0)
+		{
+			throw new AdempiereException("Content already exists.");
+		}
+		
 		if (destContent != null && destContent.getDMS_Content_ID() > 0)
 		{
 			MDMSAssociation destAssociation = this.getAssociationFromContent(destContent.getDMS_Content_ID());
@@ -1025,20 +1015,12 @@ public class DMS
 			File dirPath = new File(this.getBaseDirPath(cutContent));
 			String newFileName = this.getBaseDirPath(destContent);
 
-			File files[] = new File(newFileName).listFiles();
-
 			if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
 				newFileName = newFileName + cutContent.getName();
 			else
 				newFileName = newFileName + DMSConstant.FILE_SEPARATOR + cutContent.getName();
 
 			File newFile = new File(newFileName);
-
-			for (int i = 0; i < files.length; i++)
-			{
-				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
-					throw new AdempiereException("Directory already exists.");
-			}
 
 			renamedURL = this.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + cutContent.getName();
 
@@ -1065,7 +1047,7 @@ public class DMS
 		}
 		else
 		{
-			int DMS_Content_ID = Utils.getDMS_Content_Related_ID(cutContent);
+			DMS_Content_ID = Utils.getDMS_Content_Related_ID(cutContent);
 
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
@@ -1084,9 +1066,17 @@ public class DMS
 				while (rs.next())
 				{
 					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-
-					this.moveFile(dmsContent, destContent);
+					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
+							null);
+					int dms_content_id = MDMSContent.checkFileDirExists(destContent == null ? null
+							: destContent.getParentURL() == null
+									? destContent.getValue() == null ? null : File.separator + destContent.getValue()
+									: destContent.getParentURL() + File.separator + destContent.getValue(),
+							dmsContent.getName());
+					if (dms_content_id > 0)
+						throw new AdempiereException("File is already exist.");
+					else
+						this.moveFile(dmsContent, destContent);
 
 					if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID)
 					{
@@ -1123,6 +1113,7 @@ public class DMS
 	 * @param tableID
 	 * @param recordID
 	 */
+	
 	public void renameContent(String fileName, MDMSContent content, MDMSContent parent_Content, int tableID, int recordID)
 	{
 		fileName = fileName.trim();
@@ -1136,44 +1127,53 @@ public class DMS
 				String newFileName = this.getBaseDirPath(content);
 				File dirPath = new File(newFileName);
 				newFileName = newFileName.substring(0, newFileName.lastIndexOf(DMSConstant.FILE_SEPARATOR));
-
-				File files[] = new File(newFileName).listFiles();
-
-				if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
-					newFileName = newFileName + fileName;
-				else
-					newFileName = newFileName + DMSConstant.FILE_SEPARATOR + fileName;
-
-				File newFile = new File(newFileName);
-
-				for (int i = 0; i < files.length; i++)
+				
+				String ParentURL = content.getParentURL() == null ? null: content.getParentURL();
+				
+				int DMS_Content_ID = MDMSContent.checkFileDirExists(ParentURL, fileName);
+				if (DMS_Content_ID > 0)
 				{
-					if (newFile.getName().equalsIgnoreCase(files[i].getName()))
-						throw new AdempiereException("Directory already exists.");
+					throw new AdempiereException("Directory already exists.");
 				}
-
-				String renamedURL = null;
-				if (!Util.isEmpty(content.getParentURL()))
-					renamedURL = content.getParentURL() + DMSConstant.FILE_SEPARATOR + fileName;
 				else
-					renamedURL = DMSConstant.FILE_SEPARATOR + fileName;
+				{
 
-				if (!dirPath.renameTo(newFile))
-					throw new AdempiereException("Invalid File Name.");
+					String renamedURL = null;
+					if (!Util.isEmpty(content.getParentURL()))
+						renamedURL = content.getParentURL() + DMSConstant.FILE_SEPARATOR + fileName;
+					else
+						renamedURL = DMSConstant.FILE_SEPARATOR + fileName;
 
-				Utils.renameFolder(content, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
-				content.setName(fileName);
-				content.saveEx();
+					content.setName(fileName);
+					
+					String actualFileName = contentManager.getContentName(fileStorageProvider, DMSConstant.CONTENT_DIR, content, fileName, "", "", DMSConstant.OPERATION_RENAME);
+					 // dir  - 
+					
+					if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
+						newFileName = newFileName + actualFileName;
+					else
+						newFileName = newFileName + DMSConstant.FILE_SEPARATOR + actualFileName;
+					
+					if (!new File(this.getBaseDirPath(content)).renameTo(new File(newFileName)))
+						throw new AdempiereException("Invalid File Name.");
+					
+					content.setValue(actualFileName);
+					content.saveEx();
+					
+					Utils.renameFolder(content, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
+				}
 			}
 		}
 		else
 		{
 			if (!fileName.equalsIgnoreCase(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf("."))))
 			{
-				updateContent(fileName, content);
+				fileName = fileName + "." + FilenameUtils.getExtension(content.getName());
+				renameContent(content,fileName);
 			}
 		}
 	} // renameContent
+
 
 	/**
 	 * Update File Content
@@ -1181,38 +1181,6 @@ public class DMS
 	 * @param fileName
 	 * @param DMSContent
 	 */
-	public void updateContent(String fileName, MDMSContent DMSContent)
-	{
-		int DMS_Content_ID = Utils.getDMS_Content_Related_ID(DMSContent);
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(Utils.SQL_GET_RELATED_CONTENT, null);
-			pstmt.setInt(1, DMS_Content_ID);
-			pstmt.setInt(2, DMS_Content_ID);
-
-			rs = pstmt.executeQuery();
-
-			while (rs.next())
-			{
-				MDMSContent content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-				MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-				this.renameFile(content, association, fileName, true);
-			}
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "Rename content failure.", e);
-			throw new AdempiereException("Rename content failure: " + e.getLocalizedMessage());
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-	} // updateContent
 
 	/**
 	 * Rename File
@@ -1812,5 +1780,69 @@ public class DMS
 		return contentID > 0;
 
 	} // isHierarchyContentExists
-
+	
+	
+	public void renameContent(MDMSContent content, String fileName) throws AdempiereException
+	{
+		int DMS_Content_ID = 0;
+		DMS_Content_ID = MDMSContent.checkFileDirExists(content.getParentURL(), fileName);
+		if (DMS_Content_ID > 0)
+			throw new AdempiereException("File with same name Exists");
+		else
+		{
+			// check if parent or not
+			String attributeType = MDMSContent.getContentAttributeType(content.getDMS_Content_ID());
+			if (attributeType.equalsIgnoreCase("Version"))
+			{
+				List<MDMSContent> dmsContentList = MDMSContent.getVersionRelatedContentID(content.getDMS_Content_ID());
+				for (MDMSContent dc : dmsContentList)
+				{
+					dc.setName(fileName);
+					
+					attributeType = MDMSContent.getContentAttributeType(dc.getDMS_Content_ID());
+					String actualFileName = "";
+					if(attributeType.equalsIgnoreCase("Version")) {
+						String count = dc.getValue().substring(dc.getValue().lastIndexOf("(") + 1,
+								dc.getValue().lastIndexOf(")"));
+						actualFileName = contentManager.getContentName(fileStorageProvider, DMSConstant.CONTNET_FILE, content, FilenameUtils.getBaseName(fileName) + "("+count+")", Utils.getFileExtension(fileName), DMSConstant.CONTENT_TYPE_VERSION, DMSConstant.OPERATION_RENAME);
+					}
+					else {
+						actualFileName = contentManager.getContentName(fileStorageProvider, DMSConstant.CONTNET_FILE, content, FilenameUtils.getBaseName(fileName), Utils.getFileExtension(fileName), DMSConstant.CONTENT_TYPE_VERSIONPARENT, DMSConstant.OPERATION_RENAME);
+					}
+					
+					String newFileName = this.getBaseDirPath(dc);
+					newFileName = newFileName.substring(0, newFileName.lastIndexOf("/"));
+					if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
+						newFileName = newFileName + actualFileName;
+					else
+						newFileName = newFileName + DMSConstant.FILE_SEPARATOR + actualFileName;
+					
+					if (!new File(this.getBaseDirPath(dc)).renameTo(new File(newFileName)))
+						throw new AdempiereException("Invalid File Name.");
+					
+					dc.setValue(actualFileName);
+					dc.save();
+					
+				}
+			}
+			else {
+				content.setName(fileName);
+				String actualName = contentManager.getContentName(fileStorageProvider, "file", content, FilenameUtils.getBaseName(fileName), Utils.getFileExtension(fileName), "Parent", "rename");
+				
+				String newFileName = this.getBaseDirPath(content);
+				newFileName = newFileName.substring(0, newFileName.lastIndexOf("/"));
+				if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
+					newFileName = newFileName + actualName;
+				else
+					newFileName = newFileName + DMSConstant.FILE_SEPARATOR + actualName;
+				
+				if (!new File(this.getBaseDirPath(content)).renameTo(new File(newFileName)))
+					throw new AdempiereException("Invalid File Name.");
+				
+				content.setValue(actualName);
+				content.save();
+			}
+		}
+	}
+	
 }

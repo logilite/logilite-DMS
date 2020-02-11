@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
@@ -35,6 +36,8 @@ import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.event.DialogEvents;
+import org.apache.commons.compress.compressors.FileNameUtil;
+import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -371,8 +374,15 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 				String error = Utils.isValidFileName(txtName.getValue(), false);
 				if (!Util.isEmpty(error, true))
 					throw new WrongValueException(txtName, error);
-
-				dms.updateContent(txtName.getValue(), content);
+				String fileName = txtName.getValue() + "." + FilenameUtils.getExtension(content.getName());
+				dms.renameContent(content, fileName);
+//				int dms_content_id = MDMSContent.checkFileExists(content.getParentURL(), txtName.getValue() + "." + content.getParentURL());
+//				if(dms_content_id > 0)
+//					throw new AdempiereException("File with same name Exists" );
+//				else {
+//					content.setName(txtName.getValue() + "." + content.getParentURL());
+//					content.save();
+//				}
 			}
 
 			ASIPanel.saveAttributes();

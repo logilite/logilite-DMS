@@ -92,7 +92,7 @@ public class ResetIndexingProcess extends SvrProcess
 
 					Map <String, Object> solrValue = Utils.createIndexMap(mdmsContent, mdmsAssociation);
 					indexSeracher.deleteIndex(mdmsContent.getDMS_Content_ID());
-					indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPath(mdmsContent)));
+					indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPathByValue(mdmsContent)));
 					cntSuccess++;
 
 					// Update the value of IsIndexed flag in dmsContent

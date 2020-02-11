@@ -54,7 +54,7 @@ public final class DMSConstant
 	public static final String				REG_EXP_FILENAME								= "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
 	public static final String				REG_EXP_WINDOWS_DIRNAME_VALIDATE				= "((^(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])$)|([\\\\//:*?\\\"<>|?*\\x00-\\x1F]))";
 	public static final String				REG_EXP_LINUX_DIRNAME_VALIDATE					= "(/)";
-
+	public static final String				REG_EXP_VERSION_FILE							= "^.*\\(\\d+\\).\\w+$";
 	// Pattern
 	public static final Pattern				PATTERN_WINDOWS_DIRNAME_ISVALID					= Pattern.compile(REG_EXP_WINDOWS_DIRNAME_VALIDATE);
 	public static final Pattern				PATTERN_LINX_DIRNAME_ISVALID					= Pattern.compile(REG_EXP_LINUX_DIRNAME_VALIDATE);
@@ -148,6 +148,19 @@ public final class DMSConstant
 	public static final String				TTT_PREVIOUS_RECORD								= "Previous Record";
 	public static final String				TTT_DISPLAYS_ITEMS_LAYOUT						= "Displays items Layout";
 
+	
+	// DMS Contents
+	public static final String				CONTNET_FILE									= "file";
+	public static final String				CONTENT_DIR										= "dir";
+
+	public static final String				OPERATION_CREATE								= "create";
+	public static final String				OPERATION_RENAME								= "rename";
+	public static final String				OPERATION_COPY									= "copy";
+
+	public static final String				CONTENT_TYPE_PARENT								= "Parent";
+	public static final String				CONTENT_TYPE_VERSION							= "Version";
+	public static final String				CONTENT_TYPE_VERSIONPARENT						= "VersionParent";
+
 	// Date Format
 	public static final SimpleDateFormat	SDF												= new SimpleDateFormat("yyyy-MM-dd hh:mm z");
 	public static final SimpleDateFormat	SDF_WITH_TIME									= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
@@ -203,5 +216,44 @@ public final class DMSConstant
 																									+ "			DMS_Content_ID IN (	SELECT DMS_Content_ID FROM ("
 																									+ DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST
 																									+ " ) AS DATA )												";
+	
+	public static final String				SQL_CHECK_CONTETNT_NAME_EXISTS					= "SELECT DMS_Content_ID from DMS_Content where ParentURL = ? AND Name = ? AND IsActive = 'Y'";
 
+	public static final String				SQL_CHECK_CONTENT_NAME_EXISTS_NO_PARENT			= "SELECT DMS_Content_ID from DMS_Content where ParentURL IS NULL AND Name = ? AND IsActive = 'Y'";
+
+	public static final String				SQL_CHECK_FILE_EXISTS							= "SELECT Value FROM DMS_Content WHERE ( DMS_Content.Value = ? OR DMS_Content.Value LIKE ? ) AND ParentURL = ?";
+
+	public static final String				SQL_CHECK_FILE_EXISTS_NO_PARENT					= "SELECT Value FROM DMS_Content WHERE ( DMS_Content.Value = ? OR DMS_Content.Value LIKE ? ) AND ParentURL IS NULL";
+
+	public static final String				SQL_CHECK_COPY_FILE_EXISTS_FOR					= "SELECT Value FROM DMS_Content WHERE ( DMS_Content.Value LIKE ? OR DMS_Content.Value LIKE ? ) AND ParentURL = ?";
+
+	public static final String				SQL_CHECK_COPY_FILE_EXISTS_NO_PARENT			= "SELECT Value FROM DMS_Content WHERE ( DMS_Content.Value LIKE ? OR DMS_Content.Value LIKE ? ) AND ParentURL IS NULL";
+
+	public static final String				SQL_GET_FILE_NAME_BY_FOR_VERSION				= "SELECT Value FROM DMS_Content WHERE DMS_Content_ID = ?";
+
+	public static final String				SQL_GET_CONTENT_TYPE							= "SELECT DMS_AssociationType.Value from adempiere.DMS_Content LEFT JOIN adempiere.DMS_Association"
+			+ " ON adempiere.DMS_Content.dms_content_id = adempiere.DMS_Association.dms_content_id"
+			+ " LEFT JOIN adempiere.DMS_AssociationType"
+			+ " ON adempiere.DMS_AssociationType.dms_associationtype_id = adempiere.DMS_Association.dms_associationtype_id WHERE DMS_Content.dms_content_id = ?";
+
+	public static final String				SQL_GET_COPIED_CONTENT_NAME						= "SELECT Name FROM adempiere.DMS_Content WHERE adempiere.DMS_Content.dms_content_id = ? ";
+
+	public static final String				SQL_GET_ANOTHER_VERSION_IDS						= "SELECT DMS_Content.* FROM adempiere.DMS_Content LEFT JOIN adempiere.DMS_Association ON DMS_Association.DMS_Content_ID = DMS_Content.DMS_Content_ID "
+			+ "WHERE DMS_Content_Related_ID = "
+			+ "( SELECT DMS_Association.DMS_Content_Related_ID FROM adempiere.DMS_Association WHERE DMS_Association.DMS_Content_ID = ? ) UNION "
+			+ "SELECT DMS_Content.* FROM adempiere.DMS_Content WHERE DMS_Content.DMS_Content_ID = ( SELECT DMS_Association.DMS_Content_Related_ID FROM adempiere.DMS_Association WHERE DMS_Association.DMS_Content_ID = ? )";
+
+	public static final String				SQL_GET_DMS_CONTENT								= "SELECT * from DMS_Content where DMS_Content_ID = ? ";
+
+	public static final String				GET_COPY_DIR_MACHING_CONTENT_NAME				= "SELECT Name FROM DMS_Content WHERE ( DMS_Content.Name = ? OR DMS_Content.Name LIKE ? ) AND ParentURL = ? AND IsActive = 'Y' ";
+
+	public static final String				GET_COPY_DIR_MACHING_CONTENT_NAME_NO_PARENT		= "SELECT Name FROM DMS_Content WHERE ( DMS_Content.Name = ? OR DMS_Content.Name LIKE ? ) AND ParentURL IS NULL AND IsActive = 'Y' ";
+
+	public static final String				SQL_CHECK_ACTUAL_FILE_DIR_EXISTS				= "SELECT DMS_Content_ID from DMS_Content where ParentURL = ? AND Value = ? ";
+
+	public static final String				SQL_CHECK_ACTUAL_FILE_DIR_EXISTS_NO_PARENT		= "SELECT DMS_Content_ID from DMS_Content where ParentURL IS NULL AND Value = ? ";
+	
+	public static final String				GET_PARENT_FOR_CONTENT							= "SELECT DMS_Content.* from DMS_Content LEFT JOIN DMS_Association on DMS_Association.DMS_CONTENT_ID = DMS_Content.DMS_CONTENT_ID "
+			+ "LEFT JOIN DMS_AssociationType ON DMS_AssociationType.DMS_AssociationType_ID = DMS_Association.DMS_AssociationType_ID "
+			+ "WHERE ParentURL = ? AND DMS_Content.Name = ?  AND DMS_AssociationType.Name = 'Parent' AND DMS_Content.isactive = 'Y'";
 }

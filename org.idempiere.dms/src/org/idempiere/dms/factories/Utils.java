@@ -144,6 +144,12 @@ public class Utils
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail						= new CCache<Integer, MImage>("MimetypeThumbnail", 2);
 	static CCache<String, Integer>				cache_contentType							= new CCache<String, Integer>("ContentTypeCache", 100);
 
+	public static final String					REG_EXP_VERSION_FILE						= "^.*\\(\\d+\\).\\w+$";
+
+	public static final String					LIKE_STR									= "%";
+	public static final String					PERIOD										= ".";
+	public static final String					UNDERSCORE_LIKE_STR							= "__%";
+	public static final String					UNDERSCORE_STR								= "_";
 	/**
 	 * Factory - Content Editor
 	 * 
@@ -555,7 +561,7 @@ public class Utils
 		Integer contentTypeID = cache_contentType.get(AD_Client_ID + "_" + contentType);
 		if (contentTypeID == null || contentTypeID <= 0)
 		{
-			contentTypeID = DB.getSQLValue(null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND AD_Client_ID = ?",
+			contentTypeID = DB.getSQLValue(null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND (AD_Client_ID = ? OR AD_Client_ID = 0)",
 					contentType, AD_Client_ID);
 
 			if (contentTypeID > 0)
@@ -965,6 +971,11 @@ public class Utils
 	{
 		return createDMSContent(name, name, contentBaseType, parentURL, null, null, 0, 0, isMounting, null);
 	} // createDMSContent
+	
+	public static int createDMSContent(String name, String value, String contentBaseType, String parentURL, boolean isMounting)
+	{
+		return createDMSContent(name, value, contentBaseType, parentURL, null, null, 0, 0, isMounting, null);
+	} // createDMSContent
 
 	/**
 	 * Create DMS Content
@@ -1150,79 +1161,191 @@ public class Utils
 	 * @param trxName - Transaction Name
 	 * @return DMS Content
 	 */
-	public static MDMSContent createDirectory(String dirName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
-			IFileStorageProvider fileStorageProvider, IContentManager contentMngr, boolean errorIfDirExists, boolean isCreateAssociation, String trxName)
+//	public static MDMSContent createDirectory(String dirName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
+//			IFileStorageProvider fileStorageProvider, IContentManager contentMngr, boolean errorIfDirExists, boolean isCreateAssociation, String trxName)
+//	{
+//		int contentID = 0;
+//
+//		dirName = dirName.trim();
+//
+//		String error = isValidFileName(dirName, true);
+//		if (!Util.isEmpty(error))
+//			throw new AdempiereException(error);
+//
+//		try
+//		{
+//			//Check if directory exists or not
+//			String baseURL = fileStorageProvider.getBaseDirectory(contentMngr.getPathByValue(parentContent));
+////			int DMS_Content_ID = MDMSContent.checkFileExists(baseURL, dirName);
+////			if(DMS_Content_ID > 0) {
+////				throw new AdempiereException(Msg.getMsg(Env.getCtx(),
+////						"Directory already exists. \n (Either same file name content exist in inActive mode)"));
+////			}
+////			else {
+//				File rootFolder = new File(fileStorageProvider.getBaseDirectory(contentMngr.getPathByValue(parentContent)));
+//				if (!rootFolder.exists())
+//					rootFolder.mkdirs();
+//
+//				File files[] = rootFolder.listFiles();
+//
+//				File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirName);
+//
+//				for (int i = 0; i < files.length; i++)
+//				{
+//					if (newFile.getName().equalsIgnoreCase(files[i].getName()))
+//					{
+//						if (errorIfDirExists)
+//						{
+//							throw new AdempiereException(Msg.getMsg(Env.getCtx(),
+//									"Directory already exists. \n (Either same file name content exist in inActive mode)"));
+//						}
+//						else
+//						{
+//							// Get directory content ID
+//							List<Object> params = new ArrayList<Object>();
+//							params.add(Env.getAD_Client_ID(Env.getCtx()));
+//							params.add(AD_Table_ID);
+//							params.add(Record_ID);
+//							params.add(dirName);
+//
+//							String sql = "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
+//									+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
+//									+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
+//
+//							if (parentContent == null || (parentContent != null && Util.isEmpty(parentContent.getParentURL(), true)))
+//								sql += "AND dc.ParentURL IS NULL";
+//							else
+//							{
+//								sql += "AND dc.ParentURL = ? ";
+//								params.add(contentMngr.getPathByValue(parentContent));
+//							}
+//
+//							contentID = DB.getSQLValueEx(trxName, sql, params);
+//
+//							break;
+//						}
+//					}
+//				}
+//
+//				if (!newFile.exists())
+//				{
+//					if (!newFile.mkdir())
+//						throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'" + contentMngr.getPathByValue(parentContent)
+//								+ DMSConstant.FILE_SEPARATOR + newFile.getName() + "'");
+//				}
+//
+//				if (contentID <= 0)
+//				{
+//					contentID = Utils.createDMSContent(dirName, MDMSContent.CONTENTBASETYPE_Directory, contentMngr.getPathByValue(parentContent), false);
+//					if (isCreateAssociation)
+//						Utils.createAssociation(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0, 0, trxName);
+//				}
+//
+//				parentContent = new MDMSContent(Env.getCtx(), contentID, trxName);
+////			}
+//			
+//		}
+//		catch (Exception e)
+//		{
+//			throw new AdempiereException(e.getLocalizedMessage(), e);
+//		}
+//
+//		return parentContent;
+//	} // createDirectory
+	
+	public static MDMSContent createDirectory(String dirContentName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
+			IFileStorageProvider fileStorageProvider, IContentManager contentMngr, boolean errorIfDirExists,
+			boolean isCreateAssociation, String trxName)
 	{
 		int contentID = 0;
 
-		dirName = dirName.trim();
+		dirContentName = dirContentName.trim();
 
-		String error = isValidFileName(dirName, true);
+		String error = isValidFileName(dirContentName, true);
 		if (!Util.isEmpty(error))
 			throw new AdempiereException(error);
 
 		try
 		{
-			File rootFolder = new File(fileStorageProvider.getBaseDirectory(contentMngr.getPath(parentContent)));
+			// Check if directory exists or not
+			String baseURL = (contentMngr.getPathByValue(parentContent));
+			File rootFolder = new File(fileStorageProvider.getBaseDirectory(contentMngr.getPathByValue(parentContent)));
 			if (!rootFolder.exists())
 				rootFolder.mkdirs();
 
-			File files[] = rootFolder.listFiles();
+			String dirName = dirContentName;
 
-			File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirName);
+			int DMS_Content_ID = MDMSContent.checkFileDirExists(baseURL, dirContentName);
 
-			for (int i = 0; i < files.length; i++)
+			MDMSContent content = MDMSContent.getDMSContent(DMS_Content_ID);
+			String existingDir = content == null ? null
+					: Util.isEmpty(content.getParentURL(), true) ? File.separator + content.getName()
+							: content.getParentURL() + File.separator + content.getName();
+			String dirPath = rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirContentName;
+			if (DMS_Content_ID > 0)
 			{
-				if (newFile.getName().equalsIgnoreCase(files[i].getName()))
+				if (existingDir.equalsIgnoreCase(dirPath) && errorIfDirExists)
 				{
-					if (errorIfDirExists)
+					File newDir = new File(dirPath);
+					if (!newDir.exists())
 					{
 						throw new AdempiereException(Msg.getMsg(Env.getCtx(),
 								"Directory already exists. \n (Either same file name content exist in inActive mode)"));
 					}
-					else
-					{
-						// Get directory content ID
-						List<Object> params = new ArrayList<Object>();
-						params.add(Env.getAD_Client_ID(Env.getCtx()));
-						params.add(AD_Table_ID);
-						params.add(Record_ID);
-						params.add(dirName);
-
-						String sql = "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
-								+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-								+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
-
-						if (parentContent == null || (parentContent != null && Util.isEmpty(parentContent.getParentURL(), true)))
-							sql += "AND dc.ParentURL IS NULL";
-						else
-						{
-							sql += "AND dc.ParentURL = ? ";
-							params.add(contentMngr.getPath(parentContent));
-						}
-
-						contentID = DB.getSQLValueEx(trxName, sql, params);
-
-						break;
-					}
+				}
+				else if(errorIfDirExists)
+				{
+					throw new AdempiereException(Msg.getMsg(Env.getCtx(),
+							"Directory already exists. \n (Either same file name content exist in inActive mode)"));
 				}
 			}
-
-			if (!newFile.exists())
+			else
 			{
-				if (!newFile.mkdir())
-					throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'" + contentMngr.getPath(parentContent)
-							+ DMSConstant.FILE_SEPARATOR + newFile.getName() + "'");
+				    dirName = contentMngr.getContentName(fileStorageProvider, "dir", parentContent, dirContentName, "", "", "create");
+					File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirName);
+//				    File newFile = new File(dirName);
+					if (!newFile.exists())
+					{
+						if (!newFile.mkdir())
+							throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'"
+									+ contentMngr.getPathByValue(parentContent) + DMSConstant.FILE_SEPARATOR
+									+ newFile.getName() + "'");
+					}
+				}
+
+			// Get directory content ID
+			List<Object> params = new ArrayList<Object>();
+			params.add(Env.getAD_Client_ID(Env.getCtx()));
+			params.add(AD_Table_ID);
+			params.add(Record_ID);
+			params.add(dirName);
+
+			String sql = "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
+					+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
+					+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
+
+//			if (parentContent == null || (parentContent != null && Util.isEmpty(parentContent.getParentURL(), true)))
+			if (parentContent == null )
+				sql += "AND dc.ParentURL IS NULL";
+			else
+			{
+				sql += "AND dc.ParentURL = ? ";
+				params.add(contentMngr.getPathByValue(parentContent));
 			}
+
+			contentID = DB.getSQLValueEx(trxName, sql, params);
 
 			if (contentID <= 0)
 			{
-				contentID = Utils.createDMSContent(dirName, MDMSContent.CONTENTBASETYPE_Directory, contentMngr.getPath(parentContent), false);
+				contentID = Utils.createDMSContent(dirContentName, dirName, MDMSContent.CONTENTBASETYPE_Directory,
+						contentMngr.getPathByValue(parentContent), false);
 				if (isCreateAssociation)
-					Utils.createAssociation(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0, 0, trxName);
+					Utils.createAssociation(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0,
+							Record_ID, AD_Table_ID, 0, 0, trxName);
 			}
 
 			parentContent = new MDMSContent(Env.getCtx(), contentID, trxName);
+
 		}
 		catch (Exception e)
 		{
@@ -1374,12 +1497,12 @@ public class Utils
 		IFileStorageProvider fsProvider = dms.getFileStorageProvider();
 		IContentManager contentMngr = dms.getContentManager();
 
-		fsProvider.writeBLOB(fsProvider.getBaseDirectory(contentMngr.getPath(content)), data, content);
+		fsProvider.writeBLOB(fsProvider.getBaseDirectory(contentMngr.getPathByValue(content)), data, content);
 
 		IThumbnailGenerator thumbnailGenerator = Utils.getThumbnailGenerator(dms, content.getDMS_MimeType().getMimeType());
 
 		if (thumbnailGenerator != null)
-			thumbnailGenerator.addThumbnail(content, fsProvider.getFile(contentMngr.getPath(content)), null);
+			thumbnailGenerator.addThumbnail(content, fsProvider.getFile(contentMngr.getPathByValue(content)), null);
 	} // writeFileOnStorageAndThumnail
 
 	/**
@@ -1580,4 +1703,93 @@ public class Utils
 		}
 		return fileName;
 	} // validateFileName
+	
+	
+	public static String getURL(MDMSContent content)
+	{
+		return content == null ? null
+				: Util.isEmpty(content.getParentURL(), true) ? content.getName() != null ? File.separator + content.getName() : null
+						: content.getParentURL() + File.separator + content.getName();
+	}
+	
+	
+	public static String getCopyDirContentName(MDMSContent content, String dirName) {
+		String actualName = dirName;
+		int DMS_Conent_ID = MDMSContent.checkFileDirExists(getURL(content), dirName);
+		if (DMS_Conent_ID > 0)
+		{
+			List<String> dirNames = MDMSContent.getMatchingDirContentNames(getURL(content),
+					dirName + " - copy");
+			if (dirNames.size() == 0)
+			{
+				actualName = actualName + " - copy";
+			}
+			else
+			{
+				boolean match = false;
+				int count = 0;
+				while (!match)
+				{
+					match = true;
+					if (count == 0)
+					{
+						actualName = actualName + " - copy";
+						count++;
+					}
+					else
+					{
+						actualName = dirName + " - copy (" + count + ")";
+						count++;
+					}
+					for (Object matchingFileName : dirNames)
+					{
+						if (((String) matchingFileName).equalsIgnoreCase(actualName))
+						{
+							match = false;
+							break;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			actualName = dirName;
+		}
+		return actualName;
+	}
+	
+	public static String getCopyFileContentName(String ParentURL, String origName, String newName)
+	{
+		String name = newName;
+		int dms_content_id = 0;
+		dms_content_id = MDMSContent.checkFileDirExists(ParentURL, name);
+		if (dms_content_id > 0)
+		{
+			if (!name.contains(" - copy"))
+				name = FilenameUtils.getBaseName(name) + " - copy" + "." + FilenameUtils.getExtension(name);
+			else
+			{
+				String fileNameWOExt = FilenameUtils.getBaseName(name);
+				int count = 0;
+				if (fileNameWOExt.contains("("))
+				{
+					String c = fileNameWOExt.substring(fileNameWOExt.lastIndexOf("(") + 1,
+							fileNameWOExt.lastIndexOf(")"));
+					count = Integer.parseInt(c);
+				}
+				String ext = FilenameUtils.getExtension(name);
+				String baseName = FilenameUtils.getBaseName(origName);
+				if (baseName.contains(" - copy")) {
+					baseName = baseName.split(" \\(")[0];
+					name = baseName + " (" + ++count + ")" + "." + ext;
+				}
+				else
+					name = baseName + " - copy" + " (" + ++count + ")" + "." + ext;
+			}
+			return getCopyFileContentName(ParentURL, origName, name);
+		}
+		else
+			return name;
+	}
 }
