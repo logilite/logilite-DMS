@@ -16,8 +16,6 @@ import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
-import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 
@@ -80,14 +78,14 @@ public class ResetIndexingProcess extends SvrProcess
 
 		// Get all DMS contents
 		statusUpdate("Fetching DMS contents from DB");
-		HashMap <I_DMS_Content, I_DMS_Association> contentList = getAllDMSContents();
+		HashMap <Integer, Integer> contentList = getAllDMSContents();
 
 		//
 		int count = 0;
-		for (Map.Entry <I_DMS_Content, I_DMS_Association> entry : contentList.entrySet())
+		for (Map.Entry <Integer, Integer> entry : contentList.entrySet())
 		{
-			MDMSContent content = (MDMSContent) entry.getKey();
-			MDMSAssociation association = (MDMSAssociation) entry.getValue();
+			MDMSContent content = new MDMSContent(getCtx(), entry.getKey(), null);
+			MDMSAssociation association = new MDMSAssociation(getCtx(), entry.getValue(), null);
 
 			try
 			{
@@ -125,14 +123,14 @@ public class ResetIndexingProcess extends SvrProcess
 	} // doIt
 
 	/**
-	 * Fetch record from DMS content
+	 * Fetch record from DMS content and its Association
 	 * based on IsIndexed flag
 	 * 
 	 * @return map
 	 */
-	private HashMap <I_DMS_Content, I_DMS_Association> getAllDMSContents()
+	private HashMap <Integer, Integer> getAllDMSContents()
 	{
-		HashMap <I_DMS_Content, I_DMS_Association> map = new LinkedHashMap <I_DMS_Content, I_DMS_Association>();
+		HashMap <Integer, Integer> map = new LinkedHashMap <Integer, Integer>();
 
 		String sql = SQL_GET_ALL_DMS_CONTENT;
 		PreparedStatement pstmt = null;
@@ -154,7 +152,7 @@ public class ResetIndexingProcess extends SvrProcess
 			{
 				while (rs.next())
 				{
-					map.put((new MDMSContent(getCtx(), rs.getInt("DMS_Content_ID"), null)), (new MDMSAssociation(getCtx(), rs.getInt("DMS_Association_ID"), null)));
+					map.put(rs.getInt("DMS_Content_ID"), rs.getInt("DMS_Association_ID"));
 				}
 			}
 		}
@@ -170,6 +168,7 @@ public class ResetIndexingProcess extends SvrProcess
 			rs = null;
 			pstmt = null;
 		}
+
 		return map;
 	} // getAllDMSContents
 }
