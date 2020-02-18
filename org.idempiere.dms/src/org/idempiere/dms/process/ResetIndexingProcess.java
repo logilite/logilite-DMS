@@ -79,9 +79,11 @@ public class ResetIndexingProcess extends SvrProcess
 			throw new AdempiereException("Content manager is not found.");
 
 		// Get all DMS contents
+		statusUpdate("Fetching DMS contents from DB");
 		HashMap <I_DMS_Content, I_DMS_Association> contentList = getAllDMSContents();
 
 		//
+		int count = 0;
 		for (Map.Entry <I_DMS_Content, I_DMS_Association> entry : contentList.entrySet())
 		{
 			MDMSContent content = (MDMSContent) entry.getKey();
@@ -116,6 +118,8 @@ public class ResetIndexingProcess extends SvrProcess
 					DB.executeUpdate("UPDATE DMS_Content 	SET IsIndexed='N'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
 				}
 			}
+			statusUpdate("Content Indexed [" + count + " / " + contentList.size() + "] Success=" + cntSuccess + ", Fail=" + cntFailed);
+			count++;
 		}
 		return "Process completed. Success : " + cntSuccess + ", Failed : " + cntFailed;
 	} // doIt
