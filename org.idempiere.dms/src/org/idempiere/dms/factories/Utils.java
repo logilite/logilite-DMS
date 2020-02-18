@@ -77,7 +77,6 @@ import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.MDMSContentType;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 
@@ -872,8 +871,7 @@ public class Utils
 		StringBuffer msg = new StringBuffer(content.getName());
 		if (content.getDMS_ContentType_ID() > 0)
 		{
-			MDMSContentType mdmsContentType = new MDMSContentType(Env.getCtx(), content.getDMS_ContentType_ID(), null);
-			msg.append("\nContent Type: ").append(mdmsContentType.getName());
+			msg.append("\nContent Type: ").append(content.getDMS_ContentType().getName());
 		}
 
 		msg.append("\nItem Type: ");

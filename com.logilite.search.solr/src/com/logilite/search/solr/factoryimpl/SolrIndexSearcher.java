@@ -1,13 +1,14 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP * This program is free software;
- * you can redistribute it and/or modify it * under the terms version 2 of the
- * GNU General Public License as published * by the Free Software Foundation.
- * This program is distributed in the hope * that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied * warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. * See the GNU General Public License for
- * more details. * You should have received a copy of the GNU General Public
- * License along * with this program; if not, write to the Free Software
- * Foundation, Inc., * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA. *
+ * Copyright (C) 2016 Logilite Technologies LLP								  *
+ * This program is free software; you can redistribute it and/or modify it    *
+ * under the terms version 2 of the GNU General Public License as published   *
+ * by the Free Software Foundation. This program is distributed in the hope   *
+ * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
+ * See the GNU General Public License for more details.                       *
+ * You should have received a copy of the GNU General Public License along    *
+ * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
 package com.logilite.search.solr.factoryimpl;
@@ -100,13 +101,11 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 			DefaultHttpClient httpclient = new DefaultHttpClient(cxMgr);
 			httpclient.addRequestInterceptor(new PreemptiveAuthInterceptor(), 0);
-			httpclient.getCredentialsProvider().setCredentials(AuthScope.ANY,
-					new UsernamePasswordCredentials(indexingConfig.getUserName(), indexingConfig.getPassword()));
+			httpclient.getCredentialsProvider().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(indexingConfig.getUserName(), indexingConfig.getPassword()));
 
 			server = new HttpSolrServer(indexingConfig.getIndexServerUrl(), httpclient);
 			server.setRequestWriter(new BinaryRequestWriter());
 			server.setAllowCompression(true);
-
 			server.ping();
 
 			try
@@ -131,24 +130,24 @@ public class SolrIndexSearcher implements IIndexSearcher
 			}
 			catch (Exception e)
 			{
-				log.log(Level.SEVERE, "Issue while build/create fieldtype/field in solr schema : ", e.getLocalizedMessage());
-				throw new AdempiereException("Issue while build/create fieldtype/field in solr schema : " + e.getLocalizedMessage());
+				log.log(Level.SEVERE, "Issue while build/create fieldtype/field in solr schema: ", e.getLocalizedMessage());
+				throw new AdempiereException("Issue while build/create fieldtype/field in solr schema: " + e.getLocalizedMessage(), e);
 			}
 		}
 		catch (SolrServerException e)
 		{
-			log.log(Level.SEVERE, "Solr server is not started ", e);
-			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Solr server is not started: ", e);
+			throw new AdempiereException("Solr server is not started: " + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
+			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Fail to initialize solr Server OR Invalid Username or Password ", e);
-			throw new AdempiereException("Fail to initialize solr Server OR Invalid Username or Password ");
+			throw new AdempiereException("Fail to initialize solr Server OR Invalid Username or Password.", e);
 		}
 	} // init
 
@@ -274,7 +273,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (SolrServerException | IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to ping solr Server ", e);
-			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage());
+			throw new AdempiereException("Fail to ping solr Server: " + e.getLocalizedMessage(), e);
 		}
 	} // checkServerIsUp
 
@@ -337,7 +336,6 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "Searching content failure:", e);
-			// throw new AdempiereException("Searching content failure:" + e);
 		}
 		return dmsContentList;
 	}
@@ -380,8 +378,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 		}
 		catch (Exception e)
 		{
-			log.log(Level.SEVERE, "Indexing failure: ", e);
-			throw new AdempiereException("Indexing failure: " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Fail to create Indexing: ", e);
+			throw new AdempiereException("Fail to create Indexing: " + e.getLocalizedMessage(), e);
 		}
 	} // indexContent
 
@@ -398,12 +396,12 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (SolrServerException e)
 		{
 			log.log(Level.SEVERE, "Solr server connection failure: ", e);
-			throw new AdempiereException("Solr server connection failure:  " + e.getLocalizedMessage());
+			throw new AdempiereException("Solr server connection failure: " + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Solr Document delete failure: ", e);
-			throw new AdempiereException("Solr Document delete failure:  " + e.getLocalizedMessage());
+			throw new AdempiereException("Solr Document delete failure: " + e.getLocalizedMessage(), e);
 		}
 	} // deleteIndex
 
@@ -516,22 +514,22 @@ public class SolrIndexSearcher implements IIndexSearcher
 		catch (FileNotFoundException e)
 		{
 			log.log(Level.SEVERE, "File Not Found: ", e);
-			throw new AdempiereException("File Not Found: " + e.getLocalizedMessage());
+			throw new AdempiereException("File Not Found: " + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to read file: ", e);
-			throw new AdempiereException("Fail to read file: " + e.getLocalizedMessage());
+			throw new AdempiereException("Fail to read file: " + e.getLocalizedMessage(), e);
 		}
 		catch (SAXException e)
 		{
-			log.log(Level.SEVERE, "Can not parse file content: ", e);
-			throw new AdempiereException("Can not parse file content: " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Fail to XML parser: ", e);
+			throw new AdempiereException("Fail to XML parser: " + e.getLocalizedMessage(), e);
 		}
 		catch (TikaException e)
 		{
-			log.log(Level.SEVERE, "Can not parse file content: ", e);
-			throw new AdempiereException("Can not parse file content: " + e.getLocalizedMessage());
+			log.log(Level.SEVERE, "Fail to parse file content: ", e);
+			throw new AdempiereException("Fail to parse file content: " + e.getLocalizedMessage(), e);
 		}
 	} // processDocument
 
