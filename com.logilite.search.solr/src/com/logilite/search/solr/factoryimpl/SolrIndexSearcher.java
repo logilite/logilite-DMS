@@ -400,10 +400,32 @@ public class SolrIndexSearcher implements IIndexSearcher
 		}
 		catch (IOException e)
 		{
-			log.log(Level.SEVERE, "Solr Document delete failure: ", e);
-			throw new AdempiereException("Solr Document delete failure: " + e.getLocalizedMessage(), e);
+			log.log(Level.SEVERE, "Solr document delete failure: ", e);
+			throw new AdempiereException("Solr document delete failure: " + e.getLocalizedMessage(), e);
 		}
 	} // deleteIndex
+
+	@Override
+	public void deleteAllIndex()
+	{
+		checkServerIsUp();
+
+		try
+		{
+			server.deleteByQuery("*:*");
+			server.commit();
+		}
+		catch (SolrServerException e)
+		{
+			log.log(Level.SEVERE, "Solr server connection failure: ", e);
+			throw new AdempiereException("Solr server connection failure: " + e.getLocalizedMessage(), e);
+		}
+		catch (IOException e)
+		{
+			log.log(Level.SEVERE, "Solr all document delete failure: ", e);
+			throw new AdempiereException("Solr all document delete failure: " + e.getLocalizedMessage(), e);
+		}
+	} // deleteAllIndex
 
 	@Override
 	public String buildSolrSearchQuery(HashMap <String, List <Object>> params)

@@ -28,12 +28,14 @@ import com.logilite.search.factory.ServiceUtils;
 public class ResetIndexingProcess extends SvrProcess
 {
 	public static final String	SQL_GET_ALL_DMS_CONTENT	= " SELECT a.DMS_Content_ID, a.DMS_Association_ID 	FROM DMS_Association a	"
-															+ " INNER JOIN DMS_Content c ON a.DMS_Content_ID = c.DMS_Content_ID		"
-															+ " WHERE c.AD_Client_ID = ? 											";
+	                                                      + " INNER JOIN DMS_Content c ON a.DMS_Content_ID = c.DMS_Content_ID		"
+	                                                      + " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT'				";
 
 	private IIndexSearcher		indexSeracher			= null;
 
 	private String				m_isIndexed				= null;
+
+	private boolean				isAllReIndex			= false;
 
 	@Override
 	protected void prepare()
@@ -52,14 +54,14 @@ public class ResetIndexingProcess extends SvrProcess
 			{
 				m_isIndexed = para[i].getParameterAsString();
 			}
-
 		}
 
 		indexSeracher = ServiceUtils.getIndexSearcher(getAD_Client_ID());
-
 		if (indexSeracher == null)
 			throw new AdempiereException("Solr Index server is not found.");
 
+		// 
+		isAllReIndex = "A".equals(m_isIndexed);
 	}
 
 	@Override
@@ -76,6 +78,15 @@ public class ResetIndexingProcess extends SvrProcess
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
+		// Delete all the index from indexing server
+		if (isAllReIndex)
+		{
+			indexSeracher.deleteAllIndex();
+
+			int no = DB.executeUpdate("UPDATE DMS_Content	SET IsIndexed='N'	WHERE ContentBaseType='CNT' AND AD_Client_ID=?", getAD_Client_ID(), null);
+			log.log(Level.INFO, "All the DMS content indexed marked as false, count: " + no);
+		}
+
 		// Get all DMS contents
 		statusUpdate("Fetching DMS contents from DB");
 		HashMap <Integer, Integer> contentList = getAllDMSContents();
@@ -89,18 +100,19 @@ public class ResetIndexingProcess extends SvrProcess
 
 			try
 			{
-				if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()))
+				if (!isAllReIndex)
 				{
-					Map <String, Object> solrValue = Utils.createIndexMap(content, association);
 					indexSeracher.deleteIndex(content.getDMS_Content_ID());
-					indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPath(content)));
-					cntSuccess++;
+				}
 
-					// Update the value of IsIndexed flag in dmsContent
-					if (!content.isIndexed())
-					{
-						DB.executeUpdate("UPDATE DMS_Content	SET IsIndexed='Y'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
-					}
+				Map <String, Object> solrValue = Utils.createIndexMap(content, association);
+				indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPath(content)));
+				cntSuccess++;
+
+				// Update the value of IsIndexed flag in dmsContent
+				if (!content.isIndexed())
+				{
+					DB.executeUpdate("UPDATE DMS_Content	SET IsIndexed='Y'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
 				}
 			}
 			catch (Exception e)
@@ -111,7 +123,7 @@ public class ResetIndexingProcess extends SvrProcess
 				cntFailed++;
 
 				// Update the value of IsIndexed flag in dmsContent
-				if (content.isIndexed())
+				if (!isAllReIndex && content.isIndexed())
 				{
 					DB.executeUpdate("UPDATE DMS_Content 	SET IsIndexed='N'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
 				}
@@ -147,13 +159,9 @@ public class ResetIndexingProcess extends SvrProcess
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, getAD_Client_ID());
 			rs = pstmt.executeQuery();
-
-			if (rs != null)
+			while (rs.next())
 			{
-				while (rs.next())
-				{
-					map.put(rs.getInt("DMS_Content_ID"), rs.getInt("DMS_Association_ID"));
-				}
+				map.put(rs.getInt("DMS_Content_ID"), rs.getInt("DMS_Association_ID"));
 			}
 		}
 		catch (SQLException e)
