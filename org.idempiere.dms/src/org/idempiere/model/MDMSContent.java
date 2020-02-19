@@ -393,6 +393,8 @@ public class MDMSContent extends X_DMS_Content
 		return dmsContent;
 	}
 	
+	// TODO Move to org.idempiere.dms.factories.Utils class 
+	// and refactor as per query changes suggested in DMSConstant class
 	public static List<String> getMatchingDirContentNames(String ParentUrl, String dirName){
 		List<String> actualNames = new ArrayList<String>();
 		PreparedStatement pstmt = null;
@@ -434,6 +436,8 @@ public class MDMSContent extends X_DMS_Content
 		return actualNames;
 	}
 	
+	// TODO Move to org.idempiere.dms.factories.Utils class 
+	// and refactor as per query changes suggested in DMSConstant class
 	public static List<String> getActualDirNameForCopiedDir(String ParentUrl, String dirName)
 	{
 
@@ -477,6 +481,8 @@ public class MDMSContent extends X_DMS_Content
 		return fileNames;
 	}
 	
+	// TODO Move to org.idempiere.dms.factories.Utils class 
+	// and refactor as per query changes suggested in DMSConstant class
 	public static int checkDirExists(String ParentUrl, String dirName)
 	{
 		int DMS_Content_ID = 0;

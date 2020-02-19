@@ -150,9 +150,10 @@ public final class DMSConstant
 
 	
 	// DMS Contents
+	// TODO typo correction
 	public static final String				CONTNET_FILE									= "file";
 	public static final String				CONTENT_DIR										= "dir";
-
+	// TODO purpose declare
 	public static final String				OPERATION_CREATE								= "create";
 	public static final String				OPERATION_RENAME								= "rename";
 	public static final String				OPERATION_COPY									= "copy";
@@ -217,6 +218,14 @@ public final class DMSConstant
 																									+ DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST
 																									+ " ) AS DATA )												";
 	
+																										+ " ) AS DATA )												";
+	// TODO Looks like same sql twice, optimize with below approach
+	// IsSearchWithParentURL = true
+	// WHERE (ParentURL = ? AND True=?) OR (ParentURL IS NULL AND False = ? )
+	
+	// TODO Use alias name instead of table name and remove adempiere 
+	// Maintain camel case
+	// maintain code format
 	public static final String				SQL_CHECK_CONTETNT_NAME_EXISTS					= "SELECT DMS_Content_ID from DMS_Content where ParentURL = ? AND Name = ? AND IsActive = 'Y'";
 
 	public static final String				SQL_CHECK_CONTENT_NAME_EXISTS_NO_PARENT			= "SELECT DMS_Content_ID from DMS_Content where ParentURL IS NULL AND Name = ? AND IsActive = 'Y'";

@@ -109,6 +109,8 @@ public class DMS
 	private boolean					isDocExplorerWindow			= false;
 
 	public int						AD_Client_ID				= 0;
+	
+	//TODO Move in DMSContent class
 	public static final String					UNDERSCORE_STR								= "_";
 
 	/**
@@ -790,6 +792,7 @@ public class DMS
 				}
 				String contentType = MDMSContent.getContentAttributeType(copiedContent.getDMS_Content_ID());
 				String name = "";
+				// TODO Use static reference
 				if(contentType.equals("Parent")) {
 					//name = getContentName(destContent == null ? null :destContent.getParentURL() == null ?  destContent.getValue() == null ? null : File.separator + destContent.getValue() : destContent.getParentURL() + File.separator + destContent.getValue(),copiedContent.getName(),copiedContent.getName());
 					name = Utils.getCopyFileContentName(destContent == null ? null :destContent.getParentURL() == null ?  destContent.getValue() == null ? null : File.separator + destContent.getValue() : destContent.getParentURL() + File.separator + destContent.getValue(),copiedContent.getName(),copiedContent.getName());
@@ -1065,6 +1068,7 @@ public class DMS
 				rs = pstmt.executeQuery();
 				while (rs.next())
 				{
+					// TODO Use DMSConstant.FILE_SEPARATOR 
 					MDMSContent dmsContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
 					MDMSAssociation association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"),
 							null);
@@ -1792,6 +1796,7 @@ public class DMS
 		{
 			// check if parent or not
 			String attributeType = MDMSContent.getContentAttributeType(content.getDMS_Content_ID());
+			// TODO Static reference
 			if (attributeType.equalsIgnoreCase("Version"))
 			{
 				List<MDMSContent> dmsContentList = MDMSContent.getVersionRelatedContentID(content.getDMS_Content_ID());
@@ -1801,6 +1806,7 @@ public class DMS
 					
 					attributeType = MDMSContent.getContentAttributeType(dc.getDMS_Content_ID());
 					String actualFileName = "";
+					// TODO Static reference
 					if(attributeType.equalsIgnoreCase("Version")) {
 						String count = dc.getValue().substring(dc.getValue().lastIndexOf("(") + 1,
 								dc.getValue().lastIndexOf(")"));
@@ -1827,6 +1833,7 @@ public class DMS
 			}
 			else {
 				content.setName(fileName);
+				// TODO Static reference
 				String actualName = contentManager.getContentName(fileStorageProvider, "file", content, FilenameUtils.getBaseName(fileName), Utils.getFileExtension(fileName), "Parent", "rename");
 				
 				String newFileName = this.getBaseDirPath(content);

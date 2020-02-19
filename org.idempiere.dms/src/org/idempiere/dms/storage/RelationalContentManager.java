@@ -31,6 +31,7 @@ public class RelationalContentManager implements IContentManager
 
 	public static CLogger		log						= CLogger.getCLogger(RelationalContentManager.class);
 
+	// TODO move these static references to DMSConstant class
 	public static final String	REG_EXP_VERSION_FILE	= "^.*\\(\\d+\\).\\w+$";
 
 	public static final String	LIKE_STR				= "%";

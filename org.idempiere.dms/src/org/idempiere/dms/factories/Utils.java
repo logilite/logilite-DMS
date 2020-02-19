@@ -1275,8 +1275,10 @@ public class Utils
 
 			String dirName = dirContentName;
 
+			// TODO handle if returning 0
 			int DMS_Content_ID = MDMSContent.checkFileDirExists(baseURL, dirContentName);
 
+			//TODO no need to create separate method to get DMS content 
 			MDMSContent content = MDMSContent.getDMSContent(DMS_Content_ID);
 			String existingDir = content == null ? null
 					: Util.isEmpty(content.getParentURL(), true) ? File.separator + content.getName()
@@ -1705,6 +1707,7 @@ public class Utils
 	} // validateFileName
 	
 	
+	// TODO Use DMS.getBaseDirPath(content) instead of this method
 	public static String getURL(MDMSContent content)
 	{
 		return content == null ? null

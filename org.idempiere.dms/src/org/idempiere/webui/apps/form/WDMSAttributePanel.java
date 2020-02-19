@@ -374,6 +374,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 				String error = Utils.isValidFileName(txtName.getValue(), false);
 				if (!Util.isEmpty(error, true))
 					throw new WrongValueException(txtName, error);
+				
+				// TODO Did you tested for this current document having multiple links created and doing rename ?
 				String fileName = txtName.getValue() + "." + FilenameUtils.getExtension(content.getName());
 				dms.renameContent(content, fileName);
 //				int dms_content_id = MDMSContent.checkFileExists(content.getParentURL(), txtName.getValue() + "." + content.getParentURL());
