@@ -3,6 +3,8 @@ package org.idempiere.dms.process;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,39 +29,54 @@ import com.logilite.search.factory.ServiceUtils;
  */
 public class ResetIndexingProcess extends SvrProcess
 {
-	public static final String	SQL_GET_ALL_DMS_CONTENT	= " SELECT a.DMS_Content_ID, a.DMS_Association_ID 	FROM DMS_Association a	"
-															+ " INNER JOIN DMS_Content c ON a.DMS_Content_ID = c.DMS_Content_ID		"
-															+ " WHERE c.AD_Client_ID = ? 											";
+	public static final String				SQL_GET_ALL_DMS_CONTENT			= " SELECT a.DMS_Content_ID, a.DMS_Association_ID 						"
+	                                                                          + " FROM DMS_Association a											"
+	                                                                          + " INNER JOIN DMS_Content c ON (a.DMS_Content_ID = c.DMS_Content_ID)	"
+	                                                                          + " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT'			";
 
-	private IIndexSearcher		indexSeracher			= null;
+	public static final String				SQL_UPDATE_CONTENT_INDEX_FALSE	= "UPDATE DMS_Content c SET IsIndexed='N'	WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=? ";
 
-	private String				m_isIndexed				= null;
+	public static final SimpleDateFormat	SDF_WITH_TIME					= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+	//
+	private IIndexSearcher					indexSeracher					= null;
+
+	private String							p_isIndexed						= null;
+
+	private Timestamp						p_createdFrom;
+	private Timestamp						p_createdTo;
+
+	private boolean							isAllReIndex					= false;
+
+	String									whereCreatedRange;
+	String									solrQuery;
 
 	@Override
 	protected void prepare()
 	{
-		/*
-		 * Get Parameters
-		 * parameter 1 : IsIndexed
-		 */
 		ProcessInfoParameter[] para = getParameter();
 		for (int i = 0; i < para.length; i++)
 		{
 			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
-			else if (("IsIndexed").equals(name))
+			else if ("IsIndexed".equals(name))
 			{
-				m_isIndexed = para[i].getParameterAsString();
+				p_isIndexed = para[i].getParameterAsString();
 			}
-
+			else if (MDMSContent.COLUMNNAME_Created.equals(name))
+			{
+				p_createdFrom = para[i].getParameterAsTimestamp();
+				p_createdTo = para[i].getParameter_ToAsTimestamp();
+			}
 		}
 
 		indexSeracher = ServiceUtils.getIndexSearcher(getAD_Client_ID());
-
 		if (indexSeracher == null)
 			throw new AdempiereException("Solr Index server is not found.");
 
+		// 
+		isAllReIndex = "A".equals(p_isIndexed);
 	}
 
 	@Override
@@ -76,6 +93,40 @@ public class ResetIndexingProcess extends SvrProcess
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
+		/*
+		 * build query for solr clearing index of range wise and where clause too
+		 */
+		if (p_createdFrom == null && p_createdTo == null)
+		{
+			whereCreatedRange = "";
+			solrQuery = "*:*";
+		}
+		else if (p_createdFrom != null && p_createdTo != null)
+		{
+			whereCreatedRange = " AND c.Created BETWEEN " + DB.TO_DATE(p_createdFrom) + " AND " + DB.TO_DATE(p_createdTo);
+			solrQuery = "created:[" + SDF_WITH_TIME.format(p_createdFrom) + " TO " + SDF_WITH_TIME.format(p_createdTo) + " ]";
+		}
+		else if (p_createdFrom != null && p_createdTo == null)
+		{
+			whereCreatedRange = " AND c.Created >= " + DB.TO_DATE(p_createdFrom);
+			solrQuery = "created:[" + SDF_WITH_TIME.format(p_createdFrom) + " TO * ]";
+		}
+		else if (p_createdFrom == null && p_createdTo != null)
+		{
+			whereCreatedRange = " AND c.Created <= " + DB.TO_DATE(p_createdTo);
+			solrQuery = "created:[ * TO " + SDF_WITH_TIME.format(p_createdTo) + " ]";
+		}
+
+		//		System.out.println(new SimpleDateFormat().format(p_createdFrom));
+		// Delete all the index from indexing server
+		if (isAllReIndex)
+		{
+			indexSeracher.deleteIndexByQuery(solrQuery);
+
+			int no = DB.executeUpdate(SQL_UPDATE_CONTENT_INDEX_FALSE + whereCreatedRange, getAD_Client_ID(), null);
+			log.log(Level.INFO, "DMS content indexed marked as false for, count: " + no);
+		}
+
 		// Get all DMS contents
 		statusUpdate("Fetching DMS contents from DB");
 		HashMap <Integer, Integer> contentList = getAllDMSContents();
@@ -89,18 +140,19 @@ public class ResetIndexingProcess extends SvrProcess
 
 			try
 			{
-				if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()))
+				if (!isAllReIndex)
 				{
-					Map <String, Object> solrValue = Utils.createIndexMap(content, association);
 					indexSeracher.deleteIndex(content.getDMS_Content_ID());
-					indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPath(content)));
-					cntSuccess++;
+				}
 
-					// Update the value of IsIndexed flag in dmsContent
-					if (!content.isIndexed())
-					{
-						DB.executeUpdate("UPDATE DMS_Content	SET IsIndexed='Y'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
-					}
+				Map <String, Object> solrValue = Utils.createIndexMap(content, association);
+				indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPath(content)));
+				cntSuccess++;
+
+				// Update the value of IsIndexed flag in dmsContent
+				if (!content.isIndexed())
+				{
+					DB.executeUpdate("UPDATE DMS_Content	SET IsIndexed='Y'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
 				}
 			}
 			catch (Exception e)
@@ -111,13 +163,13 @@ public class ResetIndexingProcess extends SvrProcess
 				cntFailed++;
 
 				// Update the value of IsIndexed flag in dmsContent
-				if (content.isIndexed())
+				if (!isAllReIndex && content.isIndexed())
 				{
 					DB.executeUpdate("UPDATE DMS_Content 	SET IsIndexed='N'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
 				}
 			}
-			statusUpdate("Content Indexed [" + count + " / " + contentList.size() + "] Success=" + cntSuccess + ", Fail=" + cntFailed);
 			count++;
+			statusUpdate("Content Indexed [" + count + " / " + contentList.size() + "] Success=" + cntSuccess + ", Fail=" + cntFailed);
 		}
 		return "Process completed. Success : " + cntSuccess + ", Failed : " + cntFailed;
 	} // doIt
@@ -137,23 +189,19 @@ public class ResetIndexingProcess extends SvrProcess
 		ResultSet rs = null;
 		try
 		{
-			if ("T".equals(m_isIndexed)) // "T" => records in which isIndex flag is true.
+			if ("T".equals(p_isIndexed)) // "T" => records in which isIndex flag is true.
 				sql += " AND c.IsIndexed = 'Y'";
-			else if ("F".equals(m_isIndexed)) // "F" => records in which isIndex flag is false.
+			else if ("F".equals(p_isIndexed)) // "F" => records in which isIndex flag is false.
 				sql += " AND c.IsIndexed = 'N'";
-			else if ("A".equals(m_isIndexed)) // All records.
+			else if ("A".equals(p_isIndexed)) // All records.
 				; // sql += " AND (c.IsIndexed = 'Y' OR c.IsIndexed = 'N')";
 
-			pstmt = DB.prepareStatement(sql, null);
+			pstmt = DB.prepareStatement(sql + whereCreatedRange, null);
 			pstmt.setInt(1, getAD_Client_ID());
 			rs = pstmt.executeQuery();
-
-			if (rs != null)
+			while (rs.next())
 			{
-				while (rs.next())
-				{
-					map.put(rs.getInt("DMS_Content_ID"), rs.getInt("DMS_Association_ID"));
-				}
+				map.put(rs.getInt("DMS_Content_ID"), rs.getInt("DMS_Association_ID"));
 			}
 		}
 		catch (SQLException e)
