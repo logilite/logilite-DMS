@@ -28,6 +28,8 @@ public interface IIndexSearcher
 
 	public void deleteAllIndex();
 
+	public void deleteIndexByQuery(String query);
+
 	public List <Integer> searchIndex(String query);
 
 	public void indexContent(Map <String, Object> solrValue);

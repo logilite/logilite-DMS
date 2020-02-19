@@ -386,46 +386,36 @@ public class SolrIndexSearcher implements IIndexSearcher
 	@Override
 	public void deleteIndex(int content_ID)
 	{
-		checkServerIsUp();
-
-		try
-		{
-			server.deleteByQuery("DMS_Content_ID:" + content_ID);
-			server.commit();
-		}
-		catch (SolrServerException e)
-		{
-			log.log(Level.SEVERE, "Solr server connection failure: ", e);
-			throw new AdempiereException("Solr server connection failure: " + e.getLocalizedMessage(), e);
-		}
-		catch (IOException e)
-		{
-			log.log(Level.SEVERE, "Solr document delete failure: ", e);
-			throw new AdempiereException("Solr document delete failure: " + e.getLocalizedMessage(), e);
-		}
+		deleteIndexByQuery("DMS_Content_ID:" + content_ID);
 	} // deleteIndex
 
 	@Override
 	public void deleteAllIndex()
 	{
+		deleteIndexByQuery("*:*");
+	} // deleteAllIndex
+
+	@Override
+	public void deleteIndexByQuery(String query)
+	{
 		checkServerIsUp();
 
 		try
 		{
-			server.deleteByQuery("*:*");
+			server.deleteByQuery(query);
 			server.commit();
 		}
 		catch (SolrServerException e)
 		{
-			log.log(Level.SEVERE, "Solr server connection failure: ", e);
-			throw new AdempiereException("Solr server connection failure: " + e.getLocalizedMessage(), e);
+			log.log(Level.SEVERE, "Solr server connection failure, Query=" + query, e);
+			throw new AdempiereException("Solr server connection failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
-			log.log(Level.SEVERE, "Solr all document delete failure: ", e);
-			throw new AdempiereException("Solr all document delete failure: " + e.getLocalizedMessage(), e);
+			log.log(Level.SEVERE, "Solr document delete failure, Query=" + query, e);
+			throw new AdempiereException("Solr document delete failure, Query=" + query + " Error:" + e.getLocalizedMessage(), e);
 		}
-	} // deleteAllIndex
+	} // deleteIndexByQuery
 
 	@Override
 	public String buildSolrSearchQuery(HashMap <String, List <Object>> params)
