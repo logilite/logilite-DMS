@@ -35,6 +35,7 @@ import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.event.DialogEvents;
+import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -371,8 +372,9 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 				String error = Utils.isValidFileName(txtName.getValue(), false);
 				if (!Util.isEmpty(error, true))
 					throw new WrongValueException(txtName, error);
-
-				dms.updateContent(txtName.getValue(), content);
+				
+				String fileName = txtName.getValue() + "." + FilenameUtils.getExtension(content.getName());
+				dms.renameContent(content, fileName);
 			}
 
 			ASIPanel.saveAttributes();
