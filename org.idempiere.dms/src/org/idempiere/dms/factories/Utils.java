@@ -78,7 +78,6 @@ import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
-import org.idempiere.model.MDMSContentType;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
 
@@ -104,11 +103,11 @@ public class Utils
 																									+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.DMS_Content_Related_ID, 0) = ? "
 																									+ " ), "
 																									+ " VersionList AS ( "
-																									+ " 	SELECT 	a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID, MAX(a.SeqNo) AS SeqNo "
+																									+ " 	SELECT 	a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0) AS AD_Table_ID, NVL(a.Record_ID, 0) AS Record_ID, MAX(a.SeqNo) AS SeqNo "
 																									+ " 	FROM 	DMS_Association a "
 																									+ "		JOIN 	ContentAssociation ca ON ( ca.DMS_Content_ID = a.DMS_Content_Related_ID OR ca.DMS_Content_Related_ID = a.DMS_Content_Related_ID ) "
 																									+ " 	WHERE 	a.AD_Client_ID = ? AND a.DMS_AssociationType_ID = 1000000 "
-																									+ " 	GROUP BY a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
+																									+ " 	GROUP BY a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0), NVL(a.Record_ID, 0) "
 																									+ " ) "
 																									+ " SELECT  NVL(a.DMS_Content_ID, c.DMS_Content_ID) 				AS DMS_Content_ID, 			"
 																									+ " 		NVL(a.DMS_Content_Related_ID, c.DMS_Content_Related_ID) AS DMS_Content_Related_ID,	"
@@ -125,8 +124,7 @@ public class Utils
 																									+ " ORDER BY DMS_Association_ID";
 
 	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#", "");
-	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#",
-																									"AND c.IsActive='Y' AND a.IsActive='Y'");
+	public static String						SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE.replace("#IsActive#", "AND c.IsActive='Y' AND a.IsActive='Y'");
 
 	// Restrict copy paste while parent directory copy paste into itself or it's
 	// child directory.
@@ -145,12 +143,6 @@ public class Utils
 	static CCache<Integer, MImage>				cache_mimetypeThumbnail						= new CCache<Integer, MImage>("MimetypeThumbnail", 2);
 	static CCache<String, Integer>				cache_contentType							= new CCache<String, Integer>("ContentTypeCache", 100);
 
-	public static final String					REG_EXP_VERSION_FILE						= "^.*\\(\\d+\\).\\w+$";
-
-	public static final String					LIKE_STR									= "%";
-	public static final String					PERIOD										= ".";
-	public static final String					UNDERSCORE_LIKE_STR							= "__%";
-	public static final String					UNDERSCORE_STR								= "_";
 	/**
 	 * Factory - Content Editor
 	 * 
@@ -231,7 +223,6 @@ public class Utils
 		for (IContentManagerProvider factory : factories)
 		{
 			contentManager = factory.get(c_key);
-
 			if (contentManager != null)
 			{
 				cache_contentManager.put(AD_Client_ID, contentManager);
@@ -562,8 +553,7 @@ public class Utils
 		Integer contentTypeID = cache_contentType.get(AD_Client_ID + "_" + contentType);
 		if (contentTypeID == null || contentTypeID <= 0)
 		{
-			contentTypeID = DB.getSQLValue(null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND AD_Client_ID = ?",
-					contentType, AD_Client_ID);
+			contentTypeID = DB.getSQLValue(null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND AD_Client_ID = ?", contentType, AD_Client_ID);
 
 			if (contentTypeID > 0)
 				cache_contentType.put(AD_Client_ID + "_" + contentType, contentTypeID);
@@ -774,8 +764,7 @@ public class Utils
 					}
 				}
 				catch (Exception e)
-				{
-				}
+				{}
 				finally
 				{
 					DB.close(rs, pstmt);
@@ -809,7 +798,7 @@ public class Utils
 		contentFile = (MDMSContent) associationFile.getDMS_Content_Related();
 		MDMSAssociation as = Utils.getAssociationFromContent(contentFile.getDMS_Content_ID(), null);
 		if (contentFile.getDMS_Content_ID() != parentContent.getDMS_Content_ID()
-				&& (as.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID || as.getDMS_AssociationType_ID() == MDMSAssociationType.VERSION_ID))
+			&& (as.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID || as.getDMS_AssociationType_ID() == MDMSAssociationType.VERSION_ID))
 		{
 			Utils.updateAllVersions(baseURL, renamedURL, tableID, recordID, contentFile, parentContent);
 		}
@@ -901,6 +890,7 @@ public class Utils
 		return msg.toString();
 	} // getToolTipTextMsg
 
+	// TODO Move to MountingStrategy
 	/**
 	 * Initialize Mounting Content
 	 * 
@@ -945,14 +935,13 @@ public class Utils
 				tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_CONTENTID_FROM_CONTENTNAME, table_Name, Env.getAD_Client_ID(Env.getCtx()));
 			}
 
-			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
-					+ Record_ID);
+			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR + Record_ID);
 
 			if (!file.exists())
 			{
 				file.mkdirs();
-				recordContentID = createDMSContent(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR
-						+ mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name, true);
+				String parentURL = DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name;
+				recordContentID = createDMSContent(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, parentURL, true);
 				createAssociation(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, 0, 0, null);
 			}
 		}
@@ -971,7 +960,7 @@ public class Utils
 	{
 		return createDMSContent(name, name, contentBaseType, parentURL, null, null, 0, 0, isMounting, null);
 	} // createDMSContent
-	
+
 	public static int createDMSContent(String name, String value, String contentBaseType, String parentURL, boolean isMounting)
 	{
 		return createDMSContent(name, value, contentBaseType, parentURL, null, null, 0, 0, isMounting, null);
@@ -993,9 +982,9 @@ public class Utils
 	 * @return DMS_Content_ID
 	 */
 	public static int createDMSContent(String name, String value, String contentBaseType, String parentURL, String desc, File file, int contentTypeID,
-			int asiID, boolean isMounting, String trxName)
+		int asiID, boolean isMounting, String trxName)
 	{
-		MDMSContent content = new MDMSContent(Env.getCtx(), 0, trxName);
+		MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(0, trxName);
 		content.setName(name);
 		content.setValue(value);
 		content.setDescription(desc);
@@ -1042,9 +1031,7 @@ public class Utils
 			association.setDMS_AssociationType_ID(associationTypeID);
 		association.saveEx();
 
-		log.log(Level.INFO, "New DMS_Association_ID = " + association.getDMS_Association_ID() + " of Content=" + contentID + " TableID=" + AD_Table_ID
-				+ " RecordID=" + Record_ID);
-
+		log.log(Level.INFO, "New DMS_Association_ID = " + association.getDMS_Association_ID() + " of Content=" + contentID + " TableID=" + AD_Table_ID + " RecordID=" + Record_ID);
 		return association.getDMS_Association_ID();
 	} // createAssociation
 
@@ -1083,11 +1070,13 @@ public class Utils
 			return DMSConstant.MSG_FILL_MANDATORY;
 
 		if (isDirName && fileName.length() > DMSConstant.MAX_DIRECTORY_LENGTH)
-			return "The folder name would be too long. You can shorten the folder name and try again (Maximum characters: " + DMSConstant.MAX_DIRECTORY_LENGTH
-					+ " instead of " + fileName.length() + ")";
+			return "The folder name would be too long. You can shorten the folder name and try again (Maximum characters: "
+						+ DMSConstant.MAX_DIRECTORY_LENGTH
+						+ " instead of "
+						+ fileName.length()
+						+ ")";
 		else if (!isDirName && fileName.length() > DMSConstant.MAX_FILENAME_LENGTH)
-			return "The filename would be too long. You can shorten the filename and try again (Maximum characters: " + DMSConstant.MAX_FILENAME_LENGTH
-					+ " instead of " + fileName.length() + ")";
+			return "The filename would be too long. You can shorten the filename and try again (Maximum characters: " + DMSConstant.MAX_FILENAME_LENGTH + " instead of " + fileName.length() + ")";
 
 		if (fileName.contains(DMSConstant.FILE_SEPARATOR))
 			return "Invalid Name, Due to file separator is used";
@@ -1161,9 +1150,8 @@ public class Utils
 	 * @param trxName - Transaction Name
 	 * @return DMS Content
 	 */
-	public static MDMSContent createDirectory(String dirContentName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
-			IFileStorageProvider fileStorageProvider, IContentManager contentMngr, boolean errorIfDirExists,
-			boolean isCreateAssociation, String trxName)
+	public static MDMSContent createDirectory(String dirContentName, MDMSContent parentContent, int AD_Table_ID, int Record_ID, IFileStorageProvider fileStorageProvider, IContentManager contentMngr,
+		boolean errorIfDirExists, boolean isCreateAssociation, String trxName)
 	{
 		int contentID = 0;
 
@@ -1180,42 +1168,40 @@ public class Utils
 			if (!rootFolder.exists())
 				rootFolder.mkdirs();
 			String dirName = dirContentName;
-			int DMS_Content_ID = Utils.checkFileDirExists(baseURL, dirContentName);
+			int DMS_Content_ID = Utils.checkExistsFileDir(baseURL, dirContentName);
 			String dirPath = rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirContentName;
 			if (DMS_Content_ID > 0)
 			{
-				MDMSContent  content =  (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_Name).getPO(DMS_Content_ID, null);
-				String existingDir = content == null ? null
-						: Util.isEmpty(content.getParentURL(), true) ? DMSConstant.FILE_SEPARATOR + content.getName()
-								: content.getParentURL() + DMSConstant.FILE_SEPARATOR + content.getName();
+				MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_Name).getPO(DMS_Content_ID, null);
+				String existingDir = contentMngr.getPathByName(content);
 				if (existingDir.equalsIgnoreCase(dirPath) && errorIfDirExists)
 				{
 					File newDir = new File(dirPath);
 					if (!newDir.exists())
 					{
-						throw new AdempiereException(Msg.getMsg(Env.getCtx(),
-								"Directory already exists. \n (Either same file name content exist in inActive mode)"));
+						throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists. \n (Either same file name content exist in inActive mode)"));
 					}
 				}
-				else if(errorIfDirExists)
+				else if (errorIfDirExists)
 				{
-					throw new AdempiereException(Msg.getMsg(Env.getCtx(),
-							"Directory already exists. \n (Either same file name content exist in inActive mode)"));
+					throw new AdempiereException(Msg.getMsg(Env.getCtx(), "Directory already exists. \n (Either same file name content exist in inActive mode)"));
 				}
 			}
 			else
 			{
-				    dirName = contentMngr.getContentName(fileStorageProvider, DMSConstant.CONTENT_DIR, parentContent, dirContentName, "", "", DMSConstant.OPERATION_CREATE);
-					File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirName);
-//				    File newFile = new File(dirName);
-					if (!newFile.exists())
-					{
-						if (!newFile.mkdir())
-							throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'"
-									+ contentMngr.getPathByValue(parentContent) + DMSConstant.FILE_SEPARATOR
-									+ newFile.getName() + "'");
-					}
+				dirName = contentMngr.getContentName(fileStorageProvider, DMSConstant.CONTENT_DIR, parentContent, dirContentName, "", "", DMSConstant.OPERATION_CREATE);
+				File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirName);
+				// File newFile = new File(dirName);
+				if (!newFile.exists())
+				{
+					if (!newFile.mkdir())
+						throw new AdempiereException("Something went wrong!\nDirectory is not created:\n'"
+															+ contentMngr.getPathByValue(parentContent)
+															+ DMSConstant.FILE_SEPARATOR
+															+ newFile.getName()
+															+ "'");
 				}
+			}
 
 			// Get directory content ID
 			List<Object> params = new ArrayList<Object>();
@@ -1225,11 +1211,10 @@ public class Utils
 			params.add(dirName);
 
 			String sql = "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
-					+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-					+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
+								+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
+								+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
 
-//			if (parentContent == null || (parentContent != null && Util.isEmpty(parentContent.getParentURL(), true)))
-			if (parentContent == null )
+			if (parentContent == null)
 				sql += "AND dc.ParentURL IS NULL";
 			else
 			{
@@ -1241,11 +1226,9 @@ public class Utils
 
 			if (contentID <= 0)
 			{
-				contentID = Utils.createDMSContent(dirContentName, dirName, MDMSContent.CONTENTBASETYPE_Directory,
-						contentMngr.getPathByValue(parentContent), false);
+				contentID = Utils.createDMSContent(dirContentName, dirName, MDMSContent.CONTENTBASETYPE_Directory, contentMngr.getPathByValue(parentContent), false);
 				if (isCreateAssociation)
-					Utils.createAssociation(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0,
-							Record_ID, AD_Table_ID, 0, 0, trxName);
+					Utils.createAssociation(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0, 0, trxName);
 			}
 
 			parentContent = new MDMSContent(Env.getCtx(), contentID, trxName);
@@ -1296,8 +1279,7 @@ public class Utils
 
 						if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attrs[i].getAttributeValueType()))
 						{
-							MAttributeValue atVal = (value != null && Integer.valueOf(value) > 0) ? new MAttributeValue(Env.getCtx(), Integer.valueOf(value),
-									trxName) : null;
+							MAttributeValue atVal = (value != null && Integer.valueOf(value) > 0) ? new MAttributeValue(Env.getCtx(), Integer.valueOf(value), trxName) : null;
 							if (value != null)
 								attrs[i].setMAttributeInstance(asiID, atVal);
 						}
@@ -1445,8 +1427,7 @@ public class Utils
 			PO.copyValues(oldASI, newASI);
 			newASI.saveEx();
 
-			List<MAttributeInstance> oldAIList = new Query(Env.getCtx(), MAttributeInstance.Table_Name, "M_AttributeSetInstance_ID = ?", trxName)
-					.setParameters(asiID).list();
+			List<MAttributeInstance> oldAIList = new Query(Env.getCtx(), MAttributeInstance.Table_Name, "M_AttributeSetInstance_ID = ?", trxName).setParameters(asiID).list();
 
 			for (MAttributeInstance oldAI : oldAIList)
 			{
@@ -1522,7 +1503,7 @@ public class Utils
 		}
 		catch (SQLException e)
 		{
-			DMS.log.log(Level.SEVERE, "Content directory level wise fetching failure: ", e);
+			log.log(Level.SEVERE, "Content directory level wise fetching failure: ", e);
 			throw new AdempiereException("Content directory level wise fetching failure: " + e, e);
 		}
 		finally
@@ -1546,7 +1527,7 @@ public class Utils
 		HashMap<I_DMS_Association, I_DMS_Content> map = new LinkedHashMap<I_DMS_Association, I_DMS_Content>();
 
 		String sql = "SELECT DMS_Association_ID, DMS_Content_Related_ID 	 FROM DMS_Association "
-				+ " WHERE IsActive = 'Y' AND DMS_Content_ID = ? AND DMS_AssociationType_ID = ? ";
+						+ " WHERE IsActive = 'Y' AND DMS_Content_ID = ? AND DMS_AssociationType_ID = ? ";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -1607,28 +1588,14 @@ public class Utils
 		}
 		return fileName;
 	} // validateFileName
-	
-	
-	// TODO Use DMS.getBaseDirPath(content) instead of this method 
-	//DMS.getBaseDirPath(content)-- will return base path  
-	//this method returns the content relative URL
-	public static String getURL(MDMSContent content)
+
+	public static String getCopyDirContentName(MDMSContent content, String dirName, String contentPath)
 	{
-		return content == null
-								? null
-									: Util.isEmpty(content.getParentURL(), true)
-																					? content.getName() != null ? DMSConstant.FILE_SEPARATOR + content.getName() : null
-																						: content.getParentURL() + DMSConstant.FILE_SEPARATOR + content.getName();
-	}
-	
-	
-	public static String getCopyDirContentName(MDMSContent content, String dirName) {
 		String actualName = dirName;
-		int DMS_Conent_ID = Utils.checkFileDirExists(getURL(content), dirName);
+		int DMS_Conent_ID = Utils.checkExistsFileDir(contentPath, dirName);
 		if (DMS_Conent_ID > 0)
 		{
-			List<String> dirNames = Utils.getMatchingDirContentNames(getURL(content),
-					dirName + " - copy");
+			List<String> dirNames = Utils.getMatchingDirContentNames(contentPath, dirName + " - copy");
 			if (dirNames.size() == 0)
 			{
 				actualName = actualName + " - copy";
@@ -1667,12 +1634,12 @@ public class Utils
 		}
 		return actualName;
 	}
-	
+
 	public static String getCopyFileContentName(String ParentURL, String origName, String newName)
 	{
 		String name = newName;
 		int dms_content_id = 0;
-		dms_content_id = Utils.checkFileDirExists(ParentURL, name);
+		dms_content_id = Utils.checkExistsFileDir(ParentURL, name);
 		if (dms_content_id > 0)
 		{
 			if (!name.contains(" - copy"))
@@ -1684,12 +1651,13 @@ public class Utils
 				if (fileNameWOExt.contains("("))
 				{
 					String c = fileNameWOExt.substring(fileNameWOExt.lastIndexOf("(") + 1,
-							fileNameWOExt.lastIndexOf(")"));
+									fileNameWOExt.lastIndexOf(")"));
 					count = Integer.parseInt(c);
 				}
 				String ext = FilenameUtils.getExtension(name);
 				String baseName = FilenameUtils.getBaseName(origName);
-				if (baseName.contains(" - copy")) {
+				if (baseName.contains(" - copy"))
+				{
 					baseName = baseName.split(" \\(")[0];
 					name = baseName + " (" + ++count + ")" + "." + ext;
 				}
@@ -1701,67 +1669,40 @@ public class Utils
 		else
 			return name;
 	}
-	
-	public static int checkDirExists(String ParentUrl, String dirName)
+
+	public static int checkExistsDir(String ParentURL, String dirName)
 	{
-		int DMS_Content_ID = 0;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_CHECK_ACTUAL_FILE_DIR_EXISTS_BOTH, null);
-			pstmt.setString(1, dirName);
-			pstmt.setString(2, ParentUrl == null ? "" : ParentUrl);
-			if (!Util.isEmpty(ParentUrl, true))
-			{
-				
-				pstmt.setBoolean(3, true);
-				pstmt.setBoolean(4, true);
-			}
-			else
-			{
-				pstmt.setBoolean(3, false);
-				pstmt.setBoolean(4, false);
-			}
-			rs = pstmt.executeQuery();
-			if (rs.next())
-			{
-				DMS_Content_ID = rs.getInt(1);
-			}
-		}
-		catch (SQLException e)
-		{
-			throw new AdempiereException("Something went wrong while checking the file name: " + e, e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-		return DMS_Content_ID;
+		return checkContentExists(ParentURL, dirName, false);
 	}
-	
-	public static int checkFileDirExists(String ParentUrl, String ContentName)
+
+	public static int checkExistsFileDir(String parentURL, String contentName)
+	{
+		return checkContentExists(parentURL, contentName, true);
+	}
+
+	public static int checkContentExists(String parentURL, String contentName, boolean isCheckByContentName)
 	{
 		int DMS_Content_ID = 0;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_CHECK_CONTENT_NAME_EXISTS, null);
-			pstmt.setString(1, ParentUrl == null ? "" : ParentUrl);
-			pstmt.setString(4, ContentName);
-			if (!Util.isEmpty(ParentUrl, true))
+			pstmt = DB.prepareStatement(isCheckByContentName ? DMSConstant.SQL_GET_CONTENT_ID_BY_CONTENT_NAME : DMSConstant.SQL_GET_CONTENT_ID_BY_CONTENT_VALUE, null);
+			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
+			pstmt.setString(2, contentName);
+			if (!Util.isEmpty(parentURL, true))
 			{
-				pstmt.setBoolean(2, true);
-				pstmt.setBoolean(3, true);
+				pstmt.setString(3, parentURL);
+				pstmt.setBoolean(4, true);
+				pstmt.setBoolean(5, true);
 			}
 			else
 			{
-				pstmt.setBoolean(2, false);
-				pstmt.setBoolean(3, false);
+				pstmt.setString(3, "");
+				pstmt.setBoolean(4, false);
+				pstmt.setBoolean(5, false);
 			}
+
 			rs = pstmt.executeQuery();
 			if (rs.next())
 			{
@@ -1779,79 +1720,7 @@ public class Utils
 			pstmt = null;
 		}
 		return DMS_Content_ID;
-	}
-
-
-	public static List<String> getExtistingFileNamesForCopiedFile(String ParentURL, String fileName, String ext,
-			boolean isVersion)
-	{
-		List<String> fileNames = new ArrayList<String>();
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_CHECK_COPY_FILE_EXISTS, null);
-			pstmt.setString(1, fileName + "." + ext);
-			pstmt.setString(2, fileName + " - copy%" + "." + ext);
-			pstmt.setString(3, ParentURL == null ? "" : ParentURL);
-			if (!Util.isEmpty(ParentURL, true))
-			{
-				pstmt.setBoolean(4, true);
-				pstmt.setBoolean(5, true);
-
-			}
-			else
-			{
-				pstmt.setBoolean(4, false);
-				pstmt.setBoolean(5, false);
-			}
-			rs = pstmt.executeQuery();
-			while (rs.next())
-			{
-				String value = rs.getString(1);
-				fileNames.add(value);
-			}
-		}
-		catch (SQLException e)
-		{
-			throw new AdempiereException("Something went wrong while fetching existing files name: " + e, e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-		return fileNames;
-	}
-
-	public static String getNameOfPreviousVersion(int DMS_Content_ID)
-	{
-		String name = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_FILE_NAME_BY_FOR_VERSION, null);
-			pstmt.setInt(1, DMS_Content_ID);
-			rs = pstmt.executeQuery();
-			if (rs.next())
-			{
-				name = rs.getString(1);
-			}
-		}
-		catch (SQLException e)
-		{
-			throw new AdempiereException("Something went wrong while fetching the file from dms content: " + e, e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-		return name;
-	}
+	} // checkContentExists
 
 	public static String getContentAttributeType(int DMS_Content_ID)
 	{
@@ -1870,8 +1739,7 @@ public class Utils
 		}
 		catch (SQLException e)
 		{
-			throw new AdempiereException("Something went wrong while fetching the content type for dms content: " + e,
-					e);
+			throw new AdempiereException("Something went wrong while fetching the content type for dms content: " + e, e);
 		}
 		finally
 		{
@@ -1880,146 +1748,62 @@ public class Utils
 			pstmt = null;
 		}
 		return contentType;
-	}
+	} // getContentAttributeType
 
-	public static String getCopiedContentParentName(int DMS_Content_ID)
+	public static List<String> getExtistingFileNamesFromCopiedFile(String parentURL, String fileName, String extention)
 	{
-		String contentType = null;
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_COPIED_CONTENT_NAME, null);
-			pstmt.setInt(1, DMS_Content_ID);
-			rs = pstmt.executeQuery();
-			if (rs.next())
-			{
-				contentType = rs.getString(1);
-			}
-		}
-		catch (SQLException e)
-		{
-			throw new AdempiereException("Something went wrong while fetching the content type for dms content: " + e,
-					e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-		return contentType;
+		return getMatchingContentList(parentURL, fileName + "." + extention, fileName + " - copy%" + "." + extention, false);
 	}
-	
-	public static List<String> getMatchingActualNames(String ParentUrl, String fileName, String regExp, String extention){
-		List<String> actualNames = new ArrayList<String>();
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_CHECK_FILE_EXISTS, null);
-			pstmt.setString(1, fileName + extention);
-			pstmt.setString(2, fileName + regExp + extention);
-			pstmt.setString(3, ParentUrl == null ? "" : ParentUrl);
-			if (!Util.isEmpty(ParentUrl, true))
-			{
-				pstmt.setBoolean(4, true);
-				pstmt.setBoolean(5, true);
-			}
-			else
-			{
-				pstmt.setBoolean(4, false);
-				pstmt.setBoolean(5, false);
-				
-			}
-			rs = pstmt.executeQuery();
-			while (rs.next())
-			{
-				String value = rs.getString(1);
-				actualNames.add(value);
-			}
-		}
-		catch (SQLException e)
-		{
-			throw new AdempiereException("Something went wrong while fetching the existing file names : " + e, e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
 
-		return actualNames;
+	public static List<String> getMatchingActualNames(String parentUrl, String fileName, String regExp, String extention)
+	{
+		return getMatchingContentList(parentUrl, fileName + extention, fileName + regExp + extention, false);
 	}
-	
-	public static List<String> getMatchingDirContentNames(String ParentUrl, String dirName){
-		List<String> actualNames = new ArrayList<String>();
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_COPY_DIR_MACHING_CONTENT_NAME, null);
-			pstmt.setString(1, dirName);
-			pstmt.setString(2, dirName+ " %");
-			pstmt.setString(3, ParentUrl == null ? "" : ParentUrl);
-			if (!Util.isEmpty(ParentUrl, true))
-			{
-				pstmt.setBoolean(4, true);
-				pstmt.setBoolean(5, true);
-			}
-			else
-			{
-				pstmt.setBoolean(4, false);
-				pstmt.setBoolean(5, false);
-			}
-			rs = pstmt.executeQuery();
-			while (rs.next())
-			{
-				String value = rs.getString(1);
-				actualNames.add(value);
-			}
-		}
-		catch (SQLException e)
-		{
-			throw new AdempiereException("Something went wrong while fetching the existing file names : " + e, e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
 
-		return actualNames;
-	}
-	
 	public static List<String> getActualDirNameForCopiedDir(String ParentUrl, String dirName)
 	{
-		List<String> fileNames = new ArrayList<String>();
+		return getMatchingContentList(ParentUrl, dirName, dirName + " %", false);
+	}
+
+	public static List<String> getMatchingDirContentNames(String parentUrl, String dirName)
+	{
+		return getMatchingContentList(parentUrl, dirName, dirName + " %", true);
+	}
+
+	/**
+	 * @param ParentUrl
+	 * @param str1 - Name or Value
+	 * @param str2 - Name or Value with extra characters
+	 * @param isCheckByContentName - SLQ Check with Content Name or Value
+	 * @return
+	 */
+	private static List<String> getMatchingContentList(String ParentUrl, String str1, String str2, boolean isCheckByContentName)
+	{
+		List<String> actualNames = new ArrayList<String>();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_CHECK_FILE_EXISTS, null);
-			pstmt.setString(1, dirName );
-			pstmt.setString(2, dirName + " %");
-			pstmt.setString(3, ParentUrl == null ? "" : ParentUrl);
+			pstmt = DB.prepareStatement(isCheckByContentName ? DMSConstant.SQL_GET_MATCHING_CONTENT_BY_NAME : DMSConstant.SQL_GET_MATCHING_CONTENT_BY_VALUE, null);
+			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
+			pstmt.setString(2, str1);
+			pstmt.setString(3, str2);
 			if (!Util.isEmpty(ParentUrl, true))
 			{
+				// pstmt.setString(4, ParentUrl);
 				pstmt.setBoolean(4, true);
 				pstmt.setBoolean(5, true);
 			}
 			else
 			{
+				// pstmt.setString(4, "");
 				pstmt.setBoolean(4, false);
 				pstmt.setBoolean(5, false);
 			}
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
-				String value = rs.getString(1);
-				fileNames.add(value);
+				actualNames.add(rs.getString(1));
 			}
 		}
 		catch (SQLException e)
@@ -2032,6 +1816,37 @@ public class Utils
 			rs = null;
 			pstmt = null;
 		}
-		return fileNames;
+
+		return actualNames;
 	}
+
+	public static List<MDMSContent> getVersionRelatedContentID(int DMS_Content_ID)
+	{
+		List<MDMSContent> dmsContent = new ArrayList<MDMSContent>();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_ANOTHER_VERSION_IDS, null);
+			pstmt.setInt(1, DMS_Content_ID);
+			rs = pstmt.executeQuery();
+			while (rs.next())
+			{
+				MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(rs.getInt(1), null);
+				dmsContent.add(content);
+			}
+		}
+		catch (SQLException e)
+		{
+			throw new AdempiereException("Something went wrong while fetching the content type for dms content: " + e, e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+		return dmsContent;
+	}
+
 }

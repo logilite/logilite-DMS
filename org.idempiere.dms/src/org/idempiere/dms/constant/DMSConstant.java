@@ -59,7 +59,7 @@ public final class DMSConstant
 	public static final String				REG_EXP_PERIOD									= ".";
 	public static final String				REG_EXP_UNDERSCORE_LIKE_STR						= "__%";
 	public static final String				REG_EXP_UNDERSCORE_STR							= "_";
-		
+
 	// Pattern
 	public static final Pattern				PATTERN_WINDOWS_DIRNAME_ISVALID					= Pattern.compile(REG_EXP_WINDOWS_DIRNAME_VALIDATE);
 	public static final Pattern				PATTERN_LINX_DIRNAME_ISVALID					= Pattern.compile(REG_EXP_LINUX_DIRNAME_VALIDATE);
@@ -154,13 +154,13 @@ public final class DMSConstant
 	public static final String				TTT_DISPLAYS_ITEMS_LAYOUT						= "Displays items Layout";
 
 	// Contents Type
-	public static final String				CONTENT_FILE									= "file";
-	public static final String				CONTENT_DIR										= "dir";
-	
+	public static final String				CONTENT_FILE									= "File";
+	public static final String				CONTENT_DIR										= "Dir";
+
 	// Operations
-	public static final String				OPERATION_CREATE								= "create";
-	public static final String				OPERATION_RENAME								= "rename";
-	public static final String				OPERATION_COPY									= "copy";
+	public static final String				OPERATION_CREATE								= "OpsCreate";
+	public static final String				OPERATION_RENAME								= "OpsRename";
+	public static final String				OPERATION_COPY									= "OpsCopy";
 
 	// Content Categories
 	public static final String				CONTENT_TYPE_PARENT								= "Parent";
@@ -222,41 +222,23 @@ public final class DMSConstant
 																									+ "			DMS_Content_ID IN (	SELECT DMS_Content_ID FROM ("
 																									+ DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST
 																									+ " ) AS DATA )												";
-	public static final String				SQL_CHECK_CONTENT_NAME_EXISTS
-																							= "SELECT DMS_Content_ID FROM DMS_Content WHERE ((ParentURL = ? AND True=?) OR (ParentURL IS NULL AND False = ?)) AND Name = ? AND IsActive = 'Y' ";
 
-	public static final String				SQL_CHECK_FILE_EXISTS
-																							= "SELECT Value FROM DMS_Content WHERE ( DMS_Content.Value = ? OR DMS_Content.Value LIKE ? ) AND ((ParentURL = ? AND True=?) OR (ParentURL IS NULL AND False = ? ))";
+	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_NAME				= "SELECT DMS_Content_ID FROM DMS_Content WHERE AD_Client_ID = ? AND Name  = ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ?))";
 
-	public static final String				SQL_CHECK_COPY_FILE_EXISTS
-																							= "SELECT Value FROM DMS_Content WHERE ( DMS_Content.Value LIKE ? OR DMS_Content.Value LIKE ? ) AND ((ParentURL = ? AND True=?) OR (ParentURL IS NULL AND False = ? ))";
+	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_VALUE				= "SELECT DMS_Content_ID FROM DMS_Content WHERE AD_Client_ID = ? AND Value = ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ?))";
 
-	public static final String				SQL_GET_FILE_NAME_BY_FOR_VERSION				= "SELECT Value FROM DMS_Content WHERE DMS_Content_ID = ?";
+	public static final String				SQL_GET_MATCHING_CONTENT_BY_NAME				= "SELECT Name  FROM DMS_Content WHERE AD_Client_ID = ? AND Name  LIKE ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
 
-	public static final String				SQL_GET_CONTENT_TYPE
-																							= "SELECT DMS_AssociationType.Value FROM DMS_Content LEFT JOIN DMS_Association"
-																								+ " ON DMS_Content.DMS_Content_ID = DMS_Association.DMS_Content_ID"
-																									+ " LEFT JOIN DMS_AssociationType"
-																									+ " ON DMS_AssociationType.DMS_AssociationType_ID = DMS_Association.DMS_AssociationType_ID WHERE DMS_Content.DMS_Content_ID = ?";
+	public static final String				SQL_GET_MATCHING_CONTENT_BY_VALUE				= "SELECT Value FROM DMS_Content WHERE AD_Client_ID = ? AND Value LIKE ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
 
-	public static final String				SQL_GET_COPIED_CONTENT_NAME						= "SELECT Name FROM DMS_Content WHERE DMS_Content.DMS_Content_ID = ? ";
+	public static final String				SQL_GET_CONTENT_TYPE							= "SELECT at.Value FROM DMS_Content c 																	"
+																									+ "	INNER JOIN DMS_Association 		a	ON a.DMS_Content_ID = c.DMS_Content_ID 					"
+																									+ " INNER JOIN DMS_AssociationType	at	ON at.DMS_AssociationType_ID = a.DMS_AssociationType_ID AND at.DMS_AssociationType_ID <> 1000003 "
+																									+ " WHERE c.DMS_Content_ID = ? 																	";
 
-	public static final String				SQL_GET_ANOTHER_VERSION_IDS
-																							= "SELECT DMS_Content.* FROM DMS_Content LEFT JOIN DMS_Association ON DMS_Association.DMS_Content_ID = DMS_Content.DMS_Content_ID "
-																								+ "WHERE DMS_Content_Related_ID = "
-																									+ "( SELECT DMS_Association.DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Association.DMS_Content_ID = ? ) UNION "
-																									+ "SELECT DMS_Content.* FROM DMS_Content WHERE DMS_Content.DMS_Content_ID = ( SELECT DMS_Association.DMS_Content_Related_ID FROM DMS_Association WHERE DMS_Association.DMS_Content_ID = ? )";
+	public static final String				SQL_GET_ANOTHER_VERSION_IDS						= "SELECT c.DMS_Content_ID FROM DMS_Content c "
+																									+ " INNER JOIN DMS_Association a ON a.DMS_Content_ID = c.DMS_Content_ID "
+																									+ " INNER JOIN DMS_Association aa ON aa.DMS_Content_Related_ID = a.DMS_Content_Related_ID  OR aa.DMS_Content_Related_ID = c.DMS_Content_ID "
+																									+ " WHERE aa.DMS_Content_ID = ? AND COALESCE(aa.DMS_AssociationType_ID, 0) <> 1000003 ";
 
-	public static final String				SQL_GET_DMS_CONTENT								= "SELECT * FROM DMS_Content WHERE DMS_Content_ID = ? ";
-
-	public static final String				SQL_COPY_DIR_MACHING_CONTENT_NAME
-																							= "SELECT Name FROM DMS_Content WHERE ( DMS_Content.Name = ? OR DMS_Content.Name LIKE ? ) AND ((ParentURL = ? AND True=?) OR (ParentURL IS NULL AND False = ? )) AND IsActive = 'Y' ";
-
-	public static final String				SQL_CHECK_ACTUAL_FILE_DIR_EXISTS_BOTH
-																							= "SELECT DMS_Content_ID FROM DMS_Content WHERE Value = ? AND ((ParentURL = ? AND True=?) OR (ParentURL IS NULL AND False = ?))";
-
-	public static final String				GET_PARENT_FOR_CONTENT
-																							= "SELECT DMS_Content.* FROM DMS_Content LEFT JOIN DMS_Association on DMS_Association.DMS_Content_ID = DMS_Content.DMS_Content_ID "
-																								+ "LEFT JOIN DMS_AssociationType ON DMS_AssociationType.DMS_AssociationType_ID = DMS_Association.DMS_AssociationType_ID "
-																									+ "WHERE ParentURL = ? AND DMS_Content.Name = ?  AND DMS_AssociationType.Name = 'Parent' AND DMS_Content.IsActive = 'Y'";
 }

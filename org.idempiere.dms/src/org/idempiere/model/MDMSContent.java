@@ -122,35 +122,4 @@ public class MDMSContent extends X_DMS_Content
 	{
 		this.isSyncIndexForLinkableDocs = isSyncIndexForLinkableDocs;
 	}
-	
-	public static List<MDMSContent> getVersionRelatedContentID(int DMS_Content_ID)
-	{
-		List<MDMSContent> dmsContent = new ArrayList<MDMSContent>();
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_ANOTHER_VERSION_IDS, null);
-			pstmt.setInt(1, DMS_Content_ID);
-			pstmt.setInt(2, DMS_Content_ID);
-			rs = pstmt.executeQuery();
-			while (rs.next())
-			{
-				MDMSContent content = new MDMSContent(Env.getCtx(), rs, null);
-				dmsContent.add(content);
-			}
-		}
-		catch (SQLException e)
-		{
-			throw new AdempiereException("Something went wrong while fetching the content type for dms content: " + e,
-					e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-		return dmsContent;
-	}
 }

@@ -55,7 +55,7 @@ public class DMS_ZK_Util
 		File document = dms.getFileFromStorage(content);
 
 		if (document.exists())
-			downloadDocument(document,content);
+			downloadDocument(document, content);
 		else
 			FDialog.warn(0, "Document is not available.");
 	} // downloadDocument
@@ -66,8 +66,7 @@ public class DMS_ZK_Util
 		FileInputStream fis = new FileInputStream(document);
 		fis.read(bytesArray);
 		fis.close();
-		AMedia media = new AMedia(content.getName(), content.getDMS_MimeType().getMimeType(),
-				"application/octet-stream", bytesArray);
+		AMedia media = new AMedia(content.getName(), content.getDMS_MimeType().getMimeType(), "application/octet-stream", bytesArray);
 		Filedownload.save(media);
 	} // downloadDocument
 
