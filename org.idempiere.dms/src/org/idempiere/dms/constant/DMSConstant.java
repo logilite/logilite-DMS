@@ -223,13 +223,13 @@ public final class DMSConstant
 																									+ DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST
 																									+ " ) AS DATA )												";
 
-	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_NAME				= "SELECT DMS_Content_ID FROM DMS_Content WHERE AD_Client_ID = ? AND Name  = ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ?))";
+	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_NAME				= "SELECT DMS_Content_ID FROM DMS_Content WHERE AD_Client_ID = ? AND Name  = ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ?)) AND IsActive = 'Y'";
 
 	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_VALUE				= "SELECT DMS_Content_ID FROM DMS_Content WHERE AD_Client_ID = ? AND Value = ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ?))";
 
-	public static final String				SQL_GET_MATCHING_CONTENT_BY_NAME				= "SELECT Name  FROM DMS_Content WHERE AD_Client_ID = ? AND Name  LIKE ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
+	public static final String				SQL_GET_MATCHING_CONTENT_BY_NAME				= "SELECT Name  FROM DMS_Content WHERE AD_Client_ID = ? AND (Name  LIKE ? OR Name  LIKE ?) AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
 
-	public static final String				SQL_GET_MATCHING_CONTENT_BY_VALUE				= "SELECT Value FROM DMS_Content WHERE AD_Client_ID = ? AND Value LIKE ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
+	public static final String				SQL_GET_MATCHING_CONTENT_BY_VALUE				= "SELECT Value FROM DMS_Content WHERE AD_Client_ID = ? AND (Value LIKE ? OR Value LIKE ?) AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
 
 	public static final String				SQL_GET_CONTENT_TYPE							= "SELECT at.Value FROM DMS_Content c 																	"
 																									+ "	INNER JOIN DMS_Association 		a	ON a.DMS_Content_ID = c.DMS_Content_ID 					"

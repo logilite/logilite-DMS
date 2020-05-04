@@ -1790,15 +1790,15 @@ public class Utils
 			pstmt.setString(3, str2);
 			if (!Util.isEmpty(ParentUrl, true))
 			{
-				// pstmt.setString(4, ParentUrl);
-				pstmt.setBoolean(4, true);
+				pstmt.setString(4, ParentUrl);
 				pstmt.setBoolean(5, true);
+				pstmt.setBoolean(6, true);
 			}
 			else
 			{
-				// pstmt.setString(4, "");
-				pstmt.setBoolean(4, false);
+				pstmt.setString(4, "");
 				pstmt.setBoolean(5, false);
+				pstmt.setBoolean(6, false);
 			}
 			rs = pstmt.executeQuery();
 			while (rs.next())
