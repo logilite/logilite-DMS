@@ -1,6 +1,7 @@
 package org.idempiere.dms;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,19 +50,23 @@ public class DMS_ZK_Util
 
 	static CCache<String, IDMSViewer> cache_thumbnailGenerator = new CCache<String, IDMSViewer>("DMSViewer", 2);
 
-	public static void downloadDocument(DMS dms, MDMSContent content) throws FileNotFoundException
+	public static void downloadDocument(DMS dms, MDMSContent content) throws FileNotFoundException, IOException
 	{
 		File document = dms.getFileFromStorage(content);
 
 		if (document.exists())
-			downloadDocument(document);
+			downloadDocument(document, content);
 		else
 			FDialog.warn(0, "Document is not available.");
 	} // downloadDocument
 
-	public static void downloadDocument(File document) throws FileNotFoundException
+	public static void downloadDocument(File document, MDMSContent content) throws FileNotFoundException, IOException
 	{
-		AMedia media = new AMedia(document, "application/octet-stream", null);
+		byte[] bytesArray = new byte[(int) document.length()];
+		FileInputStream fis = new FileInputStream(document);
+		fis.read(bytesArray);
+		fis.close();
+		AMedia media = new AMedia(content.getName(), content.getDMS_MimeType().getMimeType(), "application/octet-stream", bytesArray);
 		Filedownload.save(media);
 	} // downloadDocument
 

@@ -13,10 +13,14 @@
 
 package org.idempiere.dms.factories;
 
+import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 
-public interface IContentManager {
+public interface IContentManager
+{
+	public String getPathByValue(I_DMS_Content content);
 
-	public String getPath(I_DMS_Content content);
-	
+	public String getPathByName(I_DMS_Content content);
+
+	public String getContentName(IFileStorageProvider storageProvider, String contentType, I_DMS_Content content, String fileName, String extention, String type, String operationType);
 }

@@ -54,6 +54,11 @@ public final class DMSConstant
 	public static final String				REG_EXP_FILENAME								= "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
 	public static final String				REG_EXP_WINDOWS_DIRNAME_VALIDATE				= "((^(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])$)|([\\\\//:*?\\\"<>|?*\\x00-\\x1F]))";
 	public static final String				REG_EXP_LINUX_DIRNAME_VALIDATE					= "(/)";
+	public static final String				REG_EXP_VERSION_FILE							= "^.*\\(\\d+\\).\\w+$";
+	public static final String				REG_EXP_LIKE_STR								= "%";
+	public static final String				REG_EXP_PERIOD									= ".";
+	public static final String				REG_EXP_UNDERSCORE_LIKE_STR						= "__%";
+	public static final String				REG_EXP_UNDERSCORE_STR							= "_";
 
 	// Pattern
 	public static final Pattern				PATTERN_WINDOWS_DIRNAME_ISVALID					= Pattern.compile(REG_EXP_WINDOWS_DIRNAME_VALIDATE);
@@ -148,6 +153,20 @@ public final class DMSConstant
 	public static final String				TTT_PREVIOUS_RECORD								= "Previous Record";
 	public static final String				TTT_DISPLAYS_ITEMS_LAYOUT						= "Displays items Layout";
 
+	// Contents Type
+	public static final String				CONTENT_FILE									= "File";
+	public static final String				CONTENT_DIR										= "Dir";
+
+	// Operations
+	public static final String				OPERATION_CREATE								= "OpsCreate";
+	public static final String				OPERATION_RENAME								= "OpsRename";
+	public static final String				OPERATION_COPY									= "OpsCopy";
+
+	// Content Categories
+	public static final String				CONTENT_TYPE_PARENT								= "Parent";
+	public static final String				CONTENT_TYPE_VERSION							= "Version";
+	public static final String				CONTENT_TYPE_VERSIONPARENT						= "VersionParent";
+
 	// Date Format
 	public static final SimpleDateFormat	SDF												= new SimpleDateFormat("yyyy-MM-dd hh:mm z");
 	public static final SimpleDateFormat	SDF_WITH_TIME									= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
@@ -203,5 +222,23 @@ public final class DMSConstant
 																									+ "			DMS_Content_ID IN (	SELECT DMS_Content_ID FROM ("
 																									+ DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST
 																									+ " ) AS DATA )												";
+
+	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_NAME				= "SELECT DMS_Content_ID FROM DMS_Content WHERE AD_Client_ID = ? AND Name  = ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ?)) AND IsActive = 'Y'";
+
+	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_VALUE				= "SELECT DMS_Content_ID FROM DMS_Content WHERE AD_Client_ID = ? AND Value = ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ?))";
+
+	public static final String				SQL_GET_MATCHING_CONTENT_BY_NAME				= "SELECT Name  FROM DMS_Content WHERE AD_Client_ID = ? AND (Name  LIKE ? OR Name  LIKE ?) AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
+
+	public static final String				SQL_GET_MATCHING_CONTENT_BY_VALUE				= "SELECT Value FROM DMS_Content WHERE AD_Client_ID = ? AND (Value LIKE ? OR Value LIKE ?) AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
+
+	public static final String				SQL_GET_CONTENT_TYPE							= "SELECT at.Value FROM DMS_Content c 																	"
+																									+ "	INNER JOIN DMS_Association 		a	ON a.DMS_Content_ID = c.DMS_Content_ID 					"
+																									+ " INNER JOIN DMS_AssociationType	at	ON at.DMS_AssociationType_ID = a.DMS_AssociationType_ID AND at.DMS_AssociationType_ID <> 1000003 "
+																									+ " WHERE c.DMS_Content_ID = ? 																	";
+
+	public static final String				SQL_GET_ANOTHER_VERSION_IDS						= "SELECT c.DMS_Content_ID FROM DMS_Content c "
+																									+ " INNER JOIN DMS_Association a ON a.DMS_Content_ID = c.DMS_Content_ID "
+																									+ " INNER JOIN DMS_Association aa ON aa.DMS_Content_Related_ID = a.DMS_Content_Related_ID  OR aa.DMS_Content_Related_ID = c.DMS_Content_ID "
+																									+ " WHERE aa.DMS_Content_ID = ? AND COALESCE(aa.DMS_AssociationType_ID, 0) <> 1000003 ";
 
 }

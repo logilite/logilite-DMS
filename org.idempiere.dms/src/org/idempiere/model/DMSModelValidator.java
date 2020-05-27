@@ -134,7 +134,7 @@ public class DMSModelValidator implements ModelValidator
 
 							// Delete and Create Index
 							indexSeracher.deleteIndex(content.getDMS_Content_ID());
-							indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPath(content)));
+							indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPathByValue(content)));
 
 							// Update the value of IsIndexed flag in Content
 							if (!content.isIndexed())

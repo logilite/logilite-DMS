@@ -838,7 +838,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		allowUserToCreateDir();
 
-		// Event for Searching content Simple or Advance level
+		// Event for Searching content Simple or Adavance level
 		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().equals(vsearchBox.getButton()))
 		{
 			searchContents(false);
@@ -991,7 +991,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * @param component
 	 * @throws FileNotFoundException
 	 */
-	private void openDirectoryORContent(Component component) throws FileNotFoundException
+	private void openDirectoryORContent(Component component) throws FileNotFoundException, IOException
 	{
 		selectedDMSContent.push((MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
 		MDMSAssociation selectedAssociation = (MDMSAssociation) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION);
@@ -1053,7 +1053,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				else
 				{
-					DMS_ZK_Util.downloadDocument(documentToPreview);
+					DMS_ZK_Util.downloadDocument(documentToPreview, currDMSContent);
 				}
 			}
 			else
