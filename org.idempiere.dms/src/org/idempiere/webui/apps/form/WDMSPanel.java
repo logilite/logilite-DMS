@@ -105,7 +105,7 @@ import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
 import org.zkoss.zul.impl.XulElement;
 
-public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
+public class WDMSPanel extends Panel implements EventListener <Event>, ValueChangeListener
 {
 	private static final long		serialVersionUID		= -6813481516566180243L;
 	private static CLogger			log						= CLogger.getCLogger(WDMSPanel.class);
@@ -169,7 +169,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private MDMSContent				copyDMSContent			= null;
 	private MDMSContent				dirContent				= null;
 
-	private Stack<MDMSContent>		selectedDMSContent		= new Stack<MDMSContent>();
+	private Stack <MDMSContent>		selectedDMSContent		= new Stack <MDMSContent>();
 
 	//
 	private Component				compCellRowViewer		= null;
@@ -206,9 +206,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private boolean					isDocExplorerWindow		= false;
 	private boolean					isMountingBaseStructure	= false;
 
-	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
+	private ArrayList <WEditor>		m_editors				= new ArrayList <WEditor>();
 
-	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
+	private Map <String, WEditor>	ASI_Value				= new HashMap <String, WEditor>();
 
 	private AbstractADWindowContent	winContent;
 
@@ -390,6 +390,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search", DMSConstant.TTT_SEARCH, this);
 		vsearchBox.addEventListener(Events.ON_OK, this);
+		vsearchBox.getButton().setStyle("margin: 0px !important;");
 
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblAdvanceSearch, 3);
@@ -516,7 +517,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMS_ZK_Util.setButtonData(btnToggleView, "List", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
 
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
-		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important;");
+		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important; height: 45px; width: 45px;");
 
 		hbox = new Hbox();
 		hbox.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
@@ -536,11 +537,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		cell_layout.appendChild(gridBreadCrumb);
 		cell_layout.appendChild(grid);
 
-		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; min-height: 32px; max-height: 50px; "
-		                        + "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px; overflow-y: scroll;");
+		gridBreadCrumb.setClass("dms-breadcrumb");
+		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; height: 45px; "
+		                        + "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px; overflow-x: auto;");
 
 		breadRow.setZclass("none");
-		breadRow.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
+		breadRow.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION_NOWRAP);
 
 		Splitter splitter = new Splitter();
 		splitter.setCollapse("after");
@@ -691,7 +693,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
 			final WUploadContent uploadContent = new WUploadContent(dms, dirContent, true, this.getTable_ID(), this.getRecord_ID());
-			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
 
 				@Override
 				public void onEvent(Event e) throws Exception
@@ -748,7 +750,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(mnu_rename))
 		{
 			final WRenameContent renameContent = new WRenameContent(dms, dirContent, tableID, recordID);
-			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
 
 				@Override
 				public void onEvent(Event e) throws Exception
@@ -763,7 +765,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(mnu_delete))
 		{
 			// TODO inactive DMS_content and same change in solr index
-			Callback<Boolean> callback = new Callback<Boolean>() {
+			Callback <Boolean> callback = new Callback <Boolean>() {
 				@Override
 				public void onCallback(Boolean result)
 				{
@@ -775,7 +777,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						String warningMsg = dms.hasLinkableDocs(deletableContent, deletableAssociation);
 						if (!Util.isEmpty(warningMsg, true))
 						{
-							Callback<Boolean> callbackWarning = new Callback<Boolean>() {
+							Callback <Boolean> callbackWarning = new Callback <Boolean>() {
 
 								@Override
 								public void onCallback(Boolean result)
@@ -901,11 +903,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		lblPositionInfo.setValue(currDMSContent.getName());
 
-		List<BreadCrumbLink> parents = getParentLinks();
+		List <BreadCrumbLink> parents = getParentLinks();
 		if (!parents.isEmpty())
 		{
 			breadRow.getChildren().clear();
-			Iterator<BreadCrumbLink> iterator = parents.iterator();
+			Iterator <BreadCrumbLink> iterator = parents.iterator();
 			while (iterator.hasNext())
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
@@ -930,13 +932,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public void renderViewer()
 	{
-		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = null;
+		HashMap <I_DMS_Content, I_DMS_Association> contentsMap = null;
 
 		// Setting current dms content value on label
 		if (isTabViewer())
 		{
-			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName())
-			                                                 : null;
+			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;
 			lblPositionInfo.setValue(currContentValue);
 		}
 
@@ -1071,14 +1072,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void navigationBack()
 	{
-		List<BreadCrumbLink> parents = getParentLinks();
+		List <BreadCrumbLink> parents = getParentLinks();
 		int contentID = 0;
 		if (!parents.isEmpty())
 		{
 			breadRow.getChildren().clear();
 
 			int count = 0;
-			Iterator<BreadCrumbLink> iterator = parents.iterator();
+			Iterator <BreadCrumbLink> iterator = parents.iterator();
 			while (iterator.hasNext())
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
@@ -1190,7 +1191,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		createDirectoryForm = new WCreateDirectoryForm(dms, currDMSContent, tableID, recordID);
 
-		createDirectoryForm.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+		createDirectoryForm.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
 
 			@Override
 			public void onEvent(Event event) throws Exception
@@ -1207,7 +1208,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		uploadContent = new WUploadContent(dms, currDMSContent, false, tableID, recordID);
 
-		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
 
 			@Override
 			public void onEvent(Event event) throws Exception
@@ -1415,9 +1416,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 	} // linkCopyDocument
 
-	private HashMap<String, List<Object>> getQueryParamas()
+	private HashMap <String, List <Object>> getQueryParamas()
 	{
-		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
+		HashMap <String, List <Object>> params = new LinkedHashMap <String, List <Object>>();
 
 		if (!Util.isEmpty(txtDocumentName.getValue(), true))
 			setSearchParams(DMSConstant.NAME, "*" + txtDocumentName.getValue().toLowerCase() + "*", null, params);
@@ -1460,8 +1461,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// if chkInActive = true, display all files
 		// if chkInActive = false, display only active files
 		if (chkInActive != null)
-			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false
-			                                                                                            : null,
+			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false : null,
 			                params);
 
 		//
@@ -1555,8 +1555,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				else if (dt == DisplayType.YesNo)
 				{
-					from = ((boolean) editor.getValue() ? "Y"
-					                                    : "N");
+					from = ((boolean) editor.getValue() ? "Y" : "N");
 					to = null;
 				}
 				else if (dt == DisplayType.String || dt == DisplayType.Text)
@@ -1594,9 +1593,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		return params;
 	} // getQueryParamas
 
-	private void setSearchParams(String searchAttributeName, Object data, Object data2, HashMap<String, List<Object>> params)
+	private void setSearchParams(String searchAttributeName, Object data, Object data2, HashMap <String, List <Object>> params)
 	{
-		ArrayList<Object> value = new ArrayList<Object>();
+		ArrayList <Object> value = new ArrayList <Object>();
 
 		if (data instanceof Date || data instanceof Timestamp)
 			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data));
@@ -1730,9 +1729,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		gridBreadCrumb.appendChild(breadRows);
 	} // showBreadcumb
 
-	public List<BreadCrumbLink> getParentLinks()
+	public List <BreadCrumbLink> getParentLinks()
 	{
-		List<BreadCrumbLink> parents = new ArrayList<BreadCrumbLink>();
+		List <BreadCrumbLink> parents = new ArrayList <BreadCrumbLink>();
 		for (Component component : breadRow.getChildren())
 		{
 			if (component instanceof BreadCrumbLink)
