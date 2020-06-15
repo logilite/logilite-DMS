@@ -65,7 +65,6 @@ import org.adempiere.webui.editor.WTimeEditor;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
-import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
@@ -593,7 +592,6 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		//
 		DMSConstant.SDF_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
 		addRootBreadCrumb();
-		SessionManager.getAppDesktop();
 	}
 
 	@Override
@@ -932,27 +930,30 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	 */
 	public void renderViewer()
 	{
-		HashMap <I_DMS_Content, I_DMS_Association> contentsMap = null;
-
-		// Setting current dms content value on label
-		if (isTabViewer())
+		if (recordID > 0 || isDocExplorerWindow)
 		{
-			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;
-			lblPositionInfo.setValue(currContentValue);
+			HashMap<I_DMS_Content, I_DMS_Association> contentsMap = null;
+
+			// Setting current dms content value on label
+			if (isTabViewer())
+			{
+				String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;
+				lblPositionInfo.setValue(currContentValue);
+			}
+
+			if (isSearch)
+				contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
+			else if (isGenericSearch)
+				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
+			else
+				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, true);
+
+			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
+
+			// Component Viewer
+			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
+			viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 		}
-
-		if (isSearch)
-			contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
-		else if (isGenericSearch)
-			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
-		else
-			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, true);
-
-		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
-
-		// Component Viewer
-		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
-		viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 
 		tabBox.setSelectedIndex(0);
 	} // renderViewer
