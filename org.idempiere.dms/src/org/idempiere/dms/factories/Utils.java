@@ -905,34 +905,40 @@ public class Utils
 		String baseDir = fileStorageProvider.getBaseDirectory(null);
 		File file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName);
 
-		int mountingContentID = 0;
 		int tableNameContentID = 0;
 		int recordContentID = 0;
+
+		int mountingContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_ROOT_MOUNTING_BASE_CONTENT, mountingBaseName, Env.getAD_Client_ID(Env.getCtx()));
 
 		if (!file.exists())
 		{
 			file.mkdirs();
-			mountingContentID = createDMSContent(mountingBaseName, MDMSContent.CONTENTBASETYPE_Directory, null, true);
-			createAssociation(mountingContentID, 0, Record_ID, AD_Table_ID, 0, 0, null);
-		}
-		else
-		{
-			mountingContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_BASE_CONTENT, mountingBaseName, Env.getAD_Client_ID(Env.getCtx()));
+
+			// Check if already DMS content created for Mounting Base Folder but storage moved or something
+			// happen to prevent to create another content for same
+			if (mountingContentID <= 0)
+			{
+				mountingContentID = createDMSContent(mountingBaseName, MDMSContent.CONTENTBASETYPE_Directory, null, true);
+				createAssociation(mountingContentID, 0, 0, 0, 0, 0, null);
+			}
 		}
 
 		if (!Util.isEmpty(table_Name) && Record_ID > 0)
 		{
 			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name);
 
+			tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_CONTENT_FROM_CONTENTNAME, table_Name, Env.getAD_Client_ID(Env.getCtx()));
+
 			if (!file.exists())
 			{
 				file.mkdirs();
-				tableNameContentID = createDMSContent(table_Name, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + mountingBaseName, true);
-				createAssociation(tableNameContentID, mountingContentID, Record_ID, AD_Table_ID, 0, 0, null);
-			}
-			else
-			{
-				tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_CONTENTID_FROM_CONTENTNAME, table_Name, Env.getAD_Client_ID(Env.getCtx()));
+
+				// Check if already DMS content created
+				if (tableNameContentID <= 0)
+				{
+					tableNameContentID = createDMSContent(table_Name, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + mountingBaseName, true);
+					createAssociation(tableNameContentID, mountingContentID, 0, AD_Table_ID, 0, 0, null);
+				}
 			}
 
 			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR + Record_ID);

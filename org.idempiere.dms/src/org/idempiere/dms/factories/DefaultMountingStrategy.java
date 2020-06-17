@@ -73,7 +73,7 @@ public class DefaultMountingStrategy implements IMountingStrategy
 	public MDMSContent getMountingParentForArchive()
 	{
 		int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
-		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_BASE_CONTENT, Utils.getDMSMountingArchiveBase(AD_Client_ID), AD_Client_ID);
+		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_ROOT_MOUNTING_BASE_CONTENT, Utils.getDMSMountingArchiveBase(AD_Client_ID), AD_Client_ID);
 
 		if (DMS_Content_ID > 0)
 			return new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
