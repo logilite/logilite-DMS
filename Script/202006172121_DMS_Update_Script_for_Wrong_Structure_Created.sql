@@ -23,7 +23,7 @@
 -- Must deploy below changeset when before/after apply this sql script [Branch: iDempiere-4.1]
 -- Changeset:340 (52492bdd9aa0) Prevent to show root content in New record entry in DMS as Tab configured.
 -- Changeset:341 (1772501ba64d) Prevent to create duplicate mounting content entry.
--- Changeset:342 (            ) Allow to create content entry when folder exists but no DB records. - Correction SQL script for wrong DMS Mounting structure.
+-- Changeset:342 (e2c4e9006902) Allow to create content entry when folder exists but no DB records. - Correction SQL script for wrong DMS Mounting structure.
 -- 
 
 
