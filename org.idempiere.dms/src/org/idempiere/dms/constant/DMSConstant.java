@@ -193,7 +193,9 @@ public final class DMSConstant
 
 	public static final String				SQL_GET_ASSOCIATION_ID_FROM_CONTENT				= "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND NVL(DMS_AssociationType_ID, 0)";
 
-	public static final String				SQL_GET_MOUNTING_CONTENT_FROM_CONTENTNAME		= "SELECT DMS_Content_ID FROM DMS_Content WHERE Name = ? AND AD_Client_ID = ? AND ContentBaseType = 'DIR' AND IsActive = 'Y' AND IsMounting = 'Y' AND ParentUrl IS NOT NULL ORDER BY Created ";
+	public static final String				SQL_GET_SUB_MOUNTING_BASE_CONTENT				= " SELECT c.DMS_Content_ID 	FROM DMS_Content c "
+																									+ " INNER JOIN DMS_Association a	ON (a.DMS_Content_ID = c.DMS_Content_ID) "
+																									+ " WHERE c.ContentBaseType = 'DIR' AND c.IsActive = 'Y' AND c.IsMounting = 'Y' AND c.ParentURL IS NOT NULL AND c.AD_Client_ID = ? AND a.DMS_Content_Related_ID = ? AND a.AD_Table_ID = ? AND c.Name = ? ";
 
 	public static final String				SQL_GET_ROOT_MOUNTING_BASE_CONTENT				= "SELECT DMS_Content_ID FROM DMS_Content WHERE Name = ? AND AD_Client_ID = ? AND ContentBaseType = 'DIR' AND IsActive = 'Y' AND IsMounting = 'Y' AND ParentUrl IS NULL ORDER BY Created";
 
