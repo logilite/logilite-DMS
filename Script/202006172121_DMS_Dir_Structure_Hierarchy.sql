@@ -24,7 +24,8 @@ UNION ALL
 )
 SELECT c.IsActive, s.*
 FROM SupplyTree AS s 
-INNER JOIN DMS_content c ON (c.DMS_content_ID = s.DMS_content_ID)
+INNER JOIN DMS_content c ON (c.DMS_content_ID = s.DMS_content_ID)		
 -- WHERE Level <= 4
-ORDER BY  s.AD_Client_ID, Level, ParentURL, DMS_Content_Related_ID, AD_Table_ID, Record_ID, Path
+-- ORDER BY  s.AD_Client_ID, Level, ParentURL, DMS_Content_ID, DMS_Content_Related_ID, AD_Table_ID, Record_ID, Path
+ORDER BY  s.AD_Client_ID, Path, ParentURL, DMS_Content_ID, AD_Table_ID, Record_ID, DMS_Content_Related_ID
 ;
