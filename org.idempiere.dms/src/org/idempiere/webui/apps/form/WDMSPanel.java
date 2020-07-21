@@ -71,6 +71,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
+import org.compiere.model.MToolBarButtonRestrict;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
@@ -111,6 +112,8 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 	public static final String		ATTRIBUTE_TOGGLE		= "Toggle";
 	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
+	private static final String		TOOLBAR_BTN_DMS_DIR		= "DMS - Create Directory";
+	private static final String		TOOLBAR_BTN_DMS_UPLOAD	= "DMS - Upload Content";
 
 	private Tabbox					tabBox					= new Tabbox();
 	private Tabs					tabs					= new Tabs();
@@ -198,6 +201,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	private int						recordID				= 0;
 	private int						tableID					= 0;
 	private int						windowID				= 0;
+	private int						tabID					= 0;
 
 	private boolean					isSearch				= false;
 	private boolean					isGenericSearch			= false;
@@ -227,7 +231,10 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 		this.winContent = winContent;
 		this.windowID = winContent.getADWindow().getAD_Window_ID();
+		this.tabID = winContent.getActiveGridTab().getAD_Tab_ID();
 		this.isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
+		btnCreateDir.setVisible(!MToolBarButtonRestrict.isToolbarButtonRestricted(windowID, tabID, TOOLBAR_BTN_DMS_DIR));
+		btnUploadContent.setVisible(!MToolBarButtonRestrict.isToolbarButtonRestricted(windowID, tabID, TOOLBAR_BTN_DMS_UPLOAD));
 
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
@@ -235,6 +242,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		String tableName = winContent.getADTab().getSelectedGridTab().getTableName();
 		dms.initMountingStrategy(tableName);
 		dms.initiateMountingContent(tableName, Record_ID, Table_ID);
+		dms.setAD_Window_ID(windowID);
 
 		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
 
@@ -468,12 +476,21 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		hbox.appendChild(dbUpdatedTo);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 2, hbox);
 
-		Column_ID = MColumn.getColumn_ID(MDMSContentType.Table_Name, MDMSContentType.COLUMNNAME_DMS_ContentType_ID);
-		lookup = null;
+		Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
+		MColumn mColumn = new MColumn(Env.getCtx(), Column_ID, null);
 		try
 		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			lstboxContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
+			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang,
+					MDMSContent.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
+			if (mColumn.getAD_Val_Rule_ID() > 0)
+			{
+				lookup.getLookupInfo().ValidationCode = mColumn.getAD_Val_Rule().getCode();
+				lookup.getLookupInfo().IsValidated = false;
+				lookup.getLookupInfo().ctx.setProperty("0|DMS_AD_Window_ID", String.valueOf(dms.getAD_Window_ID()));
+			}
+			lookup.refresh();
+			lstboxContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true,
+					lookup);
 		}
 		catch (Exception e)
 		{

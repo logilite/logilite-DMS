@@ -105,6 +105,7 @@ public class DMS
 
 	private boolean					isDocExplorerWindow			= false;
 
+	private int						AD_Window_ID				= 0;
 	public int						AD_Client_ID				= 0;
 
 	/**
@@ -1832,5 +1833,15 @@ public class DMS
 				content.save();
 			}
 		}
+	}
+
+	public int getAD_Window_ID()
+	{
+		return AD_Window_ID;
+	}
+
+	public void setAD_Window_ID(int aD_Window_ID)
+	{
+		AD_Window_ID = aD_Window_ID;
 	}
 }

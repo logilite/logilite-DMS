@@ -162,13 +162,22 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int Column_ID = MColumn.getColumn_ID(MDMSContentType.Table_Name, MDMSContentType.COLUMNNAME_DMS_ContentType_ID);
+		int Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
+		MColumn mColumn = new MColumn(Env.getCtx(), Column_ID, null);
 		MLookup lookup = null;
 		try
 		{
 			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
-			                            MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			contentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
+					MDMSContent.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
+			if (mColumn.getAD_Val_Rule_ID() > 0)
+			{
+				lookup.getLookupInfo().ValidationCode = mColumn.getAD_Val_Rule().getCode();
+				lookup.getLookupInfo().IsValidated = false;
+				lookup.getLookupInfo().ctx.setProperty("0|DMS_AD_Window_ID", String.valueOf(dms.getAD_Window_ID()));
+			}
+			lookup.refresh();
+			contentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true,
+					lookup);
 		}
 		catch (Exception e)
 		{
