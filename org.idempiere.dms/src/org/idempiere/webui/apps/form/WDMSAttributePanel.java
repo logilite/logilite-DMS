@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
@@ -69,7 +68,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.South;
 
-public class WDMSAttributePanel extends Panel implements EventListener<Event>, ValueChangeListener 
+public class WDMSAttributePanel extends Panel implements EventListener <Event>, ValueChangeListener
 {
 
 	/**
@@ -129,10 +128,13 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	private boolean				isMountingBaseStructure	= false;
 	private boolean				isLink					= false;
 
-	private WTableDirEditor		contentType				= null;
+	private WTableDirEditor		editorContentType		= null;
 
-	public WDMSAttributePanel(DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess,
-	                          boolean isMountingBaseStructure, boolean isLink)
+	private int					windowNo				= 0;
+	private int					tabNo					= 0;
+
+	public WDMSAttributePanel(	DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure, boolean isLink, int windowNo,
+								int tabNo)
 	{
 		this.dms = dms;
 		this.tabBox = tabBox;
@@ -142,6 +144,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		this.isWindowAccess = isWindowAccess;
 		this.isMountingBaseStructure = isMountingBaseStructure;
 		this.isLink = isLink;
+		this.windowNo = windowNo;
+		this.tabNo = tabNo;
 
 		try
 		{
@@ -184,7 +188,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		lblStatus = new Label();
 		ZkCssHelper.appendStyle(lblStatus, "font-weight: bold;");
 		ZkCssHelper.appendStyle(lblStatus, "align: center;");
-		lblStatus.setValue(MUser.getNameOfUser(content.getUpdatedBy()) + " edited at " + content.getUpdated());
+		lblStatus.setValue(MUser.getNameOfUser(content.getUpdatedBy()) + " edited at " + DMSConstant.SDF.format(content.getUpdated()));
 
 		panelAttribute.appendChild(lblStatus);
 		tabBoxAttribute.appendChild(tabsAttribute);
@@ -298,8 +302,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 
 		MDMSAssociation dmsAssociation = dms.getAssociationFromContent(content.getDMS_Content_ID());
 
-		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = new HashMap<I_DMS_Content, I_DMS_Association>();
-		List<I_DMS_Content> contentVersions = MDMSContent.getVersionHistory(content);
+		HashMap <I_DMS_Content, I_DMS_Association> contentsMap = new HashMap <I_DMS_Content, I_DMS_Association>();
+		List <I_DMS_Content> contentVersions = MDMSContent.getVersionHistory(content);
 		for (I_DMS_Content contentVersion : contentVersions)
 		{
 			contentsMap.put(contentVersion, dmsAssociation);
@@ -308,8 +312,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		String[] eventsList = new String[] { Events.ON_CLICK, Events.ON_DOUBLE_CLICK };
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_VERSION);
-		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this,
-		                     eventsList);
+		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this, eventsList);
 
 	} // initVersionHistory
 
@@ -350,40 +353,17 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		txtName.setEnabled(isEdit);
 		txtDesc.setEnabled(isEdit);
 
-		if (contentType != null)
-			contentType.removeValuechangeListener(this);
+		lblContentType = new Label(DMSConstant.MSG_DMS_CONTENT_TYPE);
+
+		if (editorContentType != null)
+			editorContentType.removeValuechangeListener(this);
 
 		int Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
-		MColumn mColumn = new MColumn(Env.getCtx(), Column_ID, null);
-		MLookup lookup = null;
-		try
-		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
-					MDMSContent.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			if (mColumn.getAD_Val_Rule_ID() > 0)
-			{
-				lookup.getLookupInfo().ValidationCode = mColumn.getAD_Val_Rule().getCode();
-				lookup.getLookupInfo().IsValidated = false;
-				lookup.getLookupInfo().ctx.setProperty("0|DMS_AD_Window_ID", String.valueOf(dms.getAD_Window_ID()));
-			}
-			lookup.refresh();
-			contentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true,
-					lookup);
-			contentType.setValue(contentTypeID);
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "Contenttype fetching failure :", e);
-			throw new AdempiereException("Contenttype fetching failure :" + e);
-		}
-
-		lblContentType = new Label(DMSConstant.MSG_DMS_CONTENT_TYPE);
-		contentTypeRow = new Row();
-		contentTypeRow.appendChild(lblContentType);
-		contentTypeRow.appendChild(contentType.getComponent());
-		contentTypeRow.setVisible(isEdit);
-		contentType.addValueChangeListener(this);
-		rows.appendChild(contentTypeRow);
+		MLookup lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
+		lookup.refresh();
+		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
+		editorContentType.setValue(contentTypeID);
+		editorContentType.addValueChangeListener(this);
 
 		Row row = new Row();
 		row.appendChild(lblName);
@@ -394,6 +374,13 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		row.appendChild(lblDesc);
 		row.appendChild(txtDesc);
 		rows.appendChild(row);
+
+		contentTypeRow = new Row();
+		contentTypeRow.appendChild(lblContentType);
+		contentTypeRow.appendChild(editorContentType.getComponent());
+		contentTypeRow.setVisible(isEdit);
+		rows.appendChild(contentTypeRow);
+
 		tabpanelAttribute.appendChild(commGrid);
 
 		ASIPanel = new WDLoadASIPanel(contentTypeID, content.getM_AttributeSetInstance_ID());
@@ -420,30 +407,29 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 			btnSave.setVisible(true);
 			btnEdit.setVisible(false);
 			contentTypeRow.setVisible(true);
-			if (contentType != null)
-				contentType.addValueChangeListener(this);
-			
+			if (editorContentType != null)
+				editorContentType.addValueChangeListener(this);
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
+			boolean isContentSave = false;
 			if (content.getDMS_ContentType_ID() != contentTypeID)
 			{
-				int oldAttributeSet_ID = content.getDMS_ContentType_ID() > 0
-						? content.getDMS_ContentType().getM_AttributeSet_ID() : 0;
+				isContentSave = true;
 
+				//
+				int oldAttributeSet_ID = content.getDMS_ContentType_ID() > 0 ? content.getDMS_ContentType().getM_AttributeSet_ID() : 0;
 				content.setDMS_ContentType_ID(contentTypeID);
-				content.save();
+				int newAttributeSet_ID = content.getDMS_ContentType_ID() > 0 ? content.getDMS_ContentType().getM_AttributeSet_ID() : 0;
 
-				int newAttributeSet_ID = content.getDMS_ContentType_ID() > 0
-						? content.getDMS_ContentType().getM_AttributeSet_ID() : 0;
+				//
 				if (oldAttributeSet_ID != newAttributeSet_ID)
 				{
 					MAttributeSet mAttributeSet = new MAttributeSet(Env.getCtx(), oldAttributeSet_ID, null);
 					MAttribute[] attributes = mAttributeSet.getMAttributes(false);
 					for (MAttribute att : attributes)
 					{
-						MAttributeInstance attInstance = att
-								.getMAttributeInstance(content.getM_AttributeSetInstance_ID());
+						MAttributeInstance attInstance = att.getMAttributeInstance(content.getM_AttributeSetInstance_ID());
 						if (attInstance != null)
 							attInstance.deleteEx(false);
 					}
@@ -455,12 +441,12 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 				String error = Utils.isValidFileName(txtName.getValue(), false);
 				if (!Util.isEmpty(error, true))
 					throw new WrongValueException(txtName, error);
-				
+
 				String fileName = txtName.getValue() + "." + FilenameUtils.getExtension(content.getName());
 				dms.renameContent(content, fileName);
 			}
 
-			ASIPanel.saveAttributes();
+			int asiID = ASIPanel.saveAttributes();
 			ASIPanel.setEditableAttribute(false);
 			btnSave.setVisible(false);
 			txtName.setEnabled(false);
@@ -468,10 +454,25 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 			contentTypeRow.setVisible(false);
 			btnEdit.setVisible(true);
 
-			if ((Util.isEmpty(content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
-			    || (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
+			if (content.getDMS_ContentType_ID() == 0)
+			{
+				asiID = 0;
+			}
+
+			if (content.getM_AttributeSetInstance_ID() != asiID)
+			{
+				content.setM_AttributeSetInstance_ID(asiID);
+				isContentSave = true;
+			}
+
+			if ((Util.isEmpty(content.getDescription()) && !Util.isEmpty(txtDesc.getValue())) || (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
 			{
 				content.setDescription(txtDesc.getValue());
+				isContentSave = true;
+			}
+
+			if (isContentSave)
+			{
 				content.save();
 			}
 
@@ -508,8 +509,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 			final Tab tab = (Tab) tabBox.getSelectedTab();
 			final WDMSAttributePanel panel = this;
 
-			WUploadContent uploadContent = new WUploadContent(dms, content, true, tableId, recordId);
-			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+			WUploadContent uploadContent = new WUploadContent(dms, content, true, tableId, recordId, windowNo, tabNo);
+			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
 
 				@Override
 				public void onEvent(Event arg0) throws Exception
@@ -548,10 +549,10 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	@Override
 	public void valueChange(ValueChangeEvent event)
 	{
-		if (event.getSource().equals(contentType))
+		if (event.getSource().equals(editorContentType))
 		{
-			if (contentType.getValue() != null)
-				contentTypeID = (int) contentType.getValue();
+			if (editorContentType.getValue() != null)
+				contentTypeID = (int) editorContentType.getValue();
 			else
 				contentTypeID = 0;
 			initAttributes(true);
