@@ -242,6 +242,10 @@ public final class DMSConstant
 	public static final String				SQL_GET_ANOTHER_VERSION_IDS						= "SELECT c.DMS_Content_ID FROM DMS_Content c "
 																									+ " INNER JOIN DMS_Association a ON a.DMS_Content_ID = c.DMS_Content_ID "
 																									+ " INNER JOIN DMS_Association aa ON aa.DMS_Content_Related_ID = a.DMS_Content_Related_ID  OR aa.DMS_Content_Related_ID = c.DMS_Content_ID "
-																									+ " WHERE aa.DMS_Content_ID = ? AND COALESCE(aa.DMS_AssociationType_ID, 0) <> 1000003 ";
+																								+ " WHERE aa.DMS_Content_ID = ? AND COALESCE(aa.DMS_AssociationType_ID, 0) <> 1000003 ";
+	// Access & Permission
+	public static final String				SQL_GET_CONTENT_BASED_ON_CONTENTTTYPE_ACCESS	= "SELECT c.DMS_Content_ID from DMS_Content c "
+																								+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
+																								+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) ";
 
 }

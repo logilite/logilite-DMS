@@ -83,6 +83,7 @@ import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
+import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
@@ -950,11 +951,14 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 			else
 				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, true);
 
-			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
+			// Content Type wise access restriction
+			IContentTypeAccess contentTypeAccess = DMS_ZK_Util.getContentTypeAccessFactory();
+			HashMap<I_DMS_Content, I_DMS_Association> contentsMapFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
 
 			// Component Viewer
+			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
-			viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+			viewerComponent.init(dms, contentsMapFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 		}
 
 		tabBox.setSelectedIndex(0);

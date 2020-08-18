@@ -25,6 +25,8 @@ import org.compiere.model.MImage;
 import org.compiere.util.CCache;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.idempiere.dms.factories.IContentTypeAccess;
+import org.idempiere.dms.factories.IContentTypeAccessFactory;
 import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.dms.factories.IDMSViewerFactory;
 import org.idempiere.dms.factories.Utils;
@@ -87,6 +89,24 @@ public class DMS_ZK_Util
 		return null;
 	}
 
+
+	/**
+	 * Factory call for DMS ContentTypeAccess
+	 * 
+	 * @param toggleAction
+	 * @return {@link IContentTypeAccess}
+	 */
+	public static IContentTypeAccess getContentTypeAccessFactory()
+	{
+		List<IContentTypeAccessFactory> factories = Service.locator().list(IContentTypeAccessFactory.class).getServices();
+		for (IContentTypeAccessFactory factory : factories)
+		{
+			return factory.get();
+		}
+
+		return null;
+	}
+	
 	/**
 	 * Get AImage for the Content
 	 * 
