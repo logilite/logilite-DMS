@@ -26,6 +26,8 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.model.DMSSubstituteTableInfo;
+import org.idempiere.model.MDMSSubstitute;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -40,6 +42,9 @@ public class CustomToolbarFactory implements IAction
 	private WDMSPanel				dmsPanel	= null;
 	private Window					dmsWindow	= null;
 
+	private MDMSSubstitute			substitute	= null;
+	private DMSSubstituteTableInfo	ssTableInfo	= null;
+
 	@Override
 	public void execute(Object target)
 	{
@@ -49,11 +54,19 @@ public class CustomToolbarFactory implements IAction
 		//
 		ADWindow window = (ADWindow) target;
 		winContent = window.getADWindowContent();
-		int tableID = winContent.getADTab().getSelectedGridTab().getAD_Table_ID();
-		int recordID = winContent.getADTab().getSelectedGridTab().getRecord_ID();
-		String tableName = winContent.getADTab().getSelectedGridTab().getTableName();
 
-		if (recordID == -1 || tableID == -1)
+		// Check if any sbustitute configuration exists for DMS for the table.
+		substitute = MDMSSubstitute.get(winContent.getADTab().getSelectedGridTab().getAD_Table_ID());
+
+		// Based on Substitute or normal table get Table and RecordID info
+		ssTableInfo = new DMSSubstituteTableInfo(winContent, winContent.getADTab().getSelectedGridTab(), substitute);
+		ssTableInfo.updateRecord();
+
+		int tableID = ssTableInfo.getTable_ID();
+		int recordID = ssTableInfo.getRecord_ID();
+		String tableName = ssTableInfo.getTable_Name();
+
+		if (recordID == -1 || tableID == -1 || winContent.getADTab().getSelectedGridTab().getRecord_ID() == -1)
 			return;
 
 		dmsPanel = new WDMSPanel(tableID, recordID, winContent);
@@ -73,10 +86,11 @@ public class CustomToolbarFactory implements IAction
 			@Override
 			public void onEvent(Event arg0) throws Exception
 			{
-				int associateRecords = DB.getSQLValue(null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
-				                                            + " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
-				        winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
-				        winContent.getADTab().getSelectedGridTab().getRecord_ID());
+				int associateRecords = DB
+								.getSQLValue(null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
+												+ " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
+												winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
+												winContent.getADTab().getSelectedGridTab().getRecord_ID());
 
 				winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed((associateRecords > 0));
 			}

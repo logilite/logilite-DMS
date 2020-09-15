@@ -21,6 +21,7 @@ import org.compiere.util.Env;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
+import org.idempiere.model.MDMSSubstitute;
 
 public class ModelFactory implements IModelFactory
 {
@@ -34,6 +35,8 @@ public class ModelFactory implements IModelFactory
 			return MDMSContent.class;
 		else if (tableName.equals(MDMSContentType.Table_Name))
 			return MDMSContentType.class;
+		else if (tableName.equals(MDMSSubstitute.Table_Name))
+			return MDMSSubstitute.class;
 
 		return null;
 	}
@@ -47,6 +50,8 @@ public class ModelFactory implements IModelFactory
 			return new MDMSContent(Env.getCtx(), Record_ID, trxName);
 		else if (tableName.equals(MDMSContentType.Table_Name))
 			return new MDMSContentType(Env.getCtx(), Record_ID, trxName);
+		else if (tableName.equals(MDMSSubstitute.Table_Name))
+			return new MDMSSubstitute(Env.getCtx(), Record_ID, trxName);
 
 		return null;
 	}
@@ -60,6 +65,8 @@ public class ModelFactory implements IModelFactory
 			return new MDMSContent(Env.getCtx(), rs, trxName);
 		else if (tableName.equals(MDMSContentType.Table_Name))
 			return new MDMSContentType(Env.getCtx(), rs, trxName);
+		else if (tableName.equals(MDMSSubstitute.Table_Name))
+			return new MDMSSubstitute(Env.getCtx(), rs, trxName);
 
 		return null;
 	}

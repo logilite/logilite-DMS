@@ -71,6 +71,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
 import org.compiere.model.MToolBarButtonRestrict;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
@@ -247,7 +248,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
 
-		String tableName = winContent.getADTab().getSelectedGridTab().getTableName();
+		String tableName = MTable.getTableName(Env.getCtx(), Table_ID);
 		dms.initMountingStrategy(tableName);
 		dms.initiateMountingContent(tableName, Record_ID, Table_ID);
 
