@@ -540,12 +540,6 @@ public class DMS
 		String parentURL;
 		int dms_content_id = 0;
 
-		String format = Utils.getFileExtension(fileName);
-		if (format == null)
-			format = Utils.getFileExtension(file.getName());
-		if (format == null)
-			throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
-
 		if (isVersion)
 		{
 			actualFileName = getActualFileOrDirName(DMSConstant.CONTENT_FILE, parentContent, null, null, DMSConstant.CONTENT_TYPE_VERSION, DMSConstant.OPERATION_CREATE);
@@ -560,6 +554,12 @@ public class DMS
 		}
 		else
 		{
+			String format = Utils.getFileExtension(fileName);
+			if (format == null)
+				format = Utils.getFileExtension(file.getName());
+			if (format == null)
+				throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
+
 			if (!fileName.endsWith(format))
 			{
 				actualFileName = getActualFileOrDirName(DMSConstant.CONTENT_FILE, parentContent, fileName, format, DMSConstant.CONTENT_TYPE_PARENT, DMSConstant.OPERATION_CREATE);
