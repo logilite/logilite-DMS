@@ -423,4 +423,18 @@ public class ArchiveDMS implements IArchiveStore
 		}
 		return attributeValueID;
 	} // getAttributeValueID
+
+	@Override
+	public boolean isPendingFlush()
+	{
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void flush(MArchive archive, MStorageProvider prov)
+	{
+		// TODO Auto-generated method stub
+		
+	}
 }
