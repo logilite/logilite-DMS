@@ -31,6 +31,7 @@ import org.idempiere.componenet.AbstractComponentIconViewer;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
@@ -93,7 +94,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 	public String renderDMSVersion(MDMSContent DMS_Content) throws IOException
 	{
-		MDMSAssociation dmsAssociation = dms.getAssociationFromContent(DMS_Content.getDMS_Content_ID());
+		MDMSAssociation association = dms.getAssociationFromContent(DMS_Content.getDMS_Content_ID());
 
 		List<I_DMS_Content> contentList = MDMSContent.getVersionHistory(DMS_Content);
 		if (contentList.size() == 0)
@@ -103,11 +104,11 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 		HashMap<I_DMS_Content, I_DMS_Association> contentMap = new HashMap<I_DMS_Content, I_DMS_Association>();
 		for (int i = 0; i < contentList.size(); i++)
-			contentMap.put(contentList.get(i), dmsAssociation);
+			contentMap.put(contentList.get(i), association);
 
 		String[] eventsList = new String[] { Events.ON_DOUBLE_CLICK };
 
-		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_LARGE);
+		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(DMSConstant.ICON_VIEW_LARGE);
 		viewerComponent.init(dms, contentMap, gridView, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 		return null;
 

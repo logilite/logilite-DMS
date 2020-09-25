@@ -36,10 +36,12 @@ import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.DMSOprUtils;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSContentType;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -158,7 +160,7 @@ public class ArchiveDMS implements IArchiveStore
 		try
 		{
 			Trx trx = null;
-			int cTypeID = Utils.getContentTypeID(DMS_ARCHIVE_CONTENT_TYPE, 0);
+			int cTypeID = MDMSContentType.getContentTypeIDFromName(DMS_ARCHIVE_CONTENT_TYPE, 0);
 
 			Integer tableID = archive.getAD_Table_ID();
 			String tableName = MTable.getTableName(Env.getCtx(), tableID);
@@ -190,8 +192,8 @@ public class ArchiveDMS implements IArchiveStore
 				trx = Trx.get(trxName, true);
 
 				// Create DMS Content
-				int contentID = dms.createDMSContent(file.getName(), file.getName(), MDMSContent.CONTENTBASETYPE_Content,
-						dms.getPathFromContentManager(mountingParent), null, file, cTypeID, 0, true, trxName);
+				int contentID = dms.createDMSContent(	file.getName(), file.getName(), MDMSContent.CONTENTBASETYPE_Content,
+														dms.getPathFromContentManager(mountingParent), null, file, cTypeID, 0, true, trxName);
 				MDMSContent content = new MDMSContent(Env.getCtx(), contentID, trxName);
 
 				// Create Attributes
@@ -205,7 +207,7 @@ public class ArchiveDMS implements IArchiveStore
 				MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, trxName);
 
 				// File write on Storage provider and Generate Thumbnail Image
-				Utils.writeFileOnStorageAndThumnail(dms, file, content);
+				DMSOprUtils.writeFileOnStorageAndThumnail(dms, file, content);
 
 				archive.setByteData(generateEntry(content, association));
 
@@ -365,13 +367,10 @@ public class ArchiveDMS implements IArchiveStore
 				attributeInstance.save();
 			}
 
-			if (processAttributeID > 0)
+			if (processAttributeID > 0 && archive.getAD_Process_ID() > 0)
 			{
-				if (archive.getAD_Process_ID() > 0)
-				{
-					attributeInstance = new MAttributeInstance(Env.getCtx(), processAttributeID, asi.get_ID(), archive.getAD_Process_ID(), null);
-					attributeInstance.save();
-				}
+				attributeInstance = new MAttributeInstance(Env.getCtx(), processAttributeID, asi.get_ID(), archive.getAD_Process_ID(), null);
+				attributeInstance.save();
 			}
 
 			dmsContent.setM_AttributeSetInstance_ID(asi.get_ID());

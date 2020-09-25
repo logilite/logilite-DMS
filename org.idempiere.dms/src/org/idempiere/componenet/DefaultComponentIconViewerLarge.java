@@ -18,9 +18,9 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
@@ -60,9 +60,8 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 
 		// Content Label
 		Label lblName = new Label(getContentName(content, ((MDMSContent) content).getSeqNo()));
-		lblName.setStyle("text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 15px; width: "
-								+ (compWidth - 10)
-								+ "px; display: inline-block;");
+		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 15px; width: "
+							+ (compWidth - 10) + "px; display: inline-block;");
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
@@ -94,7 +93,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		for (int i = 0; i < eventsList.length; i++)
 			cell.addEventListener(eventsList[i], listener);
 
-		if (Utils.isLink(association))
+		if (MDMSAssociationType.isLink(association))
 		{
 			Component icon = getLinkIconComponent(association);
 
@@ -105,7 +104,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		}
 
 		// set tooltip text
-		cell.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
+		cell.setTooltiptext(((MDMSContent) content).getToolTipTextMsg());
 	} // createComponent
 
 	@Override

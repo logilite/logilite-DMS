@@ -16,14 +16,20 @@ package org.idempiere.model;
 import java.sql.ResultSet;
 import java.util.Properties;
 
+import org.compiere.util.CCache;
+import org.compiere.util.DB;
+
 public class MDMSContentType extends X_DMS_ContentType
 {
 
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID	= -7974749939408476322L;
+	private static final long		serialVersionUID	= -7974749939408476322L;
 
+	static CCache<String, Integer>	cache_contentType	= new CCache<String, Integer>("ContentTypeCache", 100);
+
+	//
 	public MDMSContentType(Properties ctx, int DMS_ContentType_ID, String trxName)
 	{
 		super(ctx, DMS_ContentType_ID, trxName);
@@ -33,5 +39,18 @@ public class MDMSContentType extends X_DMS_ContentType
 	{
 		super(ctx, rs, trxName);
 	}
+
+	public static int getContentTypeIDFromName(String contentType, int AD_Client_ID)
+	{
+		Integer contentTypeID = cache_contentType.get(AD_Client_ID + "_" + contentType);
+		if (contentTypeID == null || contentTypeID <= 0)
+		{
+			contentTypeID = DB.getSQLValue(	null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND AD_Client_ID = ?",
+											contentType, AD_Client_ID);
+			if (contentTypeID > 0)
+				cache_contentType.put(AD_Client_ID + "_" + contentType, contentTypeID);
+		}
+		return contentTypeID;
+	} // getContentTypeIDFromName
 
 }

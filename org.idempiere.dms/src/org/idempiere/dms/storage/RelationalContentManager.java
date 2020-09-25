@@ -22,9 +22,10 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSAssociationType;
 
 public class RelationalContentManager implements IContentManager
 {
@@ -63,13 +64,15 @@ public class RelationalContentManager implements IContentManager
 	} // getPathByName
 
 	@Override
-	public String getContentName(IFileStorageProvider storageProvider, String contentType, I_DMS_Content content, String fileName, String extention, String type, String operationType)
+	public String getContentName(	IFileStorageProvider storageProvider, String contentType, I_DMS_Content content, String fileName, String extention,
+									String type, String operationType)
 	{
 		String contentName = getActualContentName(storageProvider, contentType, content, fileName, extention, type, operationType);
 		return contentName;
-	}
+	} // getContentName
 
-	private String getActualContentName(IFileStorageProvider storageProvider, String contentType, I_DMS_Content content, String fileName, String extention, String type, String operationType)
+	private String getActualContentName(IFileStorageProvider storageProvider, String contentType, I_DMS_Content content, String fileName, String extention,
+										String type, String operationType)
 	{
 		String actualName = null;
 
@@ -79,7 +82,7 @@ public class RelationalContentManager implements IContentManager
 			{
 				switch (type)
 				{
-					case DMSConstant.CONTENT_TYPE_VERSION:
+					case MDMSAssociationType.TYPE_VERSION:
 					{
 						String previousVersionName = content.getValue();
 						String newFileNameWithVersion = null;
@@ -95,8 +98,8 @@ public class RelationalContentManager implements IContentManager
 						}
 
 						extention = FilenameUtils.getExtension(previousVersionName);
-						List<String> matchingFileNames = Utils.getMatchingActualNames(content.getParentURL(), newFileNameWithVersion, DMSConstant.REG_EXP_LIKE_STR, DMSConstant.REG_EXP_PERIOD
-																																									+ extention);
+						List<String> matchingFileNames = Utils.getMatchingActualNames(	content.getParentURL(), newFileNameWithVersion,
+																						DMSConstant.REG_EXP_LIKE_STR, DMSConstant.REG_EXP_PERIOD + extention);
 						Object[] matchingFileNameArray = matchingFileNames.toArray();
 						boolean match = true;
 						for (Object matchingFileName : matchingFileNameArray)
@@ -134,14 +137,16 @@ public class RelationalContentManager implements IContentManager
 						File newFile = storageProvider.getFile(content.getParentURL() + DMSConstant.FILE_SEPARATOR + actualName);
 						if (newFile != null)
 						{
-							actualName = getActualContentName(storageProvider, contentType, content, actualName.substring(0, actualName.lastIndexOf(".")) + "_1", extention, type, operationType);
+							actualName = getActualContentName(storageProvider, contentType, content, actualName.substring(0, actualName.lastIndexOf("."))
+																										+ "_1", extention, type, operationType);
 						}
 
 						break;
 					}
-					case DMSConstant.CONTENT_TYPE_PARENT:
+					case MDMSAssociationType.TYPE_PARENT:
 					{
-						List<String> matchingFileNames = Utils.getMatchingActualNames(getPathByName(content), fileName, DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR, extention);
+						List<String> matchingFileNames = Utils.getMatchingActualNames(	getPathByName(content), fileName, DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR,
+																						extention);
 
 						if (matchingFileNames.size() == 0)
 						{
@@ -171,10 +176,12 @@ public class RelationalContentManager implements IContentManager
 						}
 
 						File newFile = storageProvider.getFile(Util.isEmpty(getPathByName(content), true)	? DMSConstant.FILE_SEPARATOR + actualName
-																											: getPathByName(content) + DMSConstant.FILE_SEPARATOR + actualName);
+																											: getPathByName(content)
+																												+ DMSConstant.FILE_SEPARATOR + actualName);
 						if (newFile != null)
 						{
-							actualName = getActualContentName(storageProvider, contentType, content, actualName.substring(0, actualName.lastIndexOf(".")) + "_1", extention, type, operationType);
+							actualName = getActualContentName(storageProvider, contentType, content, actualName.substring(0, actualName.lastIndexOf("."))
+																										+ "_1", extention, type, operationType);
 						}
 						break;
 					}
@@ -183,7 +190,8 @@ public class RelationalContentManager implements IContentManager
 			else if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_COPY))
 			{
 				String name = fileName;
-				List<String> fileNames = Utils.getExtistingFileNamesFromCopiedFile(getPathByName(content), FilenameUtils.getBaseName(fileName), FilenameUtils.getExtension(fileName));
+				List<String> fileNames = Utils.getExtistingFileNamesFromCopiedFile(	getPathByName(content), FilenameUtils.getBaseName(fileName),
+																					FilenameUtils.getExtension(fileName));
 				if (fileNames.size() == 0)
 				{
 					actualName = FilenameUtils.getBaseName(fileName) + "." + FilenameUtils.getExtension(fileName);
@@ -218,9 +226,10 @@ public class RelationalContentManager implements IContentManager
 			{
 				switch (type)
 				{
-					case DMSConstant.CONTENT_TYPE_VERSIONPARENT:
+					case MDMSAssociationType.TYPE_VERSIONPARENT:
 					{
-						List<String> matchingFileNames = Utils.getMatchingActualNames(getPathByName(content), fileName, DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR, extention);
+						List<String> matchingFileNames = Utils.getMatchingActualNames(	getPathByName(content), fileName, DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR,
+																						extention);
 
 						if (matchingFileNames.size() == 0)
 						{
@@ -250,9 +259,10 @@ public class RelationalContentManager implements IContentManager
 						}
 						break;
 					}
-					case DMSConstant.CONTENT_TYPE_PARENT:
+					case MDMSAssociationType.TYPE_PARENT:
 					{
-						List<String> matchingFileNames = Utils.getMatchingActualNames(getPathByName(content), fileName, DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR, extention);
+						List<String> matchingFileNames = Utils.getMatchingActualNames(	getPathByName(content), fileName, DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR,
+																						extention);
 
 						if (matchingFileNames.size() == 0)
 						{
@@ -282,9 +292,10 @@ public class RelationalContentManager implements IContentManager
 						}
 						break;
 					}
-					case DMSConstant.CONTENT_TYPE_VERSION:
+					case MDMSAssociationType.TYPE_VERSION:
 					{
-						List<String> matchingFileNames = Utils.getMatchingActualNames(content.getParentURL(), fileName, DMSConstant.REG_EXP_LIKE_STR, extention);
+						List<String> matchingFileNames = Utils.getMatchingActualNames(	content.getParentURL(), fileName, DMSConstant.REG_EXP_LIKE_STR,
+																						extention);
 						Object[] matchingFileNameArray = matchingFileNames.toArray();
 						boolean match = false;
 						while (!match)
@@ -360,7 +371,8 @@ public class RelationalContentManager implements IContentManager
 				File newDir = new File(dirPath);
 				if (newDir.exists())
 				{
-					actualName = this.getActualContentName(storageProvider, DMSConstant.CONTENT_DIR, content, fileName + "_" + ++seq, "", "", DMSConstant.OPERATION_CREATE);
+					actualName = this.getActualContentName(	storageProvider, DMSConstant.CONTENT_DIR, content, fileName + "_" + ++seq, "", "",
+															DMSConstant.OPERATION_CREATE);
 				}
 				else
 				{

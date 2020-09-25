@@ -27,7 +27,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.WrongValueException;
@@ -87,7 +87,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 		gridView.setStyle("max-widht:230px; max-height:230px;");
 		gridView.setStyle("min-widht:230px; min-height:230px;");
 
-		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
+		parent_Content = new MDMSContent(Env.getCtx(), DMSContent.getDMS_Content_Related_ID(), null);
 		if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
 			txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));

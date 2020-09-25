@@ -23,7 +23,7 @@ import org.idempiere.model.X_DMS_Content;
 public class FileSizeFixProcess extends SvrProcess
 {
 
-	private DMS	dms;
+	private DMS dms;
 
 	@Override
 	protected void prepare()
@@ -76,9 +76,10 @@ public class FileSizeFixProcess extends SvrProcess
 			int DMS_Content_ID = mdmsContent.getDMS_Content_ID();
 			try
 			{
-				String sql = "SELECT a.DMS_Content_ID, a.DMS_Association_ID	FROM DMS_Association a 		"
-						+ " INNER JOIN DMS_Content c ON a.DMS_Content_ID = c.DMS_Content_ID 			"
-						+ "	WHERE a.DMS_AssociationType_ID = 1000000 AND DMS_Content_Related_ID = ?		ORDER BY a.DMS_Association_ID ";
+				String sql = "SELECT a.DMS_Content_ID, a.DMS_Association_ID	FROM DMS_Association a 			"
+								+ " INNER JOIN DMS_Content c ON a.DMS_Content_ID = c.DMS_Content_ID 		"
+								+ "	WHERE a.DMS_AssociationType_ID = 1000000 AND DMS_Content_Related_ID = ?	"
+								+ " ORDER BY a.DMS_Association_ID ";
 
 				pstmt = DB.prepareStatement(sql, null);
 				pstmt.setInt(1, DMS_Content_ID);
@@ -168,20 +169,20 @@ public class FileSizeFixProcess extends SvrProcess
 		boolean flag = false;
 		if (dms.getFileFromStorage(content) != null)
 		{
-			addLog(content.getDMS_Content_ID() + "| old name [" + content.getName() + "] to new name [" + newName + "] |parentPath [" + content.getParentURL()
+			addLog(	content.getDMS_Content_ID() + "| old name [" + content.getName() + "] to new name [" + newName + "] |parentPath [" + content.getParentURL()
 					+ "] | SUCCESS");
 			dms.renameFile(content, association, newName, false);
 			flag = true;
-
 		}
 		else
 		{
-			addLog(content.getDMS_Content_ID() + "| old name [" + content.getName() + "] to new name [" + newName + "] |parentPath [" + content.getParentURL()
+			addLog(	content.getDMS_Content_ID() + "| old name [" + content.getName() + "] to new name [" + newName + "] |parentPath [" + content.getParentURL()
 					+ "] | FAIL");
 		}
 		return flag;
 	}
 
+	@SuppressWarnings("unused")
 	private int migrateWithVersion()
 	{
 
@@ -221,8 +222,8 @@ public class FileSizeFixProcess extends SvrProcess
 			try
 			{
 				String sql = "SELECT a.DMS_Content_ID, a.DMS_Association_ID "
-						+ "		FROM dms_association a INNER JOIN dms_content c ON a.dms_content_id = c.dms_content_id "
-						+ "		WHERE a.dms_associationtype_id = 1000000 AND DMS_Content_Related_ID = ? " + "		Order By a.DMS_Association_ID";
+								+ "		FROM dms_association a INNER JOIN dms_content c ON a.dms_content_id = c.dms_content_id "
+								+ "		WHERE a.dms_associationtype_id = 1000000 AND DMS_Content_Related_ID = ? " + "		Order By a.DMS_Association_ID";
 
 				pstmt = DB.prepareStatement(sql, null);
 				pstmt.setInt(1, DMS_Content_ID);
@@ -260,7 +261,5 @@ public class FileSizeFixProcess extends SvrProcess
 
 		}
 		return cntMigrated;
-
 	}
-
 }
