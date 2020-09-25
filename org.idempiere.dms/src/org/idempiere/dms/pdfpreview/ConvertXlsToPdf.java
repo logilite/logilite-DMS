@@ -23,8 +23,7 @@ import org.apache.poi.hssf.usermodel.HSSFShape;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -202,23 +201,25 @@ public class ConvertXlsToPdf
 		out.append("style='");
 		final HSSFCellStyle style = cell.getCellStyle();
 		// Text alignment
-		switch (style.getAlignment())
-		{
-			case CellStyle.ALIGN_LEFT:
-				out.append("text-align: left; ");
-				break;
-			case CellStyle.ALIGN_RIGHT:
-				out.append("text-align: right; ");
-				break;
-			case CellStyle.ALIGN_CENTER:
-				out.append("text-align: center; ");
-				break;
-			default:
-				break;
-		}
+
+		// switch (style.getAlignment())
+		// {
+		// case CellStyle.ALIGN_LEFT:
+		// out.append("text-align: left; ");
+		// break;
+		// case CellStyle.ALIGN_RIGHT:
+		// out.append("text-align: right; ");
+		// break;
+		// case CellStyle.ALIGN_CENTER:
+		// out.append("text-align: center; ");
+		// break;
+		// default:
+		// break;
+		// }
+
 		// Font style, size and weight
 		final HSSFFont font = style.getFont(book);
-		if (font.getBoldweight() == HSSFFont.BOLDWEIGHT_BOLD)
+		if (font.getBold())
 		{
 			out.append("font-weight: bold; ");
 		}
@@ -247,19 +248,19 @@ public class ConvertXlsToPdf
 			out.append("background-color: rgb(").append(backRGB[0]).append(',').append(backRGB[1]).append(',').append(backRGB[2]).append(");");
 		}
 		// Border
-		if (style.getBorderTop() != HSSFCellStyle.BORDER_NONE)
+		if (style.getBorderTop() != BorderStyle.NONE)
 		{
 			out.append("border-top-style: solid; ");
 		}
-		if (style.getBorderRight() != HSSFCellStyle.BORDER_NONE)
+		if (style.getBorderRight() != BorderStyle.NONE)
 		{
 			out.append("border-right-style: solid; ");
 		}
-		if (style.getBorderBottom() != HSSFCellStyle.BORDER_NONE)
+		if (style.getBorderBottom() != BorderStyle.NONE)
 		{
 			out.append("border-bottom-style: solid; ");
 		}
-		if (style.getBorderLeft() != HSSFCellStyle.BORDER_NONE)
+		if (style.getBorderLeft() != BorderStyle.NONE)
 		{
 			out.append("border-left-style: solid; ");
 		}
@@ -269,12 +270,13 @@ public class ConvertXlsToPdf
 		{
 			switch (cell.getCellType())
 			{
-				case HSSFCell.CELL_TYPE_STRING:
+				case STRING:
 					val = cell.getStringCellValue();
 					break;
-				case HSSFCell.CELL_TYPE_NUMERIC:
+				case NUMERIC:
 					// POI does not distinguish between integer and double, thus:
-					final double original = cell.getNumericCellValue(), rounded = Math.round(original);
+					final double original = cell.getNumericCellValue(),
+									rounded = Math.round(original);
 					if (Math.abs(rounded - original) < 0.00000000000000001)
 					{
 						val = String.valueOf((int) rounded);
@@ -284,22 +286,22 @@ public class ConvertXlsToPdf
 						val = String.valueOf(original);
 					}
 					break;
-				case HSSFCell.CELL_TYPE_FORMULA:
+				case FORMULA:
 					final CellValue cv = evaluator.evaluate(cell);
 					switch (cv.getCellType())
 					{
-						case Cell.CELL_TYPE_BOOLEAN:
+						case BOOLEAN:
 							out.append(cv.getBooleanValue());
 							break;
-						case Cell.CELL_TYPE_NUMERIC:
+						case NUMERIC:
 							out.append(cv.getNumberValue());
 							break;
-						case Cell.CELL_TYPE_STRING:
+						case STRING:
 							out.append(cv.getStringValue());
 							break;
-						case Cell.CELL_TYPE_BLANK:
+						case BLANK:
 							break;
-						case Cell.CELL_TYPE_ERROR:
+						case ERROR:
 							break;
 						default:
 							break;

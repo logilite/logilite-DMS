@@ -55,7 +55,6 @@ public class ConvertXlsxToPdf
 
 	public ConvertXlsxToPdf(String filePath) throws IOException, InvalidFormatException, ParserConfigurationException
 	{
-
 		InputStream in = new FileInputStream(new File(filePath));
 		OPCPackage op = OPCPackage.open(in);
 		x = new XSSFWorkbook(op);
@@ -293,35 +292,44 @@ public class ConvertXlsxToPdf
 		}
 		else
 		{
-			if(CellType.BLANK.equals(cell.getCellType())) {
-					value = "\u00a0";
-			}else if(CellType.NUMERIC.equals(cell.getCellType())){
-					if (DateUtil.isCellDateFormatted(cell))
-					{
-						// to display date format
-						DataFormatter dateFormatter = new DataFormatter();
-						value = dateFormatter.formatCellValue(cell);
-					}
-					else
-					{
-						value = cell.getNumericCellValue();
-					}
-			}else if(CellType.BOOLEAN.equals(cell.getCellType())) {
-					value = cell.getBooleanCellValue();
-			}else if(CellType.FORMULA.equals(cell.getCellType())) {
-					if (CellType.ERROR.equals(cell.getCachedFormulaResultType()))
-					{
-						value = cell.getCellFormula();
-					}
-					else
-					{
-						// To evaluate formula
-						FormulaEvaluator formulaEvalutor = x.getCreationHelper().createFormulaEvaluator();
-						DataFormatter fmt = new DataFormatter();
-						value = fmt.formatCellValue(cell, formulaEvalutor);
-					}
-			}else {
-					value = cell.getRichStringCellValue();
+			if (CellType.BLANK.equals(cell.getCellType()))
+			{
+				value = "\u00a0";
+			}
+			else if (CellType.NUMERIC.equals(cell.getCellType()))
+			{
+				if (DateUtil.isCellDateFormatted(cell))
+				{
+					// to display date format
+					DataFormatter dateFormatter = new DataFormatter();
+					value = dateFormatter.formatCellValue(cell);
+				}
+				else
+				{
+					value = cell.getNumericCellValue();
+				}
+			}
+			else if (CellType.BOOLEAN.equals(cell.getCellType()))
+			{
+				value = cell.getBooleanCellValue();
+			}
+			else if (CellType.FORMULA.equals(cell.getCellType()))
+			{
+				if (CellType.ERROR.equals(cell.getCachedFormulaResultType()))
+				{
+					value = cell.getCellFormula();
+				}
+				else
+				{
+					// To eveluate formula
+					FormulaEvaluator formulaEvalutor = x.getCreationHelper().createFormulaEvaluator();
+					DataFormatter fmt = new DataFormatter();
+					value = fmt.formatCellValue(cell, formulaEvalutor);
+				}
+			}
+			else
+			{
+				value = cell.getRichStringCellValue();
 			}
 			if (value instanceof XSSFRichTextString)
 			{
@@ -333,6 +341,8 @@ public class ConvertXlsxToPdf
 				processCellStyle(td, cell.getCellStyle(), null, sID);
 				td.setTextContent(value.toString());
 			}
+			// String s = value.toString();
+			// System.out.println(s);
 		}
 		tr.appendChild(td);
 	}
@@ -373,7 +383,6 @@ public class ConvertXlsxToPdf
 
 		if (HorizontalAlignment.RIGHT.equals(style.getAlignment()))
 			sb.append("text-align:").append("right;");
-			
 
 		// TODO: set correct value for type and width of border.
 		if (style.getBorderBottom() != BorderStyle.NONE)
