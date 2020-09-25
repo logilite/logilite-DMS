@@ -54,4 +54,5 @@ Export-Package: com.lowagie.text,
  org.idempiere.dms,
  org.idempiere.dms.constant,
  org.idempiere.dms.factories,
+ org.idempiere.dms.util,
  org.idempiere.model
