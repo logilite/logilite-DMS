@@ -49,8 +49,10 @@ public class WDocumentViewer extends Window
 
 	private int					tableID				= 0;
 	private int					recordID			= 0;
+	private int					windowNo			= 0;
+	private int					tabNo				= 0;
 
-	public WDocumentViewer(DMS dms, Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID)
+	public WDocumentViewer(DMS dms, Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID, int windowNo, int tabNo)
 	{
 		mimeType = new MDMSMimeType(Env.getCtx(), mdms_content.getDMS_MimeType_ID(), null);
 		this.dms = dms;
@@ -59,6 +61,8 @@ public class WDocumentViewer extends Window
 		this.document_preview = document_preview;
 		this.tableID = tableID;
 		this.recordID = recordID;
+		this.windowNo = windowNo;
+		this.tabNo = tabNo;
 	}
 
 	public WDMSAttributePanel getAttributePanel()
@@ -92,7 +96,7 @@ public class WDocumentViewer extends Window
 		// Content attribute view
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure, isLink);
+		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure, isLink, windowNo, tabNo);
 		cellCPreview.appendChild(attributePanel);
 
 		Hbox boxViewSeparator = new Hbox();

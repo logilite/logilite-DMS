@@ -65,13 +65,14 @@ import org.adempiere.webui.editor.WTimeEditor;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
-import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
+import org.compiere.model.MToolBarButtonRestrict;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
@@ -83,6 +84,7 @@ import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
+import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
@@ -112,6 +114,8 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 	public static final String		ATTRIBUTE_TOGGLE		= "Toggle";
 	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
+	private static final String		TOOLBAR_BTN_DMS_DIR		= "DMS - Create Directory";
+	private static final String		TOOLBAR_BTN_DMS_UPLOAD	= "DMS - Upload Content";
 
 	private Tabbox					tabBox					= new Tabbox();
 	private Tabs					tabs					= new Tabs();
@@ -199,6 +203,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	private int						recordID				= 0;
 	private int						tableID					= 0;
 	private int						windowID				= 0;
+	private int						tabID					= 0;
 
 	private boolean					isSearch				= false;
 	private boolean					isGenericSearch			= false;
@@ -212,28 +217,38 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 	private AbstractADWindowContent	winContent;
 
+	private int						windowNo				= 0;
+	private int						tabNo					= 0;
+
 	/**
 	 * Constructor initialize
 	 */
-	public WDMSPanel()
+	public WDMSPanel(int windowNo, int tabNo)
 	{
 		dms = new DMS(Env.getAD_Client_ID(Env.getCtx()));
+		this.windowNo = windowNo;
+		this.tabNo = tabNo;
 
 		initForm();
 	}
 
 	public WDMSPanel(int Table_ID, int Record_ID, AbstractADWindowContent winContent)
 	{
-		this();
+		this(winContent.getWindowNo(), winContent.getActiveGridTab().getTabNo());
 
 		this.winContent = winContent;
 		this.windowID = winContent.getADWindow().getAD_Window_ID();
+		this.tabID = winContent.getActiveGridTab().getAD_Tab_ID();
 		this.isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
+
+		// Toolbar button restriction
+		btnCreateDir.setVisible(!MToolBarButtonRestrict.isToolbarButtonRestricted(windowID, tabID, TOOLBAR_BTN_DMS_DIR));
+		btnUploadContent.setVisible(!MToolBarButtonRestrict.isToolbarButtonRestricted(windowID, tabID, TOOLBAR_BTN_DMS_UPLOAD));
 
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);
 
-		String tableName = winContent.getADTab().getSelectedGridTab().getTableName();
+		String tableName = MTable.getTableName(Env.getCtx(), Table_ID);
 		dms.initMountingStrategy(tableName);
 		dms.initiateMountingContent(tableName, Record_ID, Table_ID);
 
@@ -469,18 +484,10 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		hbox.appendChild(dbUpdatedTo);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 2, hbox);
 
-		Column_ID = MColumn.getColumn_ID(MDMSContentType.Table_Name, MDMSContentType.COLUMNNAME_DMS_ContentType_ID);
-		lookup = null;
-		try
-		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, lang, MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			lstboxContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "Contenttype fetching failure :", e);
-			throw new AdempiereException("Contenttype fetching failure :" + e);
-		}
+		Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
+		lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
+		lookup.refresh();
+		lstboxContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 
 		//
 		row = rowsSearch.newRow();
@@ -539,7 +546,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 		gridBreadCrumb.setClass("dms-breadcrumb");
 		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; height: 45px; "
-		                        + "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px; overflow-x: auto;");
+			+ "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px; overflow-x: auto;");
 
 		breadRow.setZclass("none");
 		breadRow.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION_NOWRAP);
@@ -593,7 +600,6 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		//
 		DMSConstant.SDF_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
 		addRootBreadCrumb();
-		SessionManager.getAppDesktop();
 	}
 
 	@Override
@@ -672,8 +678,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		{
 			openCanvasContextMenu(event);
 		}
-		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
-		         && (event.getTarget().getClass().equals(Cell.class) || event.getTarget().getClass().equals(Row.class)))
+		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && (event.getTarget().getClass().equals(Cell.class) || event.getTarget().getClass().equals(Row.class)))
 		{
 			compCellRowViewer = event.getTarget();
 			openContentContextMenu(compCellRowViewer);
@@ -692,7 +697,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		}
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
-			final WUploadContent uploadContent = new WUploadContent(dms, dirContent, true, this.getTable_ID(), this.getRecord_ID());
+			final WUploadContent uploadContent = new WUploadContent(dms, dirContent, true, this.getTable_ID(), this.getRecord_ID(), windowNo, tabNo);
 			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
 
 				@Override
@@ -793,8 +798,8 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 								}
 							};
 
-							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete,
-							            "<b> Are you want to delete linkable documents associated with actual docs ? </b>" + warningMsg, callbackWarning);
+							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete, "<b> Are you want to delete linkable documents associated with actual docs ? </b>" + warningMsg,
+											callbackWarning);
 						}
 						else
 						{
@@ -809,15 +814,12 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 				}
 			};
 
-			FDialog.ask(0, this,
-			            "Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
-			            callback);
+			FDialog.ask(0, this, "Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?", callback);
 
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
-			new WDAssociationType(dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(),
-			                      getRecord_ID(), winContent);
+			new WDAssociationType(dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(), getRecord_ID(), winContent);
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
@@ -932,27 +934,33 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	 */
 	public void renderViewer()
 	{
-		HashMap <I_DMS_Content, I_DMS_Association> contentsMap = null;
-
-		// Setting current dms content value on label
-		if (isTabViewer())
+		if (recordID > 0 || isDocExplorerWindow)
 		{
-			String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;
-			lblPositionInfo.setValue(currContentValue);
+			HashMap <I_DMS_Content, I_DMS_Association> contentsMap = null;
+
+			// Setting current dms content value on label
+			if (isTabViewer())
+			{
+				String currContentValue = currDMSContent != null ? String.valueOf(currDMSContent.getName()) : null;
+				lblPositionInfo.setValue(currContentValue);
+			}
+
+			if (isSearch)
+				contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
+			else if (isGenericSearch)
+				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
+			else
+				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, true);
+
+			// Content Type wise access restriction
+			IContentTypeAccess contentTypeAccess = DMS_ZK_Util.getContentTypeAccessFactory();
+			HashMap<I_DMS_Content, I_DMS_Association> contentsMapFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
+
+			// Component Viewer
+			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
+			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
+			viewerComponent.init(dms, contentsMapFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 		}
-
-		if (isSearch)
-			contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
-		else if (isGenericSearch)
-			contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
-		else
-			contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, true);
-
-		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
-
-		// Component Viewer
-		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
-		viewerComponent.init(dms, contentsMap, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 
 		tabBox.setSelectedIndex(0);
 	} // renderViewer
@@ -1040,7 +1048,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 					tabs.appendChild(tabData);
 					tabBox.setSelectedTab(tabData);
 
-					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID);
+					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID, windowNo, tabNo);
 					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure, Utils.isLink(selectedAssociation));
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
@@ -1206,7 +1214,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	 */
 	private void uploadContent()
 	{
-		uploadContent = new WUploadContent(dms, currDMSContent, false, tableID, recordID);
+		uploadContent = new WUploadContent(dms, currDMSContent, false, tableID, recordID, windowNo, tabNo);
 
 		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
 
@@ -1231,8 +1239,8 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		copyDMSContent = DMSClipboard.get();
 
 		if (!isWindowAccess
-		    || (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-		    || isMountingBaseStructure)
+			|| (dirContent.isMounting() && dirContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+			|| isMountingBaseStructure)
 		{
 			ctxMenuItemDisabled(true);
 
@@ -1461,8 +1469,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		// if chkInActive = true, display all files
 		// if chkInActive = false, display only active files
 		if (chkInActive != null)
-			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false : null,
-			                params);
+			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false : null, params);
 
 		//
 		if (lstboxContentType.getValue() != null)
@@ -1485,10 +1492,10 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 				Object to = null;
 
 				if (dt == DisplayType.Number
-				    || dt == DisplayType.Integer
-				    || dt == DisplayType.Quantity
-				    || dt == DisplayType.Amount
-				    || dt == DisplayType.CostPrice)
+					|| dt == DisplayType.Integer
+					|| dt == DisplayType.Quantity
+					|| dt == DisplayType.Amount
+					|| dt == DisplayType.CostPrice)
 				{
 					NumberBox fromNumBox = (NumberBox) ASI_Value.get(compName).getComponent();
 					NumberBox toNumBox = (NumberBox) ASI_Value.get(compName + "to").getComponent();
@@ -1651,10 +1658,10 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 					row.appendChild(editor.getLabel());
 
 					if (dt == DisplayType.Number
-					    || dt == DisplayType.Integer
-					    || dt == DisplayType.Quantity
-					    || dt == DisplayType.Amount
-					    || dt == DisplayType.CostPrice)
+						|| dt == DisplayType.Integer
+						|| dt == DisplayType.Quantity
+						|| dt == DisplayType.Amount
+						|| dt == DisplayType.CostPrice)
 					{
 						WNumberEditor numBox = new WNumberEditor(compName + "to", false, false, true, dt, "SB");
 						row.appendChild(editor.getComponent());

@@ -188,41 +188,43 @@ public final class DMSConstant
 
 	// Queries
 	public static final String				SQL_GET_CONTENT_LATEST_VERSION_NONLINK			= "SELECT DMS_Content_ID, DMS_Association_ID, SeqNo FROM DMS_Association "
-	                                                                                          + "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID = ? AND NVL(DMS_AssociationType_ID, 0) <> 1000003"
-	                                                                                          + "GROUP BY DMS_Content_ID, DMS_Association_ID 	ORDER BY MAX(SeqNo) DESC ";
+																									+ "WHERE DMS_Content_Related_ID = ? OR DMS_Content_ID = ? AND NVL(DMS_AssociationType_ID, 0) <> 1000003"
+																									+ "GROUP BY DMS_Content_ID, DMS_Association_ID 	ORDER BY MAX(SeqNo) DESC ";
 
 	public static final String				SQL_GET_ASSOCIATION_ID_FROM_CONTENT				= "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_ID = ? AND NVL(DMS_AssociationType_ID, 0)";
 
-	public static final String				SQL_GET_CONTENTID_FROM_CONTENTNAME				= "SELECT DMS_Content_ID FROM DMS_Content WHERE Name = ? AND AD_Client_ID = ?";
+	public static final String				SQL_GET_SUB_MOUNTING_BASE_CONTENT				= " SELECT c.DMS_Content_ID 	FROM DMS_Content c "
+																									+ " INNER JOIN DMS_Association a	ON (a.DMS_Content_ID = c.DMS_Content_ID) "
+																									+ " WHERE c.ContentBaseType = 'DIR' AND c.IsActive = 'Y' AND c.IsMounting = 'Y' AND c.ParentURL IS NOT NULL AND c.AD_Client_ID = ? AND a.DMS_Content_Related_ID = ? AND a.AD_Table_ID = ? AND c.Name = ? ";
 
-	public static final String				SQL_GET_MOUNTING_BASE_CONTENT					= "SELECT DMS_Content_ID FROM DMS_Content WHERE Name = ? AND AD_Client_ID = ? AND ContentBaseType = 'DIR' AND ParentUrl IS NULL";
+	public static final String				SQL_GET_ROOT_MOUNTING_BASE_CONTENT				= "SELECT DMS_Content_ID FROM DMS_Content WHERE Name = ? AND AD_Client_ID = ? AND ContentBaseType = 'DIR' AND IsActive = 'Y' AND IsMounting = 'Y' AND ParentUrl IS NULL ORDER BY Created";
 
 	public static final String				SQL_GET_MOUNTING_CONTENT_FOR_TABLE				= "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
-	                                                                                          + " INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-	                                                                                          + " WHERE dc.Name = ? AND dc.IsMounting = 'Y' AND da.AD_Table_ID = ? AND da.Record_ID = ?";
+																									+ " INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
+																									+ " WHERE dc.Name = ? AND dc.IsMounting = 'Y' AND da.AD_Table_ID = ? AND da.Record_ID = ?";
 
 	/*
 	 * Pass any version content ID to get whole list of its hierarchy
 	 */
 	public static final String				SQL_FETCH_CONTENT_VERSION_LIST					= " WITH RootContent AS (	 																			"
-	                                                                                          + " 	SELECT NVL((SELECT DMS_Content_Related_ID FROM DMS_Association 							"
-	                                                                                          + "		WHERE DMS_AssociationType_ID = ? AND DMS_Content_ID = ?), ?) AS RootContentID			"
-	                                                                                          + "	) 																							"
-	                                                                                          + "		SELECT DISTINCT DMS_Content_ID, SeqNo	FROM DMS_Association, RootContent 				"
-	                                                                                          + " 	WHERE DMS_AssociationType_ID = ? AND DMS_Content_Related_ID = RootContent.RootContentID "
-	                                                                                          + " UNION 																						"
-	                                                                                          + " 	SELECT DMS_Content_ID, NULL 			FROM DMS_Content, RootContent 					"
-	                                                                                          + " 	WHERE DMS_Content_ID = RootContent.RootContentID AND ContentBaseType <> 'DIR' 			"
-	                                                                                          + " 	ORDER BY DMS_Content_ID DESC 															";
+																									+ " 	SELECT NVL((SELECT DMS_Content_Related_ID FROM DMS_Association 							"
+																									+ "		WHERE DMS_AssociationType_ID = ? AND DMS_Content_ID = ?), ?) AS RootContentID			"
+																									+ "	) 																							"
+																									+ "		SELECT DISTINCT DMS_Content_ID, SeqNo	FROM DMS_Association, RootContent 				"
+																									+ " 	WHERE DMS_AssociationType_ID = ? AND DMS_Content_Related_ID = RootContent.RootContentID "
+																									+ " UNION 																						"
+																									+ " 	SELECT DMS_Content_ID, NULL 			FROM DMS_Content, RootContent 					"
+																									+ " 	WHERE DMS_Content_ID = RootContent.RootContentID AND ContentBaseType <> 'DIR' 			"
+																									+ " 	ORDER BY DMS_Content_ID DESC 															";
 
 	/*
 	 * Get Link Association ID from Any with/without Versioning Content
 	 */
 	public static final String				SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT	= "SELECT DMS_Association_ID 		FROM DMS_Association 			"
-	                                                                                          + "	WHERE 	DMS_AssociationType_ID = 1000003 AND 			"
-	                                                                                          + "			DMS_Content_ID IN (	SELECT DMS_Content_ID FROM ("
-	                                                                                          + DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST
-	                                                                                          + " ) AS DATA )												";
+																									+ "	WHERE 	DMS_AssociationType_ID = 1000003 AND 			"
+																									+ "			DMS_Content_ID IN (	SELECT DMS_Content_ID FROM ("
+																									+ DMSConstant.SQL_FETCH_CONTENT_VERSION_LIST
+																									+ " ) AS DATA )												";
 
 	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_NAME				= "SELECT DMS_Content_ID FROM DMS_Content WHERE AD_Client_ID = ? AND Name  = ? AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ?)) AND IsActive = 'Y'";
 
@@ -233,13 +235,17 @@ public final class DMSConstant
 	public static final String				SQL_GET_MATCHING_CONTENT_BY_VALUE				= "SELECT Value FROM DMS_Content WHERE AD_Client_ID = ? AND (Value LIKE ? OR Value LIKE ?) AND ((ParentURL = ? AND True = ?) OR (ParentURL IS NULL AND False = ? ))";
 
 	public static final String				SQL_GET_CONTENT_TYPE							= "SELECT at.Value FROM DMS_Content c 																	"
-	                                                                                          + "	INNER JOIN DMS_Association 		a	ON a.DMS_Content_ID = c.DMS_Content_ID 					"
-	                                                                                          + " INNER JOIN DMS_AssociationType	at	ON at.DMS_AssociationType_ID = a.DMS_AssociationType_ID AND at.DMS_AssociationType_ID <> 1000003 "
-	                                                                                          + " WHERE c.DMS_Content_ID = ? 																	";
+																									+ "	INNER JOIN DMS_Association 		a	ON a.DMS_Content_ID = c.DMS_Content_ID 					"
+																									+ " INNER JOIN DMS_AssociationType	at	ON at.DMS_AssociationType_ID = a.DMS_AssociationType_ID AND at.DMS_AssociationType_ID <> 1000003 "
+																									+ " WHERE c.DMS_Content_ID = ? 																	";
 
 	public static final String				SQL_GET_ANOTHER_VERSION_IDS						= "SELECT c.DMS_Content_ID FROM DMS_Content c "
-	                                                                                          + " INNER JOIN DMS_Association a ON a.DMS_Content_ID = c.DMS_Content_ID "
-	                                                                                          + " INNER JOIN DMS_Association aa ON aa.DMS_Content_Related_ID = a.DMS_Content_Related_ID  OR aa.DMS_Content_Related_ID = c.DMS_Content_ID "
-	                                                                                          + " WHERE aa.DMS_Content_ID = ? AND COALESCE(aa.DMS_AssociationType_ID, 0) <> 1000003 ";
+																									+ " INNER JOIN DMS_Association a ON a.DMS_Content_ID = c.DMS_Content_ID "
+																									+ " INNER JOIN DMS_Association aa ON aa.DMS_Content_Related_ID = a.DMS_Content_Related_ID  OR aa.DMS_Content_Related_ID = c.DMS_Content_ID "
+																								+ " WHERE aa.DMS_Content_ID = ? AND COALESCE(aa.DMS_AssociationType_ID, 0) <> 1000003 ";
+	// Access & Permission
+	public static final String				SQL_GET_CONTENT_BASED_ON_CONTENTTTYPE_ACCESS	= "SELECT c.DMS_Content_ID from DMS_Content c "
+																								+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
+																								+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) ";
 
 }

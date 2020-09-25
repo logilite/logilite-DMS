@@ -29,6 +29,8 @@ import org.compiere.model.DataStatusListener;
 import org.compiere.model.GridTab;
 import org.compiere.model.GridWindow;
 import org.compiere.util.CLogger;
+import org.idempiere.model.DMSSubstituteTableInfo;
+import org.idempiere.model.MDMSSubstitute;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
@@ -55,6 +57,9 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 
 	private int						windowNumber		= 0;
 
+	private MDMSSubstitute			substitute			= null;
+	private DMSSubstituteTableInfo	ssTableInfo			= null;
+
 	public DMSContentTab()
 	{
 	}
@@ -76,7 +81,15 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		if (gridTab.getParentTab() == null)
 			throw new AdempiereException("Parent Tab not found");
 
-		docDMSPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab().getRecord_ID(), adWindowContent);
+		// Check if any sbustitute configuration exists for DMS for the table.
+		substitute = MDMSSubstitute.get(gridTab.getParentTab().getAD_Table_ID());
+
+		// Based on Substitute or normal table get Table and RecordID info
+		ssTableInfo = new DMSSubstituteTableInfo(winPanel, gridTab.getParentTab(), substitute);
+		ssTableInfo.updateRecord();
+
+		// Initiate the DMS Panel
+		docDMSPanel = new WDMSPanel(ssTableInfo.getTable_ID(), ssTableInfo.getRecord_ID(), adWindowContent);
 
 		this.appendChild(docDMSPanel);
 
@@ -121,9 +134,12 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void createUI()
 	{
-		int tableID = gridTab.getParentTab().getAD_Table_ID();
-		int recordID = gridTab.getParentTab().getRecord_ID();
-		String tableName = gridTab.getParentTab().getTableName();
+		// set Current Record ID
+		ssTableInfo.updateRecord();
+
+		int tableID = ssTableInfo.getTable_ID();
+		int recordID = ssTableInfo.getRecord_ID();
+		String tableName = ssTableInfo.getTable_Name();
 
 		docDMSPanel.clearComponents();
 		docDMSPanel.setButtonsContentCreationEnabled(true);
@@ -138,12 +154,12 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 
 	public void reload()
 	{
-		int recordID = gridTab.getParentTab().getRecord_ID();
-		String tableName = gridTab.getParentTab().getTableName();
+		// set Current Record ID
+		ssTableInfo.updateRecord();
 
 		docDMSPanel.getBreadRow().getChildren().clear();
 		docDMSPanel.addRootBreadCrumb();
-		docDMSPanel.setCurrDMSContent(docDMSPanel.getDMS().getMountingStrategy().getMountingParent(tableName, recordID));
+		docDMSPanel.setCurrDMSContent(docDMSPanel.getDMS().getMountingStrategy().getMountingParent(ssTableInfo.getTable_Name(), ssTableInfo.getRecord_ID()));
 
 		renderViewer();
 	}
@@ -176,8 +192,12 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void refresh()
 	{
-		docDMSPanel.setTable_ID((gridTab.getParentTab().getAD_Table_ID()));
-		docDMSPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
+		// set Current Record ID
+		ssTableInfo.updateRecord();
+
+		docDMSPanel.setTable_ID(ssTableInfo.getTable_ID());
+		docDMSPanel.setRecord_ID(ssTableInfo.getRecord_ID());
+		//
 		renderViewer();
 	}
 

@@ -65,7 +65,7 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Space;
 
-public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
+public class WUploadContent extends Window implements EventListener <Event>, ValueChangeListener
 {
 
 	/**
@@ -108,8 +108,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	private boolean				isCancel			= false;
 
 	private AMedia				uploadedMedia		= null;
-	private WTableDirEditor		contentType;
+	private WTableDirEditor		editorContentType;
 	private WDLoadASIPanel		asiPanel			= null;
+
+	private int					windowNo			= 0;
+	private int					tabNo				= 0;
 
 	/**
 	 * Constructor initialize
@@ -119,14 +122,19 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	 * @param isVersion
 	 * @param tableID
 	 * @param recordID
+	 * @param tabNo
+	 * @param windowNo
+	 * @param winContent
 	 */
-	public WUploadContent(DMS dms, MDMSContent mDMSContent, boolean isVersion, int tableID, int recordID)
+	public WUploadContent(DMS dms, MDMSContent mDMSContent, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo)
 	{
 		this.dms = dms;
 		this.DMSContent = (MDMSContent) mDMSContent;
 		this.isVersion = isVersion;
 		this.tableID = tableID;
 		this.recordID = recordID;
+		this.windowNo = windowNo;
+		this.tabNo = tabNo;
 
 		init();
 
@@ -162,19 +170,10 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int Column_ID = MColumn.getColumn_ID(MDMSContentType.Table_Name, MDMSContentType.COLUMNNAME_DMS_ContentType_ID);
-		MLookup lookup = null;
-		try
-		{
-			lookup = MLookupFactory.get(Env.getCtx(), 0, Column_ID, DisplayType.TableDir, Env.getLanguage(Env.getCtx()),
-			                            MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, true, "");
-			contentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "Contenttype fetching failure :", e);
-			throw new AdempiereException("Contenttype fetching failure :" + e);
-		}
+		int Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
+		MLookup lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
+		lookup.refresh();
+		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 
 		lblFile.setValue(DMSConstant.MSG_SELECT_FILE + "* ");
 		lblContentType.setValue(DMSConstant.MSG_DMS_CONTENT_TYPE);
@@ -213,8 +212,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		rows.appendChild(nameRow);
 
 		contentTypeRow.appendChild(lblContentType);
-		contentTypeRow.appendChild(contentType.getComponent());
-		contentType.addValueChangeListener(this);
+		contentTypeRow.appendChild(editorContentType.getComponent());
+		editorContentType.addValueChangeListener(this);
 		rows.appendChild(contentTypeRow);
 
 		row = rows.newRow();
@@ -321,9 +320,9 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				int ASI_ID = 0;
 				int cTypeID = 0;
 
-				if (contentType.getValue() != null)
+				if (editorContentType.getValue() != null)
 				{
-					cTypeID = (int) contentType.getValue();
+					cTypeID = (int) editorContentType.getValue();
 					ASI_ID = asiPanel.saveAttributes();
 				}
 
@@ -369,13 +368,13 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	@Override
 	public void valueChange(ValueChangeEvent event)
 	{
-		if (event.getSource().equals(contentType))
+		if (event.getSource().equals(editorContentType))
 		{
 			Components.removeAllChildren(tabPanelAttribute);
 
-			if (contentType.getValue() != null)
+			if (editorContentType.getValue() != null)
 			{
-				asiPanel = new WDLoadASIPanel((int) contentType.getValue(), 0);
+				asiPanel = new WDLoadASIPanel((int) editorContentType.getValue(), 0);
 				tabPanelAttribute.appendChild(asiPanel);
 			}
 		}

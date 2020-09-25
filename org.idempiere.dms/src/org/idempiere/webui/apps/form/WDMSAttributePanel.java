@@ -34,10 +34,20 @@ import org.adempiere.webui.component.Tabpanels;
 import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.ZkCssHelper;
+import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.DialogEvents;
+import org.adempiere.webui.event.ValueChangeEvent;
+import org.adempiere.webui.event.ValueChangeListener;
 import org.apache.commons.io.FilenameUtils;
+import org.compiere.model.MAttribute;
+import org.compiere.model.MAttributeInstance;
+import org.compiere.model.MAttributeSet;
+import org.compiere.model.MColumn;
+import org.compiere.model.MLookup;
+import org.compiere.model.MLookupFactory;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.componenet.AbstractComponentIconViewer;
@@ -49,6 +59,7 @@ import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSContentType;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -57,7 +68,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.South;
 
-public class WDMSAttributePanel extends Panel implements EventListener<Event>
+public class WDMSAttributePanel extends Panel implements EventListener <Event>, ValueChangeListener
 {
 
 	/**
@@ -82,6 +93,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 	private Grid				gridAttributeLayout		= new Grid();
 	private Grid				grid					= new Grid();
 
+	private Row					contentTypeRow			= null;
+
 	private Button				btnDelete				= null;
 	private Button				btnRequery				= null;
 	private Button				btnClose				= null;
@@ -93,6 +106,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 	private Label				lblStatus				= null;
 	private Label				lblName					= null;
 	private Label				lblDesc					= null;
+	private Label				lblContentType			= null;
 
 	private Textbox				txtName					= null;
 	private Textbox				txtDesc					= null;
@@ -108,13 +122,19 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 
 	private int					tableId					= 0;
 	private int					recordId				= 0;
+	private int					contentTypeID			= 0;
 
 	private boolean				isWindowAccess			= true;
 	private boolean				isMountingBaseStructure	= false;
 	private boolean				isLink					= false;
 
-	public WDMSAttributePanel(DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess,
-	                          boolean isMountingBaseStructure, boolean isLink)
+	private WTableDirEditor		editorContentType		= null;
+
+	private int					windowNo				= 0;
+	private int					tabNo					= 0;
+
+	public WDMSAttributePanel(	DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure, boolean isLink, int windowNo,
+								int tabNo)
 	{
 		this.dms = dms;
 		this.tabBox = tabBox;
@@ -124,10 +144,13 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		this.isWindowAccess = isWindowAccess;
 		this.isMountingBaseStructure = isMountingBaseStructure;
 		this.isLink = isLink;
+		this.windowNo = windowNo;
+		this.tabNo = tabNo;
 
 		try
 		{
 			init();
+			this.contentTypeID = content.getDMS_ContentType_ID();
 			refreshPanel();
 		}
 		catch (Exception e)
@@ -165,7 +188,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		lblStatus = new Label();
 		ZkCssHelper.appendStyle(lblStatus, "font-weight: bold;");
 		ZkCssHelper.appendStyle(lblStatus, "align: center;");
-		lblStatus.setValue(MUser.getNameOfUser(content.getUpdatedBy()) + " edited at " + content.getUpdated());
+		lblStatus.setValue(MUser.getNameOfUser(content.getUpdatedBy()) + " edited at " + DMSConstant.SDF.format(content.getUpdated()));
 
 		panelAttribute.appendChild(lblStatus);
 		tabBoxAttribute.appendChild(tabsAttribute);
@@ -183,7 +206,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		tabVersionHistory.setLabel(DMSConstant.MSG_VERSION_HISTORY);
 
 		tabpanelsAttribute.appendChild(tabpanelAttribute);
-		// tabpanelsAttribute.setStyle("display: flex;");
+		tabpanelAttribute.setStyle("overflow: auto;");
 		tabpanelsAttribute.setHeight("98%");
 		tabpanelsAttribute.setWidth("100%");
 
@@ -279,8 +302,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 
 		MDMSAssociation dmsAssociation = dms.getAssociationFromContent(content.getDMS_Content_ID());
 
-		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = new HashMap<I_DMS_Content, I_DMS_Association>();
-		List<I_DMS_Content> contentVersions = MDMSContent.getVersionHistory(content);
+		HashMap <I_DMS_Content, I_DMS_Association> contentsMap = new HashMap <I_DMS_Content, I_DMS_Association>();
+		List <I_DMS_Content> contentVersions = MDMSContent.getVersionHistory(content);
 		for (I_DMS_Content contentVersion : contentVersions)
 		{
 			contentsMap.put(contentVersion, dmsAssociation);
@@ -289,12 +312,11 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		String[] eventsList = new String[] { Events.ON_CLICK, Events.ON_DOUBLE_CLICK };
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_VERSION);
-		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this,
-		                     eventsList);
+		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this, eventsList);
 
 	} // initVersionHistory
 
-	private void initAttributes()
+	private void initAttributes(boolean isEdit)
 	{
 		Components.removeAllChildren(tabpanelAttribute);
 		Grid commGrid = GridFactory.newGridLayout();
@@ -328,8 +350,20 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		txtDesc.setValue(content.getDescription());
 		txtName.setMaxlength(DMSConstant.MAX_FILENAME_LENGTH);
 
-		txtName.setEnabled(false);
-		txtDesc.setEnabled(false);
+		txtName.setEnabled(isEdit);
+		txtDesc.setEnabled(isEdit);
+
+		lblContentType = new Label(DMSConstant.MSG_DMS_CONTENT_TYPE);
+
+		if (editorContentType != null)
+			editorContentType.removeValuechangeListener(this);
+
+		int Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
+		MLookup lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
+		lookup.refresh();
+		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
+		editorContentType.setValue(contentTypeID);
+		editorContentType.addValueChangeListener(this);
 
 		Row row = new Row();
 		row.appendChild(lblName);
@@ -340,13 +374,20 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 		row.appendChild(lblDesc);
 		row.appendChild(txtDesc);
 		rows.appendChild(row);
+
+		contentTypeRow = new Row();
+		contentTypeRow.appendChild(lblContentType);
+		contentTypeRow.appendChild(editorContentType.getComponent());
+		contentTypeRow.setVisible(isEdit);
+		rows.appendChild(contentTypeRow);
+
 		tabpanelAttribute.appendChild(commGrid);
 
-		ASIPanel = new WDLoadASIPanel(content.getDMS_ContentType_ID(), content.getM_AttributeSetInstance_ID());
-		ASIPanel.setEditableAttribute(false);
+		ASIPanel = new WDLoadASIPanel(contentTypeID, content.getM_AttributeSetInstance_ID());
+		ASIPanel.setEditableAttribute(isEdit);
 		ASIPanel.appendChild(btnEdit);
 		ASIPanel.appendChild(btnSave);
-		btnSave.setVisible(false);
+		btnSave.setVisible(isEdit);
 		tabpanelAttribute.appendChild(ASIPanel);
 	} // initAttributes
 
@@ -364,29 +405,74 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 			txtDesc.setEnabled(true);
 			ASIPanel.setEditableAttribute(true);
 			btnSave.setVisible(true);
+			btnEdit.setVisible(false);
+			contentTypeRow.setVisible(true);
+			if (editorContentType != null)
+				editorContentType.addValueChangeListener(this);
 		}
 		else if (event.getTarget().equals(btnSave))
 		{
+			boolean isContentSave = false;
+			if (content.getDMS_ContentType_ID() != contentTypeID)
+			{
+				isContentSave = true;
+
+				//
+				int oldAttributeSet_ID = content.getDMS_ContentType_ID() > 0 ? content.getDMS_ContentType().getM_AttributeSet_ID() : 0;
+				content.setDMS_ContentType_ID(contentTypeID);
+				int newAttributeSet_ID = content.getDMS_ContentType_ID() > 0 ? content.getDMS_ContentType().getM_AttributeSet_ID() : 0;
+
+				//
+				if (oldAttributeSet_ID != newAttributeSet_ID)
+				{
+					MAttributeSet mAttributeSet = new MAttributeSet(Env.getCtx(), oldAttributeSet_ID, null);
+					MAttribute[] attributes = mAttributeSet.getMAttributes(false);
+					for (MAttribute att : attributes)
+					{
+						MAttributeInstance attInstance = att.getMAttributeInstance(content.getM_AttributeSetInstance_ID());
+						if (attInstance != null)
+							attInstance.deleteEx(false);
+					}
+				}
+			}
+
 			if (!txtName.getValue().equals(parentContent.getName().substring(0, parentContent.getName().lastIndexOf("."))))
 			{
 				String error = Utils.isValidFileName(txtName.getValue(), false);
 				if (!Util.isEmpty(error, true))
 					throw new WrongValueException(txtName, error);
-				
+
 				String fileName = txtName.getValue() + "." + FilenameUtils.getExtension(content.getName());
 				dms.renameContent(content, fileName);
 			}
 
-			ASIPanel.saveAttributes();
+			int asiID = ASIPanel.saveAttributes();
 			ASIPanel.setEditableAttribute(false);
 			btnSave.setVisible(false);
 			txtName.setEnabled(false);
 			txtDesc.setEnabled(false);
+			contentTypeRow.setVisible(false);
+			btnEdit.setVisible(true);
 
-			if ((Util.isEmpty(content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
-			    || (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
+			if (content.getDMS_ContentType_ID() == 0)
+			{
+				asiID = 0;
+			}
+
+			if (content.getM_AttributeSetInstance_ID() != asiID)
+			{
+				content.setM_AttributeSetInstance_ID(asiID);
+				isContentSave = true;
+			}
+
+			if ((Util.isEmpty(content.getDescription()) && !Util.isEmpty(txtDesc.getValue())) || (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
 			{
 				content.setDescription(txtDesc.getValue());
+				isContentSave = true;
+			}
+
+			if (isContentSave)
+			{
 				content.save();
 			}
 
@@ -423,8 +509,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 			final Tab tab = (Tab) tabBox.getSelectedTab();
 			final WDMSAttributePanel panel = this;
 
-			WUploadContent uploadContent = new WUploadContent(dms, content, true, tableId, recordId);
-			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+			WUploadContent uploadContent = new WUploadContent(dms, content, true, tableId, recordId, windowNo, tabNo);
+			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
 
 				@Override
 				public void onEvent(Event arg0) throws Exception
@@ -456,8 +542,21 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>
 	 */
 	public void refreshPanel()
 	{
-		initAttributes();
+		initAttributes(false);
 		initVersionHistory();
+	}
+
+	@Override
+	public void valueChange(ValueChangeEvent event)
+	{
+		if (event.getSource().equals(editorContentType))
+		{
+			if (editorContentType.getValue() != null)
+				contentTypeID = (int) editorContentType.getValue();
+			else
+				contentTypeID = 0;
+			initAttributes(true);
+		}
 	}
 
 }
