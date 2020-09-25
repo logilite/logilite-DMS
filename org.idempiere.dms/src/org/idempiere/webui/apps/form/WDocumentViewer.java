@@ -22,7 +22,7 @@ import org.adempiere.webui.component.Window;
 import org.compiere.util.Env;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IContentEditor;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 import org.zkoss.zul.Cell;
@@ -75,7 +75,7 @@ public class WDocumentViewer extends Window
 		this.setHeight("100%");
 		this.setWidth("100%");
 
-		IContentEditor contentEditor = Utils.getContentEditor(mimeType.getMimeType());
+		IContentEditor contentEditor = DMSFactoryUtils.getContentEditor(mimeType.getMimeType());
 
 		if (contentEditor != null)
 		{

@@ -54,7 +54,8 @@ import org.idempiere.componenet.AbstractComponentIconViewer;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.DMSFactoryUtils;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
@@ -68,7 +69,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.South;
 
-public class WDMSAttributePanel extends Panel implements EventListener <Event>, ValueChangeListener
+public class WDMSAttributePanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
 
 	/**
@@ -133,7 +134,8 @@ public class WDMSAttributePanel extends Panel implements EventListener <Event>, 
 	private int					windowNo				= 0;
 	private int					tabNo					= 0;
 
-	public WDMSAttributePanel(	DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure, boolean isLink, int windowNo,
+	public WDMSAttributePanel(	DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure,
+								boolean isLink, int windowNo,
 								int tabNo)
 	{
 		this.dms = dms;
@@ -302,8 +304,8 @@ public class WDMSAttributePanel extends Panel implements EventListener <Event>, 
 
 		MDMSAssociation dmsAssociation = dms.getAssociationFromContent(content.getDMS_Content_ID());
 
-		HashMap <I_DMS_Content, I_DMS_Association> contentsMap = new HashMap <I_DMS_Content, I_DMS_Association>();
-		List <I_DMS_Content> contentVersions = MDMSContent.getVersionHistory(content);
+		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = new HashMap<I_DMS_Content, I_DMS_Association>();
+		List<I_DMS_Content> contentVersions = MDMSContent.getVersionHistory(content);
 		for (I_DMS_Content contentVersion : contentVersions)
 		{
 			contentsMap.put(contentVersion, dmsAssociation);
@@ -311,8 +313,9 @@ public class WDMSAttributePanel extends Panel implements EventListener <Event>, 
 
 		String[] eventsList = new String[] { Events.ON_CLICK, Events.ON_DOUBLE_CLICK };
 
-		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(DMSConstant.ICON_VIEW_VERSION);
-		viewerComponent.init(dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this, eventsList);
+		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(DMSConstant.ICON_VIEW_VERSION);
+		viewerComponent.init(	dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this,
+								eventsList);
 
 	} // initVersionHistory
 
@@ -345,7 +348,7 @@ public class WDMSAttributePanel extends Panel implements EventListener <Event>, 
 		txtName.setWidth("100%");
 		txtDesc.setWidth("100%");
 
-		parentContent = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(content), null);
+		parentContent = new MDMSContent(Env.getCtx(), content.getDMS_Content_Related_ID(), null);
 		txtName.setValue(parentContent.getName().substring(0, parentContent.getName().lastIndexOf(".")));
 		txtDesc.setValue(content.getDescription());
 		txtName.setMaxlength(DMSConstant.MAX_FILENAME_LENGTH);
@@ -443,7 +446,7 @@ public class WDMSAttributePanel extends Panel implements EventListener <Event>, 
 					throw new WrongValueException(txtName, error);
 
 				String fileName = txtName.getValue() + "." + FilenameUtils.getExtension(content.getName());
-				dms.renameContent(content, fileName);
+				dms.renameContent(fileName, content);
 			}
 
 			int asiID = ASIPanel.saveAttributes();
@@ -465,7 +468,8 @@ public class WDMSAttributePanel extends Panel implements EventListener <Event>, 
 				isContentSave = true;
 			}
 
-			if ((Util.isEmpty(content.getDescription()) && !Util.isEmpty(txtDesc.getValue())) || (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
+			if ((Util.isEmpty(content.getDescription()) && !Util.isEmpty(txtDesc.getValue()))
+				|| (!Util.isEmpty(content.getDescription()) && !content.getDescription().equals(txtDesc.getValue())))
 			{
 				content.setDescription(txtDesc.getValue());
 				isContentSave = true;
@@ -510,7 +514,7 @@ public class WDMSAttributePanel extends Panel implements EventListener <Event>, 
 			final WDMSAttributePanel panel = this;
 
 			WUploadContent uploadContent = new WUploadContent(dms, content, true, tableId, recordId, windowNo, tabNo);
-			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
+			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event arg0) throws Exception

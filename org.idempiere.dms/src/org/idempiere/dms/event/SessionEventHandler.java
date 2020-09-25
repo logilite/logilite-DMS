@@ -29,8 +29,7 @@ public class SessionEventHandler extends AbstractEventHandler
 		PO po = getPO(event);
 		MSession mSession = (MSession) po;
 
-		if (event.getTopic().equals(IEventTopics.PO_AFTER_CHANGE) && po instanceof MSession
-				&& ((MSession) po).isProcessed())
+		if (event.getTopic().equals(IEventTopics.PO_AFTER_CHANGE) && po instanceof MSession && ((MSession) po).isProcessed())
 		{
 			DMSClipboard.removeSessionId(mSession.getAD_Session_ID());
 		}

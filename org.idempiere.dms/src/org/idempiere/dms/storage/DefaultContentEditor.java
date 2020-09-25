@@ -28,8 +28,8 @@ import org.compiere.model.MImage;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.idempiere.dms.factories.IContentEditor;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSMimeType;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zul.Iframe;
 
@@ -160,7 +160,7 @@ public class DefaultContentEditor extends Panel implements IContentEditor
 			if (logoID > 0)
 				image = new MImage(Env.getCtx(), logoID, null);
 			else
-				image = Utils.getMimetypeThumbnail(content.getDMS_MimeType_ID());
+				image = MDMSMimeType.getThumbnail(content.getDMS_MimeType_ID());
 
 			if (image.getData() != null)
 				media = new AMedia(null, null, null, image.getData());

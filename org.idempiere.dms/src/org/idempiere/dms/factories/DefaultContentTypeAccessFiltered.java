@@ -21,12 +21,12 @@ public class DefaultContentTypeAccessFiltered implements IContentTypeAccess
 {
 
 	@Override
-	public HashMap <I_DMS_Content, I_DMS_Association> getFilteredContentList(HashMap <I_DMS_Content, I_DMS_Association> contentMap) throws DBException
+	public HashMap<I_DMS_Content, I_DMS_Association> getFilteredContentList(HashMap<I_DMS_Content, I_DMS_Association> contentMap) throws DBException
 	{
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
-		ArrayList <Integer> contentIDList = new ArrayList <Integer>();
+		ArrayList<Integer> contentIDList = new ArrayList<Integer>();
 		try
 		{
 			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_CONTENT_BASED_ON_CONTENTTTYPE_ACCESS, null);
@@ -49,12 +49,12 @@ public class DefaultContentTypeAccessFiltered implements IContentTypeAccess
 		}
 
 		//
-		HashMap <I_DMS_Content, I_DMS_Association> contentsMapFiltered = new HashMap <I_DMS_Content, I_DMS_Association>();
+		HashMap<I_DMS_Content, I_DMS_Association> contentsMapFiltered = new HashMap<I_DMS_Content, I_DMS_Association>();
 
-		Iterator <Entry <I_DMS_Content, I_DMS_Association>> it = contentMap.entrySet().iterator();
+		Iterator<Entry<I_DMS_Content, I_DMS_Association>> it = contentMap.entrySet().iterator();
 		while (it.hasNext())
 		{
-			Map.Entry <I_DMS_Content, I_DMS_Association> mapEntry = (Entry <I_DMS_Content, I_DMS_Association>) it.next();
+			Map.Entry<I_DMS_Content, I_DMS_Association> mapEntry = (Entry<I_DMS_Content, I_DMS_Association>) it.next();
 			if (contentIDList.contains(mapEntry.getKey().getDMS_Content_ID()) || mapEntry.getKey().getDMS_ContentType_ID() == 0)
 			{
 				contentsMapFiltered.put(mapEntry.getKey(), mapEntry.getValue());

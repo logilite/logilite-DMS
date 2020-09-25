@@ -7,11 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.logging.Level;
 
 import org.adempiere.base.Core;
 import org.adempiere.base.IResourceFinder;
-import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.Button;
@@ -20,16 +19,12 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.compiere.model.MImage;
-import org.compiere.util.CCache;
+import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.idempiere.dms.factories.IContentTypeAccess;
-import org.idempiere.dms.factories.IContentTypeAccessFactory;
-import org.idempiere.dms.factories.IDMSViewer;
-import org.idempiere.dms.factories.IDMSViewerFactory;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.image.AImage;
@@ -50,7 +45,7 @@ import org.zkoss.zul.impl.LabelImageElement;
 public class DMS_ZK_Util
 {
 
-	static CCache<String, IDMSViewer> cache_thumbnailGenerator = new CCache<String, IDMSViewer>("DMSViewer", 2);
+	static CLogger log = CLogger.getCLogger(DMS_ZK_Util.class);
 
 	public static void downloadDocument(DMS dms, MDMSContent content) throws FileNotFoundException, IOException
 	{
@@ -73,47 +68,12 @@ public class DMS_ZK_Util
 	} // downloadDocument
 
 	/**
-	 * Factory call for DMS Component Viewer
-	 * 
-	 * @param toggleAction
-	 * @return {@link IDMSViewer}
-	 */
-	public static IDMSViewer getDMSCompViewer(String toggleAction)
-	{
-		List<IDMSViewerFactory> factories = Service.locator().list(IDMSViewerFactory.class).getServices();
-		for (IDMSViewerFactory factory : factories)
-		{
-			return factory.get(toggleAction);
-		}
-
-		return null;
-	}
-
-
-	/**
-	 * Factory call for DMS ContentTypeAccess
-	 * 
-	 * @param toggleAction
-	 * @return {@link IContentTypeAccess}
-	 */
-	public static IContentTypeAccess getContentTypeAccessFactory()
-	{
-		List<IContentTypeAccessFactory> factories = Service.locator().list(IContentTypeAccessFactory.class).getServices();
-		for (IContentTypeAccessFactory factory : factories)
-		{
-			return factory.get();
-		}
-
-		return null;
-	}
-	
-	/**
 	 * Get AImage for the Content
 	 * 
-	 * @param dms
-	 * @param content
-	 * @param thumbImgSize
-	 * @return {@link AImage}
+	 * @param  dms
+	 * @param  content
+	 * @param  thumbImgSize
+	 * @return              {@link AImage}
 	 */
 	public static AImage getThumbImageForContent(DMS dms, I_DMS_Content content, String thumbImgSize)
 	{
@@ -149,11 +109,11 @@ public class DMS_ZK_Util
 	/**
 	 * Create Cell and added child of Row
 	 * 
-	 * @param row
-	 * @param rowSpan
-	 * @param colSpan
-	 * @param comp - Component
-	 * @return {@link Cell}
+	 * @param  row
+	 * @param  rowSpan
+	 * @param  colSpan
+	 * @param  comp    - Component
+	 * @return         {@link Cell}
 	 */
 	public static Cell createCellUnderRow(Row row, int rowSpan, int colSpan, Component comp)
 	{
@@ -171,11 +131,11 @@ public class DMS_ZK_Util
 	/**
 	 * Create MenuItem and append child of MenuPopup
 	 * 
-	 * @param menuPopup
-	 * @param itemName - Menu Item Name
-	 * @param icon - Image Name
-	 * @param listener
-	 * @return {@link Menuitem}
+	 * @param  menuPopup
+	 * @param  itemName  - Menu Item Name
+	 * @param  icon      - Image Name
+	 * @param  listener
+	 * @return           {@link Menuitem}
 	 */
 	public static Menuitem createMenuItem(Menupopup menuPopup, String itemName, String icon, EventListener<? extends Event> listener)
 	{
@@ -189,7 +149,7 @@ public class DMS_ZK_Util
 	/**
 	 * Set Font or Image based icon to the component
 	 * 
-	 * @param iconName - Icon Name
+	 * @param iconName   - Icon Name
 	 * @param imgElement - component which are implementing {@link LabelImageElement}
 	 */
 	public static void setFontOrImageAsIcon(String iconName, LabelImageElement imgElement)
@@ -208,15 +168,15 @@ public class DMS_ZK_Util
 			{
 				suffix = size + ".png";
 			}
-			imgElement.setImageContent(Utils.getImage(iconName + suffix));
+			imgElement.setImageContent(DMS_ZK_Util.getImage(iconName + suffix));
 		}
 	} // setFontOrImageAsIcon
 
 	/**
 	 * Set Data for Button component
 	 * 
-	 * @param btn - Button Component
-	 * @param icon - Image Name
+	 * @param btn         - Button Component
+	 * @param icon        - Image Name
 	 * @param toolTipText
 	 * @param listener
 	 */
@@ -250,19 +210,19 @@ public class DMS_ZK_Util
 
 			StringBuffer sb = new StringBuffer();
 			sb.append(" var css  = '" + cssContents + "';");
-			sb.append(" var head = document.head || document.getElementsByTagName('head')[0]; 	"
-			          + " if ($(head).find('Style[id=\"ID_DMS_Style_Ref\"]').length <= 0)	"
-			              + " { 																"
-			              + " 	var style = document.createElement('style'); 				"
-			              + " 	style.id = 'ID_DMS_Style_Ref'; 								"
-			              + " 	style.type = 'text/css'; 									"
-			              + " 	style.title = 'DMSStyle'; 									"
-			              + " 	if 	(style.styleSheet) 										"
-			              + "			{ style.styleSheet.cssText = css; } 					"
-			              + "		else 														"
-			              + "			{ style.appendChild(document.createTextNode(css)); }	"
-			              + " 	head.appendChild(style); 									"
-			              + " }																");
+			sb.append(	" var head = document.head || document.getElementsByTagName('head')[0]; 	"
+						+ " if ($(head).find('Style[id=\"ID_DMS_Style_Ref\"]').length <= 0)	"
+						+ " { 																"
+						+ " 	var style = document.createElement('style'); 				"
+						+ " 	style.id = 'ID_DMS_Style_Ref'; 								"
+						+ " 	style.type = 'text/css'; 									"
+						+ " 	style.title = 'DMSStyle'; 									"
+						+ " 	if 	(style.styleSheet) 										"
+						+ "			{ style.styleSheet.cssText = css; } 					"
+						+ "		else 														"
+						+ "			{ style.appendChild(document.createTextNode(css)); }	"
+						+ " 	head.appendChild(style); 									"
+						+ " }																");
 			Clients.evalJavaScript(sb.toString());
 		}
 		catch (IOException e)
@@ -270,5 +230,41 @@ public class DMS_ZK_Util
 			throw new AdempiereException("Error: Unable to load dms.css file. " + e.getLocalizedMessage(), e);
 		}
 	} // loadDMSThemeCSSFile
+
+	public static AImage getImage(String name)
+	{
+		IResourceFinder rf = null;
+		URL url = null;
+		AImage image = null;
+		try
+		{
+			rf = Core.getResourceFinder();
+			url = rf.getResource("/dmsimages/" + name);
+			image = new AImage(url);
+		}
+		catch (IOException e)
+		{
+			log.log(Level.WARNING, name + " Icon not found");
+		}
+		return image;
+	} // getImage
+
+	/**
+	 * Get Media from File
+	 * 
+	 * @param  file
+	 * @return      {@link AMedia}
+	 */
+	public static AMedia getMediaFromFile(File file)
+	{
+		try
+		{
+			return new AMedia(file.getName(), null, null, FileUtils.readFileToByteArray(file));
+		}
+		catch (IOException e)
+		{
+			throw new AdempiereException("Issue while creating Media file.", e);
+		}
+	} // getMediaFromFile
 
 }

@@ -26,7 +26,7 @@ import com.idempiere.model.MIndexingConfig;
 
 public class ServiceUtils
 {
-	static CCache <Integer, IIndexSearcher>	cache_indexSearcher					= new CCache <Integer, IIndexSearcher>("IndexSearcher", 2);
+	static CCache<Integer, IIndexSearcher>	cache_indexSearcher					= new CCache<Integer, IIndexSearcher>("IndexSearcher", 2);
 
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH	= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 
@@ -34,7 +34,7 @@ public class ServiceUtils
 	public static final String				DMS_CONTENT_ID						= "DMS_Content_ID";
 
 	/**
-	 * @param AD_Client_ID
+	 * @param  AD_Client_ID
 	 * @return
 	 */
 	public static IIndexSearcher getIndexSearcher(int AD_Client_ID)
@@ -57,7 +57,7 @@ public class ServiceUtils
 		else
 			throw new AdempiereException("Index Server Not Found on Client Info");
 
-		List <IIndexSearcherFactory> factories = Service.locator().list(IIndexSearcherFactory.class).getServices();
+		List<IIndexSearcherFactory> factories = Service.locator().list(IIndexSearcherFactory.class).getServices();
 
 		for (IIndexSearcherFactory factory : factories)
 		{

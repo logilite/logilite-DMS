@@ -86,8 +86,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 	private HttpSolrServer		server					= null;
 	private MIndexingConfig		indexingConfig			= null;
 
-	public HashSet <String>		fieldSet				= new HashSet <String>();
-	public HashSet <String>		fieldTypeSet			= new HashSet <String>();
+	public HashSet<String>		fieldSet				= new HashSet<String>();
+	public HashSet<String>		fieldTypeSet			= new HashSet<String>();
 
 	@Override
 	public void init(MIndexingConfig indexingConfig)
@@ -101,7 +101,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 			DefaultHttpClient httpclient = new DefaultHttpClient(cxMgr);
 			httpclient.addRequestInterceptor(new PreemptiveAuthInterceptor(), 0);
-			httpclient.getCredentialsProvider().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(indexingConfig.getUserName(), indexingConfig.getPassword()));
+			httpclient.getCredentialsProvider().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(indexingConfig.getUserName(), indexingConfig
+																																							.getPassword()));
 
 			server = new HttpSolrServer(indexingConfig.getIndexServerUrl(), httpclient);
 			server.setRequestWriter(new BinaryRequestWriter());
@@ -161,8 +162,8 @@ public class SolrIndexSearcher implements IIndexSearcher
 	{
 		final SchemaRequest.Fields fieldsSchemaRequest = new SchemaRequest.Fields();
 		SchemaResponse.FieldsResponse fieldsResponse1 = fieldsSchemaRequest.process(server);
-		List <Map <String, Object>> fields = fieldsResponse1.getFields();
-		for (Map <String, Object> map : fields)
+		List<Map<String, Object>> fields = fieldsResponse1.getFields();
+		for (Map<String, Object> map : fields)
 		{
 			fieldSet.add((String) map.get("name"));
 		}
@@ -179,10 +180,10 @@ public class SolrIndexSearcher implements IIndexSearcher
 		SchemaRequest.FieldTypes fTypes = new SchemaRequest.FieldTypes();
 		SchemaResponse.FieldTypesResponse ftRes = fTypes.process(server);
 
-		List <FieldTypeRepresentation> fieldTypes = ftRes.getFieldTypes();
+		List<FieldTypeRepresentation> fieldTypes = ftRes.getFieldTypes();
 		for (FieldTypeRepresentation ftRepr : fieldTypes)
 		{
-			Map <String, Object> ftAttrib = ftRepr.getAttributes();
+			Map<String, Object> ftAttrib = ftRepr.getAttributes();
 			fieldTypeSet.add(ftAttrib.get("name").toString());
 		}
 	} // buildSolrSchemaFieldsTypeSet
@@ -190,13 +191,13 @@ public class SolrIndexSearcher implements IIndexSearcher
 	/**
 	 * Create FieldType if not exists in solr schema
 	 * 
-	 * @param fieldTypeName
+	 * @param  fieldTypeName
 	 * @throws SolrServerException
 	 * @throws IOException
 	 */
 	public void createOrCheckFieldsTypeInSolrSchema(String fieldTypeName) throws SolrServerException, IOException
 	{
-		Map <String, Object> mapAttribute = new HashMap <String, Object>();
+		Map<String, Object> mapAttribute = new HashMap<String, Object>();
 		if (!fieldTypeSet.contains(fieldTypeName) && SOLR_FIELDTYPE_TLONGS.equals(fieldTypeName))
 		{
 			mapAttribute.put("name", SOLR_FIELDTYPE_TLONGS);
@@ -222,13 +223,13 @@ public class SolrIndexSearcher implements IIndexSearcher
 	/**
 	 * Create Field if not exists in solr schema
 	 * 
-	 * @param fieldName
+	 * @param  fieldName
 	 * @throws SolrServerException
 	 * @throws IOException
 	 */
 	public void createOrCheckFieldsInSolrSchema(String fieldName) throws SolrServerException, IOException
 	{
-		Map <String, Object> mapAttribute = new HashMap <String, Object>();
+		Map<String, Object> mapAttribute = new HashMap<String, Object>();
 		if (fieldName.equalsIgnoreCase(ServiceUtils.FILE_CONTENT) && !fieldSet.contains(ServiceUtils.FILE_CONTENT))
 		{
 			mapAttribute.put("name", ServiceUtils.FILE_CONTENT);
@@ -278,14 +279,14 @@ public class SolrIndexSearcher implements IIndexSearcher
 	} // checkServerIsUp
 
 	@Override
-	public List <Integer> searchIndex(String query)
+	public List<Integer> searchIndex(String query)
 	{
 		checkServerIsUp();
 
 		SolrQuery solrQuery = new SolrQuery();
 		QueryResponse response = new QueryResponse();
 		SolrDocumentList documentList = null;
-		List <Integer> dmsContentList = new ArrayList <Integer>();
+		List<Integer> dmsContentList = new ArrayList<Integer>();
 
 		long numbFound = 0;
 		int current = 0;
@@ -300,23 +301,23 @@ public class SolrIndexSearcher implements IIndexSearcher
 
 			while (current < numbFound)
 			{
-				ListIterator <SolrDocument> iterator = documentList.listIterator();
+				ListIterator<SolrDocument> iterator = documentList.listIterator();
 
 				while (iterator.hasNext())
 				{
 					current++;
 
 					SolrDocument document = iterator.next();
-					Map <String, Collection <Object>> searchedContent = document.getFieldValuesMap();
-					Iterator <String> fields = document.getFieldNames().iterator();
+					Map<String, Collection<Object>> searchedContent = document.getFieldValuesMap();
+					Iterator<String> fields = document.getFieldNames().iterator();
 					while (fields.hasNext())
 					{
 						String field = fields.next();
 
 						if (field.equalsIgnoreCase(ServiceUtils.DMS_CONTENT_ID))
 						{
-							Collection <Object> values = searchedContent.get(field);
-							Iterator <Object> value = values.iterator();
+							Collection<Object> values = searchedContent.get(field);
+							Iterator<Object> value = values.iterator();
 
 							while (value.hasNext())
 							{
@@ -341,13 +342,13 @@ public class SolrIndexSearcher implements IIndexSearcher
 	}
 
 	@Override
-	public void indexContent(Map <String, Object> indexValue)
+	public void indexContent(Map<String, Object> indexValue)
 	{
 		indexContent(indexValue, null);
 	}
 
 	@Override
-	public void indexContent(Map <String, Object> indexValue, File file)
+	public void indexContent(Map<String, Object> indexValue, File file)
 	{
 		checkServerIsUp();
 
@@ -356,7 +357,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 			String content = (String) indexValue.get(ServiceUtils.FILE_CONTENT);
 			SolrInputDocument document = new SolrInputDocument();
 
-			for (Entry <String, Object> row : indexValue.entrySet())
+			for (Entry<String, Object> row : indexValue.entrySet())
 			{
 				if (row.getKey() != null && row.getValue() != null)
 				{
@@ -418,14 +419,14 @@ public class SolrIndexSearcher implements IIndexSearcher
 	} // deleteIndexByQuery
 
 	@Override
-	public String buildSolrSearchQuery(HashMap <String, List <Object>> params)
+	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
 	{
 		StringBuffer query = new StringBuffer();
 
-		for (Entry <String, List <Object>> row : params.entrySet())
+		for (Entry<String, List<Object>> row : params.entrySet())
 		{
 			String key = row.getKey();
-			List <Object> value = row.getValue();
+			List<Object> value = row.getValue();
 
 			if (value.size() == 2)
 			{
@@ -473,19 +474,19 @@ public class SolrIndexSearcher implements IIndexSearcher
 			solrQuery.setQuery(query);
 			response = server.query(solrQuery);
 			SolrDocumentList documentList = response.getResults();
-			ListIterator <SolrDocument> iterator = documentList.listIterator();
+			ListIterator<SolrDocument> iterator = documentList.listIterator();
 			while (iterator.hasNext())
 			{
 				SolrDocument document = iterator.next();
-				Map <String, Collection <Object>> searchedContent = document.getFieldValuesMap();
-				Iterator <String> fields = document.getFieldNames().iterator();
+				Map<String, Collection<Object>> searchedContent = document.getFieldValuesMap();
+				Iterator<String> fields = document.getFieldNames().iterator();
 				while (fields.hasNext())
 				{
 					String field = fields.next();
 					if (field.equalsIgnoreCase(columnName))
 					{
-						Collection <Object> values = searchedContent.get(field);
-						Iterator <Object> value = values.iterator();
+						Collection<Object> values = searchedContent.get(field);
+						Iterator<Object> value = values.iterator();
 
 						while (value.hasNext())
 						{
@@ -505,7 +506,7 @@ public class SolrIndexSearcher implements IIndexSearcher
 	} // getColumnValue
 
 	/**
-	 * @param file
+	 * @param  file
 	 * @return
 	 */
 	private String processDocument(File file)
