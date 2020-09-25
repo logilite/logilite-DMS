@@ -221,8 +221,9 @@ public class WDLoadASIPanel extends Panel
 
 	private GridField getGridField(MAttribute attribute, String columnName, int Reference_ID, int Reference_Value_ID)
 	{
-		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
-				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID, Reference_Value_ID, false, false, null);
+		GridFieldVO vo = GridFieldVO.createParameter(	Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
+														Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID,
+														Reference_Value_ID, false, false, null);
 		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 
@@ -255,8 +256,8 @@ public class WDLoadASIPanel extends Panel
 					if (instance.getValueTimeStamp() != null)
 						editor.setValue(instance.getValueTimeStamp());
 				}
-				else if (dt == DisplayType.Image || dt == DisplayType.Assignment || dt == DisplayType.Locator || dt == DisplayType.Payment
-						|| dt == DisplayType.TableDir || dt == DisplayType.Table || dt == DisplayType.Search || dt == DisplayType.Account)
+				else if (dt == DisplayType.Image	|| dt == DisplayType.Assignment || dt == DisplayType.Locator || dt == DisplayType.Payment
+							|| dt == DisplayType.TableDir || dt == DisplayType.Table || dt == DisplayType.Search || dt == DisplayType.Account)
 				{
 					if (instance.getValueInt() > 0)
 						editor.setValue(instance.getValueInt());
@@ -297,8 +298,7 @@ public class WDLoadASIPanel extends Panel
 			{
 				WEditor editor = (WEditor) m_editors.get(i);
 				Object item = editor.getValue();
-				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(Env.getCtx(), Integer.valueOf(String
-						.valueOf(item)), null) : null;
+				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(	Env.getCtx(), Integer.valueOf(String.valueOf(item)), null) : null;
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
@@ -397,9 +397,9 @@ public class WDLoadASIPanel extends Panel
 					attributes.setMAttributeInstance(asiID, (BigDecimal) value);
 			}
 		}
-		else if (displayType == DisplayType.Image || displayType == DisplayType.Assignment || displayType == DisplayType.Locator
-				|| displayType == DisplayType.Payment || displayType == DisplayType.TableDir || displayType == DisplayType.Table
-				|| displayType == DisplayType.Search || displayType == DisplayType.Account)
+		else if (displayType == DisplayType.Image	|| displayType == DisplayType.Assignment || displayType == DisplayType.Locator
+					|| displayType == DisplayType.Payment || displayType == DisplayType.TableDir || displayType == DisplayType.Table
+					|| displayType == DisplayType.Search || displayType == DisplayType.Account)
 		{
 			Integer value = (Integer) editor.getValue();
 			if (attributes.isMandatory() && value == null)
@@ -410,7 +410,7 @@ public class WDLoadASIPanel extends Panel
 
 			String valueLable = null;
 			if (displayType == DisplayType.TableDir || displayType == DisplayType.Table || displayType == DisplayType.Search
-					|| displayType == DisplayType.Account)
+				|| displayType == DisplayType.Account)
 			{
 				valueLable = editor.getDisplay();
 			}

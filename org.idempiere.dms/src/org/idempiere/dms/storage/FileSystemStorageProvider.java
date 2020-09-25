@@ -28,7 +28,7 @@ import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CLogger;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;

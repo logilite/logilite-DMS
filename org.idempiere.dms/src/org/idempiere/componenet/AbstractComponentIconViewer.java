@@ -9,10 +9,11 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.theme.ThemeManager;
 import org.idempiere.dms.DMS;
+import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.factories.IDMSViewer;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSAssociationType;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
@@ -27,13 +28,13 @@ import org.zkoss.zul.Image;
  * 
  * @author Sachin
  */
-public abstract class AbstractComponentIconViewer implements IDMSViewer, EventListener <Event>
+public abstract class AbstractComponentIconViewer implements IDMSViewer, EventListener<Event>
 {
 	protected static Image LinkImage = new Image();
 
 	static
 	{
-		LinkImage.setContent(Utils.getImage("Link16.png"));
+		LinkImage.setContent(DMS_ZK_Util.getImage("Link16.png"));
 	}
 
 	protected DMS								dms;
@@ -42,18 +43,18 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	protected Component							prevComponent;
 
 	protected String[]							eventsList;
-	protected EventListener <? extends Event>	listener;
+	protected EventListener<? extends Event>	listener;
 
 	// Abstract method definition
-	public abstract void createHeaderPart( );
+	public abstract void createHeaderPart();
 
 	public abstract void setNoComponentExistsMsg(Rows rows);
 
 	public abstract void createComponent(Rows rows, I_DMS_Content content, I_DMS_Association association, int compWidth, int compHeight);
 
 	@Override
-	public void init(DMS dms, HashMap <I_DMS_Content, I_DMS_Association> contentsMap, Grid gridLayout, int compWidth, int compHeight,
-		EventListener <? extends Event> listener, String[] eventsList)
+	public void init(DMS dms, HashMap<I_DMS_Content, I_DMS_Association> contentsMap, Grid gridLayout, int compWidth, int compHeight,
+		EventListener<? extends Event> listener, String[] eventsList)
 	{
 		this.dms = dms;
 		this.grid = gridLayout;
@@ -77,7 +78,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		}
 		else
 		{
-			for (Map.Entry <I_DMS_Content, I_DMS_Association> entry : contentsMap.entrySet())
+			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : contentsMap.entrySet())
 				createComponent(rows, entry.getKey(), entry.getValue(), compWidth, compHeight);
 		}
 	} // init
@@ -106,12 +107,12 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	} // getContentName
 
 	/**
-	 * @param association
-	 * @return {@link Component} Icon component
+	 * @param  association
+	 * @return             {@link Component} Icon component
 	 */
 	public Component getLinkIconComponent(I_DMS_Association association)
 	{
-		if (Utils.isLink(association))
+		if (MDMSAssociationType.isLink(association))
 		{
 			if (ThemeManager.isUseFontIconForImage())
 			{

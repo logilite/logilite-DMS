@@ -21,19 +21,19 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID			= 262213468229169099L;
+	private static final long	serialVersionUID	= 262213468229169099L;
 
-	public static final String	SQL_GET_ASSOCIATION_TYPE	= "SELECT DMS_AssociationType_ID FROM DMS_AssociationType WHERE Upper(name) = UPPER(?)";
+	public static final String	TYPE_VERSION		= "Version";
+	public static final String	TYPE_PARENT			= "Parent";
+	public static final String	TYPE_RECORD			= "Record";
+	public static final String	TYPE_LINK			= "Link";
+	// Extra Type for Renaming the content [ Out of the Record ]
+	public static final String	TYPE_VERSIONPARENT	= "VersionParent";
 
-	public static final String	TYPE_VERSION				= "Version";
-	public static final String	TYPE_PARENT					= "Parent";
-	public static final String	TYPE_RECORD					= "Record";
-	public static final String	TYPE_LINK					= "Link";
-
-	public static final int		VERSION_ID					= 1000000;
-	public static final int		PARENT_ID					= 1000001;
-	public static final int		RECORD_ID					= 1000002;
-	public static final int		LINK_ID						= 1000003;
+	public static final int		VERSION_ID			= 1000000;
+	public static final int		PARENT_ID			= 1000001;
+	public static final int		RECORD_ID			= 1000002;
+	public static final int		LINK_ID				= 1000003;
 
 	public MDMSAssociationType(Properties ctx, int DMS_AssociationType_ID, String trxName)
 	{
@@ -49,5 +49,27 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 	{
 		return isParent ? PARENT_ID : VERSION_ID;
 	}
+
+	/**
+	 * Check Association Type is Link
+	 * 
+	 * @param  association
+	 * @return             TRUE if Link
+	 */
+	public static boolean isLink(I_DMS_Association association)
+	{
+		return isLink(association.getDMS_AssociationType_ID());
+	} // isLink
+
+	/**
+	 * Check Association Type is Link
+	 * 
+	 * @param  associationTypeID
+	 * @return                   TRUE if Link
+	 */
+	public static boolean isLink(int associationTypeID)
+	{
+		return associationTypeID == LINK_ID;
+	} // isLink
 
 }

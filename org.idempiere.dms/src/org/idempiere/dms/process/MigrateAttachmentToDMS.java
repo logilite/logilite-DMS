@@ -44,8 +44,8 @@ public class MigrateAttachmentToDMS extends SvrProcess
 		int cntMigrated = 0;
 		int cntDeleted = 0;
 
-		List<MAttachment> attachments = new Query(getCtx(), MAttachment.Table_Name,
-				" AD_Table_ID NOT IN(50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y'", get_TrxName()).list();
+		List<MAttachment> attachments = new Query(	getCtx(), MAttachment.Table_Name,
+													" AD_Table_ID NOT IN(50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y'", get_TrxName()).list();
 
 		for (MAttachment attachment : attachments)
 		{

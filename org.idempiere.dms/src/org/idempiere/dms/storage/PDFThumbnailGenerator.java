@@ -31,7 +31,7 @@ import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IThumbnailGenerator;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.I_DMS_Content;
 
 import com.sun.pdfview.PDFFile;

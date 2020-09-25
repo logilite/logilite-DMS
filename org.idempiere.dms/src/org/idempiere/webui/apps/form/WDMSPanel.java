@@ -85,10 +85,12 @@ import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentTypeAccess;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.DMSConvertToPDFUtils;
+import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
@@ -107,15 +109,15 @@ import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
 import org.zkoss.zul.impl.XulElement;
 
-public class WDMSPanel extends Panel implements EventListener <Event>, ValueChangeListener
+public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
 	private static final long		serialVersionUID		= -6813481516566180243L;
 	private static CLogger			log						= CLogger.getCLogger(WDMSPanel.class);
 
-	public static final String		ATTRIBUTE_TOGGLE		= "Toggle";
-	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
+	private static final String		ATTRIBUTE_TOGGLE		= "Toggle";
 	private static final String		TOOLBAR_BTN_DMS_DIR		= "DMS - Create Directory";
 	private static final String		TOOLBAR_BTN_DMS_UPLOAD	= "DMS - Upload Content";
+	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
 
 	private Tabbox					tabBox					= new Tabbox();
 	private Tabs					tabs					= new Tabs();
@@ -173,7 +175,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	private MDMSContent				copyDMSContent			= null;
 	private MDMSContent				dirContent				= null;
 
-	private Stack <MDMSContent>		selectedDMSContent		= new Stack <MDMSContent>();
+	private Stack<MDMSContent>		selectedDMSContent		= new Stack<MDMSContent>();
 
 	//
 	private Component				compCellRowViewer		= null;
@@ -205,20 +207,20 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	private int						windowID				= 0;
 	private int						tabID					= 0;
 
+	private int						windowNo				= 0;
+	private int						tabNo					= 0;
+
 	private boolean					isSearch				= false;
 	private boolean					isGenericSearch			= false;
 	private boolean					isWindowAccess			= true;
 	private boolean					isDocExplorerWindow		= false;
 	private boolean					isMountingBaseStructure	= false;
 
-	private ArrayList <WEditor>		m_editors				= new ArrayList <WEditor>();
+	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
 
-	private Map <String, WEditor>	ASI_Value				= new HashMap <String, WEditor>();
+	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
 
 	private AbstractADWindowContent	winContent;
-
-	private int						windowNo				= 0;
-	private int						tabNo					= 0;
 
 	/**
 	 * Constructor initialize
@@ -230,7 +232,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		this.tabNo = tabNo;
 
 		initForm();
-	}
+	} // Constructor
 
 	public WDMSPanel(int Table_ID, int Record_ID, AbstractADWindowContent winContent)
 	{
@@ -257,7 +259,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		btnUploadContent.setEnabled(isWindowAccess);
 
 		allowUserToCreateDir();
-	}
+	} // Constructor
 
 	/*
 	 * Navigation and createDir buttons are disabled based on
@@ -546,7 +548,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 		gridBreadCrumb.setClass("dms-breadcrumb");
 		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; height: 45px; "
-			+ "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px; overflow-x: auto;");
+								+ "border: 1px solid #AAA !important; border-radius: 5px; box-shadow: 1px 1px 1px 0px; overflow-x: auto;");
 
 		breadRow.setZclass("none");
 		breadRow.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION_NOWRAP);
@@ -678,7 +680,8 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		{
 			openCanvasContextMenu(event);
 		}
-		else if (Events.ON_RIGHT_CLICK.equals(event.getName()) && (event.getTarget().getClass().equals(Cell.class) || event.getTarget().getClass().equals(Row.class)))
+		else if (Events.ON_RIGHT_CLICK.equals(event.getName())
+					&& (event.getTarget().getClass().equals(Cell.class) || event.getTarget().getClass().equals(Row.class)))
 		{
 			compCellRowViewer = event.getTarget();
 			openContentContextMenu(compCellRowViewer);
@@ -698,7 +701,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
 			final WUploadContent uploadContent = new WUploadContent(dms, dirContent, true, this.getTable_ID(), this.getRecord_ID(), windowNo, tabNo);
-			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
+			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event e) throws Exception
@@ -755,7 +758,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		else if (event.getTarget().equals(mnu_rename))
 		{
 			final WRenameContent renameContent = new WRenameContent(dms, dirContent, tableID, recordID);
-			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
+			renameContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event e) throws Exception
@@ -770,7 +773,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		else if (event.getTarget().equals(mnu_delete))
 		{
 			// TODO inactive DMS_content and same change in solr index
-			Callback <Boolean> callback = new Callback <Boolean>() {
+			Callback<Boolean> callback = new Callback<Boolean>() {
 				@Override
 				public void onCallback(Boolean result)
 				{
@@ -782,7 +785,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 						String warningMsg = dms.hasLinkableDocs(deletableContent, deletableAssociation);
 						if (!Util.isEmpty(warningMsg, true))
 						{
-							Callback <Boolean> callbackWarning = new Callback <Boolean>() {
+							Callback<Boolean> callbackWarning = new Callback<Boolean>() {
 
 								@Override
 								public void onCallback(Boolean result)
@@ -798,8 +801,8 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 								}
 							};
 
-							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete, "<b> Are you want to delete linkable documents associated with actual docs ? </b>" + warningMsg,
-											callbackWarning);
+							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete,
+										"<b> Are you want to delete linkable documents associated with actual docs ? </b>" + warningMsg, callbackWarning);
 						}
 						else
 						{
@@ -814,12 +817,14 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 				}
 			};
 
-			FDialog.ask(0, this, "Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?", callback);
+			FDialog.ask(0, this, "Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
+						callback);
 
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
-			new WDAssociationType(dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(), getRecord_ID(), winContent);
+			new WDAssociationType(	dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(),
+									getRecord_ID(), winContent);
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
@@ -842,7 +847,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 		allowUserToCreateDir();
 
-		// Event for Searching content Simple or Adavance level
+		// Event for Searching content Simple or Advance level
 		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().equals(vsearchBox.getButton()))
 		{
 			searchContents(false);
@@ -905,11 +910,11 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 		lblPositionInfo.setValue(currDMSContent.getName());
 
-		List <BreadCrumbLink> parents = getParentLinks();
+		List<BreadCrumbLink> parents = getParentLinks();
 		if (!parents.isEmpty())
 		{
 			breadRow.getChildren().clear();
-			Iterator <BreadCrumbLink> iterator = parents.iterator();
+			Iterator<BreadCrumbLink> iterator = parents.iterator();
 			while (iterator.hasNext())
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
@@ -936,7 +941,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	{
 		if (recordID > 0 || isDocExplorerWindow)
 		{
-			HashMap <I_DMS_Content, I_DMS_Association> contentsMap = null;
+			HashMap<I_DMS_Content, I_DMS_Association> contentsMap = null;
 
 			// Setting current dms content value on label
 			if (isTabViewer())
@@ -953,12 +958,12 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, true);
 
 			// Content Type wise access restriction
-			IContentTypeAccess contentTypeAccess = DMS_ZK_Util.getContentTypeAccessFactory();
+			IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
 			HashMap<I_DMS_Content, I_DMS_Association> contentsMapFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
 
 			// Component Viewer
 			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
-			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMS_ZK_Util.getDMSCompViewer(currThumbViewerAction);
+			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
 			viewerComponent.init(dms, contentsMapFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 		}
 
@@ -997,7 +1002,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	/**
 	 * open the Directory OR Content
 	 * 
-	 * @param component
+	 * @param  component
 	 * @throws FileNotFoundException
 	 */
 	private void openDirectoryORContent(Component component) throws FileNotFoundException, IOException
@@ -1032,7 +1037,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 				try
 				{
-					documentToPreview = dms.convertToPDF(documentToPreview, mimeType);
+					documentToPreview = DMSConvertToPDFUtils.convertDocToPDF(documentToPreview, mimeType);
 				}
 				catch (Exception e)
 				{
@@ -1041,15 +1046,16 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 					FDialog.warn(windowID, errorMsg, "Document preview issue...");
 				}
 
-				if (Utils.getContentEditor(mimeType.getMimeType()) != null)
+				if (DMSFactoryUtils.getContentEditor(mimeType.getMimeType()) != null)
 				{
 					Tab tabData = new Tab(name);
 					tabData.setClosable(true);
 					tabs.appendChild(tabData);
 					tabBox.setSelectedTab(tabData);
 
-					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID, windowNo, tabNo);
-					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure, Utils.isLink(selectedAssociation));
+					WDocumentViewer documentViewer = new WDocumentViewer(	dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID, windowNo,
+																			tabNo);
+					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure, MDMSAssociationType.isLink(selectedAssociation));
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
 					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_RENAME_COMPLETE, this);
@@ -1080,14 +1086,14 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	 */
 	private void navigationBack()
 	{
-		List <BreadCrumbLink> parents = getParentLinks();
+		List<BreadCrumbLink> parents = getParentLinks();
 		int contentID = 0;
 		if (!parents.isEmpty())
 		{
 			breadRow.getChildren().clear();
 
 			int count = 0;
-			Iterator <BreadCrumbLink> iterator = parents.iterator();
+			Iterator<BreadCrumbLink> iterator = parents.iterator();
 			while (iterator.hasNext())
 			{
 				BreadCrumbLink breadCrumbLink = (BreadCrumbLink) iterator.next();
@@ -1199,7 +1205,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	{
 		createDirectoryForm = new WCreateDirectoryForm(dms, currDMSContent, tableID, recordID);
 
-		createDirectoryForm.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
+		createDirectoryForm.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 			@Override
 			public void onEvent(Event event) throws Exception
@@ -1216,7 +1222,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 	{
 		uploadContent = new WUploadContent(dms, currDMSContent, false, tableID, recordID, windowNo, tabNo);
 
-		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener <Event>() {
+		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 			@Override
 			public void onEvent(Event event) throws Exception
@@ -1316,7 +1322,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		((XulElement) compCellRowViewer).setContext(contentContextMenu);
 		contentContextMenu.open(this, "at_pointer");
 
-		if (Utils.isLink(((MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION))))
+		if (MDMSAssociationType.isLink(((MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION))))
 		{
 			if (MDMSContent.CONTENTBASETYPE_Content.equals(dirContent.getContentBaseType()))
 			{
@@ -1378,8 +1384,7 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 
 		if (tableID <= 0 || recordID <= 0)
 		{
-			// DMS Tab Level Configured, Allow Cut content to Paste it on
-			// Document Explorer window
+			// DMS Tab Level Configured, Allow Cut content to Paste it on Document Explorer window
 			if (DMSClipboard.get() == null || (DMSClipboard.get() != null && !DMSClipboard.getIsCopy()))
 				; // mnu_canvasPaste.setDisabled(true);
 			else
@@ -1424,9 +1429,9 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		}
 	} // linkCopyDocument
 
-	private HashMap <String, List <Object>> getQueryParamas()
+	private HashMap<String, List<Object>> getQueryParamas()
 	{
-		HashMap <String, List <Object>> params = new LinkedHashMap <String, List <Object>>();
+		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
 
 		if (!Util.isEmpty(txtDocumentName.getValue(), true))
 			setSearchParams(DMSConstant.NAME, "*" + txtDocumentName.getValue().toLowerCase() + "*", null, params);
@@ -1600,9 +1605,9 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		return params;
 	} // getQueryParamas
 
-	private void setSearchParams(String searchAttributeName, Object data, Object data2, HashMap <String, List <Object>> params)
+	private void setSearchParams(String searchAttributeName, Object data, Object data2, HashMap<String, List<Object>> params)
 	{
-		ArrayList <Object> value = new ArrayList <Object>();
+		ArrayList<Object> value = new ArrayList<Object>();
 
 		if (data instanceof Date || data instanceof Timestamp)
 			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data));
@@ -1736,9 +1741,9 @@ public class WDMSPanel extends Panel implements EventListener <Event>, ValueChan
 		gridBreadCrumb.appendChild(breadRows);
 	} // showBreadcumb
 
-	public List <BreadCrumbLink> getParentLinks()
+	public List<BreadCrumbLink> getParentLinks()
 	{
-		List <BreadCrumbLink> parents = new ArrayList <BreadCrumbLink>();
+		List<BreadCrumbLink> parents = new ArrayList<BreadCrumbLink>();
 		for (Component component : breadRow.getChildren())
 		{
 			if (component instanceof BreadCrumbLink)

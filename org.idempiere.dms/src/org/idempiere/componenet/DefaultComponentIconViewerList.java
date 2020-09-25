@@ -24,7 +24,6 @@ import org.compiere.model.MUser;
 import org.compiere.util.Env;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSContent;
@@ -81,8 +80,8 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 			lblCType.setText(content.getDMS_ContentType().getName());
 		Label lblSize = new Label(content.getDMS_FileSize());
 		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
-		Label lblFileType = new Label(content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory) ? DMSConstant.MSG_FILE_FOLDER : content
-		        .getDMS_MimeType().getName());
+		Label lblFileType = new Label(content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)	? DMSConstant.MSG_FILE_FOLDER
+																													: content.getDMS_MimeType().getName());
 		Label lblModifiedBy = new Label(MUser.get(Env.getCtx(), content.getUpdatedBy()).getName());
 		Component linkIcon = getLinkIconComponent(association);
 
@@ -110,7 +109,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 			row.addEventListener(eventsList[i], listener);
 
 		// set tooltip text
-		row.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
+		row.setTooltiptext(((MDMSContent) content).getToolTipTextMsg());
 
 	} // createComponent
 
