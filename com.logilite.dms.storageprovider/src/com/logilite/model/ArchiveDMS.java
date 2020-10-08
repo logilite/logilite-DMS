@@ -172,15 +172,15 @@ public class ArchiveDMS implements IArchiveStore
 				if (tableName == null)
 					tableName = "";
 				// Generate Mounting Parent
-				dms.initiateMountingContent(Utils.getDMSMountingArchiveBase(dms.AD_Client_ID), tableName, recordID, tableID);
 				dms.initMountingStrategy(tableName);
+				dms.initiateMountingContent(Utils.getDMSMountingArchiveBase(dms.AD_Client_ID), tableName, recordID, tableID);
 				mountingParent = dms.getMountingStrategy().getMountingParentForArchive();
 			}
 			else
 			{
 				// Generate Mounting Parent
-				dms.initiateMountingContent(tableName, recordID, tableID);
 				dms.initMountingStrategy(tableName);
+				dms.initiateMountingContent(tableName, recordID, tableID);
 				mountingParent = dms.getMountingStrategy().getMountingParent(tableName, recordID);
 			}
 			// Generate File
