@@ -644,7 +644,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			if (isTabViewer())
 			{
-				MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+				MDMSContent mountingContent = dms.getDMSMountingParent(tableID, recordID);
 				selectedDMSContent.removeAllElements();
 				setCurrDMSContent(mountingContent);
 
@@ -887,7 +887,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			if (isRoot)
 			{
-				MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+				MDMSContent mountingContent = dms.getDMSMountingParent(tableID, recordID);
 				breadCrumbEvent.setPathId(String.valueOf(mountingContent.getDMS_Content_ID()));
 			}
 
@@ -1154,7 +1154,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (isTabViewer())
 		{
 			// Getting initial mounting content for disabling back navigation
-			MDMSContent mountingContent = dms.getMountingStrategy().getMountingParent(tableID, recordID);
+			MDMSContent mountingContent = dms.getDMSMountingParent(tableID, recordID);
 			if (currDMSContent == null)
 				currDMSContent = selectedDMSContent.peek();
 
@@ -1597,10 +1597,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		if (tableID > 0)
-			setSearchParams(DMSConstant.AD_Table_ID, tableID, null, params);
+			setSearchParams(DMSConstant.AD_Table_ID, dms.validTableID(tableID), null, params);
 
 		if (recordID > 0)
-			setSearchParams(DMSConstant.RECORD_ID, recordID, null, params);
+			setSearchParams(DMSConstant.RECORD_ID, dms.validRecordID(recordID), null, params);
 
 		return params;
 	} // getQueryParamas

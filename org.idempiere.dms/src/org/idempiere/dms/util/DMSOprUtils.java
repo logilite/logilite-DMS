@@ -105,7 +105,7 @@ public class DMSOprUtils
 		// Create Directory folder hierarchy OR get leaf DMS-Content
 		if (!Util.isEmpty(dirPath, true) && !dirPath.equals(DMSConstant.FILE_SEPARATOR))
 		{
-			dirContent = dms.createDirHierarchy(dirPath, dirContent, AD_Table_ID, Record_ID, trx.getTrxName());
+			dirContent = dms.createDirHierarchy(dirPath, dirContent, dms.getSsTableInfo().getOriginTable_ID(), dms.getSsTableInfo().getOriginRecord_ID(), trx.getTrxName());
 		}
 
 		if (!isVersion && contentType != null)
@@ -753,7 +753,7 @@ public class DMSOprUtils
 			MDMSAssociation oldDMSAssociation = (MDMSAssociation) mapEntry.getValue();
 			if (oldDMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
-				MDMSContent newDMSContent = dms.createDirectory(oldDMSContent.getName(), destPasteContent, tableID, recordID, true, false, null);
+				MDMSContent newDMSContent = dms.createDirectory(oldDMSContent.getName(), destPasteContent, dms.getSsTableInfo().getOriginTable_ID(), dms.getSsTableInfo().getOriginRecord_ID(), true, false, null);
 
 				MAttributeSetInstance newASI = Utils.copyASI(copiedContent.getM_AttributeSetInstance_ID(), null);
 				if (newASI != null)
@@ -783,7 +783,7 @@ public class DMSOprUtils
 			}
 			else if (MDMSAssociationType.isLink(oldDMSAssociation))
 			{
-				int associationID = dms.createAssociation(	oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), recordID, tableID,
+				int associationID = dms.createAssociation(	oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), dms.getSsTableInfo().getOriginRecord_ID(), dms.getSsTableInfo().getOriginTable_ID(),
 															MDMSAssociationType.LINK_ID, 0, null);
 
 				DMSOprUtils.createIndexforLinkableContent(	dms, oldDMSAssociation.getDMS_Content().getContentBaseType(), oldDMSAssociation.getDMS_Content_ID(),
@@ -1264,7 +1264,7 @@ public class DMSOprUtils
 		// For Tab viewer
 		if (tableID > 0 && recordID > 0)
 		{
-			associationID = dms.createAssociation(latestVerContentID, contentRelatedID, recordID, tableID, MDMSAssociationType.LINK_ID, 0, null);
+			associationID = dms.createAssociation(latestVerContentID, contentRelatedID, dms.getSsTableInfo().getOriginRecord_ID(), dms.getSsTableInfo().getOriginTable_ID(), MDMSAssociationType.LINK_ID, 0, null);
 			MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
 
 			contentID = association.getDMS_Content_Related_ID();

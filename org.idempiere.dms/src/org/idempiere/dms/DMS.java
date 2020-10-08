@@ -22,6 +22,7 @@ import java.util.Map;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MImage;
 import org.compiere.model.MTable;
+import org.compiere.model.PO;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -29,10 +30,11 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.factories.IThumbnailProvider;
-import org.idempiere.dms.util.DMSSearchUtils;
-import org.idempiere.dms.util.Utils;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSOprUtils;
+import org.idempiere.dms.util.DMSSearchUtils;
+import org.idempiere.dms.util.Utils;
+import org.idempiere.model.DMSSubstituteTableInfo;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
@@ -64,6 +66,8 @@ public class DMS
 	private boolean					isDocExplorerWindow			= false;
 
 	public int						AD_Client_ID				= 0;
+
+	private DMSSubstituteTableInfo	ssTableInfo					= null;
 
 	/**
 	 * Constructor for initialize provider
@@ -107,9 +111,49 @@ public class DMS
 		initMountingStrategy(Table_Name);
 	} // Constructor
 
+	// Get Valid TableID
+	public int validTableID(int tableID)
+	{
+		if (this.ssTableInfo.getSubstitute() != null)
+			return this.ssTableInfo.getSubstituteTable_ID();
+		else
+			return tableID;
+	}
+
+	// Get Valid TableName
+	public String validTableName(String tableName)
+	{
+		if (this.ssTableInfo.getSubstitute() != null)
+			return this.ssTableInfo.getSubstituteTable_Name();
+		else
+			return tableName;
+	}
+
+	// Get Valid RecordID
+	public int validRecordID(int record_ID)
+	{
+		if ((this.ssTableInfo.getSubstitute() != null && this.ssTableInfo.getSubstituteRecord_ID() == record_ID))
+		{
+			return this.ssTableInfo.getValidRecord_ID();
+		}
+		else
+		{
+			this.ssTableInfo.updateRecord(record_ID);
+			return this.ssTableInfo.getValidRecord_ID();
+		}
+	}
+
+	// Get Substitute Table Information
+	public DMSSubstituteTableInfo getSsTableInfo()
+	{
+		return ssTableInfo;
+	}
+
 	public void initMountingStrategy(String Table_Name)
 	{
-		mountingStrategy = DMSFactoryUtils.getMountingStrategy(Table_Name);
+		// Initiate the Substitute table info
+		ssTableInfo = new DMSSubstituteTableInfo(MTable.getTable_ID(Table_Name));
+		mountingStrategy = DMSFactoryUtils.getMountingStrategy(validTableName(Table_Name));
 	}
 
 	public IFileStorageProvider getThumbnailStorageProvider()
@@ -157,18 +201,37 @@ public class DMS
 	 */
 	public MDMSContent getRootContent(int AD_Table_ID, int Record_ID)
 	{
-		return getMountingStrategy().getMountingParent(MTable.getTableName(Env.getCtx(), AD_Table_ID), Record_ID);
+		return getMountingStrategy().getMountingParent(MTable.getTableName(Env.getCtx(), validTableID(AD_Table_ID)), validRecordID(Record_ID));
 	} // getRootContent
+
+	// Get DMS MountainingParent for DMSSubstitute content
+	public MDMSContent getDMSMountingParent(int AD_Table_ID, int Record_ID)
+	{
+		return getMountingStrategy().getMountingParent(validTableID(AD_Table_ID), validRecordID(Record_ID));
+	}
+
+	public MDMSContent getDMSMountingParent(String Table_Name, int Record_ID)
+	{
+		return getMountingStrategy().getMountingParent(validTableName(Table_Name), validRecordID(Record_ID));
+	}
+
+	// TODO - Need to Check with Substitute
+	public MDMSContent getDMSMountingParent(PO po)
+	{
+		return getMountingStrategy().getMountingParent(po);
+	}
 
 	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)
 	{
 		return createDirectory(dirName, parentContent, tableID, recordID, errorIfDirExists, true, trxName);
 	} // createDirectory
 
-	public MDMSContent createDirectory(	String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists,
-										boolean isCreateAssociation, String trxName)
+	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists,
+		boolean isCreateAssociation, String trxName)
 	{
-		return DMSOprUtils.createDirectory(this, dirName, parentContent, tableID, recordID, errorIfDirExists, isCreateAssociation, trxName);
+		return DMSOprUtils
+						.createDirectory(this, dirName, parentContent, validTableID(tableID), validRecordID(recordID), errorIfDirExists, isCreateAssociation,
+										trxName);
 	} // createDirectory
 
 	/**
@@ -178,7 +241,7 @@ public class DMS
 	 */
 	public MDMSContent createDirHierarchy(String dirPath, MDMSContent dirContent, int AD_Table_ID, int Record_ID, String trxName)
 	{
-		dirContent = DMSOprUtils.createDirHierarchy(this, dirPath, dirContent, AD_Table_ID, Record_ID, trxName);
+		dirContent = DMSOprUtils.createDirHierarchy(this, dirPath, dirContent, validTableID(AD_Table_ID), validRecordID(Record_ID), trxName);
 		return dirContent;
 	} // createDirHierarchy
 
@@ -244,23 +307,26 @@ public class DMS
 
 	public void initiateMountingContent(String tableName, int recordID, int tableID)
 	{
-		this.initiateMountingContent(Utils.getDMSMountingBase(AD_Client_ID), tableName, recordID, tableID);
+		this.ssTableInfo.updateRecord(recordID);
+		this
+						.initiateMountingContent(Utils.getDMSMountingBase(AD_Client_ID), tableName, recordID,
+										tableID);
 	} // initiateMountingContent
 
 	public void initiateMountingContent(String mountingBaseName, String tableName, int recordID, int tableID)
 	{
-		Utils.initiateMountingContent(mountingBaseName, tableName, recordID, tableID);
+		Utils.initiateMountingContent(mountingBaseName, validTableName(tableName), validRecordID(recordID), validTableID(tableID));
 	} // initiateMountingContent
 
 	public int createDMSContent(String name, String value, String contentBaseType, String parentURL, String desc, File file, int contentTypeID, int asiID,
-								boolean isMounting, String trxName)
+		boolean isMounting, String trxName)
 	{
 		return MDMSContent.create(name, value, contentBaseType, parentURL, desc, file, contentTypeID, asiID, isMounting, trxName);
 	} // createDMSContent
 
 	public int createAssociation(int dms_Content_ID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, int seqNo, String trxName)
 	{
-		return MDMSAssociation.create(dms_Content_ID, contentRelatedID, Record_ID, AD_Table_ID, associationTypeID, seqNo, trxName);
+		return MDMSAssociation.create(dms_Content_ID, contentRelatedID, validRecordID(Record_ID), validTableID(AD_Table_ID), associationTypeID, seqNo, trxName);
 	} // createAssociation
 
 	public MDMSAssociation getAssociationFromContent(int contentID)
@@ -313,7 +379,7 @@ public class DMS
 
 	public int addFile(String dirPath, File file, String fileName, String contentType, Map<String, String> attributeMap, int AD_Table_ID, int Record_ID)
 	{
-		return DMSOprUtils.addFile(this, dirPath, file, fileName, null, contentType, attributeMap, AD_Table_ID, Record_ID, false);
+		return DMSOprUtils.addFile(this, dirPath, file, fileName, null, contentType, attributeMap, validTableID(AD_Table_ID), validRecordID(Record_ID), false);
 	} // addFile
 
 	public int addFile(MDMSContent parentContent, File file, int AD_Table_ID, int Record_ID)
@@ -323,7 +389,7 @@ public class DMS
 
 	public int addFile(MDMSContent parentContent, File file, String name, String desc, int contentTypeID, int asiID, int AD_Table_ID, int Record_ID)
 	{
-		return DMSOprUtils.addFile(this, parentContent, file, name, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, false);
+		return DMSOprUtils.addFile(this, parentContent, file, name, desc, contentTypeID, asiID, validTableID(AD_Table_ID), validRecordID(Record_ID), false);
 	} // addFile
 
 	/**
@@ -347,7 +413,7 @@ public class DMS
 
 	public int addFileVersion(MDMSContent parentContent, File file, String desc, int AD_Table_ID, int Record_ID)
 	{
-		return DMSOprUtils.addFile(this, parentContent, file, null, desc, 0, 0, AD_Table_ID, Record_ID, true);
+		return DMSOprUtils.addFile(this, parentContent, file, null, desc, 0, 0, validTableID(AD_Table_ID), validRecordID(Record_ID), true);
 	} // addFileVersion
 
 	/**
@@ -379,7 +445,7 @@ public class DMS
 	 */
 	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID)
 	{
-		DMSOprUtils.pasteCopyContent(this, copiedContent, destContent, tableID, recordID);
+		DMSOprUtils.pasteCopyContent(this, copiedContent, destContent, validTableID(tableID), validRecordID(recordID));
 	} // pasteCopyContent
 
 	/**
@@ -392,7 +458,7 @@ public class DMS
 	 */
 	public void pasteCutContent(MDMSContent cutContent, MDMSContent destContent, int tableID, int recordID)
 	{
-		DMSOprUtils.pasteCutContent(this, cutContent, destContent, tableID, recordID, isDocExplorerWindow);
+		DMSOprUtils.pasteCutContent(this, cutContent, destContent, validTableID(tableID), validRecordID(recordID), isDocExplorerWindow);
 	} // pasteCutContent
 
 	/**
@@ -418,7 +484,7 @@ public class DMS
 	 */
 	public void renameContent(String fileName, MDMSContent content, MDMSContent parent_Content, int tableID, int recordID)
 	{
-		DMSOprUtils.renameContent(this, fileName, content, parent_Content, tableID, recordID, isDocExplorerWindow);
+		DMSOprUtils.renameContent(this, fileName, content, parent_Content, validTableID(tableID), validRecordID(recordID), isDocExplorerWindow);
 	} // renameContent
 
 	/**
@@ -436,7 +502,7 @@ public class DMS
 
 	public String createLink(MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
 	{
-		return DMSOprUtils.createLink(this, contentParent, clipboardContent, isDir, tableID, recordID);
+		return DMSOprUtils.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
 	} // createLink
 
 	/**
@@ -476,13 +542,13 @@ public class DMS
 
 	public HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent(String searchText, int tableID, int recordID, MDMSContent content)
 	{
-		return DMSSearchUtils.getGenericSearchedContent(this, searchText, tableID, recordID, content);
+		return DMSSearchUtils.getGenericSearchedContent(this, searchText, validTableID(tableID), validRecordID(recordID), content);
 	} // getGenericSearchedContent
 
-	public HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
-																			int recordID)
+	public HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent(HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
+		int recordID)
 	{
-		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, tableID, recordID);
+		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, validTableID(tableID), validRecordID(recordID));
 	} // renderSearchedContent
 
 	/**
@@ -494,7 +560,8 @@ public class DMS
 	 */
 	public boolean isHierarchyContentExists(int destContentID, int sourceContentID)
 	{
-		int contentID = DB.getSQLValue(	null, DMSConstant.SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY, Env.getAD_Client_ID(Env.getCtx()), destContentID,
+		int contentID = DB
+						.getSQLValue(null, DMSConstant.SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY, Env.getAD_Client_ID(Env.getCtx()), destContentID,
 										sourceContentID);
 		return contentID > 0;
 	} // isHierarchyContentExists

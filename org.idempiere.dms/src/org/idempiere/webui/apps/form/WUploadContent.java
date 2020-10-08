@@ -313,6 +313,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 			// Adding File
 			if (isVersion)
 			{
+				//TODO - TableID and RecordID getting fro Substitute Record need to check conversion
 				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue(), tableID, recordID);
 			}
 			else
@@ -326,6 +327,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 					ASI_ID = asiPanel.saveAttributes();
 				}
 
+				//TODO - TableID and RecordID getting fro Substitute Record need to check conversion
 				dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
 			}
 		}

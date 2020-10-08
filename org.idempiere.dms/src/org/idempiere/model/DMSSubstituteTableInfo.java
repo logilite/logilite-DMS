@@ -1,9 +1,7 @@
 package org.idempiere.model;
 
-import org.adempiere.webui.adwindow.AbstractADWindowContent;
-import org.compiere.model.GridTab;
-import org.compiere.model.MColumn;
 import org.compiere.model.MTable;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 /**
@@ -13,25 +11,26 @@ import org.compiere.util.Env;
  */
 public class DMSSubstituteTableInfo
 {
-	private AbstractADWindowContent	winContent;
-	private GridTab					gridTab;
+	private int				originTable_ID;
+	private int				originRecord_ID;
 
-	private MDMSSubstitute			substitute;
+	private MDMSSubstitute	substitute;
 
-	private String					table_Name;
+	private int				substituteTable_ID;
+	private int				substituteRecord_ID;
 
-	private int						table_ID;
-	private int						column_ID;
-	private int						record_ID;
+	public DMSSubstituteTableInfo(int tableID)
 
-	public DMSSubstituteTableInfo(AbstractADWindowContent winPanel, GridTab gridTab, MDMSSubstitute substitute)
 	{
-		this.winContent = winPanel;
-		this.gridTab = gridTab;
-		this.substitute = substitute;
-
-		//
+		this.originTable_ID = tableID;
+		this.substitute = MDMSSubstitute.get(tableID);
 		configTableInfo();
+	}
+
+	public DMSSubstituteTableInfo(int tableID, int recordID)
+	{
+		this(tableID);
+		updateRecord(recordID);
 	}
 
 	/**
@@ -41,15 +40,11 @@ public class DMSSubstituteTableInfo
 	{
 		if (substitute == null)
 		{
-			this.table_ID = gridTab.getAD_Table_ID();
-			this.table_Name = gridTab.getTableName();
-			this.column_ID = -1;
+			this.substituteTable_ID = this.originTable_ID;
 		}
 		else
 		{
-			this.table_ID = substitute.getDMS_Substitute_Table_ID();
-			this.table_Name = MTable.getTableName(Env.getCtx(), this.getTable_ID());
-			this.column_ID = substitute.getAD_Column_ID();
+			this.substituteTable_ID = substitute.getDMS_Substitute_Table_ID();
 		}
 	} // configTableInfo
 
@@ -57,39 +52,74 @@ public class DMSSubstituteTableInfo
 	 * Modify the record_ID from GridTab as current selected record or origin column record for
 	 * substitute
 	 */
-	public void updateRecord()
+	public void updateRecord(int recordID)
 	{
-		if (substitute == null)
+		setOriginRecordID(recordID);
+		if (substitute != null)
 		{
-			this.record_ID = gridTab.getRecord_ID();
+			String pKey = MTable.get(Env.getCtx(), substitute.getAD_Table_ID()).getPO(originRecord_ID, null).get_KeyColumns()[0];
+			int subsRecordID = DB
+							.getSQLValue(null, "SELECT " + substitute.getAD_Column().getColumnName() +
+											" FROM " + substitute.getAD_Table().getTableName() +
+											" WHERE " + pKey + " = " + originRecord_ID);
+
+			this.substituteRecord_ID = subsRecordID;
 		}
 		else
 		{
-			Object recordID = winContent.getADTab().getSelectedGridTab().getValue(MColumn.getColumnName(Env.getCtx(), this.getColumn_ID()));
-			if (recordID == null)
-				this.record_ID = (int) -1;
-			else
-				this.record_ID = (int) recordID;
+			this.substituteRecord_ID = originRecord_ID;
 		}
 	} // updateRecord
 
-	public int getTable_ID()
+	public int getOriginTable_ID()
 	{
-		return table_ID;
+		return originTable_ID;
 	}
 
-	public String getTable_Name()
+	public String getOriginTable_Name()
 	{
-		return table_Name;
+		return MTable.getTableName(Env.getCtx(), originTable_ID);
 	}
 
-	public int getColumn_ID()
+	public void setOriginRecordID(int recordID)
 	{
-		return column_ID;
+		this.originRecord_ID = recordID;
 	}
 
-	public int getRecord_ID()
+	public int getOriginRecord_ID()
 	{
-		return record_ID;
+		return originRecord_ID;
+	}
+
+	public MDMSSubstitute getSubstitute()
+	{
+		return substitute;
+	}
+
+	public int getSubstituteTable_ID()
+	{
+		return substituteTable_ID;
+	}
+
+	public String getSubstituteTable_Name()
+	{
+		return MTable.getTableName(Env.getCtx(), substituteTable_ID);
+	}
+
+	public int getSubstituteRecord_ID()
+	{
+		return substituteRecord_ID;
+	}
+
+	public int getValidRecord_ID()
+	{
+		if (substitute == null)
+		{
+			return originRecord_ID;
+		}
+		else
+		{
+			return substituteRecord_ID;
+		}
 	}
 }
