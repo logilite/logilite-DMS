@@ -34,7 +34,7 @@ Bundle-ClassPath: .,
  lib/itext-2.1.7.jar,
  lib/ooxml-schemas-1.1.jar,
  lib/commons-codec-1.5.jar,
- lib/poi-scratchpad-3.9.jar,
+ lib/poi-scratchpad-4.1.0.jar,
  lib/tidy.jar,
  lib/itextpdf-5.4.1.jar,
  lib/xmlworker-5.4.1.1_LLP.jar,
@@ -46,7 +46,8 @@ Bundle-ClassPath: .,
  lib/commons-compress-1.19.jar,
  lib/fr.opensagres.poi.xwpf.converter.core-2.0.2.jar,
  lib/fr.opensagres.poi.xwpf.converter.pdf-2.0.1.jar,
- lib/fr.opensagres.xdocreport.itext.extension-2.0.1.jar
+ lib/fr.opensagres.xdocreport.itext.extension-2.0.1.jar,
+ lib/commons-math3-3.6.1.jar
 Service-Component: OSGI-INF/*.xml
 Export-Package: com.lowagie.text,
  com.lowagie.text.pdf,
