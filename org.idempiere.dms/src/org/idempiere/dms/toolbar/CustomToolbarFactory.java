@@ -16,6 +16,7 @@ package org.idempiere.dms.toolbar;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.action.IAction;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
@@ -45,6 +46,7 @@ public class CustomToolbarFactory implements IAction
 	{
 		// Load DMS CSS file content and attach as style tag in Head tab
 		DMS_ZK_Util.loadDMSThemeCSSFile();
+		DMS_ZK_Util.loadDMSMobileCSSFile();
 
 		ADWindow window = (ADWindow) target;
 		winContent = window.getADWindowContent();
@@ -59,8 +61,16 @@ public class CustomToolbarFactory implements IAction
 		dmsPanel.setCurrDMSContent(dmsPanel.getDMS().getDMSMountingParent(tableID, recordID));
 
 		dmsWindow = new Window();
-		dmsWindow.setHeight("80%");
-		dmsWindow.setWidth("80%");
+		if (ClientInfo.isMobile())
+		{
+			dmsWindow.setHeight("100%");
+			dmsWindow.setWidth("100%");
+		}
+		else
+		{
+			dmsWindow.setHeight("80%");
+			dmsWindow.setWidth("80%");
+		}
 		dmsWindow.setClosable(true);
 		dmsWindow.setMaximizable(true);
 		dmsWindow.setMode(Mode.OVERLAPPED);

@@ -20,11 +20,10 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.AdempiereWebUI;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Column;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -137,15 +136,6 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 		this.tabNo = tabNo;
 
 		init();
-
-		if (isVersion)
-		{
-			contentTypeRow.setVisible(false);
-			nameRow.setVisible(false);
-			tabBoxAttribute.setVisible(false);
-			this.setHeight("26%");
-			this.setWidth("40%");
-		}
 	}
 
 	/**
@@ -158,6 +148,22 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 			this.setStyle("min-height:40%; max-height:60%; overflow-y:auto;");
 			this.setWidth("50%");
 		}
+		else
+		{
+			contentTypeRow.setVisible(false);
+			nameRow.setVisible(false);
+			tabBoxAttribute.setVisible(false);
+			this.setHeight("26%");
+			this.setWidth("40%");
+		}
+
+		if (ClientInfo.isMobile())
+		{
+			if (!isVersion)
+				this.setStyle("min-height:40%; overflow-y:auto;");
+			this.setWidth("100%");
+		}
+
 		this.setTitle(DMSConstant.MSG_UPLOAD_CONTENT);
 		this.setClosable(true);
 		this.appendChild(gridView);
@@ -187,42 +193,29 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 		txtName.addEventListener(Events.ON_CHANGE, this);
 		LayoutUtils.addSclass("txt-btn", btnFileUpload);
 
-		Columns columns = new Columns();
-		gridView.appendChild(columns);
-
-		Column column = new Column();
-		column.setWidth("15%");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("40%");
-		column.setAlign("left");
-		columns.appendChild(column);
-
 		Rows rows = gridView.newRows();
 
 		Row row = rows.newRow();
-		row.appendChild(lblFile);
-		row.appendChild(btnFileUpload);
+		row.appendCellChild(lblFile);
+		row.appendCellChild(btnFileUpload, 2);
 
 		lblName.setValue(DMSConstant.MSG_NAME);
-		nameRow.appendChild(lblName);
-		nameRow.appendChild(txtName);
+		nameRow.appendCellChild(lblName);
+		nameRow.appendCellChild(txtName, 2);
 		rows.appendChild(nameRow);
 
-		contentTypeRow.appendChild(lblContentType);
-		contentTypeRow.appendChild(editorContentType.getComponent());
+		contentTypeRow.appendCellChild(lblContentType);
+		contentTypeRow.appendCellChild(editorContentType.getComponent(), 2);
 		editorContentType.addValueChangeListener(this);
 		rows.appendChild(contentTypeRow);
 
 		row = rows.newRow();
-		row.appendChild(lblDesc);
-		row.appendChild(txtDesc);
+		row.appendCellChild(lblDesc);
+		row.appendCellChild(txtDesc, 2);
 
 		row = rows.newRow();
 		Cell cell = new Cell();
-		cell.setColspan(2);
+		cell.setColspan(3);
 
 		tabBoxAttribute.appendChild(tabsAttribute);
 		tabBoxAttribute.appendChild(tabPanelsAttribute);
@@ -243,7 +236,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 
 		cell = new Cell();
 		cell.setAlign("right");
-		cell.setColspan(2);
+		cell.setColspan(3);
 		cell.appendChild(btnOk);
 		cell.appendChild(new Space());
 		cell.appendChild(btnClose);

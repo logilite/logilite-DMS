@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -83,13 +84,19 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 	private void init()
 	{
-		this.setWidth("44%");
-		this.setHeight("50%");
+		if (ClientInfo.isMobile())
+			this.setHeight("100%");
+		else
+		{
+			this.setWidth("44%");
+			this.setHeight("50%");
+		}
+
 		this.setClosable(true);
 		this.appendChild(gridView);
 		this.setTitle(DMSConstant.MSG_DMS_VERSION_LIST);
 
-		gridView.setStyle("width: 100%; height: 95%; position: relative; overflow: auto;");
+		gridView.setStyle("width: 100%; height: 95%; max-height: 100%; position: relative; overflow: auto;");
 	} // init
 
 	public String renderDMSVersion(MDMSContent DMS_Content) throws IOException

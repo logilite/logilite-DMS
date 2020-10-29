@@ -16,6 +16,8 @@ package org.idempiere.webui.apps.form;
 import java.io.File;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
+import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Window;
@@ -27,6 +29,7 @@ import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Splitter;
 
 public class WDocumentViewer extends Window
@@ -99,17 +102,36 @@ public class WDocumentViewer extends Window
 		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure, isLink, windowNo, tabNo);
 		cellCPreview.appendChild(attributePanel);
 
-		Hbox boxViewSeparator = new Hbox();
-		boxViewSeparator.setWidth("100%");
-		boxViewSeparator.setHeight("100%");
-		boxViewSeparator.setStyle("position:relative; overflow: auto;");
-		boxViewSeparator.appendChild(cellPreview);
-		boxViewSeparator.appendChild(splitter);
-		boxViewSeparator.appendChild(cellCPreview);
+		if (ClientInfo.isMobile())
+		{
+			Borderlayout borderViewSeparator = new Borderlayout();
+			borderViewSeparator.setWidth("100%");
+			borderViewSeparator.setHeight("100%");
+			borderViewSeparator.setStyle("position:relative; overflow: auto;");
+			borderViewSeparator.appendCenter(cellPreview);
+			borderViewSeparator.appendSouth(cellCPreview);
+
+			South south = borderViewSeparator.getSouth();
+			south.setStyle("max-height: 100%;");
+			south.setSplittable(true);
+			south.setCollapsible(true);
+			south.setOpen(false);
+			tabDataPanel.appendChild(borderViewSeparator);
+		}
+		else
+		{
+			Hbox boxViewSeparator = new Hbox();
+			boxViewSeparator.setWidth("100%");
+			boxViewSeparator.setHeight("100%");
+			boxViewSeparator.setStyle("position:relative; overflow: auto;");
+			boxViewSeparator.appendChild(cellPreview);
+			boxViewSeparator.appendChild(splitter);
+			boxViewSeparator.appendChild(cellCPreview);
+			tabDataPanel.appendChild(boxViewSeparator);
+		}
 
 		tabDataPanel.setStyle("position:relative; overflow: auto;");
 		tabDataPanel.setZclass("none");
-		tabDataPanel.appendChild(boxViewSeparator);
 		return tabDataPanel;
 	} // initForm
 }

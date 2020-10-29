@@ -31,14 +31,15 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.adwindow.BreadCrumbLink;
+import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
-import org.adempiere.webui.component.Column;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
+import org.adempiere.webui.component.DatetimeBox;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Label;
@@ -65,6 +66,7 @@ import org.adempiere.webui.editor.WTimeEditor;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
@@ -104,6 +106,7 @@ import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Menuitem;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
@@ -353,16 +356,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		// Load DMS CSS file content and attach as style tag in Head tab
 		DMS_ZK_Util.loadDMSThemeCSSFile();
+		DMS_ZK_Util.loadDMSMobileCSSFile();
 
-		this.setHeight("100%");
-		this.setWidth("100%");
+		ZKUpdateUtil.setHeight(this, "100%");
+		ZKUpdateUtil.setWidth(this, "100%");
 		this.appendChild(tabBox);
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
 
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
-		grid.setStyle("width: 100%; height: 95%; position: relative; overflow: auto;");
+		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");// 
 
 		// View Result Tab
 		Grid btnGrid = GridFactory.newGridLayout();
@@ -398,7 +402,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		//
 		Grid searchGridView = GridFactory.newGridLayout();
 		searchGridView.setVflex(true);
-		searchGridView.setStyle("max-height: 100%; width: 100%; position: relative; overflow: auto;");
+		searchGridView.setStyle("max-height: 100%; width: 100%; height: calc( 100% - 90px); position: relative; overflow: auto;");
 
 		Rows rowsSearch = searchGridView.newRows();
 
@@ -414,15 +418,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		ZkCssHelper.appendStyle(lblAdvanceSearch, DMSConstant.CSS_HIGHLIGHT_LABEL);
 
 		row = rowsSearch.newRow();
-		row.appendChild(lblDocumentName);
-		DMS_ZK_Util.createCellUnderRow(row, 0, 2, txtDocumentName);
+		row.appendCellChild(lblDocumentName);
+		row.appendCellChild(txtDocumentName, 2);
 		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
-		txtDocumentName.setWidth("100%");
 
 		row = rowsSearch.newRow();
-		row.appendChild(lblDescription);
-		DMS_ZK_Util.createCellUnderRow(row, 0, 2, txtDescription);
-		txtDescription.setWidth("100%");
+		row.appendCellChild(lblDescription);
+		row.appendCellChild(txtDescription, 2);
 
 		Language lang = Env.getLanguage(Env.getCtx());
 		int Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
@@ -439,11 +441,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		row = rowsSearch.newRow();
-		row.setAlign("right");
-		row.appendChild(lblCreatedBy);
-		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxCreatedBy.getComponent());
+		row.appendCellChild(lblCreatedBy);
+		row.appendCellChild(lstboxCreatedBy.getComponent(), 2);
 		lblCreatedBy.setStyle("float: left;");
-		lstboxCreatedBy.getComponent().setHflex("1");
 
 		Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		lookup = null;
@@ -459,11 +459,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		row = rowsSearch.newRow();
-		row.setAlign("right");
-		row.appendChild(lblUpdatedBy);
-		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxUpdatedBy.getComponent());
+		row.appendCellChild(lblUpdatedBy);
+		row.appendCellChild(lstboxUpdatedBy.getComponent(), 2);
 		lblUpdatedBy.setStyle("float: left;");
-		lstboxUpdatedBy.getComponent().setHflex("1");
 
 		dbCreatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
 		dbUpdatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
@@ -472,19 +470,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		//
 		row = rowsSearch.newRow();
-		row.appendChild(lblCreated);
-		hbox = new Hbox();
-		hbox.appendChild(dbCreatedFrom);
-		hbox.appendChild(dbCreatedTo);
-		DMS_ZK_Util.createCellUnderRow(row, 0, 2, hbox);
+		row.setSclass("SB-Grid-field");
+		row.appendCellChild(lblCreated);
+		row.appendCellChild(dbCreatedFrom);
+		row.appendCellChild(dbCreatedTo);
 
 		//
 		row = rowsSearch.newRow();
-		row.appendChild(lblUpdated);
-		hbox = new Hbox();
-		hbox.appendChild(dbUpdatedFrom);
-		hbox.appendChild(dbUpdatedTo);
-		DMS_ZK_Util.createCellUnderRow(row, 0, 2, hbox);
+		row.setSclass("SB-Grid-field");
+		row.appendCellChild(lblUpdated);
+		row.appendCellChild(dbUpdatedFrom);
+		row.appendCellChild(dbUpdatedTo);
 
 		Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
 		lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
@@ -493,17 +489,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		//
 		row = rowsSearch.newRow();
-		row.setAlign("right");
-		row.appendChild(lblContentType);
-		DMS_ZK_Util.createCellUnderRow(row, 0, 2, lstboxContentType.getComponent());
+		row.setSclass("SB-Grid-field");
+		row.appendCellChild(lblContentType);
+		row.appendCellChild(lstboxContentType.getComponent(), 2);
 		lblContentType.setStyle("float: left;");
-		lstboxContentType.getComponent().setWidth("100%");
 		lstboxContentType.addValueChangeListener(this);
 
 		//
 		row = rowsSearch.newRow();
-		row.setStyle("padding-left : 109px;");
-		DMS_ZK_Util.createCellUnderRow(row, 0, 3, chkInActive);
+		row.appendCellChild(new Space());
+		row.appendCellChild(chkInActive, 2);
 		chkInActive.setChecked(false);
 		chkInActive.setLabel(DMSConstant.MSG_SHOW_IN_ACTIVE);
 		chkInActive.addEventListener(Events.ON_CLICK, this);
@@ -541,7 +536,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		 * Main Layout View
 		 */
 		Cell cell_layout = new Cell();
-		cell_layout.setWidth("70%");
 		cell_layout.appendChild(btnToggleView);
 		cell_layout.appendChild(gridBreadCrumb);
 		cell_layout.appendChild(grid);
@@ -557,23 +551,48 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		splitter.setCollapse("after");
 
 		Cell cell_attribute = new Cell();
-		cell_attribute.setWidth("30%");
 		cell_attribute.setHeight("100%");
 		cell_attribute.appendChild(btnGrid);
 		cell_attribute.appendChild(searchGridView);
 
-		Hbox boxViewSeparator = new Hbox();
-		boxViewSeparator.setWidth("100%");
-		boxViewSeparator.setHeight("100%");
-		boxViewSeparator.appendChild(cell_layout);
-		boxViewSeparator.appendChild(splitter);
-		boxViewSeparator.appendChild(cell_attribute);
+		if (ClientInfo.isMobile())
+		{
+			Borderlayout borderViewSeparator = new Borderlayout();
+			borderViewSeparator.setWidth("100%");
+			borderViewSeparator.setHeight("100%");
+			borderViewSeparator.appendCenter(cell_layout);
+			borderViewSeparator.appendSouth(cell_attribute);
 
-		Tabpanel tabViewPanel = new Tabpanel();
-		tabViewPanel.setHeight("100%");
-		tabViewPanel.setWidth("100%");
-		tabViewPanel.appendChild(boxViewSeparator);
-		tabPanels.appendChild(tabViewPanel);
+			South south = borderViewSeparator.getSouth();
+			south.setStyle("max-height: 100%;");
+			south.setSplittable(true);
+			south.setCollapsible(true);
+			south.setOpen(false);
+
+			Tabpanel tabViewPanel = new Tabpanel();
+			tabViewPanel.setHeight("100%");
+			tabViewPanel.setWidth("100%");
+			tabViewPanel.appendChild(borderViewSeparator);
+			tabPanels.appendChild(tabViewPanel);
+		}
+		else
+		{
+			cell_layout.setWidth("70%");
+			cell_attribute.setWidth("30%");
+			
+			Hbox boxViewSeparator = new Hbox();
+			boxViewSeparator.setWidth("100%");
+			boxViewSeparator.setHeight("100%");
+			boxViewSeparator.appendChild(cell_layout);
+			boxViewSeparator.appendChild(splitter);
+			boxViewSeparator.appendChild(cell_attribute);
+
+			Tabpanel tabViewPanel = new Tabpanel();
+			tabViewPanel.setHeight("100%");
+			tabViewPanel.setWidth("100%");
+			tabViewPanel.appendChild(boxViewSeparator);
+			tabPanels.appendChild(tabViewPanel);
+		}
 
 		tabBox.setWidth("100%");
 		tabBox.setHeight("100%");
@@ -1630,17 +1649,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			lblContentMeta.setVisible(true);
 			Components.removeAllChildren(panelAttribute);
 
-			Columns columns = new Columns();
-			columns.appendChild(new Column());
-			columns.appendChild(new Column());
-			columns.appendChild(new Column());
-
 			Rows rows = new Rows();
 
 			Grid gridView = GridFactory.newGridLayout();
 			gridView.setHeight("100%");
 			gridView.appendChild(rows);
-			gridView.appendChild(columns);
 
 			if (lstboxContentType.getValue() != null)
 			{
@@ -1660,7 +1673,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					compName = compName.replaceAll("/", "");
 
 					Row row = rows.newRow();
-					row.appendChild(editor.getLabel());
+					row.setSclass("SB-Grid-field");
+					row.appendCellChild(editor.getLabel());
 
 					if (dt == DisplayType.Number
 						|| dt == DisplayType.Integer
@@ -1669,8 +1683,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						|| dt == DisplayType.CostPrice)
 					{
 						WNumberEditor numBox = new WNumberEditor(compName + "to", false, false, true, dt, "SB");
-						row.appendChild(editor.getComponent());
-						row.appendChild(numBox.getComponent());
+						row.appendCellChild(editor.getComponent());
+						row.appendCellChild(numBox.getComponent());
 
 						ASI_Value.put(compName, editor);
 						ASI_Value.put(compName + "to", numBox);
@@ -1684,14 +1698,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						if (dt == DisplayType.Date)
 						{
 							compTo = new WDateEditor(compName + "to", false, false, true, "");
-							row.appendChild(editor.getComponent());
-							row.appendChild(compTo.getComponent());
+							((Datebox) editor.getComponent()).setStyle(DMSConstant.CSS_DATEBOX);
+							((Datebox) compTo.getComponent()).setStyle(DMSConstant.CSS_DATEBOX);
+							row.appendCellChild(editor.getComponent());
+							row.appendCellChild(compTo.getComponent());
 						}
 						else if (dt == DisplayType.Time)
 						{
 							compTo = new WTimeEditor(compName + "to", false, false, true, "");
-							row.appendChild(editor.getComponent());
-							row.appendChild(compTo.getComponent());
+							row.appendCellChild(editor.getComponent());
+							row.appendCellChild(compTo.getComponent());
 							((Timebox) compTo.getComponent()).setFormat("h:mm:ss a");
 							((Timebox) compTo.getComponent()).setWidth("100%");
 						}
@@ -1700,8 +1716,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							compTo = new WDatetimeEditor(compName, false, false, true, "");
 							row.appendCellChild(editor.getComponent(), 2);
 							row = rows.newRow();
-							row.appendChild(new Space());
+							row.setSclass("SB-Grid-field");
+							row.appendCellChild(new Space());
 							row.appendCellChild(compTo.getComponent(), 2);
+							((DatetimeBox) editor.getComponent()).setWidth("100%");
 						}
 						ASI_Value.put(compName, editor);
 						ASI_Value.put(compName + "to", compTo);

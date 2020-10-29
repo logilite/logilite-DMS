@@ -13,6 +13,7 @@
 
 package org.idempiere.webui.apps.form;
 
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
@@ -69,8 +70,12 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private void init()
 	{
-		this.setWidth("30%");
-		this.setHeight("32%");
+		if (!ClientInfo.isMobile())
+		{
+			this.setWidth("30%");
+			this.setHeight("32%");
+		}
+
 		this.setClosable(true);
 		this.setTitle(DMSConstant.MSG_RENAME);
 		this.addEventListener(Events.ON_OK, this);

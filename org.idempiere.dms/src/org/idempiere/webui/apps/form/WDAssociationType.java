@@ -16,11 +16,10 @@ package org.idempiere.webui.apps.form;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Column;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -29,6 +28,7 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WTableDirEditor;
+import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.FDialog;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
@@ -110,7 +110,10 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		this.setTitle("Association Type");
 		this.setClosable(true);
 		this.appendChild(gridView);
-		this.setWidth("35%");
+		if(ClientInfo.isMobile())
+			ZKUpdateUtil.setWindowWidthX(this, 320);
+		else
+			this.setWidth("35%");
 
 		gridView.setStyle("position:relative;");
 		gridView.makeNoStrip();
@@ -135,25 +138,12 @@ public class WDAssociationType extends Window implements EventListener<Event>
 			throw new AdempiereException("Association type fetching failure :" + e);
 		}
 
-		Columns columns = new Columns();
-		gridView.appendChild(columns);
-
-		Column column = new Column();
-		column.setWidth("10%");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("15%");
-		column.setAlign("left");
-		columns.appendChild(column);
-
 		Rows rows = new Rows();
 		gridView.appendChild(rows);
 
 		lblAssociationType.setValue("Association Type*");
-		associationTypeRow.appendChild(lblAssociationType);
-		associationTypeRow.appendChild(associationType.getComponent());
+		associationTypeRow.appendCellChild(lblAssociationType);
+		associationTypeRow.appendCellChild(associationType.getComponent(), 2);
 		rows.appendChild(associationTypeRow);
 
 		confirmPanel = new ConfirmPanel();
@@ -164,7 +154,7 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		rows.appendChild(row);
 		Cell cell = new Cell();
 		cell.setAlign("right");
-		cell.setColspan(2);
+		cell.setColspan(3);
 		cell.appendChild(btnOk);
 		cell.appendChild(new Space());
 		cell.appendChild(btnClose);

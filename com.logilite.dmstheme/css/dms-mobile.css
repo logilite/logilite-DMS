@@ -1,0 +1,21 @@
+
+.SB-Grid-field .z-combobox-input, 
+.SB-Grid-field .z-bandbox-input, 
+.SB-Grid-field .z-datebox-input, 
+.SB-Grid-field .z-spinner-input
+.SB-Grid-field .z-doublespinner-input {
+    width: calc( 100% - 11px) !important;
+}
+
+.SB-Grid-field .z-timebox-input {
+	width: calc( 100% - 33px) !important;
+}
+
+.SB-Grid-field .datetime-box .z-datebox-input,
+.SB-Grid-field .datetime-box .z-timebox-input {
+	width: calc( 50% - 30px) !important;
+}
+
+.SB-Grid-field span.grid-combobox-editor {
+	width: 98% !important;
+}

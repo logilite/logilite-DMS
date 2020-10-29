@@ -19,9 +19,8 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
-import org.adempiere.webui.component.Column;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -63,8 +62,6 @@ public class WDLoadASIPanel extends Panel
 	private int					M_AttributeSet_ID	= 0;
 
 	private Grid				attributeGrid		= new Grid();
-	private Columns				columns				= new Columns();
-	private Column				column				= new Column();
 	private Rows				rows				= new Rows();
 	private Label				lblAttribute		= new Label();
 
@@ -95,18 +92,14 @@ public class WDLoadASIPanel extends Panel
 
 	public void initPanel()
 	{
-		this.setHeight("65%");
-		this.setWidth("100%");
 		this.appendChild(attributeGrid);
 
-		column.setWidth("30%");
-		columns.appendChild(column);
+		if (!ClientInfo.isMobile())
+		{
+			this.setHeight("65%");
+			this.setWidth("100%");
+		}
 
-		column = new Column();
-		column.setWidth("70%");
-		columns.appendChild(column);
-
-		attributeGrid.appendChild(columns);
 		attributeGrid.appendChild(rows);
 
 		if (contentType != null && !Util.isEmpty(contentType.getName(), true))
@@ -166,6 +159,7 @@ public class WDLoadASIPanel extends Panel
 		if (editor != null)
 		{
 			Row row = rows.newRow();
+			row.setSclass("SB-Grid-field");
 
 			Label label = editor.getLabel();
 			if (label.getValue() == null || label.getValue().trim().length() < 1)
@@ -176,7 +170,7 @@ public class WDLoadASIPanel extends Panel
 				label.setValue(label.getValue());
 			}
 
-			row.appendChild(label);
+			row.appendCellChild(label);
 
 			editor.setMandatory(attribute.isMandatory());
 			editor.fillHorizontal();
@@ -187,7 +181,7 @@ public class WDLoadASIPanel extends Panel
 			}
 
 			Component fieldEditor = editor.getComponent();
-			row.appendChild(fieldEditor);
+			row.appendCellChild(fieldEditor, 2);
 
 			m_editors.add(editor);
 		}
