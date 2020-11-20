@@ -2,29 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS
 Bundle-SymbolicName: org.idempiere.dms;singleton:=true
-Bundle-Version: 7.0.1.qualifier
-Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Import-Package: org.apache.commons.io;version="2.2.0",
- org.apache.commons.io.filefilter;version="2.2.0",
- org.osgi.framework;version="1.3.0",
- org.osgi.service.event;version="1.3.0",
- org.zkoss.image,
- org.zkoss.util.media
-Require-Bundle: org.adempiere.plugin.utils;bundle-version="3.1.0",
- org.adempiere.base;bundle-version="3.1.0",
- org.adempiere.ui.zk;bundle-version="3.1.0",
- org.adempiere.ui;bundle-version="3.1.0",
- org.apache.commons.net,
- com.logilite.search;bundle-version="1.0.0",
- org.eclipse.osgi;bundle-version="3.10.2",
- org.eclipse.osgi.services;bundle-version="3.4.0",
- zhtml;bundle-version="8.0.1",
- zel;bundle-version="8.0.1",
- zk;bundle-version="8.0.1",
- zul;bundle-version="8.0.1"
-Bundle-Vendor: Logilite
-Bundle-ActivationPolicy: lazy
+Bundle-Version: 7.1.0.qualifier
 Bundle-ClassPath: .,
  lib/pdf-renderer-1.0.5.jar,
  lib/imgscalr-lib-4.2.jar,
@@ -48,7 +26,8 @@ Bundle-ClassPath: .,
  lib/fr.opensagres.poi.xwpf.converter.pdf-2.0.1.jar,
  lib/fr.opensagres.xdocreport.itext.extension-2.0.1.jar,
  lib/commons-math3-3.6.1.jar
-Service-Component: OSGI-INF/*.xml
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
+Bundle-Vendor: Logilite
 Export-Package: com.lowagie.text,
  com.lowagie.text.pdf,
  com.lowagie.text.pdf.codec,
@@ -56,3 +35,24 @@ Export-Package: com.lowagie.text,
  org.idempiere.dms.constant,
  org.idempiere.dms.factories,
  org.idempiere.model
+Require-Bundle: org.adempiere.plugin.utils;bundle-version="3.1.0",
+ org.adempiere.base;bundle-version="3.1.0",
+ org.adempiere.ui.zk;bundle-version="3.1.0",
+ org.adempiere.ui;bundle-version="3.1.0",
+ org.apache.commons.net,
+ com.logilite.search;bundle-version="1.0.0",
+ org.eclipse.osgi;bundle-version="3.10.2",
+ org.eclipse.osgi.services;bundle-version="3.4.0",
+ zhtml;bundle-version="8.0.1",
+ zel;bundle-version="8.0.1",
+ zk;bundle-version="8.0.1",
+ zul;bundle-version="8.0.1"
+Import-Package: org.apache.commons.io;version="2.2.0",
+ org.apache.commons.io.filefilter;version="2.2.0",
+ org.osgi.framework;version="1.3.0",
+ org.osgi.service.event;version="1.3.0",
+ org.zkoss.image,
+ org.zkoss.util.media
+Service-Component: OSGI-INF/*.xml
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-11

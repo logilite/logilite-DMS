@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="com.logilite.dms"
+      id="com.logilite.dms.feature"
       label="dms-feature"
-      version="1.0.1.qualifier"
+      version="7.1.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
@@ -26,7 +26,6 @@
       <import plugin="org.eclipse.osgi" version="3.10.2" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi.services" version="3.4.0" match="greaterOrEqual"/>
       <import plugin="com.logilite.search" version="1.0.2" match="greaterOrEqual"/>
-      <import plugin="org.apache.poi" version="3.9.0" match="greaterOrEqual"/>
       <import plugin="zhtml" version="8.0.1" match="greaterOrEqual"/>
       <import plugin="zel" version="8.0.1" match="greaterOrEqual"/>
       <import plugin="zk" version="8.0.1" match="greaterOrEqual"/>
