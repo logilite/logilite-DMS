@@ -147,8 +147,7 @@ public class Utils
 		}
 
 		// Check if already DMS content created for Mounting Base Folder but storage moved or
-		// something
-		// happen to prevent to create another content for same
+		// something happen to prevent to create another content for same
 		if (mountingContentID <= 0)
 		{
 			mountingContentID = MDMSContent.create(mountingBaseName, MDMSContent.CONTENTBASETYPE_Directory, null, true);

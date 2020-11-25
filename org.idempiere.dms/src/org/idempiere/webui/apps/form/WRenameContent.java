@@ -176,7 +176,6 @@ public class WRenameContent extends Window implements EventListener<Event>
 		ValidateName();
 
 		MDMSAssociation parentAssociation = dms.getAssociationFromContent(parent_Content.getDMS_Content_ID());
-		//TODO - TableID and RecordID getting fro Substitute Record need to check conversion
 		dms.renameContent(txtName.getValue(), DMSContent, parent_Content, parentAssociation.getAD_Table_ID(), parentAssociation.getRecord_ID());
 
 		this.detach();

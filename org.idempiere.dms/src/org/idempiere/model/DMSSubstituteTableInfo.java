@@ -14,22 +14,23 @@ public class DMSSubstituteTableInfo
 	private int				originTable_ID;
 	private int				originRecord_ID;
 
-	private MDMSSubstitute	substitute;
-
 	private int				substituteTable_ID;
 	private int				substituteRecord_ID;
 
-	public DMSSubstituteTableInfo(int tableID)
+	private MDMSSubstitute	substitute;
 
+	public DMSSubstituteTableInfo(int tableID)
 	{
 		this.originTable_ID = tableID;
 		this.substitute = MDMSSubstitute.get(tableID);
+
 		configTableInfo();
 	}
 
 	public DMSSubstituteTableInfo(int tableID, int recordID)
 	{
 		this(tableID);
+
 		updateRecord(recordID);
 	}
 
@@ -55,19 +56,20 @@ public class DMSSubstituteTableInfo
 	public void updateRecord(int recordID)
 	{
 		setOriginRecordID(recordID);
+
 		if (substitute != null)
 		{
 			String pKey = MTable.get(Env.getCtx(), substitute.getAD_Table_ID()).getPO(originRecord_ID, null).get_KeyColumns()[0];
-			int subsRecordID = DB
-							.getSQLValue(null, "SELECT " + substitute.getAD_Column().getColumnName() +
-											" FROM " + substitute.getAD_Table().getTableName() +
-											" WHERE " + pKey + " = " + originRecord_ID);
+			// TODO: Need to thing alternate option for query.
+			int subsRecordID = DB.getSQLValue(null, "SELECT "	+ substitute.getAD_Column().getColumnName() +
+													" FROM " + substitute.getAD_Table().getTableName() +
+													" WHERE " + pKey + " = " + originRecord_ID);
 
 			this.substituteRecord_ID = subsRecordID;
 		}
 		else
 		{
-			this.substituteRecord_ID = originRecord_ID;
+			this.substituteRecord_ID = getOriginRecord_ID();
 		}
 	} // updateRecord
 
@@ -121,5 +123,5 @@ public class DMSSubstituteTableInfo
 		{
 			return substituteRecord_ID;
 		}
-	}
+	} // getValidRecord_ID
 }

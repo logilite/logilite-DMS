@@ -90,8 +90,8 @@ public class DMSOprUtils
 	 * @param  isVersion
 	 * @return              New contentID
 	 */
-	public static int addFile(DMS dms, String dirPath, File file, String fileName, String desc, String contentType, Map<String, String> attributeMap,
-		int AD_Table_ID, int Record_ID, boolean isVersion)
+	public static int addFile(	DMS dms, String dirPath, File file, String fileName, String desc, String contentType, Map<String, String> attributeMap,
+								int AD_Table_ID, int Record_ID, boolean isVersion)
 	{
 		int asiID = 0;
 		int contentTypeID = 0;
@@ -105,7 +105,8 @@ public class DMSOprUtils
 		// Create Directory folder hierarchy OR get leaf DMS-Content
 		if (!Util.isEmpty(dirPath, true) && !dirPath.equals(DMSConstant.FILE_SEPARATOR))
 		{
-			dirContent = dms.createDirHierarchy(dirPath, dirContent, dms.getSsTableInfo().getOriginTable_ID(), dms.getSsTableInfo().getOriginRecord_ID(), trx.getTrxName());
+			dirContent = dms.createDirHierarchy(dirPath, dirContent, dms.getSubstituteTableInfo().getOriginTable_ID(),
+												dms.getSubstituteTableInfo().getOriginRecord_ID(), trx.getTrxName());
 		}
 
 		if (!isVersion && contentType != null)
@@ -145,8 +146,8 @@ public class DMSOprUtils
 	 * @param  isVersion
 	 * @return               New ContentID
 	 */
-	public static int addFile(DMS dms, MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID, int AD_Table_ID,
-		int Record_ID, boolean isVersion)
+	public static int addFile(	DMS dms, MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID, int AD_Table_ID,
+								int Record_ID, boolean isVersion)
 	{
 		boolean isError = false;
 		fileName = Utils.validateFileName(parentContent, file, fileName, isVersion);
@@ -198,8 +199,9 @@ public class DMSOprUtils
 	 * @param  trxName
 	 * @return               New ContentID
 	 */
-	public static int createContentAssociationFileStoreAndThumnail(DMS dms, MDMSContent parentContent, File file, String fileName, String desc,
-		int contentTypeID, int asiID, int AD_Table_ID, int Record_ID, boolean isVersion, String trxName)
+	public static int createContentAssociationFileStoreAndThumnail(	DMS dms, MDMSContent parentContent, File file, String fileName, String desc,
+																	int contentTypeID, int asiID, int AD_Table_ID, int Record_ID, boolean isVersion,
+																	String trxName)
 	{
 		int seqNo = 0;
 		int DMS_Content_Related_ID = 0;
@@ -383,8 +385,8 @@ public class DMSOprUtils
 	 * @param  trxName             - Transaction Name
 	 * @return                     DMS Content
 	 */
-	public static MDMSContent createDirectory(DMS dms, String dirContentName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
-		boolean errorIfDirExists, boolean isCreateAssociation, String trxName)
+	public static MDMSContent createDirectory(	DMS dms, String dirContentName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
+												boolean errorIfDirExists, boolean isCreateAssociation, String trxName)
 	{
 		int contentID = 0;
 
@@ -718,8 +720,8 @@ public class DMSOprUtils
 
 			newDMSAssociation.updateTableRecordRef(tableID, recordID);
 
-			// Note: Must save association first other wise creating
-			// issue of wrong info in solr indexing entry
+			// Note: Must save association first other wise creating issue of wrong info in solr
+			// indexing entry
 			newDMSContent.setValue(contentname);
 			newDMSContent.setName(newName);
 			newDMSContent.saveEx();
@@ -743,8 +745,8 @@ public class DMSOprUtils
 	 * @param tableID          - AD_Table_ID
 	 * @param recordID         - Record_ID
 	 */
-	public static void pasteCopyDirContent(DMS dms, MDMSContent copiedContent, MDMSContent destPasteContent, String baseURL, String renamedURL, int tableID,
-		int recordID)
+	public static void pasteCopyDirContent(	DMS dms, MDMSContent copiedContent, MDMSContent destPasteContent, String baseURL, String renamedURL, int tableID,
+											int recordID)
 	{
 		HashMap<I_DMS_Content, I_DMS_Association> map = dms.getDMSContentsWithAssociation(copiedContent, dms.AD_Client_ID, true);
 		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
@@ -753,7 +755,8 @@ public class DMSOprUtils
 			MDMSAssociation oldDMSAssociation = (MDMSAssociation) mapEntry.getValue();
 			if (oldDMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
-				MDMSContent newDMSContent = dms.createDirectory(oldDMSContent.getName(), destPasteContent, dms.getSsTableInfo().getOriginTable_ID(), dms.getSsTableInfo().getOriginRecord_ID(), true, false, null);
+				MDMSContent newDMSContent = dms.createDirectory(oldDMSContent.getName(), destPasteContent, dms.getSubstituteTableInfo().getOriginTable_ID(),
+																dms.getSubstituteTableInfo().getOriginRecord_ID(), true, false, null);
 
 				MAttributeSetInstance newASI = Utils.copyASI(copiedContent.getM_AttributeSetInstance_ID(), null);
 				if (newASI != null)
@@ -783,9 +786,9 @@ public class DMSOprUtils
 			}
 			else if (MDMSAssociationType.isLink(oldDMSAssociation))
 			{
-				int associationID = dms.createAssociation(	oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(), dms.getSsTableInfo().getOriginRecord_ID(), dms.getSsTableInfo().getOriginTable_ID(),
+				int associationID = dms.createAssociation(	oldDMSAssociation.getDMS_Content_ID(), destPasteContent.getDMS_Content_ID(),
+															dms.getSubstituteTableInfo().getOriginRecord_ID(), dms.getSubstituteTableInfo().getOriginTable_ID(),
 															MDMSAssociationType.LINK_ID, 0, null);
-
 				DMSOprUtils.createIndexforLinkableContent(	dms, oldDMSAssociation.getDMS_Content().getContentBaseType(), oldDMSAssociation.getDMS_Content_ID(),
 															associationID);
 			}
@@ -860,8 +863,8 @@ public class DMSOprUtils
 
 			association.updateTableRecordRef(tableID, recordID);
 
-			// Note: Must save association first other wise creating
-			// issue of wrong info in solr indexing entry
+			// Note: Must save association first other wise creating issue of wrong info in solr
+			// indexing entry
 			cutContent.saveEx();
 		}
 		else
@@ -1028,8 +1031,8 @@ public class DMSOprUtils
 	 * @param recordID            - Record_ID
 	 * @param isDocExplorerWindow - is Document Explorer Window
 	 */
-	public static void renameContent(DMS dms, String fileName, MDMSContent content, MDMSContent parent_Content, int tableID, int recordID,
-		boolean isDocExplorerWindow)
+	public static void renameContent(	DMS dms, String fileName, MDMSContent content, MDMSContent parent_Content, int tableID, int recordID,
+										boolean isDocExplorerWindow)
 	{
 		fileName = fileName.trim();
 
@@ -1117,8 +1120,8 @@ public class DMSOprUtils
 				MDMSAssociation associationDir = MDMSAssociation.getAssociationFromContent(dmsContent.getDMS_Content_ID(), null);
 				associationDir.updateTableRecordRef(tableID, recordID);
 
-				// Note: Must save association first other wise creating
-				// issue of wrong info in solr indexing entry
+				// Note: Must save association first other wise creating issue of wrong info in solr
+				// indexing entry
 				dmsContent.saveEx();
 			}
 			else
@@ -1173,8 +1176,8 @@ public class DMSOprUtils
 		MDMSAssociation associationFile = MDMSAssociation.getAssociationFromContent(contentFile.getDMS_Content_ID(), null);
 		associationFile.updateTableRecordRef(tableID, recordID);
 
-		// Note: Must save association first other wise creating
-		// issue of wrong info in solr indexing entry
+		// Note: Must save association first other wise creating issue of wrong info in solr
+		// indexing entry
 		contentFile.saveEx();
 
 		contentFile = (MDMSContent) associationFile.getDMS_Content_Related();
@@ -1264,7 +1267,8 @@ public class DMSOprUtils
 		// For Tab viewer
 		if (tableID > 0 && recordID > 0)
 		{
-			associationID = dms.createAssociation(latestVerContentID, contentRelatedID, dms.getSsTableInfo().getOriginRecord_ID(), dms.getSsTableInfo().getOriginTable_ID(), MDMSAssociationType.LINK_ID, 0, null);
+			associationID = dms.createAssociation(	latestVerContentID, contentRelatedID, dms.getSubstituteTableInfo().getOriginRecord_ID(),
+													dms.getSubstituteTableInfo().getOriginTable_ID(), MDMSAssociationType.LINK_ID, 0, null);
 			MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
 
 			contentID = association.getDMS_Content_Related_ID();

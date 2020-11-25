@@ -69,7 +69,7 @@ import org.zkoss.zul.Space;
 
 import com.adaxa.signature.webui.component.SignatureImgBox;
 
-public class WUploadContent extends Window implements EventListener <Event>, ValueChangeListener
+public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
 {
 
 	/**
@@ -90,7 +90,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 
 	private Textbox				txtDesc				= new Textbox();
 	private Textbox				txtName				= new Textbox();
-	
+
 	private Grid				gridView			= GridFactory.newGridLayout();
 	private Row					contentTypeRow		= new Row();
 	private Row					nameRow				= new Row();
@@ -105,7 +105,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 	private Tab					tabAttribute		= new Tab();
 	private Tabpanels			tabPanelsAttribute	= new Tabpanels();
 	private Tabpanel			tabPanelAttribute	= new Tabpanel();
-	
+
 	private SignatureImgBox		signatureBox		= new SignatureImgBox(false);
 
 	private int					tableID				= 0;
@@ -219,7 +219,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 		row = rows.newRow();
 		row.appendCellChild(lblDesc);
 		row.appendCellChild(txtDesc, 2);
-		
+
 		boolean isDMSSignSupport = MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx())).get_ValueAsBoolean("IsDMSSignSupport");
 		if (isDMSSignSupport)
 		{
@@ -356,7 +356,6 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 			// Adding File
 			if (isVersion)
 			{
-				//TODO - TableID and RecordID getting fro Substitute Record need to check conversion
 				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue(), tableID, recordID);
 			}
 			else
@@ -370,7 +369,6 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 					ASI_ID = asiPanel.saveAttributes();
 				}
 
-				//TODO - TableID and RecordID getting fro Substitute Record need to check conversion
 				dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
 			}
 		}

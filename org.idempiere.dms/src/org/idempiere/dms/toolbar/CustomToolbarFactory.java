@@ -85,13 +85,12 @@ public class CustomToolbarFactory implements IAction
 		dmsWindow.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 			@Override
-			public void onEvent(Event arg0) throws Exception
+			public void onEvent(Event arg) throws Exception
 			{
-				int associateRecords = DB
-								.getSQLValue(null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
-												+ " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
-												winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
-												winContent.getADTab().getSelectedGridTab().getRecord_ID());
+				int associateRecords = DB.getSQLValue(	null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
+																+ " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
+														winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
+														winContent.getADTab().getSelectedGridTab().getRecord_ID());
 
 				winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed((associateRecords > 0));
 			}
