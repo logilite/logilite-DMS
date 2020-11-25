@@ -41,13 +41,18 @@ public class CustomToolbarFactory implements IAction
 	private WDMSPanel				dmsPanel	= null;
 	private Window					dmsWindow	= null;
 
-	@Override
-	public void execute(Object target)
+	public CustomToolbarFactory()
 	{
+		super();
+
 		// Load DMS CSS file content and attach as style tag in Head tab
 		DMS_ZK_Util.loadDMSThemeCSSFile();
 		DMS_ZK_Util.loadDMSMobileCSSFile();
+	}
 
+	@Override
+	public void execute(Object target)
+	{
 		ADWindow window = (ADWindow) target;
 		winContent = window.getADWindowContent();
 
