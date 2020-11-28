@@ -19,14 +19,14 @@ import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CCache;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.Utils;
 
 /**
  * @author Deepak@logilite.com
  */
 public class FileStorageUtil
 {
-	static CCache<String, IFileStorageProvider>	s_cache	= new CCache<String, IFileStorageProvider>("FileStorageProvider", 2);
+	static CCache<String, IFileStorageProvider> s_cache = new CCache<String, IFileStorageProvider>("FileStorageProvider", 2);
 
 	// TODO This util method should be added in MStorageProvider when it ended
 	// into iDempiere core

@@ -16,7 +16,8 @@ import org.compiere.util.Trx;
 import org.compiere.util.TrxEventListener;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.DMSFactoryUtils;
+import org.idempiere.dms.util.DMSSearchUtils;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
@@ -63,16 +64,16 @@ public class DMSModelValidator implements ModelValidator
 		 * change of attribute value
 		 */
 		if (MAttributeInstance.Table_Name.equals(po.get_TableName())
-		    && type == TYPE_BEFORE_CHANGE
-		    && (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value)
-		        || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueTimeStamp)
-		        || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber)
-		        || po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueInt)))
+			&& type == TYPE_BEFORE_CHANGE
+			&& (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value)
+				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueTimeStamp)
+				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber)
+				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueInt)))
 		{
 			MAttributeInstance attributeInstance = (MAttributeInstance) po;
 
-			int dmsContentID = DB.getSQLValue(po.get_TrxName(), "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ",
-			                                  attributeInstance.getM_AttributeSetInstance_ID());
+			int dmsContentID = DB.getSQLValue(po.get_TrxName(), "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ", attributeInstance
+																																								.getM_AttributeSetInstance_ID());
 
 			if (dmsContentID > 0)
 			{
@@ -87,11 +88,13 @@ public class DMSModelValidator implements ModelValidator
 		 * index again
 		 */
 		if (MDMSContent.Table_Name.equals(po.get_TableName())
-		    && type == TYPE_BEFORE_CHANGE
-		    && (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
-		        || po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
-		        || po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
-		        || po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)))
+			&& type == TYPE_BEFORE_CHANGE
+			&& (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
+				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
+				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
+				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)
+				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_DMS_ContentType_ID)
+				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_M_AttributeSetInstance_ID)))
 		{
 			MDMSContent dmsContent = (MDMSContent) po;
 			dmsContent.setIsIndexed(false);
@@ -114,9 +117,9 @@ public class DMSModelValidator implements ModelValidator
 						@Override
 						public void afterCommit(Trx trx, boolean success)
 						{
-							MDMSAssociation association = Utils.getAssociationFromContent(content.getDMS_Content_ID(), null);
+							MDMSAssociation association = MDMSAssociation.getAssociationFromContent(content.getDMS_Content_ID(), null);
 
-							Map<String, Object> solrValue = Utils.createIndexMap(content, association);
+							Map<String, Object> solrValue = DMSSearchUtils.createIndexMap(content, association);
 							IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
 
 							if (indexSeracher == null)
@@ -128,7 +131,7 @@ public class DMSModelValidator implements ModelValidator
 							if (fsProvider == null)
 								throw new AdempiereException("Storage provider is not define on clientInfo.");
 
-							IContentManager contentManager = Utils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
+							IContentManager contentManager = DMSFactoryUtils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
 							if (contentManager == null)
 								throw new AdempiereException("Content manager is not found.");
 
@@ -145,15 +148,16 @@ public class DMSModelValidator implements ModelValidator
 							if (content.isSyncIndexForLinkableDocs())
 							{
 								// Create index of Linkable docs is exists
-								int[] linkAssociationIDs = DB.getIDsEx(null, DMSConstant.SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT,
-								                                       MDMSAssociationType.VERSION_ID, content.getDMS_Content_ID(), content.getDMS_Content_ID(),
-								                                       MDMSAssociationType.VERSION_ID);
+								int[] linkAssociationIDs = DB.getIDsEx(	null, DMSConstant.SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT,
+																		MDMSAssociationType.VERSION_ID, content.getDMS_Content_ID(), content
+																																			.getDMS_Content_ID(),
+																		MDMSAssociationType.VERSION_ID);
 
 								for (int linkAssociationID : linkAssociationIDs)
 								{
 									MDMSAssociation associationLink = new MDMSAssociation(Env.getCtx(), linkAssociationID, null);
 
-									solrValue = Utils.createIndexMap(content, associationLink);
+									solrValue = DMSSearchUtils.createIndexMap(content, associationLink);
 
 									indexSeracher.indexContent(solrValue);
 								}
@@ -177,10 +181,10 @@ public class DMSModelValidator implements ModelValidator
 		{
 			// For index changes of deleting linkable content.
 			MDMSAssociation association = (MDMSAssociation) po;
-			if (Utils.isLink(association)
-			    && association.getDMS_Content().isActive()
-			    && association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)
-			    && !association.isActive())
+			if (MDMSAssociationType.isLink(association)
+				&& association.getDMS_Content().isActive()
+				&& association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)
+				&& !association.isActive())
 			{
 				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 				linkContent.setIsIndexed(false);

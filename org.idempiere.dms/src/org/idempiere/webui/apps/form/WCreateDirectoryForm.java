@@ -16,12 +16,14 @@ package org.idempiere.webui.apps.form;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.component.Window;
+import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.util.CLogger;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
@@ -90,8 +92,8 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 	 */
 	public void init() throws Exception
 	{
-		this.setHeight("150px");
-		this.setWidth("500px");
+		ZKUpdateUtil.setWindowHeightX(this, 150);
+		ZKUpdateUtil.setWindowWidthX(this, 500);
 		this.setTitle(DMSConstant.MSG_CREATE_DIRECTORY);
 		mainLayout.setParent(this);
 		mainLayout.setHflex("1");
@@ -120,7 +122,19 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		Separator separator = new Separator();
 		separator.setOrient("horizontal");
 		separator.setBar(true);
-		separator.setStyle("padding-top: 40px");
+		
+		
+		if (ClientInfo.isMobile())
+		{
+			txtboxDirectory.setWidth("98%");
+			if (ClientInfo.get().isPortrait())
+				north.setHeight("50px");
+		}
+		else
+		{
+			separator.setStyle("padding-top: 40px");
+		}
+
 		parameterPanel.appendChild(separator);
 
 		South south = new South();

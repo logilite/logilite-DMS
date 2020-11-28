@@ -77,7 +77,6 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 			throw new AdempiereException("Parent Tab not found");
 
 		docDMSPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab().getRecord_ID(), adWindowContent);
-
 		this.appendChild(docDMSPanel);
 
 	}
@@ -121,6 +120,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void createUI()
 	{
+
 		int tableID = gridTab.getParentTab().getAD_Table_ID();
 		int recordID = gridTab.getParentTab().getRecord_ID();
 		String tableName = gridTab.getParentTab().getTableName();
@@ -129,8 +129,6 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		docDMSPanel.setButtonsContentCreationEnabled(true);
 		docDMSPanel.allowUserToCreateDir();
 		docDMSPanel.setNavigationButtonEnabled(false);
-		docDMSPanel.setTable_ID(tableID);
-		docDMSPanel.setRecord_ID(recordID);
 		docDMSPanel.getDMS().initiateMountingContent(tableName, recordID, tableID);
 
 		reload();
@@ -138,13 +136,13 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 
 	public void reload()
 	{
+		int tableID = gridTab.getParentTab().getAD_Table_ID();
 		int recordID = gridTab.getParentTab().getRecord_ID();
-		String tableName = gridTab.getParentTab().getTableName();
-
+		docDMSPanel.setTable_ID((gridTab.getParentTab().getAD_Table_ID()));
+		docDMSPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
 		docDMSPanel.getBreadRow().getChildren().clear();
 		docDMSPanel.addRootBreadCrumb();
-		docDMSPanel.setCurrDMSContent(docDMSPanel.getDMS().getMountingStrategy().getMountingParent(tableName, recordID));
-
+		docDMSPanel.setCurrDMSContent(docDMSPanel.getDMS().getDMSMountingParent(tableID, recordID));
 		renderViewer();
 	}
 

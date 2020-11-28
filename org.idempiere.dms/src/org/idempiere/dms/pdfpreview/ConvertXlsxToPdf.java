@@ -55,7 +55,6 @@ public class ConvertXlsxToPdf
 
 	public ConvertXlsxToPdf(String filePath) throws IOException, InvalidFormatException, ParserConfigurationException
 	{
-
 		InputStream in = new FileInputStream(new File(filePath));
 		OPCPackage op = OPCPackage.open(in);
 		x = new XSSFWorkbook(op);
@@ -72,14 +71,13 @@ public class ConvertXlsxToPdf
 	}
 
 	/**
-	 * @param filePath
+	 * @param  filePath
 	 * @throws InvalidFormatException
 	 * @throws IOException
 	 * @throws ParserConfigurationException
 	 * @throws TransformerException
 	 */
-	public static void convert(String filePath, String output)
-			throws InvalidFormatException, IOException, ParserConfigurationException, TransformerException
+	public static void convert(String filePath, String output) throws InvalidFormatException, IOException, ParserConfigurationException, TransformerException
 	{
 		ConvertXlsxToPdf converter = new ConvertXlsxToPdf(filePath);
 
@@ -108,7 +106,6 @@ public class ConvertXlsxToPdf
 
 	private void processSheet(Element container, XSSFSheet sheet, String sID)
 	{
-
 		Element table = htmlDocumentFacade.createTable();
 		int sIndex = sheet.getWorkbook().getSheetIndex(sheet);
 		String sId = "sheet_".concat(String.valueOf(sIndex));
@@ -120,13 +117,11 @@ public class ConvertXlsxToPdf
 
 		if (sheet.getDefaultRowHeightInPoints() > 0)
 		{
-			css.append("#").append(sId).append(" tr{height:").append(sheet.getDefaultRowHeightInPoints() / 28.34)
-					.append("cm}\n");
+			css.append("#").append(sId).append(" tr{height:").append(sheet.getDefaultRowHeightInPoints() / 28.34).append("cm}\n");
 		}
 		if (sheet.getDefaultColumnWidth() > 0)
 		{
-			css.append("#").append(sId).append(" td{width:").append(sheet.getDefaultColumnWidth() * 0.21)
-					.append("cm}\n");
+			css.append("#").append(sId).append(" td{width:").append(sheet.getDefaultColumnWidth() * 0.21).append("cm}\n");
 		}
 		// cols
 		generateColumns(sheet, table);
@@ -297,35 +292,44 @@ public class ConvertXlsxToPdf
 		}
 		else
 		{
-			if(CellType.BLANK.equals(cell.getCellType())) {
-					value = "\u00a0";
-			}else if(CellType.NUMERIC.equals(cell.getCellType())){
-					if (DateUtil.isCellDateFormatted(cell))
-					{
-						// to display date format
-						DataFormatter dateFormatter = new DataFormatter();
-						value = dateFormatter.formatCellValue(cell);
-					}
-					else
-					{
-						value = cell.getNumericCellValue();
-					}
-			}else if(CellType.BOOLEAN.equals(cell.getCellType())) {
-					value = cell.getBooleanCellValue();
-			}else if(CellType.FORMULA.equals(cell.getCellType())) {
-					if (CellType.ERROR.equals(cell.getCachedFormulaResultType()))
-					{
-						value = cell.getCellFormula();
-					}
-					else
-					{
-						// To eveluate formula
-						FormulaEvaluator formulaEvalutor = x.getCreationHelper().createFormulaEvaluator();
-						DataFormatter fmt = new DataFormatter();
-						value = fmt.formatCellValue(cell, formulaEvalutor);
-					}
-			}else {
-					value = cell.getRichStringCellValue();
+			if (CellType.BLANK.equals(cell.getCellType()))
+			{
+				value = "\u00a0";
+			}
+			else if (CellType.NUMERIC.equals(cell.getCellType()))
+			{
+				if (DateUtil.isCellDateFormatted(cell))
+				{
+					// to display date format
+					DataFormatter dateFormatter = new DataFormatter();
+					value = dateFormatter.formatCellValue(cell);
+				}
+				else
+				{
+					value = cell.getNumericCellValue();
+				}
+			}
+			else if (CellType.BOOLEAN.equals(cell.getCellType()))
+			{
+				value = cell.getBooleanCellValue();
+			}
+			else if (CellType.FORMULA.equals(cell.getCellType()))
+			{
+				if (CellType.ERROR.equals(cell.getCachedFormulaResultType()))
+				{
+					value = cell.getCellFormula();
+				}
+				else
+				{
+					// To eveluate formula
+					FormulaEvaluator formulaEvalutor = x.getCreationHelper().createFormulaEvaluator();
+					DataFormatter fmt = new DataFormatter();
+					value = fmt.formatCellValue(cell, formulaEvalutor);
+				}
+			}
+			else
+			{
+				value = cell.getRichStringCellValue();
 			}
 			if (value instanceof XSSFRichTextString)
 			{
@@ -379,7 +383,6 @@ public class ConvertXlsxToPdf
 
 		if (HorizontalAlignment.RIGHT.equals(style.getAlignment()))
 			sb.append("text-align:").append("right;");
-			
 
 		// TODO: set correct value for type and width of border.
 		if (style.getBorderBottom() != BorderStyle.NONE)
@@ -413,8 +416,8 @@ public class ConvertXlsxToPdf
 	}
 
 	/**
-	 * @param output
-	 * @param document
+	 * @param  output
+	 * @param  document
 	 * @throws IOException
 	 * @throws TransformerException
 	 */
@@ -436,7 +439,7 @@ public class ConvertXlsxToPdf
 
 		TransformerFactory tf = TransformerFactory.newInstance();
 		Transformer serializer = tf.newTransformer();
-		
+
 		serializer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 		serializer.setOutputProperty(OutputKeys.INDENT, "yes");
 		serializer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");

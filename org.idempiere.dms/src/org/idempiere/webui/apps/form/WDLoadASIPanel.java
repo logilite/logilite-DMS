@@ -19,9 +19,8 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
-import org.adempiere.webui.component.Column;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Panel;
@@ -63,8 +62,6 @@ public class WDLoadASIPanel extends Panel
 	private int					M_AttributeSet_ID	= 0;
 
 	private Grid				attributeGrid		= new Grid();
-	private Columns				columns				= new Columns();
-	private Column				column				= new Column();
 	private Rows				rows				= new Rows();
 	private Label				lblAttribute		= new Label();
 
@@ -95,18 +92,14 @@ public class WDLoadASIPanel extends Panel
 
 	public void initPanel()
 	{
-		this.setHeight("65%");
-		this.setWidth("100%");
 		this.appendChild(attributeGrid);
 
-		column.setWidth("30%");
-		columns.appendChild(column);
+		if (!ClientInfo.isMobile())
+		{
+			this.setHeight("65%");
+			this.setWidth("100%");
+		}
 
-		column = new Column();
-		column.setWidth("70%");
-		columns.appendChild(column);
-
-		attributeGrid.appendChild(columns);
 		attributeGrid.appendChild(rows);
 
 		if (contentType != null && !Util.isEmpty(contentType.getName(), true))
@@ -166,6 +159,7 @@ public class WDLoadASIPanel extends Panel
 		if (editor != null)
 		{
 			Row row = rows.newRow();
+			row.setSclass("SB-Grid-field");
 
 			Label label = editor.getLabel();
 			if (label.getValue() == null || label.getValue().trim().length() < 1)
@@ -176,7 +170,7 @@ public class WDLoadASIPanel extends Panel
 				label.setValue(label.getValue());
 			}
 
-			row.appendChild(label);
+			row.appendCellChild(label);
 
 			editor.setMandatory(attribute.isMandatory());
 			editor.fillHorizontal();
@@ -187,7 +181,7 @@ public class WDLoadASIPanel extends Panel
 			}
 
 			Component fieldEditor = editor.getComponent();
-			row.appendChild(fieldEditor);
+			row.appendCellChild(fieldEditor, 2);
 
 			m_editors.add(editor);
 		}
@@ -221,8 +215,9 @@ public class WDLoadASIPanel extends Panel
 
 	private GridField getGridField(MAttribute attribute, String columnName, int Reference_ID, int Reference_Value_ID)
 	{
-		GridFieldVO vo = GridFieldVO.createParameter(Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
-				Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID, Reference_Value_ID, false, false, null);
+		GridFieldVO vo = GridFieldVO.createParameter(	Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
+														Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID,
+														Reference_Value_ID, false, false);
 		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 
@@ -255,8 +250,8 @@ public class WDLoadASIPanel extends Panel
 					if (instance.getValueTimeStamp() != null)
 						editor.setValue(instance.getValueTimeStamp());
 				}
-				else if (dt == DisplayType.Image || dt == DisplayType.Assignment || dt == DisplayType.Locator || dt == DisplayType.Payment
-						|| dt == DisplayType.TableDir || dt == DisplayType.Table || dt == DisplayType.Search || dt == DisplayType.Account)
+				else if (dt == DisplayType.Image	|| dt == DisplayType.Assignment || dt == DisplayType.Locator || dt == DisplayType.Payment
+							|| dt == DisplayType.TableDir || dt == DisplayType.Table || dt == DisplayType.Search || dt == DisplayType.Account)
 				{
 					if (instance.getValueInt() > 0)
 						editor.setValue(instance.getValueInt());
@@ -297,8 +292,9 @@ public class WDLoadASIPanel extends Panel
 			{
 				WEditor editor = (WEditor) m_editors.get(i);
 				Object item = editor.getValue();
-				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(Env.getCtx(), Integer.valueOf(String
-						.valueOf(item)), null) : null;
+				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(	Env.getCtx(),
+																															Integer.valueOf(String.valueOf(item)),
+																															null) : null;
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
@@ -397,9 +393,9 @@ public class WDLoadASIPanel extends Panel
 					attributes.setMAttributeInstance(asiID, (BigDecimal) value);
 			}
 		}
-		else if (displayType == DisplayType.Image || displayType == DisplayType.Assignment || displayType == DisplayType.Locator
-				|| displayType == DisplayType.Payment || displayType == DisplayType.TableDir || displayType == DisplayType.Table
-				|| displayType == DisplayType.Search || displayType == DisplayType.Account)
+		else if (displayType == DisplayType.Image	|| displayType == DisplayType.Assignment || displayType == DisplayType.Locator
+					|| displayType == DisplayType.Payment || displayType == DisplayType.TableDir || displayType == DisplayType.Table
+					|| displayType == DisplayType.Search || displayType == DisplayType.Account)
 		{
 			Integer value = (Integer) editor.getValue();
 			if (attributes.isMandatory() && value == null)
@@ -410,7 +406,7 @@ public class WDLoadASIPanel extends Panel
 
 			String valueLable = null;
 			if (displayType == DisplayType.TableDir || displayType == DisplayType.Table || displayType == DisplayType.Search
-					|| displayType == DisplayType.Account)
+				|| displayType == DisplayType.Account)
 			{
 				valueLable = editor.getDisplay();
 			}

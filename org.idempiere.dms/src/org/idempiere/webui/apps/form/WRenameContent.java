@@ -13,6 +13,7 @@
 
 package org.idempiere.webui.apps.form;
 
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
@@ -27,7 +28,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.WrongValueException;
@@ -69,8 +70,12 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private void init()
 	{
-		this.setWidth("30%");
-		this.setHeight("32%");
+		if (!ClientInfo.isMobile())
+		{
+			this.setWidth("30%");
+			this.setHeight("32%");
+		}
+
 		this.setClosable(true);
 		this.setTitle(DMSConstant.MSG_RENAME);
 		this.addEventListener(Events.ON_OK, this);
@@ -87,7 +92,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 		gridView.setStyle("max-widht:230px; max-height:230px;");
 		gridView.setStyle("min-widht:230px; min-height:230px;");
 
-		parent_Content = new MDMSContent(Env.getCtx(), Utils.getDMS_Content_Related_ID(DMSContent), null);
+		parent_Content = new MDMSContent(Env.getCtx(), DMSContent.getDMS_Content_Related_ID(), null);
 		if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
 			txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
@@ -171,6 +176,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 		ValidateName();
 
 		MDMSAssociation parentAssociation = dms.getAssociationFromContent(parent_Content.getDMS_Content_ID());
+		//TODO - TableID and RecordID getting fro Substitute Record need to check conversion
 		dms.renameContent(txtName.getValue(), DMSContent, parent_Content, parentAssociation.getAD_Table_ID(), parentAssociation.getRecord_ID());
 
 		this.detach();

@@ -18,22 +18,34 @@ import java.sql.ResultSet;
 import org.adempiere.base.IModelFactory;
 import org.compiere.model.PO;
 import org.compiere.util.Env;
+import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
+import org.idempiere.model.MDMSStatus;
+import org.idempiere.model.MDMSSubstitute;
 
 public class ModelFactory implements IModelFactory
 {
 
 	@Override
-	public Class <?> getClass(String tableName)
+	public Class<?> getClass(String tableName)
 	{
 		if (tableName.equals(MDMSMimeType.Table_Name))
 			return MDMSMimeType.class;
 		else if (tableName.equals(MDMSContent.Table_Name))
 			return MDMSContent.class;
+		else if (tableName.equals(MDMSAssociation.Table_Name))
+			return MDMSAssociation.class;
+		else if (tableName.equals(MDMSAssociationType.Table_Name))
+			return MDMSAssociationType.class;
 		else if (tableName.equals(MDMSContentType.Table_Name))
 			return MDMSContentType.class;
+		else if (tableName.equals(MDMSStatus.Table_Name))
+			return MDMSStatus.class;
+		else if (tableName.equals(MDMSSubstitute.Table_Name))
+			return MDMSSubstitute.class;
 
 		return null;
 	}
@@ -45,8 +57,16 @@ public class ModelFactory implements IModelFactory
 			return new MDMSMimeType(Env.getCtx(), Record_ID, trxName);
 		else if (tableName.equals(MDMSContent.Table_Name))
 			return new MDMSContent(Env.getCtx(), Record_ID, trxName);
+		else if (tableName.equals(MDMSAssociation.Table_Name))
+			return new MDMSAssociation(Env.getCtx(), Record_ID, trxName);
+		else if (tableName.equals(MDMSAssociationType.Table_Name))
+			return new MDMSAssociationType(Env.getCtx(), Record_ID, trxName);
 		else if (tableName.equals(MDMSContentType.Table_Name))
 			return new MDMSContentType(Env.getCtx(), Record_ID, trxName);
+		else if (tableName.equals(MDMSStatus.Table_Name))
+			return new MDMSStatus(Env.getCtx(), Record_ID, trxName);
+		else if (tableName.equals(MDMSSubstitute.Table_Name))
+			return new MDMSSubstitute(Env.getCtx(), Record_ID, trxName);
 
 		return null;
 	}
@@ -58,8 +78,16 @@ public class ModelFactory implements IModelFactory
 			return new MDMSMimeType(Env.getCtx(), rs, trxName);
 		else if (tableName.equals(MDMSContent.Table_Name))
 			return new MDMSContent(Env.getCtx(), rs, trxName);
+		else if (tableName.equals(MDMSAssociation.Table_Name))
+			return new MDMSAssociation(Env.getCtx(), rs, trxName);
+		else if (tableName.equals(MDMSAssociationType.Table_Name))
+			return new MDMSAssociationType(Env.getCtx(), rs, trxName);
 		else if (tableName.equals(MDMSContentType.Table_Name))
 			return new MDMSContentType(Env.getCtx(), rs, trxName);
+		else if (tableName.equals(MDMSStatus.Table_Name))
+			return new MDMSStatus(Env.getCtx(), rs, trxName);
+		else if (tableName.equals(MDMSSubstitute.Table_Name))
+			return new MDMSSubstitute(Env.getCtx(), rs, trxName);
 
 		return null;
 	}

@@ -16,17 +16,20 @@ package org.idempiere.webui.apps.form;
 import java.io.File;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
+import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Window;
 import org.compiere.util.Env;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IContentEditor;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
+import org.zkoss.zul.South;
 import org.zkoss.zul.Splitter;
 
 public class WDocumentViewer extends Window
@@ -49,8 +52,10 @@ public class WDocumentViewer extends Window
 
 	private int					tableID				= 0;
 	private int					recordID			= 0;
+	private int					windowNo			= 0;
+	private int					tabNo				= 0;
 
-	public WDocumentViewer(DMS dms, Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID)
+	public WDocumentViewer(DMS dms, Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID, int windowNo, int tabNo)
 	{
 		mimeType = new MDMSMimeType(Env.getCtx(), mdms_content.getDMS_MimeType_ID(), null);
 		this.dms = dms;
@@ -59,6 +64,8 @@ public class WDocumentViewer extends Window
 		this.document_preview = document_preview;
 		this.tableID = tableID;
 		this.recordID = recordID;
+		this.windowNo = windowNo;
+		this.tabNo = tabNo;
 	}
 
 	public WDMSAttributePanel getAttributePanel()
@@ -71,7 +78,7 @@ public class WDocumentViewer extends Window
 		this.setHeight("100%");
 		this.setWidth("100%");
 
-		IContentEditor contentEditor = Utils.getContentEditor(mimeType.getMimeType());
+		IContentEditor contentEditor = DMSFactoryUtils.getContentEditor(mimeType.getMimeType());
 
 		if (contentEditor != null)
 		{
@@ -92,20 +99,39 @@ public class WDocumentViewer extends Window
 		// Content attribute view
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure, isLink);
+		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure, isLink, windowNo, tabNo);
 		cellCPreview.appendChild(attributePanel);
 
-		Hbox boxViewSeparator = new Hbox();
-		boxViewSeparator.setWidth("100%");
-		boxViewSeparator.setHeight("100%");
-		boxViewSeparator.setStyle("position:relative; overflow: auto;");
-		boxViewSeparator.appendChild(cellPreview);
-		boxViewSeparator.appendChild(splitter);
-		boxViewSeparator.appendChild(cellCPreview);
+		if (ClientInfo.isMobile())
+		{
+			Borderlayout borderViewSeparator = new Borderlayout();
+			borderViewSeparator.setWidth("100%");
+			borderViewSeparator.setHeight("100%");
+			borderViewSeparator.setStyle("position:relative; overflow: auto;");
+			borderViewSeparator.appendCenter(cellPreview);
+			borderViewSeparator.appendSouth(cellCPreview);
+
+			South south = borderViewSeparator.getSouth();
+			south.setStyle("max-height: 100%; min-height: 80%;");
+			south.setSplittable(true);
+			south.setCollapsible(true);
+			south.setOpen(false);
+			tabDataPanel.appendChild(borderViewSeparator);
+		}
+		else
+		{
+			Hbox boxViewSeparator = new Hbox();
+			boxViewSeparator.setWidth("100%");
+			boxViewSeparator.setHeight("100%");
+			boxViewSeparator.setStyle("position:relative; overflow: auto;");
+			boxViewSeparator.appendChild(cellPreview);
+			boxViewSeparator.appendChild(splitter);
+			boxViewSeparator.appendChild(cellCPreview);
+			tabDataPanel.appendChild(boxViewSeparator);
+		}
 
 		tabDataPanel.setStyle("position:relative; overflow: auto;");
 		tabDataPanel.setZclass("none");
-		tabDataPanel.appendChild(boxViewSeparator);
 		return tabDataPanel;
 	} // initForm
 }

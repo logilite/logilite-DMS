@@ -21,9 +21,9 @@ import org.adempiere.webui.component.Rows;
 import org.compiere.model.MUser;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
@@ -106,7 +106,7 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 			row.addEventListener(eventsList[i], listener);
 
 		// set tooltip text
-		row.setTooltiptext(Utils.getToolTipTextMsg(dms, content));
+		row.setTooltiptext(((MDMSContent) content).getToolTipTextMsg());
 	} // createComponent
 
 	@Override

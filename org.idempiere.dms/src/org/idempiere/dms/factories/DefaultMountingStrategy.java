@@ -19,12 +19,13 @@ import org.compiere.util.CCache;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.MDMSContent;
 
 public class DefaultMountingStrategy implements IMountingStrategy
 {
 
-	private static CCache<String, MDMSContent>	mountingParentCache	= new CCache<String, MDMSContent>(null, "MountingParentCache", 50, false);
+	private static CCache<String, MDMSContent> mountingParentCache = new CCache<String, MDMSContent>(null, "MountingParentCache", 50, false);
 
 	@Override
 	public String getMountingPath(PO po)
@@ -35,7 +36,7 @@ public class DefaultMountingStrategy implements IMountingStrategy
 	@Override
 	public String getMountingPath(String Table_Name, int Record_ID)
 	{
-		return DMSConstant.FILE_SEPARATOR + Utils.getDMSMountingBase(Env.getAD_Client_ID(Env.getCtx())) + DMSConstant.FILE_SEPARATOR + Table_Name
+		return DMSConstant.FILE_SEPARATOR	+ Utils.getDMSMountingBase(Env.getAD_Client_ID(Env.getCtx())) + DMSConstant.FILE_SEPARATOR + Table_Name
 				+ DMSConstant.FILE_SEPARATOR + Record_ID;
 	}
 
@@ -73,7 +74,7 @@ public class DefaultMountingStrategy implements IMountingStrategy
 	public MDMSContent getMountingParentForArchive()
 	{
 		int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
-		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_BASE_CONTENT, Utils.getDMSMountingArchiveBase(AD_Client_ID), AD_Client_ID);
+		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_ROOT_MOUNTING_BASE_CONTENT, Utils.getDMSMountingArchiveBase(AD_Client_ID), AD_Client_ID);
 
 		if (DMS_Content_ID > 0)
 			return new MDMSContent(Env.getCtx(), DMS_Content_ID, null);

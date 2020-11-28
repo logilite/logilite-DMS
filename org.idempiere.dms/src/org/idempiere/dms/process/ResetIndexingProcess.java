@@ -4,7 +4,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,8 +13,10 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.Utils;
+import org.idempiere.dms.util.DMSFactoryUtils;
+import org.idempiere.dms.util.DMSSearchUtils;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.MDMSAssociation;
@@ -29,27 +30,24 @@ import com.logilite.search.factory.ServiceUtils;
  */
 public class ResetIndexingProcess extends SvrProcess
 {
-	public static final String				SQL_GET_ALL_DMS_CONTENT			= " SELECT a.DMS_Content_ID, a.DMS_Association_ID 						"
-	                                                                          + " FROM DMS_Association a											"
-	                                                                          + " INNER JOIN DMS_Content c ON (a.DMS_Content_ID = c.DMS_Content_ID)	"
-	                                                                          + " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT'			";
+	public static final String	SQL_GET_ALL_DMS_CONTENT			= " SELECT a.DMS_Content_ID, a.DMS_Association_ID 						"
+																	+ " FROM DMS_Association a											"
+																	+ " INNER JOIN DMS_Content c ON (a.DMS_Content_ID=c.DMS_Content_ID)	"
+																	+ " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT'			";
 
-	public static final String				SQL_UPDATE_CONTENT_INDEX_FALSE	= "UPDATE DMS_Content c SET IsIndexed='N'	WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=? ";
-
-	public static final SimpleDateFormat	SDF_WITH_TIME					= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+	public static final String	SQL_UPDATE_CONTENT_INDEX_FALSE	= "UPDATE DMS_Content c SET IsIndexed='N'	WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=? ";
 
 	//
-	private IIndexSearcher					indexSeracher					= null;
+	private IIndexSearcher		indexSeracher					= null;
 
-	private String							p_isIndexed						= null;
+	private Timestamp			p_createdFrom;
+	private Timestamp			p_createdTo;
 
-	private Timestamp						p_createdFrom;
-	private Timestamp						p_createdTo;
+	private boolean				isAllReIndex					= false;
 
-	private boolean							isAllReIndex					= false;
-
-	String									whereCreatedRange;
-	String									solrQuery;
+	private String				p_isIndexed						= null;
+	private String				whereCreatedRange;
+	private String				solrQuery;
 
 	@Override
 	protected void prepare()
@@ -75,7 +73,7 @@ public class ResetIndexingProcess extends SvrProcess
 		if (indexSeracher == null)
 			throw new AdempiereException("Solr Index server is not found.");
 
-		// 
+		//
 		isAllReIndex = "A".equals(p_isIndexed);
 	}
 
@@ -89,7 +87,7 @@ public class ResetIndexingProcess extends SvrProcess
 		if (fsProvider == null)
 			throw new AdempiereException("Storage provider is not defined on clientInfo.");
 
-		IContentManager contentManager = Utils.getContentManager(getAD_Client_ID());
+		IContentManager contentManager = DMSFactoryUtils.getContentManager(getAD_Client_ID());
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
@@ -104,20 +102,21 @@ public class ResetIndexingProcess extends SvrProcess
 		else if (p_createdFrom != null && p_createdTo != null)
 		{
 			whereCreatedRange = " AND c.Created BETWEEN " + DB.TO_DATE(p_createdFrom) + " AND " + DB.TO_DATE(p_createdTo);
-			solrQuery = "created:[" + SDF_WITH_TIME.format(p_createdFrom) + " TO " + SDF_WITH_TIME.format(p_createdTo) + " ]";
+			solrQuery = "created:[" + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdFrom) + " TO " + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdTo)
+						+ " ]";
 		}
 		else if (p_createdFrom != null && p_createdTo == null)
 		{
 			whereCreatedRange = " AND c.Created >= " + DB.TO_DATE(p_createdFrom);
-			solrQuery = "created:[" + SDF_WITH_TIME.format(p_createdFrom) + " TO * ]";
+			solrQuery = "created:[" + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdFrom) + " TO * ]";
 		}
 		else if (p_createdFrom == null && p_createdTo != null)
 		{
 			whereCreatedRange = " AND c.Created <= " + DB.TO_DATE(p_createdTo);
-			solrQuery = "created:[ * TO " + SDF_WITH_TIME.format(p_createdTo) + " ]";
+			solrQuery = "created:[ * TO " + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdTo) + " ]";
 		}
 
-		//		System.out.println(new SimpleDateFormat().format(p_createdFrom));
+		// System.out.println(new SimpleDateFormat().format(p_createdFrom));
 		// Delete all the index from indexing server
 		if (isAllReIndex)
 		{
@@ -129,11 +128,11 @@ public class ResetIndexingProcess extends SvrProcess
 
 		// Get all DMS contents
 		statusUpdate("Fetching DMS contents from DB");
-		HashMap <Integer, Integer> contentList = getAllDMSContents();
+		HashMap<Integer, Integer> contentList = getAllDMSContents();
 
 		//
 		int count = 0;
-		for (Map.Entry <Integer, Integer> entry : contentList.entrySet())
+		for (Map.Entry<Integer, Integer> entry : contentList.entrySet())
 		{
 			MDMSContent content = new MDMSContent(getCtx(), entry.getKey(), null);
 			MDMSAssociation association = new MDMSAssociation(getCtx(), entry.getValue(), null);
@@ -145,7 +144,7 @@ public class ResetIndexingProcess extends SvrProcess
 					indexSeracher.deleteIndex(content.getDMS_Content_ID());
 				}
 
-				Map <String, Object> solrValue = Utils.createIndexMap(content, association);
+				Map<String, Object> solrValue = DMSSearchUtils.createIndexMap(content, association);
 				indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPathByValue(content)));
 				cntSuccess++;
 
@@ -180,9 +179,9 @@ public class ResetIndexingProcess extends SvrProcess
 	 * 
 	 * @return map
 	 */
-	private HashMap <Integer, Integer> getAllDMSContents()
+	private HashMap<Integer, Integer> getAllDMSContents()
 	{
-		HashMap <Integer, Integer> map = new LinkedHashMap <Integer, Integer>();
+		HashMap<Integer, Integer> map = new LinkedHashMap<Integer, Integer>();
 
 		String sql = SQL_GET_ALL_DMS_CONTENT;
 		PreparedStatement pstmt = null;
