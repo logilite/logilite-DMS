@@ -23,10 +23,17 @@ public interface IMountingStrategy
 	public String getMountingPath(PO po);
 
 	public MDMSContent getMountingParent(String Table_Name, int Record_ID);
-	
+
 	public MDMSContent getMountingParent(int AD_Table_ID, int Record_ID);
 
+	/**
+	 * Use DMS.getDMSMountingParent(PO po)
+	 * 
+	 * @param  po
+	 * @return    {@link MDMSContent}
+	 */
+	@Deprecated
 	public MDMSContent getMountingParent(PO po);
-	
+
 	public MDMSContent getMountingParentForArchive();
 }

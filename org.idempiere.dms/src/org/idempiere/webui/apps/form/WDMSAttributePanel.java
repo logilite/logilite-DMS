@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
@@ -38,6 +39,7 @@ import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.util.ZKUpdateUtil;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MAttribute;
 import org.compiere.model.MAttributeInstance;
@@ -213,7 +215,10 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		tabpanelsAttribute.setWidth("100%");
 
 		tabpanelsAttribute.appendChild(tabpanelVersionHitory);
-		tabpanelVersionHitory.setHeight("500px");
+		if (ClientInfo.maxHeight(500)) // TODO Check working
+			ZKUpdateUtil.setWindowHeightX(tabpanelVersionHitory, (ClientInfo.get().desktopHeight - 100));
+		else
+			tabpanelVersionHitory.setHeight("500px");
 		tabpanelVersionHitory.setWidth("100%");
 
 		tabpanelAttribute.appendChild(gridAttributeLayout);
@@ -324,19 +329,9 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		Components.removeAllChildren(tabpanelAttribute);
 		Grid commGrid = GridFactory.newGridLayout();
 
-		Columns columns = new Columns();
-
-		Column column = new Column();
-		column.setWidth("30%");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("70%");
-		columns.appendChild(column);
 
 		Rows rows = new Rows();
 
-		commGrid.appendChild(columns);
 		commGrid.appendChild(rows);
 
 		txtName = new Textbox();
@@ -369,18 +364,18 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		editorContentType.addValueChangeListener(this);
 
 		Row row = new Row();
-		row.appendChild(lblName);
-		row.appendChild(txtName);
+		row.appendCellChild(lblName);
+		row.appendCellChild(txtName, 2);
 		rows.appendChild(row);
 
 		row = new Row();
-		row.appendChild(lblDesc);
-		row.appendChild(txtDesc);
+		row.appendCellChild(lblDesc);
+		row.appendCellChild(txtDesc, 2);
 		rows.appendChild(row);
 
 		contentTypeRow = new Row();
-		contentTypeRow.appendChild(lblContentType);
-		contentTypeRow.appendChild(editorContentType.getComponent());
+		contentTypeRow.appendCellChild(lblContentType);
+		contentTypeRow.appendCellChild(editorContentType.getComponent(), 2);
 		contentTypeRow.setVisible(isEdit);
 		rows.appendChild(contentTypeRow);
 

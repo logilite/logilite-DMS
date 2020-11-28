@@ -16,6 +16,7 @@ package org.idempiere.dms.toolbar;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.action.IAction;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
@@ -40,12 +41,18 @@ public class CustomToolbarFactory implements IAction
 	private WDMSPanel				dmsPanel	= null;
 	private Window					dmsWindow	= null;
 
+	public CustomToolbarFactory()
+	{
+		super();
+
+		// Load DMS CSS file content and attach as style tag in Head tab
+		DMS_ZK_Util.loadDMSThemeCSSFile();
+		DMS_ZK_Util.loadDMSMobileCSSFile();
+	}
+
 	@Override
 	public void execute(Object target)
 	{
-		// Load DMS CSS file content and attach as style tag in Head tab
-		DMS_ZK_Util.loadDMSThemeCSSFile();
-
 		ADWindow window = (ADWindow) target;
 		winContent = window.getADWindowContent();
 
@@ -59,8 +66,16 @@ public class CustomToolbarFactory implements IAction
 		dmsPanel.setCurrDMSContent(dmsPanel.getDMS().getDMSMountingParent(tableID, recordID));
 
 		dmsWindow = new Window();
-		dmsWindow.setHeight("80%");
-		dmsWindow.setWidth("80%");
+		if (ClientInfo.isMobile())
+		{
+			dmsWindow.setHeight("100%");
+			dmsWindow.setWidth("100%");
+		}
+		else
+		{
+			dmsWindow.setHeight("80%");
+			dmsWindow.setWidth("80%");
+		}
 		dmsWindow.setClosable(true);
 		dmsWindow.setMaximizable(true);
 		dmsWindow.setMode(Mode.OVERLAPPED);
@@ -70,13 +85,12 @@ public class CustomToolbarFactory implements IAction
 		dmsWindow.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 			@Override
-			public void onEvent(Event arg0) throws Exception
+			public void onEvent(Event arg) throws Exception
 			{
-				int associateRecords = DB
-								.getSQLValue(null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
-												+ " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
-												winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
-												winContent.getADTab().getSelectedGridTab().getRecord_ID());
+				int associateRecords = DB.getSQLValue(	null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
+																+ " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
+														winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
+														winContent.getADTab().getSelectedGridTab().getRecord_ID());
 
 				winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed((associateRecords > 0));
 			}

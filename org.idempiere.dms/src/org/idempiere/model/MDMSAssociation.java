@@ -72,7 +72,7 @@ public class MDMSAssociation extends X_DMS_Association
 	 */
 	public static int create(int contentID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, int seqNo, String trxName)
 	{
-		MDMSAssociation association = (MDMSAssociation) MTable.get(Env.getCtx(), MDMSAssociation.Table_Name).getPO(0, trxName);
+		MDMSAssociation association = (MDMSAssociation) MTable.get(Env.getCtx(), MDMSAssociation.Table_ID).getPO(0, trxName);
 		association.setSeqNo(seqNo);
 		association.setDMS_Content_ID(contentID);
 		association.setDMS_Content_Related_ID(contentRelatedID);

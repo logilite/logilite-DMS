@@ -16,15 +16,16 @@ package org.idempiere.webui.apps.form;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.AdempiereWebUI;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Column;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -45,6 +46,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
+import org.compiere.model.MRole;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
@@ -65,7 +67,9 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Space;
 
-public class WUploadContent extends Window implements EventListener <Event>, ValueChangeListener
+import com.adaxa.signature.webui.component.SignatureImgBox;
+
+public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
 {
 
 	/**
@@ -82,6 +86,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 	private Label				lblContentType		= new Label();
 	private Label				lblDesc				= new Label();
 	private Label				lblName				= new Label();
+	private Label				lblSignature		= new Label();
 
 	private Textbox				txtDesc				= new Textbox();
 	private Textbox				txtName				= new Textbox();
@@ -100,6 +105,8 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 	private Tab					tabAttribute		= new Tab();
 	private Tabpanels			tabPanelsAttribute	= new Tabpanels();
 	private Tabpanel			tabPanelAttribute	= new Tabpanel();
+
+	private SignatureImgBox		signatureBox		= new SignatureImgBox(false);
 
 	private int					tableID				= 0;
 	private int					recordID			= 0;
@@ -137,15 +144,6 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 		this.tabNo = tabNo;
 
 		init();
-
-		if (isVersion)
-		{
-			contentTypeRow.setVisible(false);
-			nameRow.setVisible(false);
-			tabBoxAttribute.setVisible(false);
-			this.setHeight("26%");
-			this.setWidth("40%");
-		}
 	}
 
 	/**
@@ -155,9 +153,24 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 	{
 		if (!isVersion)
 		{
-			this.setStyle("min-height:40%; max-height:60%; overflow-y:auto;");
+			this.setStyle("min-height:40%; max-height:100%; overflow-y:auto;");
 			this.setWidth("50%");
 		}
+		else
+		{
+			contentTypeRow.setVisible(false);
+			nameRow.setVisible(false);
+			tabBoxAttribute.setVisible(false);
+			this.setHeight("26%");
+			this.setWidth("40%");
+		}
+
+		if (ClientInfo.isMobile())
+		{
+			this.setHeight("100%");
+			this.setWidth("100%");
+		}
+
 		this.setTitle(DMSConstant.MSG_UPLOAD_CONTENT);
 		this.setClosable(true);
 		this.appendChild(gridView);
@@ -187,42 +200,39 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 		txtName.addEventListener(Events.ON_CHANGE, this);
 		LayoutUtils.addSclass("txt-btn", btnFileUpload);
 
-		Columns columns = new Columns();
-		gridView.appendChild(columns);
-
-		Column column = new Column();
-		column.setWidth("15%");
-		column.setAlign("left");
-		columns.appendChild(column);
-
-		column = new Column();
-		column.setWidth("40%");
-		column.setAlign("left");
-		columns.appendChild(column);
-
 		Rows rows = gridView.newRows();
 
 		Row row = rows.newRow();
-		row.appendChild(lblFile);
-		row.appendChild(btnFileUpload);
+		row.appendCellChild(lblFile);
+		row.appendCellChild(btnFileUpload, 2);
 
 		lblName.setValue(DMSConstant.MSG_NAME);
-		nameRow.appendChild(lblName);
-		nameRow.appendChild(txtName);
+		nameRow.appendCellChild(lblName);
+		nameRow.appendCellChild(txtName, 2);
 		rows.appendChild(nameRow);
 
-		contentTypeRow.appendChild(lblContentType);
-		contentTypeRow.appendChild(editorContentType.getComponent());
+		contentTypeRow.appendCellChild(lblContentType);
+		contentTypeRow.appendCellChild(editorContentType.getComponent(), 2);
 		editorContentType.addValueChangeListener(this);
 		rows.appendChild(contentTypeRow);
 
 		row = rows.newRow();
-		row.appendChild(lblDesc);
-		row.appendChild(txtDesc);
+		row.appendCellChild(lblDesc);
+		row.appendCellChild(txtDesc, 2);
+
+		boolean isDMSSignSupport = MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx())).get_ValueAsBoolean("IsDMSSignSupport");
+		if (isDMSSignSupport)
+		{
+			row = rows.newRow();
+			lblSignature.setValue(DMSConstant.MSG_SIGNATURE);
+			row.appendCellChild(lblSignature);
+			row.appendCellChild(signatureBox, 2);
+			signatureBox.addEventListener(Events.ON_CHANGE, this);
+		}
 
 		row = rows.newRow();
 		Cell cell = new Cell();
-		cell.setColspan(2);
+		cell.setColspan(3);
 
 		tabBoxAttribute.appendChild(tabsAttribute);
 		tabBoxAttribute.appendChild(tabPanelsAttribute);
@@ -230,7 +240,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 		tabAttribute.setLabel(DMSConstant.MSG_ATTRIBUTE_SET);
 		tabsAttribute.appendChild(tabAttribute);
 		tabPanelsAttribute.appendChild(tabPanelAttribute);
-		tabPanelAttribute.setStyle("min-height :20px; max-height: 120px; overflow: auto;");
+		tabPanelAttribute.setStyle("min-height :20px; max-height: 200px; overflow: auto;");
 		tabBoxAttribute.setMold("accordion");
 
 		cell.appendChild(tabBoxAttribute);
@@ -243,7 +253,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 
 		cell = new Cell();
 		cell.setAlign("right");
-		cell.setColspan(2);
+		cell.setColspan(3);
 		cell.appendChild(btnOk);
 		cell.appendChild(new Space());
 		cell.appendChild(btnClose);
@@ -281,6 +291,28 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 			isCancel = true;
 			this.detach();
 		}
+		else if (e.getTarget().equals(signatureBox.getImage()))
+		{
+			signatureBox.setContent(signatureBox.getAImage());
+			if (signatureBox.getAImage() != null)
+			{
+				btnFileUpload.setEnabled(false);
+				if (isVersion)
+				{
+					MDMSContent parentContent = new MDMSContent(Env.getCtx(), DMSContent.getDMS_Content_Related_ID(), null);
+					txtName.setValue(parentContent.getName().substring(0, parentContent.getName().lastIndexOf(".")));
+				}
+				else
+				{
+					txtName.setValue("Signature_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()));
+				}
+			}
+			else
+			{
+				btnFileUpload.setEnabled(true);
+				txtName.setValue(null);
+			}
+		}
 	}
 
 	/**
@@ -288,18 +320,29 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 	 */
 	private void saveUploadedDocument()
 	{
-		if (btnFileUpload.getLabel().equalsIgnoreCase("-"))
+		if (btnFileUpload.getLabel().equalsIgnoreCase("-") && signatureBox.getAImage() == null)
 			throw new WrongValueException(btnFileUpload, DMSConstant.MSG_FILL_MANDATORY);
 
 		if (Util.isEmpty(txtName.getValue(), true))
-			throw new WrongValueException("File name is mandatory");
+			throw new WrongValueException(txtName, "File name is mandatory");
 
 		File tmpFile = null;
+		byte[] fileData = null;
 		try
 		{
-			tmpFile = File.createTempFile(uploadedMedia.getName(), "." + uploadedMedia.getFormat());
+			if (signatureBox.getAImage() != null)
+			{
+				tmpFile = File.createTempFile(txtName.getValue(), ".png");
+				fileData = signatureBox.getAImage().getByteData();
+			}
+			else
+			{
+				tmpFile = File.createTempFile(uploadedMedia.getName(), "." + uploadedMedia.getFormat());
+				fileData = uploadedMedia.getByteData();
+			}
+
 			FileOutputStream os = new FileOutputStream(tmpFile);
-			os.write(uploadedMedia.getByteData());
+			os.write(fileData);
 			os.flush();
 			os.close();
 
@@ -359,6 +402,7 @@ public class WUploadContent extends Window implements EventListener <Event>, Val
 			uploadedMedia = new AMedia(media.getName(), null, null, media.getByteData());
 			btnFileUpload.setLabel(media.getName());
 			txtName.setValue(FilenameUtils.getBaseName(media.getName()));
+			signatureBox.setReadWrite(false);
 		}
 		catch (Exception e)
 		{

@@ -21,9 +21,9 @@ public class MDMSSubstitute extends X_DMS_Substitute
 	private static final long						serialVersionUID	= 13438943L;
 
 	/**
-	 * Cache expiere 60 * 24 * 30
+	 * Cache expires in 30 Days
 	 */
-	private static CCache<Integer, MDMSSubstitute>	s_cache				= new CCache<Integer, MDMSSubstitute>(Table_Name, 2, 43200);
+	private static CCache<Integer, MDMSSubstitute>	s_cache				= new CCache<Integer, MDMSSubstitute>(Table_Name, 2, 60 * 24 * 30);
 
 	public MDMSSubstitute(Properties ctx, int DMS_Substitute_ID, String trxName)
 	{
@@ -43,15 +43,18 @@ public class MDMSSubstitute extends X_DMS_Substitute
 		Integer key = new Integer(tableID);
 
 		MDMSSubstitute retValue = (MDMSSubstitute) s_cache.get(key);
-		if (retValue == null)
+		if (!s_cache.containsKey(key) && retValue == null)
 		{
-			retValue = (MDMSSubstitute) new Query(Env.getCtx(), Table_Name, " AD_Table_ID = ? ", null)
-							.setOnlyActiveRecords(true)
-							.setParameters(tableID)
-							.first();
-			s_cache.put(key, retValue);
-		}
-		return retValue;
+			Query query = new Query(Env.getCtx(), Table_Name, " AD_Table_ID = ? ", null);
+			query.setOnlyActiveRecords(true);
+			query.setParameters(tableID);
+			retValue = query.first();
 
+			s_cache.put(key, retValue);
+			// Note: null object store in cache otherwise it call query every time and looks this
+			// configuration change rarely.
+		}
+
+		return retValue;
 	} // get
 }

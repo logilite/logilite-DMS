@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import org.adempiere.base.Core;
 import org.adempiere.base.IResourceFinder;
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Menupopup;
@@ -197,8 +198,27 @@ public class DMS_ZK_Util
 		if (!ThemeManager.isUseFontIconForImage())
 			return;
 
+		loadCSSFile("/css/dms.css");
+	} // loadDMSThemeCSSFile
+	
+	/**
+	 * Load DMS CSS file and append its style in Head tag
+	 */
+	public static void loadDMSMobileCSSFile()
+	{
+		if (!ClientInfo.isMobile())
+			return;
+
+		loadCSSFile("/css/dms-mobile.css");
+	} // loadDMSThemeCSSFile
+
+	private static void loadCSSFile(String cssFileURL )
+	{
+		if (Util.isEmpty(cssFileURL, true))
+			return;
+
 		IResourceFinder rf = Core.getResourceFinder();
-		URL url = rf.getResource("/css/dms.css");
+		URL url = rf.getResource(cssFileURL);
 		try
 		{
 			InputStream in = url.openStream();
@@ -229,7 +249,7 @@ public class DMS_ZK_Util
 		{
 			throw new AdempiereException("Error: Unable to load dms.css file. " + e.getLocalizedMessage(), e);
 		}
-	} // loadDMSThemeCSSFile
+	}
 
 	public static AImage getImage(String name)
 	{

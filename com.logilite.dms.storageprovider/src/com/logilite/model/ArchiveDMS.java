@@ -181,7 +181,7 @@ public class ArchiveDMS implements IArchiveStore
 				// Generate Mounting Parent
 				dms.initMountingStrategy(tableName);
 				dms.initiateMountingContent(tableName, recordID, tableID);
-				mountingParent = dms.getMountingStrategy().getMountingParent(tableName, recordID);
+				mountingParent = dms.getDMSMountingParent(tableName, recordID);
 			}
 			// Generate File
 			File file = generateFile(archive, inflatedData);
