@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Solr
-Bundle-SymbolicName: com.logilite.search.solr
+Bundle-SymbolicName: com.logilite.search.solr;singleton:=true
 Bundle-Version: 7.0.0.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-Vendor: LOGILITE
