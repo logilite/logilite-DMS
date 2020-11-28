@@ -1,16 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Solr
-Bundle-SymbolicName: com.logilite.search.solr;singleton:=true
-Bundle-Version: 7.0.0.qualifier
-Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
-Bundle-Vendor: LOGILITE
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Import-Package: org.osgi.framework;version="1.3.0"
-Bundle-ActivationPolicy: lazy
-Require-Bundle: com.logilite.search;bundle-version="1.0.2",
- org.adempiere.base;bundle-version="3.1.0",
- org.adempiere.plugin.utils;bundle-version="3.1.0"
+Bundle-SymbolicName: com.logilite.search.solr
+Bundle-Version: 7.1.0.qualifier
 Bundle-ClassPath: .,
  lib/solr-solrj-5.5.0.jar,
  lib/commons-codec-1.6.jar,
@@ -26,4 +18,12 @@ Bundle-ClassPath: .,
  lib/pdfbox-app-2.0.5.jar,
  lib/siren-solr-1.4.jar,
  lib/tika-app-1.14.jar
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
+Bundle-Vendor: LOGILITE
+Require-Bundle: com.logilite.search;bundle-version="1.0.2",
+ org.adempiere.base;bundle-version="3.1.0",
+ org.adempiere.plugin.utils;bundle-version="3.1.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-11
 Service-Component: OSGI-INF/*.xml
+Bundle-ActivationPolicy: lazy
+Import-Package: org.osgi.framework;version="1.3.0"
