@@ -37,8 +37,8 @@ public final class DMSConstant
 	public static final String				DMS_MOUNTING_ARCHIVE_BASE						= "DMS_MOUNTING_ARCHIVE_BASE";
 
 	// Content widget size
-	public static final int					CONTENT_LARGE_ICON_WIDTH						= 120;
-	public static final int					CONTENT_LARGE_ICON_HEIGHT						= 120;
+	public static final int					CONTENT_LARGE_ICON_WIDTH						= 135;
+	public static final int					CONTENT_LARGE_ICON_HEIGHT						= 135;
 
 	// Cell attributes
 	public static final String				COMP_ATTRIBUTE_CONTENT							= "ATTR_CONTENT";
@@ -177,7 +177,7 @@ public final class DMSConstant
 	public static final String				CSS_DATEBOX										= "width: 100%; display:flex; flex-direction: row;";
 	public static final String				CSS_BREAD_CRUMB_LINK							= "font-weight: bold; font-size: small; padding-left: 5px; color: dimgray;";
 	public static final String				CSS_FLEX_ROW_DIRECTION							= "display: flex; flex-direction: row; flex-wrap: wrap; height: 100%;";
-	public static final String				CSS_FLEX_ROW_DIRECTION_NOWRAP					= "display: flex; flex-direction: row; flex-wrap: nowrap; height: 100%;";
+	public static final String				CSS_FLEX_ROW_DIRECTION_NOWRAP					= "padding-top: 4px; display: flex; flex-direction: row; flex-wrap: nowrap; height: 100%;";//  
 
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL			= "margin: 5px; background: #e2e2e2; border: 4px double #ffffff !important; border-radius: 5px;";
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED			= "margin: 5px; background: #abcdff; border: 4px double #3363ad !important; border-radius: 5px;";
