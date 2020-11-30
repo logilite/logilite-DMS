@@ -366,7 +366,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
-		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");// 
+		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");//
 
 		// View Result Tab
 		Grid btnGrid = GridFactory.newGridLayout();
@@ -581,7 +581,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			cell_layout.setWidth("70%");
 			cell_attribute.setWidth("30%");
-			
+
 			Hbox boxViewSeparator = new Hbox();
 			boxViewSeparator.setWidth("100%");
 			boxViewSeparator.setHeight("100%");
@@ -1018,6 +1018,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				editor.setValue(null);
 		}
 		Components.removeAllChildren(panelAttribute);
+		Components.removeAllChildren(grid);
 	} // clearComponents
 
 	/**
