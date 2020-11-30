@@ -48,7 +48,7 @@ import org.w3c.dom.Element;
 public class ConvertXlsxToPdf
 {
 
-	private XSSFWorkbook		x;
+	private XSSFWorkbook		workBook;
 	private HtmlDocumentFacade	htmlDocumentFacade;
 	private Element				page;
 	private StringBuilder		css	= new StringBuilder();
@@ -57,7 +57,7 @@ public class ConvertXlsxToPdf
 	{
 		InputStream in = new FileInputStream(new File(filePath));
 		OPCPackage op = OPCPackage.open(in);
-		x = new XSSFWorkbook(op);
+		workBook = new XSSFWorkbook(op);
 		Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 		this.htmlDocumentFacade = new HtmlDocumentFacade(document);
 
@@ -81,11 +81,11 @@ public class ConvertXlsxToPdf
 	{
 		ConvertXlsxToPdf converter = new ConvertXlsxToPdf(filePath);
 
-		Integer sheetNum = converter.x.getNumberOfSheets();
+		Integer sheetNum = converter.workBook.getNumberOfSheets();
 		for (int i = 0; i < sheetNum; i++)
 		{
-			XSSFSheet sheet = converter.x.getSheet(converter.x.getSheetName(i));
-			String sheetName = converter.x.getSheetName(i);
+			XSSFSheet sheet = converter.workBook.getSheet(converter.workBook.getSheetName(i));
+			String sheetName = converter.workBook.getSheetName(i);
 			// System.out.println("----starting process sheet : " + sheetName);
 			// add sheet title
 			{
@@ -123,10 +123,11 @@ public class ConvertXlsxToPdf
 		{
 			css.append("#").append(sId).append(" td{width:").append(sheet.getDefaultColumnWidth() * 0.21).append("cm}\n");
 		}
+
 		// cols
 		generateColumns(sheet, table);
-		// rows
 
+		// rows
 		final short col_num = get_col_max(sheet);
 		final int row_num = sheet.getLastRowNum() + 1;
 		for (int i = 0; i < row_num; i++)
@@ -138,10 +139,8 @@ public class ConvertXlsxToPdf
 			{
 				continue;
 			}
-
 			processRow(table, (XSSFRow) row, sheet, col_num, sID, i);
 		}
-
 		container.appendChild(table);
 	}
 
@@ -178,7 +177,7 @@ public class ConvertXlsxToPdf
 		for (CTCols cols : colsList)
 		{
 			long oldLevel = 1;
-			for (CTCol col : cols.getColArray())
+			for (CTCol col : cols.getColList())
 			{
 				while (true)
 				{
@@ -187,8 +186,6 @@ public class ConvertXlsxToPdf
 						break;
 					}
 					Element column = htmlDocumentFacade.createTableColumn();
-					// htmlDocumentFacade.addStyleClass(column, "col",
-					// "width:2cm;");
 					column.setAttribute("style", "width:2cm;");
 					table.appendChild(column);
 					oldLevel++;
@@ -244,7 +241,6 @@ public class ConvertXlsxToPdf
 
 	private void processCell(Element tr, XSSFCell cell, String sID, int pos_col, int pos_row)
 	{
-
 		int cols = 1;
 		int rows = 1;
 		if (cell != null)
@@ -321,8 +317,8 @@ public class ConvertXlsxToPdf
 				}
 				else
 				{
-					// To eveluate formula
-					FormulaEvaluator formulaEvalutor = x.getCreationHelper().createFormulaEvaluator();
+					// To evaluate formula
+					FormulaEvaluator formulaEvalutor = workBook.getCreationHelper().createFormulaEvaluator();
 					DataFormatter fmt = new DataFormatter();
 					value = fmt.formatCellValue(cell, formulaEvalutor);
 				}
@@ -341,8 +337,6 @@ public class ConvertXlsxToPdf
 				processCellStyle(td, cell.getCellStyle(), null, sID);
 				td.setTextContent(value.toString());
 			}
-			// String s = value.toString();
-			// System.out.println(s);
 		}
 		tr.appendChild(td);
 	}
@@ -384,7 +378,6 @@ public class ConvertXlsxToPdf
 		if (HorizontalAlignment.RIGHT.equals(style.getAlignment()))
 			sb.append("text-align:").append("right;");
 
-		// TODO: set correct value for type and width of border.
 		if (style.getBorderBottom() != BorderStyle.NONE)
 		{
 			sb.append("border-bottom:solid; ").append(style.getBorderBottom()).append("px;");
@@ -402,16 +395,10 @@ public class ConvertXlsxToPdf
 			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
 		}
 
-		// if (style.getFillBackgroundXSSFColor() != null) {
-		// XSSFColor color = style.getFillBackgroundXSSFColor();
-		// }
-
-		// System.out.println(style.getFillBackgroundXSSFColor());
 		if (style.getFillBackgroundXSSFColor() != null)
 		{
 			sb.append("background:#fcc;");
 		}
-		// System.out.println(sb.toString());
 		htmlDocumentFacade.addStyleClass(td, "td" + sID, sb.toString());
 	}
 

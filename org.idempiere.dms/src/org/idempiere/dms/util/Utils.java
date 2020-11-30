@@ -21,6 +21,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -524,7 +525,7 @@ public class Utils
 						{
 							BigDecimal bd = new BigDecimal(value);
 							if (bd != null && bd.scale() == 0)
-								bd = bd.setScale(1, BigDecimal.ROUND_HALF_UP);
+								bd = bd.setScale(1, RoundingMode.HALF_UP);
 							if (bd != null)
 								attrs[i].setMAttributeInstance(asiID, bd);
 						}

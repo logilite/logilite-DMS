@@ -6,6 +6,7 @@ Bundle-Version: 7.1.0.qualifier
 Bundle-ClassPath: .
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-Vendor: LOGILITE
+Automatic-Module-Name: com.logilite.search
 Export-Package: com.idempiere.model,
  com.logilite.search,
  com.logilite.search.factory

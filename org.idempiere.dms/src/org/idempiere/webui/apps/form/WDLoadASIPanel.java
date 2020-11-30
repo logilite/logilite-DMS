@@ -14,6 +14,7 @@
 package org.idempiere.webui.apps.form;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.logging.Level;
@@ -317,7 +318,7 @@ public class WDLoadASIPanel extends Panel
 					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 				} // setMAttributeInstance doesn't work without decimal point
 				if (value != null && value.scale() == 0)
-					value = value.setScale(1, BigDecimal.ROUND_HALF_UP);
+					value = value.setScale(1, RoundingMode.HALF_UP);
 				if (value != null)
 					attributes[i].setMAttributeInstance(asiID, value);
 			}

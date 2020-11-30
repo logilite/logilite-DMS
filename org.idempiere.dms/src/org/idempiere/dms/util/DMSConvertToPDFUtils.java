@@ -81,6 +81,7 @@ public class DMSConvertToPDFUtils
 		else if (mimeType.getMimeType().equals("application/msword"))
 		{
 			HWPFDocument doc = new HWPFDocument(new FileInputStream(documentToPreview));
+			@SuppressWarnings("resource")
 			WordExtractor we = new WordExtractor(doc);
 			File newDocPDF = File.createTempFile("DMSExport", "DocToPDF");
 			OutputStream pdfFile = new FileOutputStream(newDocPDF);

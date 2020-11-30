@@ -7,4 +7,5 @@ Fragment-Host: org.adempiere.ui.zk;bundle-version="7.1.0.qualifier"
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ClassPath: .,
  dmsimages/,
- css/
+ css
+Automatic-Module-Name: com.logilite.dmstheme

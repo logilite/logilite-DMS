@@ -40,7 +40,7 @@ public class MDMSSubstitute extends X_DMS_Substitute
 	 */
 	public static MDMSSubstitute get(int tableID)
 	{
-		Integer key = new Integer(tableID);
+		Integer key = Integer.valueOf(tableID);
 
 		MDMSSubstitute retValue = (MDMSSubstitute) s_cache.get(key);
 		if (!s_cache.containsKey(key) && retValue == null)
