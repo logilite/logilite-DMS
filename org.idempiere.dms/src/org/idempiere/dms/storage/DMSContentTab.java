@@ -78,7 +78,6 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 
 		docDMSPanel = new WDMSPanel(gridTab.getParentTab().getAD_Table_ID(), gridTab.getParentTab().getRecord_ID(), adWindowContent);
 		this.appendChild(docDMSPanel);
-
 	}
 
 	@Override
@@ -120,26 +119,38 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void createUI()
 	{
-
 		int tableID = gridTab.getParentTab().getAD_Table_ID();
 		int recordID = gridTab.getParentTab().getRecord_ID();
 		String tableName = gridTab.getParentTab().getTableName();
 
 		docDMSPanel.clearComponents();
-		docDMSPanel.setButtonsContentCreationEnabled(true);
-		docDMSPanel.allowUserToCreateDir();
-		docDMSPanel.setNavigationButtonEnabled(false);
-		docDMSPanel.getDMS().initiateMountingContent(tableName, recordID, tableID);
 
-		reload();
+		// if detail tab as DMS and parent tab to create new record then prevent to do any
+		// operations.
+		if (tableID > 0 && recordID > 0)
+		{
+			docDMSPanel.setVisible(true);
+			docDMSPanel.setButtonsContentCreationEnabled(true);
+			docDMSPanel.allowUserToCreateDir();
+			docDMSPanel.setNavigationButtonEnabled(false);
+			docDMSPanel.getDMS().initiateMountingContent(tableName, recordID, tableID);
+			//
+			reload();
+		}
+		else
+		{
+			docDMSPanel.setButtonsContentCreationEnabled(false);
+			docDMSPanel.setNavigationButtonEnabled(false);
+			docDMSPanel.setVisible(false);
+		}
 	}
 
 	public void reload()
 	{
 		int tableID = gridTab.getParentTab().getAD_Table_ID();
 		int recordID = gridTab.getParentTab().getRecord_ID();
-		docDMSPanel.setTable_ID((gridTab.getParentTab().getAD_Table_ID()));
-		docDMSPanel.setRecord_ID(gridTab.getParentTab().getRecord_ID());
+		docDMSPanel.setTable_ID(tableID);
+		docDMSPanel.setRecord_ID(recordID);
 		docDMSPanel.getBreadRow().getChildren().clear();
 		docDMSPanel.addRootBreadCrumb();
 		docDMSPanel.setCurrDMSContent(docDMSPanel.getDMS().getDMSMountingParent(tableID, recordID));
