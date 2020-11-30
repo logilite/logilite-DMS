@@ -60,13 +60,13 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 
 		// Content Label
 		Label lblName = new Label(getContentName(content, ((MDMSContent) content).getSeqNo()));
-		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 15px; width: "
+		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 20px; width: "
 							+ (compWidth - 10) + "px; display: inline-block;");
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
 		thumbImg.setContent(DMS_ZK_Util.getThumbImageForContent(dms, content, "150"));
-		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + (compHeight - 30) + "px;");
+		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + (compHeight - 35) + "px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
 		Vbox vbox = new Vbox();

@@ -409,6 +409,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		DMS_ZK_Util.createCellUnderRow(row, 1, 3, vsearchBox);
 
+		ZKUpdateUtil.setWidth(vsearchBox, "100%");
 		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search", DMSConstant.TTT_SEARCH, this);
 		vsearchBox.addEventListener(Events.ON_OK, this);
 		vsearchBox.getButton().setStyle("margin: 0px !important;");
@@ -564,6 +565,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			borderViewSeparator.appendSouth(cell_attribute);
 
 			South south = borderViewSeparator.getSouth();
+			south.setZclass("SB-south " + south.getZclass());
 			south.setStyle("max-height: 100%;");
 			south.setSplittable(true);
 			south.setCollapsible(true);
