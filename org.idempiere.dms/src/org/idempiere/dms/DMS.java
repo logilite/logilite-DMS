@@ -44,7 +44,6 @@ import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
 
 import com.logilite.search.factory.IIndexSearcher;
-import com.logilite.search.factory.ServiceUtils;
 
 /**
  * DMS API SUPPORT
@@ -96,7 +95,7 @@ public class DMS
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
-		indexSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
+		indexSearcher = DMSSearchUtils.getIndexSearcher(AD_Client_ID);
 
 		if (indexSearcher == null)
 			throw new AdempiereException("Index server is not found.");
@@ -252,7 +251,7 @@ public class DMS
 
 	public List<Integer> searchIndex(String query)
 	{
-		return indexSearcher.searchIndex(query);
+		return DMSSearchUtils.searchIndex(indexSearcher, query);
 	} // searchIndex
 
 	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
@@ -262,7 +261,8 @@ public class DMS
 
 	public void createIndexContent(MDMSContent content, MDMSAssociation association)
 	{
-		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(content, association));
+		File file = fileStorageProvider.getFile(contentManager.getPathByValue(content));
+		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(content, association, file));
 	} // createIndexContent
 
 	public void initiateMountingContent(String tableName, int recordID, int tableID)

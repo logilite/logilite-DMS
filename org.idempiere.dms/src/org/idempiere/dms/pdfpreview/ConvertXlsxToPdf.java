@@ -45,6 +45,8 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCols;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
+import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
+
 public class ConvertXlsxToPdf
 {
 
@@ -245,13 +247,11 @@ public class ConvertXlsxToPdf
 		int rows = 1;
 		if (cell != null)
 		{
-
 			if (cell != null)
 			{
 				int num = cell.getSheet().getNumMergedRegions();
 				for (int i = 0; i < num; i++)
 				{
-
 					CellRangeAddress c = cell.getSheet().getMergedRegion(i);
 
 					int x0 = c.getFirstColumn();
