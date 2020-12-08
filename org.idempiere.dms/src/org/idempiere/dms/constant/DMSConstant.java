@@ -35,6 +35,7 @@ public final class DMSConstant
 
 	public static final String				DMS_MOUNTING_BASE								= "DMS_MOUNTING_BASE";
 	public static final String				DMS_MOUNTING_ARCHIVE_BASE						= "DMS_MOUNTING_ARCHIVE_BASE";
+	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH				= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 
 	// Content widget size
 	public static final int					CONTENT_LARGE_ICON_WIDTH						= 135;
@@ -107,6 +108,10 @@ public final class DMSConstant
 	public static final String				AD_CLIENT_ID									= "AD_Client_ID";
 	public static final String				SHOW_INACTIVE									= "Show_InActive";
 	public static final String				DMS_CONTENT_ID									= "DMS_Content_ID";
+	public static final String				FILE_CONTENT									= "FileContent";
+
+	public static final String				SOLR_FIELDTYPE_TLONGS							= "tlongs";
+	public static final String				SOLR_FIELD_DESCRIPTION							= "description";
 
 	// Msg translate
 	public static final String				MSG_NAME										= Msg.translate(Env.getCtx(), "Name");
@@ -177,7 +182,7 @@ public final class DMSConstant
 	public static final String				CSS_DATEBOX										= "width: 100%; display:flex; flex-direction: row;";
 	public static final String				CSS_BREAD_CRUMB_LINK							= "font-weight: bold; font-size: small; padding-left: 5px; color: dimgray;";
 	public static final String				CSS_FLEX_ROW_DIRECTION							= "display: flex; flex-direction: row; flex-wrap: wrap; height: 100%;";
-	public static final String				CSS_FLEX_ROW_DIRECTION_NOWRAP					= "padding-top: 4px; display: flex; flex-direction: row; flex-wrap: nowrap; height: 100%;";//  
+	public static final String				CSS_FLEX_ROW_DIRECTION_NOWRAP					= "padding-top: 4px; display: flex; flex-direction: row; flex-wrap: nowrap; height: 100%;";																				//
 
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL			= "margin: 5px; background: #e2e2e2; border: 4px double #ffffff !important; border-radius: 5px;";
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED			= "margin: 5px; background: #abcdff; border: 4px double #3363ad !important; border-radius: 5px;";

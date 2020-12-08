@@ -2,29 +2,31 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS
 Bundle-SymbolicName: org.idempiere.dms;singleton:=true
-Bundle-Version: 4.2.2.qualifier
+Bundle-Version: 5.1.0.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: com.adaxa.signature.webui.component,
+ com.logilite.search.solr.tika,
  org.apache.commons.io;version="2.2.0",
  org.apache.commons.io.filefilter;version="2.2.0",
+ org.apache.solr.common,
  org.osgi.framework;version="1.3.0",
  org.osgi.service.event;version="1.3.0",
  org.zkoss.image,
  org.zkoss.util.media
-Require-Bundle: org.adempiere.plugin.utils;bundle-version="3.1.0",
- org.adempiere.base;bundle-version="3.1.0",
- org.adempiere.ui.zk;bundle-version="3.1.0",
- org.adempiere.ui;bundle-version="3.1.0",
- org.apache.commons.net,
- com.logilite.search;bundle-version="1.0.0",
- org.eclipse.osgi;bundle-version="3.10.2",
- org.eclipse.osgi.services;bundle-version="3.4.0",
+Require-Bundle: org.adempiere.plugin.utils;bundle-version="5.1.0",
+ org.adempiere.base;bundle-version="5.1.0",
+ org.adempiere.ui.zk;bundle-version="5.1.0",
+ org.adempiere.ui;bundle-version="5.1.0",
+ org.apache.commons.net;bundle-version="3.2.0",
+ com.logilite.search;bundle-version="5.1.0",
+ org.eclipse.osgi;bundle-version="3.12.100",
+ org.eclipse.osgi.services;bundle-version="3.6.0",
  org.apache.poi;bundle-version="3.9.0",
- zhtml;bundle-version="8.0.1",
- zel;bundle-version="8.0.1",
- zul;bundle-version="8.0.1",
- zk
+ zhtml;bundle-version="8.0.2",
+ zel;bundle-version="8.0.2",
+ zul;bundle-version="8.0.2",
+ zk;bundle-version="8.0.2"
 Bundle-Vendor: Logilite
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
@@ -55,3 +57,4 @@ Export-Package: com.lowagie.text,
  org.idempiere.dms.factories,
  org.idempiere.dms.util,
  org.idempiere.model
+Automatic-Module-Name: org.idempiere.dms
