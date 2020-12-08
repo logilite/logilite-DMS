@@ -1,6 +1,5 @@
 package org.idempiere.dms.pdfpreview;
 
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -12,6 +11,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
@@ -20,6 +20,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
 import org.apache.poi.hwpf.converter.HtmlDocumentFacade;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
@@ -34,6 +35,8 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCol;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCols;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
 
 public class ConvertXlsxToPdf
 {
@@ -169,7 +172,7 @@ public class ConvertXlsxToPdf
 		for (CTCols cols : colsList)
 		{
 			long oldLevel = 1;
-			for (CTCol col : cols.getColArray())
+			for (CTCol col : cols.getColList())
 			{
 				while (true)
 				{
@@ -235,18 +238,15 @@ public class ConvertXlsxToPdf
 
 	private void processCell(Element tr, XSSFCell cell, String sID, int pos_col, int pos_row)
 	{
-
 		int cols = 1;
 		int rows = 1;
 		if (cell != null)
 		{
-
 			if (cell != null)
 			{
 				int num = cell.getSheet().getNumMergedRegions();
 				for (int i = 0; i < num; i++)
 				{
-
 					CellRangeAddress c = cell.getSheet().getMergedRegion(i);
 
 					int x0 = c.getFirstColumn();

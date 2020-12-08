@@ -36,15 +36,14 @@ import org.apache.poi.ss.util.CellRangeAddress;
  */
 public class ConvertXlsToPdf
 {
-	final private StringBuilder								out	= new StringBuilder(65536);
-	final private SimpleDateFormat							sdf;
-	final private HSSFWorkbook								book;
-	final private HSSFPalette								palette;
-	final private FormulaEvaluator							evaluator;
-	private short											colIndex;
-	private int												rowIndex, mergeStart, mergeEnd;
+	final private StringBuilder									out	= new StringBuilder(65536);
+	final private SimpleDateFormat								sdf;
+	final private HSSFWorkbook									book;
+	final private HSSFPalette									palette;
+	final private FormulaEvaluator								evaluator;
+	private int													colIndex, rowIndex, mergeStart, mergeEnd;
 	// Row -> Column -> Pictures
-	private Map<Integer, Map<Short, List<HSSFPictureData>>>	pix	= new HashMap<Integer, Map<Short, List<HSSFPictureData>>>();
+	private Map<Integer, Map<Integer, List<HSSFPictureData>>>	pix	= new HashMap<Integer, Map<Integer, List<HSSFPictureData>>>();
 
 	/**
 	 * Generates HTML from the InputStream of an Excel file. Generates sheet
@@ -101,13 +100,13 @@ public class ConvertXlsToPdf
 						// Store picture cell row, column and picture data.
 						if (!pix.containsKey(anchor.getRow1()))
 						{
-							pix.put(anchor.getRow1(), new HashMap<Short, List<HSSFPictureData>>());
+							pix.put(anchor.getRow1(), new HashMap<Integer, List<HSSFPictureData>>());
 						}
-						if (!pix.get(anchor.getRow1()).containsKey(anchor.getCol1()))
+						if (!pix.get(anchor.getRow1()).containsKey((int) anchor.getCol1()))
 						{
-							pix.get(anchor.getRow1()).put(anchor.getCol1(), new ArrayList<HSSFPictureData>());
+							pix.get(anchor.getRow1()).put((int) anchor.getCol1(), new ArrayList<HSSFPictureData>());
 						}
-						pix.get(anchor.getRow1()).get(anchor.getCol1()).add(book.getAllPictures().get(((HSSFPicture) pic).getPictureIndex() - 1));
+						pix.get(anchor.getRow1()).get((int) anchor.getCol1()).add(book.getAllPictures().get(((HSSFPicture) pic).getPictureIndex() - 1));
 					}
 					catch (final Exception e)
 					{
