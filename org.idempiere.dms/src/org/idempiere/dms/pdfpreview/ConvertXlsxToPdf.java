@@ -45,8 +45,6 @@ import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTCols;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.sun.org.apache.xml.internal.serializer.OutputPropertiesFactory;
-
 public class ConvertXlsxToPdf
 {
 
