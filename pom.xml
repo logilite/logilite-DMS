@@ -9,8 +9,6 @@
     <module>com.logilite.dms-feature</module>
     <module>com.logilite.dms.storageprovider</module>
     <module>com.logilite.dmstheme</module>
-    <module>com.logilite.search</module>
-    <module>com.logilite.search.solr</module>
     <module>org.idempiere.dms</module>
     <module>com.logilite.dms.p2</module>
   </modules>
