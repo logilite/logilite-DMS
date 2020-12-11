@@ -195,9 +195,6 @@ public class DMS_ZK_Util
 	 */
 	public static void loadDMSThemeCSSFile()
 	{
-		if (!ThemeManager.isUseFontIconForImage())
-			return;
-
 		loadCSSFile("/css/dms.css", "ID_DMS_Style_Ref");
 	} // loadDMSThemeCSSFile
 	

@@ -54,3 +54,7 @@
 	display: table-cell;
 	vertical-align: middle;
 }
+
+.SB-Grid .z-grid-body {
+	height: 100%;
+}
