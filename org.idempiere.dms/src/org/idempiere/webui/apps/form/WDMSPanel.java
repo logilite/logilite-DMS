@@ -1456,7 +1456,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
 
 		if (!Util.isEmpty(txtDocumentName.getValue(), true))
-			setSearchParams(DMSConstant.NAME, "*" + txtDocumentName.getValue().toLowerCase() + "*", null, params);
+			setSearchParams(DMSConstant.NAME, txtDocumentName.getValue().toLowerCase(), null, params);
 
 		if (!Util.isEmpty(txtDescription.getValue(), true))
 			setSearchParams(DMSConstant.DESCRIPTION, "*" + txtDescription.getValue().toLowerCase().trim() + "*", null, params);

@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -59,6 +60,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.KeyNamePair;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.FileStorageUtil;
@@ -516,7 +518,8 @@ public class Utils
 
 						if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attrs[i].getAttributeValueType()))
 						{
-							MAttributeValue atVal = (value != null && Integer.valueOf(value) > 0) ? new MAttributeValue(Env.getCtx(), Integer.valueOf(value),
+							MAttributeValue atVal = (value != null && Integer.valueOf(value) > 0) ? new MAttributeValue(Env.getCtx(),
+																														Integer.valueOf(String.valueOf(value)),
 																														trxName) : null;
 							attrs[i].setMAttributeInstance(asiID, atVal);
 						}
@@ -527,6 +530,20 @@ public class Utils
 								bd = bd.setScale(1, RoundingMode.HALF_UP);
 
 							attrs[i].setMAttributeInstance(asiID, bd);
+						}
+						else if (MAttribute.ATTRIBUTEVALUETYPE_Date.equals(attrs[i].getAttributeValueType()))
+						{
+							Timestamp timestamp = null;
+							try
+							{
+								Date parsedDate = new SimpleDateFormat(attrs[i].getDateFormat()).parse(value);
+								timestamp = new Timestamp(parsedDate.getTime());
+							}
+							catch (ParseException e)
+							{
+								throw new AdempiereException("Error while parsing String to Timestamp", e);
+							}
+							attrs[i].setMAttributeInstance(asiID, timestamp);
 						}
 						else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attrs[i].getAttributeValueType()))
 						{
@@ -553,7 +570,8 @@ public class Utils
 									break;
 
 								case DisplayType.Integer:
-									attrs[i].setMAttributeInstance(asiID, value == null ? 0 : Integer.parseInt(value), value);
+
+									attrs[i].setMAttributeInstance(asiID, value == null ? 0 : Integer.parseInt(value));
 									break;
 
 								case DisplayType.Amount:
@@ -571,7 +589,7 @@ public class Utils
 								case DisplayType.Table:
 								case DisplayType.Search:
 								case DisplayType.Account:
-									attrs[i].setMAttributeInstance(asiID, Integer.parseInt(value), value);
+									attrs[i].setMAttributeInstance(asiID, new KeyNamePair(value == null ? 0 : Integer.parseInt(value), value));
 									break;
 
 								default:

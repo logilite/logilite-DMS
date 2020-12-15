@@ -319,12 +319,10 @@ public class DMSSearchUtils
 					{
 						String fieldName = "ASI_" + rs.getString("Name");
 
-						if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueTimeStamp) != null)
-							solrValue.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueTimeStamp));
+						if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate) != null)
+							solrValue.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate));
 						else if (rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber) > 0)
 							solrValue.put(fieldName, rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber));
-						else if (rs.getInt(MAttributeInstance.COLUMNNAME_ValueInt) > 0)
-							solrValue.put(fieldName, rs.getInt(MAttributeInstance.COLUMNNAME_ValueInt));
 						else if (!Util.isEmpty(rs.getString(MAttributeInstance.COLUMNNAME_Value), true))
 							solrValue.put(fieldName, rs.getString(MAttributeInstance.COLUMNNAME_Value));
 					}

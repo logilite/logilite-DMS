@@ -67,14 +67,13 @@ public class DMSModelValidator implements ModelValidator
 		if (MAttributeInstance.Table_Name.equals(po.get_TableName())
 			&& type == TYPE_BEFORE_CHANGE
 			&& (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value)
-				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueTimeStamp)
-				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber)
-				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueInt)))
+				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueDate)
+				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber)))
 		{
 			MAttributeInstance attributeInstance = (MAttributeInstance) po;
 
-			int dmsContentID = DB.getSQLValue(po.get_TrxName(), "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ", attributeInstance
-																																								.getM_AttributeSetInstance_ID());
+			int dmsContentID = DB.getSQLValue(	po.get_TrxName(), "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ",
+												attributeInstance.getM_AttributeSetInstance_ID());
 
 			if (dmsContentID > 0)
 			{
