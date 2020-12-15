@@ -16,6 +16,10 @@
     <idempiere.repo-id>iDempiere71</idempiere.repo-id>
     <maven-clean-plugin.version>maven-clean-plugin.version</maven-clean-plugin.version>
     <lifecycle.mapping.version>1.0.0</lifecycle.mapping.version>
+	
+	<local.search>jar:file:///${local.maven}/repository/com/logilite/search/com.logilite.search/7.1.0-SNAPSHOT/com.logilite.search.p2.site-7.1.0-SNAPSHOT.zip!/</local.search>
+  	<jenkins.search>http://id-build.logilite.com/logilite-search/7.1.0/LATEST/repository/</jenkins.search>
+  	<search.repo>${jenkins.search}</search.repo>
   </properties>
   <build>
     <plugins>
@@ -95,6 +99,11 @@
         <repository>
           <id>${idempiere.repo-id}</id>
           <url>${idempiere.repo}</url>
+          <layout>p2</layout>
+        </repository>
+		<repository>
+          <id>logilite-search</id>
+          <url>${search.repo}</url>
           <layout>p2</layout>
         </repository>
       </repositories>
