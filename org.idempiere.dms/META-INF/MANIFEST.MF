@@ -5,7 +5,7 @@ Bundle-SymbolicName: org.idempiere.dms;singleton:=true
 Bundle-Version: 7.2.0.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-RequiredExecutionEnvironment: JavaSE-11
-Import-Package: com.adaxa.signature.webui.component,
+Import-Package: com.logilite.esignature.topaz.webui.component,
  com.logilite.search.solr.tika,
  org.apache.commons.io;version="2.2.0",
  org.apache.commons.io.filefilter;version="2.2.0",

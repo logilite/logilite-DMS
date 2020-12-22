@@ -67,7 +67,7 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Space;
 
-import com.adaxa.signature.webui.component.SignatureImgBox;
+import com.logilite.esignature.topaz.webui.component.SignatureImgBox;
 
 public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
 {
@@ -232,6 +232,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			row.appendCellChild(lblSignature);
 			row.appendCellChild(signatureBox, 2);
 			signatureBox.addEventListener(Events.ON_CHANGE, this);
+			signatureBox.setContent(null);
 		}
 
 		row = rows.newRow();
@@ -296,7 +297,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			isCancel = true;
 			this.detach();
 		}
-		else if (e.getTarget().equals(signatureBox.getImage()))
+		else if (e.getTarget().equals(signatureBox))
 		{
 			signatureBox.setContent(signatureBox.getAImage());
 			if (signatureBox.getAImage() != null)
