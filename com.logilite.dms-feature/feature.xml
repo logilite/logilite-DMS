@@ -20,7 +20,7 @@
    <requires>
       <import plugin="org.adempiere.plugin.utils" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.base" version="3.1.0" match="greaterOrEqual"/>
-      <import plugin="org.adempiere.ui.zk" version="3.1.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.ui.zk" version="7.1.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.ui" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.apache.commons.net"/>
       <import plugin="org.apache.commons.codec" version="1.6.0" match="greaterOrEqual"/>
