@@ -20,6 +20,11 @@
 	<local.search>jar:file:///${local.maven}/repository/com/logilite/search/com.logilite.search.p2/7.1.0-SNAPSHOT/com.logilite.search.p2-7.1.0-SNAPSHOT.zip!/</local.search>
   	<jenkins.search>http://id-build.logilite.com/logilite-search/7.1.0/LATEST/repository/</jenkins.search>
   	<search.repo>${jenkins.search}</search.repo>
+
+	<local.esignature>jar:file:///${local.maven}/repository/com/logilite/esignature/com.logilite.esignature.p2/7.1.0-SNAPSHOT/com.logilite.esignature.p2-7.1.0-SNAPSHOT.zip!/</local.esignature>
+  	<jenkins.esignature>http://id-build.logilite.com/esignature/7.1.0/LATEST/repository/</jenkins.esignature>
+  	<esignature.repo>${jenkins.esignature}</esignature.repo>
+	  	
   </properties>
   <build>
     <plugins>
@@ -104,6 +109,11 @@
 		<repository>
           <id>logilite-search</id>
           <url>${search.repo}</url>
+          <layout>p2</layout>
+        </repository>
+        <repository>
+          <id>esignature</id>
+          <url>${esignature.repo}</url>
           <layout>p2</layout>
         </repository>
       </repositories>

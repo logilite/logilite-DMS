@@ -23,6 +23,7 @@
       <import plugin="org.adempiere.ui.zk" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.ui" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.apache.commons.net"/>
+      <import plugin="org.apache.commons.codec" version="1.6.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi" version="3.10.2" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi.services" version="3.4.0" match="greaterOrEqual"/>
       <import plugin="com.logilite.search" version="1.0.2" match="greaterOrEqual"/>
@@ -68,6 +69,21 @@
          download-size="0"
          install-size="0"
          version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.esignature.topaz"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.esignature.topaztheme"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
          unpack="false"/>
 
 </feature>
