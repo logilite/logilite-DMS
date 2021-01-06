@@ -26,6 +26,7 @@ import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
@@ -63,26 +64,28 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, I_DMS_Content content, I_DMS_Association association, int compWidth, int compHeight)
+	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight)
 	{
+		I_DMS_Content content = version.getDMS_Content();
+
 		row = rows.newRow();
 		row.setSclass("SB-ROW");
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
-		thumbImg.setContent(DMS_ZK_Util.getThumbImageForContent(dms, content, "150"));
+		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
 		thumbImg.setStyle("width: 100%; max-width: 30px; max-height: 30px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
-		Label lblName = new Label(getContentName(content, ((MDMSContent) content).getSeqNo()));
+		Label lblName = new Label(getContentName(content, version.getSeqNo()));
 		Label lblCType = new Label("");
 		if (content.getDMS_ContentType_ID() > 0)
 			lblCType.setText(content.getDMS_ContentType().getName());
-		Label lblSize = new Label(content.getDMS_FileSize());
-		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(content.getUpdated().getTime())));
+		Label lblSize = new Label(version.getDMS_FileSize());
+		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(version.getUpdated().getTime())));
 		Label lblFileType = new Label(content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)	? DMSConstant.MSG_FILE_FOLDER
 																													: content.getDMS_MimeType().getName());
-		Label lblModifiedBy = new Label(MUser.get(Env.getCtx(), content.getUpdatedBy()).getName());
+		Label lblModifiedBy = new Label(MUser.get(Env.getCtx(), version.getUpdatedBy()).getName());
 		Component linkIcon = getLinkIconComponent(association);
 
 		Hbox hbox = new Hbox();
@@ -98,7 +101,8 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		row.appendCellChild(linkIcon);
 
 		//
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, content);
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, version.getDMS_Content());
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
 
 		// Listener for component selection
@@ -109,7 +113,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 			row.addEventListener(eventsList[i], listener);
 
 		// set tooltip text
-		row.setTooltiptext(((MDMSContent) content).getToolTipTextMsg());
+		row.setTooltiptext(getToolTipTextMsg(version, association));
 
 	} // createComponent
 

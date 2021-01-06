@@ -19,9 +19,8 @@ import org.adempiere.webui.component.Rows;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociationType;
-import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
@@ -49,7 +48,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, I_DMS_Content content, I_DMS_Association association, int compWidth, int compHeight)
+	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight)
 	{
 		if (row == null)
 		{
@@ -59,13 +58,13 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		}
 
 		// Content Label
-		Label lblName = new Label(getContentName(content, ((MDMSContent) content).getSeqNo()));
+		Label lblName = new Label(getContentName(version.getDMS_Content(), version.getSeqNo()));
 		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 20px; width: "
 							+ (compWidth - 10) + "px; display: inline-block;");
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
-		thumbImg.setContent(DMS_ZK_Util.getThumbImageForContent(dms, content, "150"));
+		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
 		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + (compHeight - 35) + "px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
@@ -83,7 +82,8 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		row.appendChild(cell);
 
 		//
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, content);
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, version.getDMS_Content());
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
 		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
 
 		// Listener for component selection
@@ -104,7 +104,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		}
 
 		// set tooltip text
-		cell.setTooltiptext(((MDMSContent) content).getToolTipTextMsg());
+		cell.setTooltiptext(getToolTipTextMsg(version, association));
 	} // createComponent
 
 	@Override

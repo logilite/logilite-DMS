@@ -1,16 +1,19 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP								  *
- * This program is free software; you can redistribute it and/or modify it    *
+ * Product: iDempiere ERP & CRM Smart Business Solution                       *
+ * Copyright (C) 1999-2012 ComPiere, Inc. All Rights Reserved.                *
+ * This program is free software, you can redistribute it and/or modify it    *
  * under the terms version 2 of the GNU General Public License as published   *
  * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * that it will be useful, but WITHOUT ANY WARRANTY, without even the implied *
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
  * See the GNU General Public License for more details.                       *
  * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * with this program, if not, write to the Free Software Foundation, Inc.,    *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * For the text or an alternative of this public license, you may reach us    *
+ * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
+ * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
-
 package org.idempiere.model;
 
 import java.math.BigDecimal;
@@ -20,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for DMS_Content
  *  @author iDempiere (generated) 
- *  @version Release 3.1
+ *  @version Release 5.1
  */
 @SuppressWarnings("all")
 public interface I_DMS_Content 
@@ -108,6 +111,15 @@ public interface I_DMS_Content
 	/** Get DMS Content	  */
 	public int getDMS_Content_ID();
 
+    /** Column name DMS_Content_UU */
+    public static final String COLUMNNAME_DMS_Content_UU = "DMS_Content_UU";
+
+	/** Set DMS_Content_UU	  */
+	public void setDMS_Content_UU (String DMS_Content_UU);
+
+	/** Get DMS_Content_UU	  */
+	public String getDMS_Content_UU();
+
     /** Column name DMS_ContentType_ID */
     public static final String COLUMNNAME_DMS_ContentType_ID = "DMS_ContentType_ID";
 
@@ -121,16 +133,7 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_ContentType_ID();
 
-	public I_DMS_ContentType getDMS_ContentType() throws RuntimeException;
-
-    /** Column name DMS_FileSize */
-    public static final String COLUMNNAME_DMS_FileSize = "DMS_FileSize";
-
-	/** Set DMS_FileSize	  */
-	public void setDMS_FileSize (String DMS_FileSize);
-
-	/** Get DMS_FileSize	  */
-	public String getDMS_FileSize();
+	public org.idempiere.model.I_DMS_ContentType getDMS_ContentType() throws RuntimeException;
 
     /** Column name DMS_MimeType_ID */
     public static final String COLUMNNAME_DMS_MimeType_ID = "DMS_MimeType_ID";
@@ -145,7 +148,7 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_MimeType_ID();
 
-	public I_DMS_MimeType getDMS_MimeType() throws RuntimeException;
+	public org.idempiere.model.I_DMS_MimeType getDMS_MimeType() throws RuntimeException;
 
     /** Column name DMS_Status_ID */
     public static final String COLUMNNAME_DMS_Status_ID = "DMS_Status_ID";
@@ -160,7 +163,7 @@ public interface I_DMS_Content
 	  */
 	public int getDMS_Status_ID();
 
-	public I_DMS_Status getDMS_Status() throws RuntimeException;
+	public org.idempiere.model.I_DMS_Status getDMS_Status() throws RuntimeException;
 
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
@@ -174,6 +177,19 @@ public interface I_DMS_Content
 	  * The record is active in the system
 	  */
 	public boolean isActive();
+
+    /** Column name IsIndexed */
+    public static final String COLUMNNAME_IsIndexed = "IsIndexed";
+
+	/** Set Indexed.
+	  * Index the document for the internal search engine
+	  */
+	public void setIsIndexed (boolean IsIndexed);
+
+	/** Get Indexed.
+	  * Index the document for the internal search engine
+	  */
+	public boolean isIndexed();
 
     /** Column name IsMounting */
     public static final String COLUMNNAME_IsMounting = "IsMounting";
@@ -275,26 +291,4 @@ public interface I_DMS_Content
 	  * DMS Conent validity To Date
 	  */
 	public Timestamp getValidToDate();
-
-    /** Column name Value */
-    public static final String COLUMNNAME_Value = "Value";
-
-	/** Set Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public void setValue (String Value);
-
-	/** Get Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public String getValue();
-	
-	 /** Column name IsIndexed */
-    public static final String COLUMNNAME_IsIndexed = "IsIndexed";
-
-	/** Set IsMounting	  */
-	public void setIsIndexed (boolean IsIndexed);
-
-	/** Get IsMounting	  */
-	public boolean isIndexed();
 }

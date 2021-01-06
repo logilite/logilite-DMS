@@ -34,9 +34,10 @@ import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSVersion;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -103,15 +104,15 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	{
 		MDMSAssociation association = dms.getAssociationFromContent(DMS_Content.getDMS_Content_ID());
 
-		List<I_DMS_Content> contentList = MDMSContent.getVersionHistory(DMS_Content);
-		if (contentList.size() == 0)
+		List<MDMSVersion> versionList = MDMSVersion.getVersionHistory(DMS_Content);
+		if (versionList.size() == 0)
 		{
 			return DMSConstant.MSG_NO_VERSION_DOC_EXISTS;
 		}
 
-		HashMap<I_DMS_Content, I_DMS_Association> contentMap = new HashMap<I_DMS_Content, I_DMS_Association>();
-		for (int i = 0; i < contentList.size(); i++)
-			contentMap.put(contentList.get(i), association);
+		HashMap<I_DMS_Version, I_DMS_Association> contentMap = new HashMap<I_DMS_Version, I_DMS_Association>();
+		for (int i = 0; i < versionList.size(); i++)
+			contentMap.put(versionList.get(i), association);
 
 		String[] eventsList = new String[] { Events.ON_DOUBLE_CLICK };
 
@@ -127,7 +128,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 		Component component = event.getTarget();
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (component instanceof Cell || component instanceof Row))
 		{
-			DMS_ZK_Util.downloadDocument(dms, (MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
+			DMS_ZK_Util.downloadDocument(dms, (MDMSVersion) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION));
 		}
 	} // onEvent
 }

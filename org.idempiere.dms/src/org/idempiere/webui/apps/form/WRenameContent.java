@@ -29,7 +29,6 @@ import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.util.Utils;
-import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -46,7 +45,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 	private static final long	serialVersionUID	= -4440351217070536198L;
 
 	private DMS					dms;
-	private MDMSContent			DMSContent			= null;
+	private MDMSContent			content				= null;
 	private MDMSContent			parent_Content		= null;
 
 	private Grid				gridView			= GridFactory.newGridLayout();
@@ -63,7 +62,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 	public WRenameContent(DMS dms, MDMSContent DMSContent, int tableID, int recordID)
 	{
 		this.dms = dms;
-		this.DMSContent = DMSContent;
+		this.content = DMSContent;
 
 		init();
 	}
@@ -92,15 +91,15 @@ public class WRenameContent extends Window implements EventListener<Event>
 		gridView.setStyle("max-widht:230px; max-height:230px;");
 		gridView.setStyle("min-widht:230px; min-height:230px;");
 
-		parent_Content = new MDMSContent(Env.getCtx(), DMSContent.getDMS_Content_Related_ID(), null);
-		if (DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
+		parent_Content = new MDMSContent(Env.getCtx(), content.getDMS_Content_Related_ID(), null);
+		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
 			txtName.setValue(parent_Content.getName().substring(0, parent_Content.getName().lastIndexOf(".")));
 			txtName.setMaxlength(DMSConstant.MAX_FILENAME_LENGTH);
 		}
 		else
 		{
-			txtName.setText(DMSContent.getName());
+			txtName.setText(content.getName());
 			txtName.setMaxlength(DMSConstant.MAX_DIRECTORY_LENGTH);
 		}
 
@@ -111,7 +110,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 		txtDesc.setRows(2);
 		txtDesc.setWidth("98%");
 		txtDesc.setMultiline(true);
-		txtDesc.setValue(DMSContent.getDescription());
+		txtDesc.setValue(content.getDescription());
 
 		btnOk = confirmpanel.createButton(ConfirmPanel.A_OK);
 		btnOk.addEventListener(Events.ON_CLICK, this);
@@ -159,7 +158,7 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private void ValidateName()
 	{
-		boolean isDir = DMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory);
+		boolean isDir = content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory);
 		String error = Utils.isValidFileName(txtName.getValue(), isDir);
 		if (!Util.isEmpty(error, true))
 			throw new WrongValueException(txtName, error);
@@ -167,16 +166,15 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 	private void renameContent()
 	{
-		if (!txtDesc.getValue().equals(DMSContent.getDescription()))
+		String description = "";
+		if (!txtDesc.getValue().equals(content.getDescription()))
 		{
-			DMSContent.setDescription(txtDesc.getValue());
-			DMSContent.save();
+			description = txtDesc.getValue();
 		}
 
 		ValidateName();
 
-		MDMSAssociation parentAssociation = dms.getAssociationFromContent(parent_Content.getDMS_Content_ID());
-		dms.renameContent(txtName.getValue(), DMSContent, parent_Content, parentAssociation.getAD_Table_ID(), parentAssociation.getRecord_ID());
+		dms.renameContentOnly(content, txtName.getValue(), description);
 
 		this.detach();
 	} // renameContent

@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,10 +38,15 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.dms.factories.IContentManager;
+import org.idempiere.model.FileStorageUtil;
+import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSVersion;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
@@ -66,35 +72,35 @@ public class DMSSearchUtils
 	 * @param  isActiveOnly
 	 * @return              map of DMS content and association
 	 */
-	public static HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, boolean isActiveOnly)
+	public static HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, boolean isActiveOnly)
 	{
 		int contentID = 0;
 		if (content != null)
 			contentID = content.getDMS_Content_ID();
 
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
+		HashMap<I_DMS_Version, I_DMS_Association> map = new LinkedHashMap<I_DMS_Version, I_DMS_Association>();
 
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
 		{
 			int i = 1;
-			pstmt = DB.prepareStatement(isActiveOnly	? DMSConstant.SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ACTIVE
-														: DMSConstant.SQL_GET_CONTENT_DIRECTORY_LEVEL_WISE_ALL, null);
+			pstmt = DB.prepareStatement(isActiveOnly	? DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE
+														: DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL, null);
 			pstmt.setInt(i++, AD_Client_ID);
 			pstmt.setInt(i++, contentID);
 			pstmt.setInt(i++, AD_Client_ID);
 			pstmt.setInt(i++, contentID);
 			pstmt.setInt(i++, contentID);
 
+			System.out.println(" contentID = " + contentID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
+				MDMSVersion version = new MDMSVersion(Env.getCtx(), rs.getInt("DMS_Version_ID"), null);
 				MDMSAssociation associationChild = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-				MDMSContent contentChild = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
-				contentChild.setSeqNo(rs.getString("SeqNo"));
 
-				map.put(contentChild, associationChild);
+				map.put(version, associationChild);
 			}
 		}
 		catch (SQLException e)
@@ -122,7 +128,7 @@ public class DMSSearchUtils
 	 * @param  content
 	 * @return            Map of Content with Association
 	 */
-	public static HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
+	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
 																						MDMSContent content)
 	{
 		StringBuffer query = new StringBuffer();
@@ -145,7 +151,8 @@ public class DMSSearchUtils
 			query.append("*:*");
 		}
 
-		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
+		//
+		StringBuffer hirachicalContent = new StringBuffer(" AND ").append(DMSConstant.DMS_CONTENT_ID).append(":(");
 
 		DMSSearchUtils.getHierarchicalContent(hirachicalContent, content != null ? content.getDMS_Content_ID() : 0, dms.AD_Client_ID, tableID, recordID);
 
@@ -167,13 +174,14 @@ public class DMSSearchUtils
 		if (!Util.isEmpty(query.toString()))
 			query.append(" AND ");
 
-		query.append(" AD_Client_ID:(").append(Env.getAD_Client_ID(Env.getCtx())).append(")").append(" AND Show_InActive : 'false'");
+		query	.append(DMSConstant.AD_CLIENT_ID).append(":(").append(Env.getAD_Client_ID(Env.getCtx())).append(")")
+				.append(" AND ").append(DMSConstant.SHOW_INACTIVE).append(" : 'false'");
 
 		if (recordID > 0)
-			query.append(" AND Record_ID:" + recordID);
+			query.append(" AND ").append(DMSConstant.RECORD_ID).append(":").append(recordID);
 
 		if (tableID > 0)
-			query.append(" AND AD_Table_ID:" + tableID);
+			query.append(" AND ").append(DMSConstant.AD_TABLE_ID).append(":").append(tableID);
 
 		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query.toString()));
 	} // getGenericSearchedContent
@@ -188,7 +196,7 @@ public class DMSSearchUtils
 	 * @param  recordID
 	 * @return              Map of Content with Association
 	 */
-	public static HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent(	DMS dms, HashMap<String, List<Object>> queryParamas, MDMSContent content,
+	public static HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	DMS dms, HashMap<String, List<Object>> queryParamas, MDMSContent content,
 																					int tableID, int recordID)
 	{
 		String query = dms.buildSolrSearchQuery(queryParamas);
@@ -197,9 +205,10 @@ public class DMSSearchUtils
 		if (!Util.isEmpty(query))
 			query += " AND ";
 
-		query += "AD_Client_ID :(" + (Env.getAD_Client_ID(Env.getCtx()) + ")");
+		query += DMSConstant.AD_CLIENT_ID + " :(" + (Env.getAD_Client_ID(Env.getCtx()) + ")");
 
-		StringBuffer hirachicalContent = new StringBuffer(" AND DMS_Content_ID:(");
+		//
+		StringBuffer hirachicalContent = new StringBuffer(" AND ").append(DMSConstant.DMS_CONTENT_ID).append(":(");
 
 		DMSSearchUtils.getHierarchicalContent(hirachicalContent, content != null ? content.getDMS_Content_ID() : 0, dms.AD_Client_ID, tableID, recordID);
 
@@ -232,20 +241,19 @@ public class DMSSearchUtils
 	private static void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int AD_Client_ID, int tableID, int recordID)
 	{
 		MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-		HashMap<I_DMS_Content, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, false);
-		for (Entry<I_DMS_Content, I_DMS_Association> mapEntry : map.entrySet())
+		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, false);
+		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
-			MDMSContent dmsContent = (MDMSContent) mapEntry.getKey();
-
-			if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
-				getHierarchicalContent(hierarchicalContent, dmsContent.getDMS_Content_ID(), AD_Client_ID, tableID, recordID);
+			MDMSVersion version = (MDMSVersion) mapEntry.getKey();
+			if (version.getDMS_Content().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+				getHierarchicalContent(hierarchicalContent, version.getDMS_Content_ID(), AD_Client_ID, tableID, recordID);
 			else
 			{
 				MDMSAssociation association = (MDMSAssociation) mapEntry.getValue();
 				hierarchicalContent.append(association.getDMS_Content_ID()).append(" OR ");
 
-				if (association.getDMS_Content_ID() != dmsContent.getDMS_Content_ID())
-					hierarchicalContent.append(dmsContent.getDMS_Content_ID()).append(" OR ");
+				if (association.getDMS_Content_ID() != version.getDMS_Content_ID())
+					hierarchicalContent.append(version.getDMS_Content_ID()).append(" OR ");
 			}
 		}
 	} // getHierarchicalContent
@@ -256,17 +264,17 @@ public class DMSSearchUtils
 	 * @param  searchedList
 	 * @return              Map of Content with Association
 	 */
-	public static HashMap<I_DMS_Content, I_DMS_Association> fillSearchedContentMap(List<Integer> searchedList)
+	public static HashMap<I_DMS_Version, I_DMS_Association> fillSearchedContentMap(HashSet<Integer> searchedList)
 	{
-		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
+		HashMap<I_DMS_Version, I_DMS_Association> map = new LinkedHashMap<I_DMS_Version, I_DMS_Association>();
 
-		for (Integer entry : searchedList)
+		for (Integer contentID : searchedList)
 		{
-			List<Object> latestVersion = DB.getSQLValueObjectsEx(null, DMSConstant.SQL_GET_CONTENT_LATEST_VERSION_NONLINK, entry, entry);
+			List<Object> latestVersion = DB.getSQLValueObjectsEx(null, DMSConstant.SQL_GET_CONTENT_LATEST_VERSION_NONLINK, contentID);
 
 			if (latestVersion != null)
 			{
-				map.put(new MDMSContent(Env.getCtx(), ((BigDecimal) latestVersion.get(0)).intValue(), null),
+				map.put(new MDMSVersion(Env.getCtx(), ((BigDecimal) latestVersion.get(0)).intValue(), null),
 						new MDMSAssociation(Env.getCtx(), ((BigDecimal) latestVersion.get(1)).intValue(), null));
 			}
 		}
@@ -276,26 +284,32 @@ public class DMSSearchUtils
 	/**
 	 * Create Index Map for Solr
 	 * 
-	 * @param  DMSContent
-	 * @param  DMSAssociation
+	 * @param  content
+	 * @param  association
+	 * @param  version
 	 * @param  file
-	 * @return                Map
+	 * @return             Map
 	 */
-	public static Map<String, Object> createIndexMap(MDMSContent DMSContent, MDMSAssociation DMSAssociation, File file)
+	public static Map<String, Object> createIndexMap(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, File file)
 	{
 		Map<String, Object> solrValue = new HashMap<String, Object>();
-		solrValue.put(DMSConstant.AD_CLIENT_ID, DMSContent.getAD_Client_ID());
-		solrValue.put(DMSConstant.NAME, DMSContent.getName().toLowerCase());
-		solrValue.put(DMSConstant.CREATED, DMSContent.getCreated());
-		solrValue.put(DMSConstant.CREATEDBY, DMSContent.getCreatedBy());
-		solrValue.put(DMSConstant.UPDATED, DMSContent.getUpdated());
-		solrValue.put(DMSConstant.UPDATEDBY, DMSContent.getUpdatedBy());
-		solrValue.put(DMSConstant.DESCRIPTION, (!Util.isEmpty(DMSContent.getDescription(), true) ? DMSContent.getDescription().toLowerCase() : null));
-		solrValue.put(DMSConstant.CONTENTTYPE, DMSContent.getDMS_ContentType_ID());
-		solrValue.put(DMSConstant.DMS_CONTENT_ID, DMSContent.getDMS_Content_ID());
-		solrValue.put(DMSConstant.AD_Table_ID, DMSAssociation.getAD_Table_ID());
-		solrValue.put(DMSConstant.RECORD_ID, DMSAssociation.getRecord_ID());
-		solrValue.put(DMSConstant.SHOW_INACTIVE, !(DMSContent.isActive() && DMSAssociation.isActive()));
+		solrValue.put(DMSConstant.DMS_CONTENT_ID, content.getDMS_Content_ID());
+		solrValue.put(DMSConstant.NAME, content.getName().toLowerCase());
+		solrValue.put(DMSConstant.CREATED, content.getCreated());
+		solrValue.put(DMSConstant.UPDATED, content.getUpdated());
+		solrValue.put(DMSConstant.CREATEDBY, content.getCreatedBy());
+		solrValue.put(DMSConstant.UPDATEDBY, content.getUpdatedBy());
+		solrValue.put(DMSConstant.CONTENTTYPE, content.getDMS_ContentType_ID());
+		solrValue.put(DMSConstant.DESCRIPTION, (!Util.isEmpty(content.getDescription(), true) ? content.getDescription().toLowerCase() : null));
+		solrValue.put(DMSConstant.AD_CLIENT_ID, content.getAD_Client_ID());
+		solrValue.put(DMSConstant.SHOW_INACTIVE, !(content.isActive() && association.isActive()));
+
+		solrValue.put(DMSConstant.RECORD_ID, association.getRecord_ID());
+		solrValue.put(DMSConstant.AD_TABLE_ID, association.getAD_Table_ID());
+		solrValue.put(DMSConstant.DMS_ASSOCIATION_ID, association.getDMS_Association_ID());
+
+		solrValue.put(DMSConstant.VERSION_SEQ_NO, version.getSeqNo());
+		solrValue.put(DMSConstant.DMS_VERSION_ID, version.getDMS_Version_ID());
 
 		// File Content
 		if (DMSSearchUtils.isAllowDocumentContentSearch() && file != null)
@@ -303,14 +317,14 @@ public class DMSSearchUtils
 			solrValue.put(DMSConstant.FILE_CONTENT, new FileContentParsingThroughTika(file).getParsedDocumentContent());
 		}
 
-		if (DMSContent.getM_AttributeSetInstance_ID() > 0)
+		if (content.getM_AttributeSetInstance_ID() > 0)
 		{
 			PreparedStatement stmt = null;
 			ResultSet rs = null;
 			try
 			{
-				stmt = DB.prepareStatement(DMSConstant.SQL_GET_ASI, null);
-				stmt.setInt(1, DMSContent.getM_AttributeSetInstance_ID());
+				stmt = DB.prepareStatement(DMSConstant.SQL_GET_ASI_INFO, null);
+				stmt.setInt(1, content.getM_AttributeSetInstance_ID());
 				rs = stmt.executeQuery();
 
 				if (rs.isBeforeFirst())
@@ -393,10 +407,31 @@ public class DMSSearchUtils
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
 
+			// Create fields in index schema DMS_Content_ID
 			if (!idxSearcher.getFieldSet().contains(DMSConstant.DMS_CONTENT_ID))
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.DMS_CONTENT_ID);
+				mapAttribute.put("type", DMSConstant.SOLR_FIELDTYPE_TLONGS);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+
+			// Create fields in index schema DMS_Version_ID
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.DMS_VERSION_ID))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.DMS_VERSION_ID);
+				mapAttribute.put("type", DMSConstant.SOLR_FIELDTYPE_TLONGS);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+
+			// Create fields in index schema DMS_Association_ID
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.DMS_ASSOCIATION_ID))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.DMS_ASSOCIATION_ID);
 				mapAttribute.put("type", DMSConstant.SOLR_FIELDTYPE_TLONGS);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
@@ -423,11 +458,11 @@ public class DMSSearchUtils
 	 * @param  query
 	 * @return               search result as list of DMS_Content_ID
 	 */
-	public static List<Integer> searchIndex(IIndexSearcher indexSearcher, String query)
+	public static HashSet<Integer> searchIndex(IIndexSearcher indexSearcher, String query)
 	{
 		Object docList = indexSearcher.searchIndexNoRestriction(query);
 
-		ArrayList<Integer> list = new ArrayList<Integer>();
+		HashSet<Integer> set = new HashSet<Integer>();
 		if (docList != null && docList instanceof SolrDocumentList)
 		{
 			for (int i = 0; i < ((SolrDocumentList) docList).size(); i++)
@@ -435,10 +470,48 @@ public class DMSSearchUtils
 				SolrDocument solrDocument = ((SolrDocumentList) docList).get(i);
 				ArrayList<?> valueIDs = (ArrayList<?>) solrDocument.getFieldValue(DMSConstant.DMS_CONTENT_ID);
 				int contentID = ((Long) valueIDs.get(0)).intValue();
-				list.add(contentID);
+				set.add(contentID);
 			}
 		}
-		return list;
+		return set;
 	} // searchIndex
+
+	/**
+	 * Create indexing in index server
+	 * 
+	 * @param content          DMS_Content
+	 * @param association      DMS_Association
+	 * @param version          DMS_Version
+	 * @param deleteIndexQuery Query for delete existing index
+	 */
+	public static void doIndexingInServer(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, String deleteIndexQuery)
+	{
+		IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
+		if (indexSeracher == null)
+			throw new AdempiereException("Index Server not found");
+
+		IFileStorageProvider fsProvider = FileStorageUtil.get(content.getAD_Client_ID(), false);
+		if (fsProvider == null)
+			throw new AdempiereException("Storage provider is not define on clientInfo.");
+
+		IContentManager contentManager = DMSFactoryUtils.getContentManager(content.getAD_Client_ID());
+		if (contentManager == null)
+			throw new AdempiereException("Content manager is not found.");
+
+		// Delete existing index
+		if (!Util.isEmpty(deleteIndexQuery, true))
+			indexSeracher.deleteIndexByQuery(deleteIndexQuery);
+
+		// Create index
+		File file = fsProvider.getFile(contentManager.getPathByValue(content));
+		Map<String, Object> solrValue = createIndexMap(content, association, version, file);
+		indexSeracher.indexContent(solrValue);
+
+		// Update the value of IsIndexed flag in Content
+		if (!version.isIndexed())
+		{
+			DB.executeUpdate("UPDATE DMS_Version SET IsIndexed='Y' WHERE DMS_Version_ID = ? ", version.getDMS_Version_ID(), null);
+		}
+	} // doIndexing
 
 }

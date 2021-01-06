@@ -27,6 +27,7 @@ import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.image.AImage;
 import org.zkoss.util.media.AMedia;
@@ -48,17 +49,17 @@ public class DMS_ZK_Util
 
 	static CLogger log = CLogger.getCLogger(DMS_ZK_Util.class);
 
-	public static void downloadDocument(DMS dms, MDMSContent content) throws FileNotFoundException, IOException
+	public static void downloadDocument(DMS dms, I_DMS_Version version) throws FileNotFoundException, IOException
 	{
-		File document = dms.getFileFromStorage(content);
+		File document = dms.getFileFromStorage(version);
 
 		if (document.exists())
-			downloadDocument(document, content);
+			downloadDocument(document, (MDMSContent) version.getDMS_Content());
 		else
 			FDialog.warn(0, "Document is not available.");
 	} // downloadDocument
 
-	public static void downloadDocument(File document, MDMSContent content) throws FileNotFoundException, IOException
+	public static void downloadDocument(File document, I_DMS_Content content) throws FileNotFoundException, IOException
 	{
 		byte[] bytesArray = new byte[(int) document.length()];
 		FileInputStream fis = new FileInputStream(document);
@@ -72,27 +73,27 @@ public class DMS_ZK_Util
 	 * Get AImage for the Content
 	 * 
 	 * @param  dms
-	 * @param  content
+	 * @param  version
 	 * @param  thumbImgSize
 	 * @return              {@link AImage}
 	 */
-	public static AImage getThumbImageForContent(DMS dms, I_DMS_Content content, String thumbImgSize)
+	public static AImage getThumbImageForVersion(DMS dms, I_DMS_Version version, String thumbImgSize)
 	{
-		File thumbFile = dms.getThumbnailFile(content, thumbImgSize);
+		File thumbFile = dms.getThumbnailFile(version, thumbImgSize);
 		AImage image = null;
 		try
 		{
 			if (thumbFile == null)
 			{
 				MImage mImage = null;
-				if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+				if (version.getDMS_Content().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 					mImage = dms.getDirThumbnail();
 				else
-					mImage = dms.getMimetypeThumbnail(content.getDMS_MimeType_ID());
+					mImage = dms.getMimetypeThumbnail(version.getDMS_Content().getDMS_MimeType_ID());
 
 				byte[] imgByteData = mImage.getData();
 				if (imgByteData != null)
-					image = new AImage(content.getName(), imgByteData);
+					image = new AImage(version.getValue(), imgByteData);
 			}
 			else
 			{
@@ -197,7 +198,7 @@ public class DMS_ZK_Util
 	{
 		loadCSSFile("/css/dms.css", "ID_DMS_Style_Ref");
 	} // loadDMSThemeCSSFile
-	
+
 	/**
 	 * Load DMS CSS file and append its style in Head tag
 	 */
@@ -209,7 +210,7 @@ public class DMS_ZK_Util
 		loadCSSFile("/css/dms-mobile.css", "ID_DMS_Mobile_Style_Ref");
 	} // loadDMSThemeCSSFile
 
-	private static void loadCSSFile(String cssFileURL, String cssStyleID )
+	private static void loadCSSFile(String cssFileURL, String cssStyleID)
 	{
 		if (Util.isEmpty(cssFileURL, true))
 			return;
@@ -246,7 +247,7 @@ public class DMS_ZK_Util
 		{
 			throw new AdempiereException("Error: Unable to load dms.css file. " + e.getLocalizedMessage(), e);
 		}
-	}
+	} // loadCSSFile
 
 	public static AImage getImage(String name)
 	{

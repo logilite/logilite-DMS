@@ -42,6 +42,7 @@ import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
+import org.idempiere.model.MDMSVersion;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -114,8 +115,9 @@ public class ArchiveDMS implements IArchiveStore
 						{
 							return null;
 						}
+
 						MDMSContent mdmsContent = new MDMSContent(Env.getCtx(), contentID, null);
-						File file = dms.getFileFromStorage(mdmsContent);
+						File file = dms.getFileFromStorage(MDMSVersion.getLatestVersion(mdmsContent));
 						if (file.exists())
 						{
 							// read files into byte[]
@@ -128,19 +130,17 @@ public class ArchiveDMS implements IArchiveStore
 							}
 							catch (FileNotFoundException e)
 							{
-								log.severe("File Not Found.");
-								e.printStackTrace();
+								log.log(Level.SEVERE, "File Not Found. " + e.getLocalizedMessage(), e);
 							}
-							catch (IOException e1)
+							catch (IOException e)
 							{
-								log.severe("Error Reading The File.");
-								e1.printStackTrace();
+								log.log(Level.SEVERE, "Error Reading The File. " + e.getLocalizedMessage(), e);
 							}
 							return dataEntry;
 						}
 						else
 						{
-							log.severe("file not found: " + file.getAbsolutePath());
+							log.log(Level.SEVERE, "File does not exists on: " + file.getAbsolutePath());
 							return null;
 						}
 					}
@@ -192,24 +192,26 @@ public class ArchiveDMS implements IArchiveStore
 				trx = Trx.get(trxName, true);
 
 				// Create DMS Content
-				int contentID = dms.createDMSContent(	file.getName(), file.getName(), MDMSContent.CONTENTBASETYPE_Content,
-														dms.getPathFromContentManager(mountingParent), null, file, cTypeID, 0, true, trxName);
-				MDMSContent content = new MDMSContent(Env.getCtx(), contentID, trxName);
+				int contentID = dms.createDMSContent(	file.getName(), MDMSContent.CONTENTBASETYPE_Content, dms.getPathFromContentManager(mountingParent), null,
+														file, cTypeID, 0, true, trxName);
 
 				// Create Attributes
+				MDMSContent content = new MDMSContent(Env.getCtx(), contentID, trxName);
 				addAttributes(tableID, recordID, content, archive);
 
 				// Create DMS Association
 				int contentRelatedID = 0;
 				if (mountingParent != null)
 					contentRelatedID = mountingParent.getDMS_Content_ID();
-				int associationID = dms.createAssociation(contentID, contentRelatedID, recordID, tableID, MDMSAssociationType.getVersionType(true), 0, trxName);
-				MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, trxName);
+				int associationID = dms.createAssociation(contentID, contentRelatedID, recordID, tableID, MDMSAssociationType.PARENT_ID, trxName);
+
+				// Create DMS Version record
+				MDMSVersion version = dms.createVersion(file.getName(), contentID, 0, file, trxName);
 
 				// File write on Storage provider and Generate Thumbnail Image
-				DMSOprUtils.writeFileOnStorageAndThumnail(dms, file, content);
+				DMSOprUtils.writeFileOnStorageAndThumnail(dms, file, version);
 
-				archive.setByteData(generateEntry(content, association));
+				archive.setByteData(generateEntry(content, new MDMSAssociation(Env.getCtx(), associationID, trxName)));
 
 				trx.commit();
 			}
