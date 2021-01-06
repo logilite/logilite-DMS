@@ -15,12 +15,16 @@ package org.idempiere.dms.factories;
 
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 
 public interface IContentManager
 {
 	public String getPathByValue(I_DMS_Content content);
 
+	public String getPathByValue(I_DMS_Version version);
+
 	public String getPathByName(I_DMS_Content content);
 
-	public String getContentName(IFileStorageProvider storageProvider, String contentType, I_DMS_Content content, String fileName, String extention, String type, String operationType);
+	public String getContentName(	IFileStorageProvider storageProvider, String contentType, I_DMS_Content content, String fileName, String extention,
+									String type, String operationType);
 }

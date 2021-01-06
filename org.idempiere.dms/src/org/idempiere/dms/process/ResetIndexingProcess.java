@@ -1,12 +1,12 @@
 package org.idempiere.dms.process;
 
-import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -22,6 +22,7 @@ import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSVersion;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
@@ -31,12 +32,15 @@ import com.logilite.search.factory.ServiceUtils;
  */
 public class ResetIndexingProcess extends SvrProcess
 {
-	public static final String	SQL_GET_ALL_DMS_CONTENT			= " SELECT a.DMS_Content_ID, a.DMS_Association_ID 						"
-																	+ " FROM DMS_Association a											"
-																	+ " INNER JOIN DMS_Content c ON (a.DMS_Content_ID=c.DMS_Content_ID)	"
-																	+ " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT'			";
 
-	public static final String	SQL_UPDATE_CONTENT_INDEX_FALSE	= "UPDATE DMS_Content c SET IsIndexed='N'	WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=? ";
+	public static final String	SQL_GET_ALL_DMS_CONTENT_DOCS	= " SELECT c.DMS_Content_ID, a.DMS_Association_ID												"
+																	+ " FROM DMS_Content c																		"
+																	+ " INNER JOIN DMS_Association a	ON (a.DMS_Content_ID = c.DMS_Content_ID  AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001))	"
+																	+ " INNER JOIN DMS_Version v		ON (v.DMS_Content_ID = c.DMS_Content_ID AND v.SeqNo = 0)"
+																	+ " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT' 									";
+
+	public static final String	SQL_UPDATE_CONTENT_INDEX_FALSE	= "UPDATE DMS_Version v SET IsIndexed='N'	"
+																	+ " WHERE v.DMS_Content_ID IN (SELECT c.DMS_Content_ID FROM DMS_Content c WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=?) ";
 
 	//
 	private IIndexSearcher		indexSeracher					= null;
@@ -103,21 +107,20 @@ public class ResetIndexingProcess extends SvrProcess
 		else if (p_createdFrom != null && p_createdTo != null)
 		{
 			whereCreatedRange = " AND c.Created BETWEEN " + DB.TO_DATE(p_createdFrom) + " AND " + DB.TO_DATE(p_createdTo);
-			solrQuery = "created:[" + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdFrom) + " TO " + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdTo)
-						+ " ]";
+			solrQuery = DMSConstant.CREATED + ":[" + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdFrom)
+						+ " TO " + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdTo) + " ]";
 		}
 		else if (p_createdFrom != null && p_createdTo == null)
 		{
 			whereCreatedRange = " AND c.Created >= " + DB.TO_DATE(p_createdFrom);
-			solrQuery = "created:[" + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdFrom) + " TO * ]";
+			solrQuery = DMSConstant.CREATED + ":[" + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdFrom) + " TO * ]";
 		}
 		else if (p_createdFrom == null && p_createdTo != null)
 		{
 			whereCreatedRange = " AND c.Created <= " + DB.TO_DATE(p_createdTo);
-			solrQuery = "created:[ * TO " + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdTo) + " ]";
+			solrQuery = DMSConstant.CREATED + ":[ * TO " + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdTo) + " ]";
 		}
 
-		// System.out.println(new SimpleDateFormat().format(p_createdFrom));
 		// Delete all the index from indexing server
 		if (isAllReIndex)
 		{
@@ -130,13 +133,13 @@ public class ResetIndexingProcess extends SvrProcess
 		// Get all DMS contents
 		statusUpdate("Fetching DMS contents from DB");
 		HashMap<Integer, Integer> contentList = getAllDMSContents();
-
 		//
 		int count = 0;
 		for (Map.Entry<Integer, Integer> entry : contentList.entrySet())
 		{
 			MDMSContent content = new MDMSContent(getCtx(), entry.getKey(), null);
 			MDMSAssociation association = new MDMSAssociation(getCtx(), entry.getValue(), null);
+			List<MDMSVersion> versionList = MDMSVersion.getVersionHistory(content);
 
 			try
 			{
@@ -145,16 +148,19 @@ public class ResetIndexingProcess extends SvrProcess
 					indexSeracher.deleteIndexByField(DMSConstant.DMS_CONTENT_ID, "" + content.getDMS_Content_ID());
 				}
 
-				File file = fsProvider.getFile(contentManager.getPathByValue(content));
-				Map<String, Object> solrValue = DMSSearchUtils.createIndexMap(content, association, file);
-				indexSeracher.indexContent(solrValue);
-				cntSuccess++;
-
-				// Update the value of IsIndexed flag in dmsContent
-				if (!content.isIndexed())
+				for (MDMSVersion version : versionList)
 				{
-					DB.executeUpdate("UPDATE DMS_Content	SET IsIndexed='Y'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
+					DMSSearchUtils.doIndexingInServer(content, association, version, null);
 				}
+
+				// Linkable association
+				List<MDMSAssociation> linkAssociations = MDMSAssociation.getLinkableAssociationFromContent(content.getDMS_Content_ID(), false);
+				for (MDMSAssociation associationLink : linkAssociations)
+				{
+					DMSSearchUtils.doIndexingInServer(content, associationLink, MDMSVersion.getLatestVersion(content, false), null);
+				}
+
+				cntSuccess++;
 			}
 			catch (Exception e)
 			{
@@ -163,14 +169,17 @@ public class ResetIndexingProcess extends SvrProcess
 				addLog(errorMsg);
 				cntFailed++;
 
-				// Update the value of IsIndexed flag in dmsContent
-				if (!isAllReIndex && content.isIndexed())
+				for (MDMSVersion version : versionList)
 				{
-					DB.executeUpdate("UPDATE DMS_Content 	SET IsIndexed='N'	WHERE DMS_Content_ID=? ", content.get_ID(), null);
+					// Update the value of IsIndexed flag in dmsContent
+					if (!isAllReIndex && version.isIndexed())
+					{
+						DB.executeUpdate("UPDATE DMS_Version 	SET IsIndexed='N'	WHERE DMS_Version_ID=? ", version.getDMS_Version_ID(), null);
+					}
 				}
 			}
 			count++;
-			statusUpdate("Content Indexed [" + count + " / " + contentList.size() + "] Success=" + cntSuccess + ", Fail=" + cntFailed);
+			statusUpdate("Content Indexed [" + count + " / " + contentList.size() + "] Success=" + cntSuccess + ", Failed=" + cntFailed);
 		}
 		return "Process completed. Success : " + cntSuccess + ", Failed : " + cntFailed;
 	} // doIt
@@ -185,19 +194,20 @@ public class ResetIndexingProcess extends SvrProcess
 	{
 		HashMap<Integer, Integer> map = new LinkedHashMap<Integer, Integer>();
 
-		String sql = SQL_GET_ALL_DMS_CONTENT;
+		String sql = SQL_GET_ALL_DMS_CONTENT_DOCS;
+
+		if ("T".equals(p_isIndexed)) // "T" => records in which isIndex flag is true.
+			sql += " AND v.IsIndexed = 'Y'";
+		else if ("F".equals(p_isIndexed)) // "F" => records in which isIndex flag is false.
+			sql += " AND v.IsIndexed = 'N'";
+		else if ("A".equals(p_isIndexed)) // All records.
+			; // sql += " AND (c.IsIndexed = 'Y' OR c.IsIndexed = 'N')";
+
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
 		{
-			if ("T".equals(p_isIndexed)) // "T" => records in which isIndex flag is true.
-				sql += " AND c.IsIndexed = 'Y'";
-			else if ("F".equals(p_isIndexed)) // "F" => records in which isIndex flag is false.
-				sql += " AND c.IsIndexed = 'N'";
-			else if ("A".equals(p_isIndexed)) // All records.
-				; // sql += " AND (c.IsIndexed = 'Y' OR c.IsIndexed = 'N')";
-
-			pstmt = DB.prepareStatement(sql + whereCreatedRange, null);
+			pstmt = DB.prepareStatement(sql + whereCreatedRange + " ORDER BY 1, 2 ", null);
 			pstmt.setInt(1, getAD_Client_ID());
 			rs = pstmt.executeQuery();
 			while (rs.next())

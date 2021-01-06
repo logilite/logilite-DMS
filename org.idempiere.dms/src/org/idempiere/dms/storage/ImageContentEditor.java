@@ -64,7 +64,7 @@ public class ImageContentEditor extends Panel implements IContentEditor
 	{
 		this.setHeight("100%");
 		this.setWidth("100%");
-		this.setStyle("overflow: auto; -webkit-overflow-scrolling: touch;");
+		this.setStyle("overflow: auto; -webkit-overflow-scrolling: touch; width: 100%;");
 
 		AMedia media = null;
 
@@ -77,10 +77,12 @@ public class ImageContentEditor extends Panel implements IContentEditor
 			throw new AdempiereException("Document cannot be displayed:" + e.getLocalizedMessage());
 		}
 
+		// TODO Need to image fit in preview
 		Iframe iframeContentPriview = new Iframe();
+		iframeContentPriview.setSclass("dms-image-frame-viewer");
 		iframeContentPriview.setContent(media);
 		iframeContentPriview.setWidth("100%");
-		iframeContentPriview.setHeight("98%");
+		iframeContentPriview.setHeight("100%");
 		this.appendChild(iframeContentPriview);
 
 		return this;

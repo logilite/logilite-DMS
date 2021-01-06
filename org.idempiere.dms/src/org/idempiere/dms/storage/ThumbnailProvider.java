@@ -24,6 +24,7 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 
 public class ThumbnailProvider implements IThumbnailProvider
 {
@@ -45,9 +46,9 @@ public class ThumbnailProvider implements IThumbnailProvider
 	}
 
 	@Override
-	public String getURL(I_DMS_Content content, String size)
+	public String getURL(I_DMS_Version version, String size)
 	{
-		File docFile = getFile(content, size);
+		File docFile = getFile(version, size);
 
 		if (docFile != null)
 			return docFile.getAbsolutePath();
@@ -56,33 +57,55 @@ public class ThumbnailProvider implements IThumbnailProvider
 	}
 
 	@Override
-	public File getFile(I_DMS_Content content, String size)
+	public File getFile(I_DMS_Version version, String size)
 	{
-		File imgpxfile = new File(getThumbPath(content, size));
+		File imgpxfile = new File(getThumbPath(version, size));
 
 		if (imgpxfile.exists())
 			return imgpxfile;
-		else
-			return null;
+		else if (new File(getThumbPath(version.getDMS_Content(), size)).exists())
+			return new File(getThumbPath(version.getDMS_Content(), size));
+		return null;
 	}
 
 	@Override
-	public ArrayList<File> getThumbnails(I_DMS_Content content)
+	public ArrayList<File> getThumbnails(I_DMS_Version version)
 	{
-		File thumbnailFolder = new File(getThumbDirPath(content));
+		File thumbnailFolder = new File(getThumbDirPath(version));
 		return new ArrayList<File>(Arrays.asList(thumbnailFolder.listFiles()));
 	}
 
-	@Override
-	public String getThumbDirPath(I_DMS_Content content)
+	/*
+	 * Support only for older DMS based on content wise thumbnail retrieval
+	 */
+	private String getThumbDirPath(I_DMS_Content content)
 	{
 		return thumbnailBasePath + DMSConstant.FILE_SEPARATOR + Env.getAD_Client_ID(Env.getCtx()) + DMSConstant.FILE_SEPARATOR + content.getDMS_Content_ID();
 	}
 
-	@Override
-	public String getThumbPath(I_DMS_Content content, String size)
+	/*
+	 * Support only for older DMS based on content wise thumbnail retrieval
+	 */
+	private String getThumbPath(I_DMS_Content content, String size)
 	{
 		String path = getThumbDirPath(content) + DMSConstant.FILE_SEPARATOR + content.getDMS_Content_ID();
+
+		if (!Util.isEmpty(size, true))
+			path += "-" + size;
+
+		return path + ".jpg";
+	}
+
+	@Override
+	public String getThumbDirPath(I_DMS_Version version)
+	{
+		return thumbnailBasePath + DMSConstant.FILE_SEPARATOR + Env.getAD_Client_ID(Env.getCtx()) + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_ID();
+	}
+
+	@Override
+	public String getThumbPath(I_DMS_Version version, String size)
+	{
+		String path = getThumbDirPath(version) + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_ID() + "_V";
 
 		if (!Util.isEmpty(size, true))
 			path += "-" + size;

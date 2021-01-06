@@ -96,8 +96,8 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		ZKUpdateUtil.setWindowWidthX(this, 500);
 		this.setTitle(DMSConstant.MSG_CREATE_DIRECTORY);
 		mainLayout.setParent(this);
-		mainLayout.setHflex("1");
-		mainLayout.setVflex("1");
+		ZKUpdateUtil.setHflex(mainLayout, "1");
+		ZKUpdateUtil.setVflex(mainLayout, "1");
 
 		lblDir.setValue(DMSConstant.MSG_ENTER_DIRETORY_NAME + ": ");
 		lblDir.setStyle("padding-left: 5px");
@@ -122,8 +122,7 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		Separator separator = new Separator();
 		separator.setOrient("horizontal");
 		separator.setBar(true);
-		
-		
+
 		if (ClientInfo.isMobile())
 		{
 			txtboxDirectory.setWidth("98%");

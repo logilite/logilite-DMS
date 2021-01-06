@@ -13,7 +13,9 @@ import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociationType;
+import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
@@ -50,11 +52,11 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 	public abstract void setNoComponentExistsMsg(Rows rows);
 
-	public abstract void createComponent(Rows rows, I_DMS_Content content, I_DMS_Association association, int compWidth, int compHeight);
+	public abstract void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight);
 
 	@Override
-	public void init(DMS dms, HashMap<I_DMS_Content, I_DMS_Association> contentsMap, Grid gridLayout, int compWidth, int compHeight,
-		EventListener<? extends Event> listener, String[] eventsList)
+	public void init(	DMS dms, HashMap<I_DMS_Version, I_DMS_Association> contentsMap, Grid gridLayout, int compWidth, int compHeight,
+						EventListener<? extends Event> listener, String[] eventsList)
 	{
 		this.dms = dms;
 		this.grid = gridLayout;
@@ -78,7 +80,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		}
 		else
 		{
-			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : contentsMap.entrySet())
+			for (Map.Entry<I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
 				createComponent(rows, entry.getKey(), entry.getValue(), compWidth, compHeight);
 		}
 	} // init
@@ -96,11 +98,11 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	} // onEvent
 
 	@Override
-	public String getContentName(I_DMS_Content content, String version)
+	public String getContentName(I_DMS_Content content, int version)
 	{
 		String name = content.getName();
 
-		if (version != null)
+		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content) && version > 0)
 			name = name + " - V" + version;
 
 		return name;
@@ -138,4 +140,19 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 			return new Image();
 		}
 	} // getLinkIconComponent
+
+	public String getToolTipTextMsg(I_DMS_Version version, I_DMS_Association association)
+	{
+		StringBuffer sb = new StringBuffer(((MDMSContent) version.getDMS_Content()).getToolTipTextMsg());
+
+		if (MDMSContent.CONTENTBASETYPE_Content.equals(version.getDMS_Content().getContentBaseType()) && version.getDMS_FileSize() != null)
+			sb.append("\nFileSize:" + version.getDMS_FileSize());
+
+		if (association.getDMS_AssociationType_ID() > 0)
+			sb.append("\nAssociation as " + association.getDMS_AssociationType().getName());
+
+		sb.append("\nVersion ID:" + version.getDMS_Version_ID());
+		sb.append("\nContent ID:" + version.getDMS_Content_ID());
+		return sb.toString();
+	}
 }

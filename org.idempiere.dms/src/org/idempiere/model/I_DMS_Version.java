@@ -21,25 +21,25 @@ import java.sql.Timestamp;
 import org.compiere.model.*;
 import org.compiere.util.KeyNamePair;
 
-/** Generated Interface for DMS_Association
+/** Generated Interface for DMS_Version
  *  @author iDempiere (generated) 
  *  @version Release 5.1
  */
 @SuppressWarnings("all")
-public interface I_DMS_Association 
+public interface I_DMS_Version 
 {
 
-    /** TableName=DMS_Association */
-    public static final String Table_Name = "DMS_Association";
+    /** TableName=DMS_Version */
+    public static final String Table_Name = "DMS_Version";
 
-    /** AD_Table_ID=1000005 */
+    /** AD_Table_ID=1000011 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
 
-    /** AccessLevel = 3 - Client - Org 
+    /** AccessLevel = 6 - System - Client 
      */
-    BigDecimal accessLevel = BigDecimal.valueOf(3);
+    BigDecimal accessLevel = BigDecimal.valueOf(6);
 
     /** Load Meta Data */
 
@@ -64,21 +64,6 @@ public interface I_DMS_Association
 	  */
 	public int getAD_Org_ID();
 
-    /** Column name AD_Table_ID */
-    public static final String COLUMNNAME_AD_Table_ID = "AD_Table_ID";
-
-	/** Set Table.
-	  * Database Table information
-	  */
-	public void setAD_Table_ID (int AD_Table_ID);
-
-	/** Get Table.
-	  * Database Table information
-	  */
-	public int getAD_Table_ID();
-
-	public org.compiere.model.I_AD_Table getAD_Table() throws RuntimeException;
-
     /** Column name Created */
     public static final String COLUMNNAME_Created = "Created";
 
@@ -95,26 +80,6 @@ public interface I_DMS_Association
 	  */
 	public int getCreatedBy();
 
-    /** Column name DMS_Association_ID */
-    public static final String COLUMNNAME_DMS_Association_ID = "DMS_Association_ID";
-
-	/** Set DMS Association ID	  */
-	public void setDMS_Association_ID (int DMS_Association_ID);
-
-	/** Get DMS Association ID	  */
-	public int getDMS_Association_ID();
-
-    /** Column name DMS_AssociationType_ID */
-    public static final String COLUMNNAME_DMS_AssociationType_ID = "DMS_AssociationType_ID";
-
-	/** Set DMS AssociationType ID	  */
-	public void setDMS_AssociationType_ID (int DMS_AssociationType_ID);
-
-	/** Get DMS AssociationType ID	  */
-	public int getDMS_AssociationType_ID();
-
-	public org.idempiere.model.I_DMS_AssociationType getDMS_AssociationType() throws RuntimeException;
-
     /** Column name DMS_Content_ID */
     public static final String COLUMNNAME_DMS_Content_ID = "DMS_Content_ID";
 
@@ -126,16 +91,32 @@ public interface I_DMS_Association
 
 	public org.idempiere.model.I_DMS_Content getDMS_Content() throws RuntimeException;
 
-    /** Column name DMS_Content_Related_ID */
-    public static final String COLUMNNAME_DMS_Content_Related_ID = "DMS_Content_Related_ID";
+    /** Column name DMS_FileSize */
+    public static final String COLUMNNAME_DMS_FileSize = "DMS_FileSize";
 
-	/** Set DMS Content Related	  */
-	public void setDMS_Content_Related_ID (int DMS_Content_Related_ID);
+	/** Set DMS_FileSize	  */
+	public void setDMS_FileSize (String DMS_FileSize);
 
-	/** Get DMS Content Related	  */
-	public int getDMS_Content_Related_ID();
+	/** Get DMS_FileSize	  */
+	public String getDMS_FileSize();
 
-	public org.idempiere.model.I_DMS_Content getDMS_Content_Related() throws RuntimeException;
+    /** Column name DMS_Version_ID */
+    public static final String COLUMNNAME_DMS_Version_ID = "DMS_Version_ID";
+
+	/** Set DMS_Version	  */
+	public void setDMS_Version_ID (int DMS_Version_ID);
+
+	/** Get DMS_Version	  */
+	public int getDMS_Version_ID();
+
+    /** Column name DMS_Version_UU */
+    public static final String COLUMNNAME_DMS_Version_UU = "DMS_Version_UU";
+
+	/** Set DMS_Version_UU	  */
+	public void setDMS_Version_UU (String DMS_Version_UU);
+
+	/** Get DMS_Version_UU	  */
+	public String getDMS_Version_UU();
 
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
@@ -150,18 +131,33 @@ public interface I_DMS_Association
 	  */
 	public boolean isActive();
 
-    /** Column name Record_ID */
-    public static final String COLUMNNAME_Record_ID = "Record_ID";
+    /** Column name IsIndexed */
+    public static final String COLUMNNAME_IsIndexed = "IsIndexed";
 
-	/** Set Record ID.
-	  * Direct internal record ID
+	/** Set Indexed.
+	  * Index the document for the internal search engine
 	  */
-	public void setRecord_ID (int Record_ID);
+	public void setIsIndexed (boolean IsIndexed);
 
-	/** Get Record ID.
-	  * Direct internal record ID
+	/** Get Indexed.
+	  * Index the document for the internal search engine
 	  */
-	public int getRecord_ID();
+	public boolean isIndexed();
+
+    /** Column name SeqNo */
+    public static final String COLUMNNAME_SeqNo = "SeqNo";
+
+	/** Set Sequence.
+	  * Method of ordering records;
+ lowest number comes first
+	  */
+	public void setSeqNo (int SeqNo);
+
+	/** Get Sequence.
+	  * Method of ordering records;
+ lowest number comes first
+	  */
+	public int getSeqNo();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";
@@ -178,4 +174,17 @@ public interface I_DMS_Association
 	  * User who updated this records
 	  */
 	public int getUpdatedBy();
+
+    /** Column name Value */
+    public static final String COLUMNNAME_Value = "Value";
+
+	/** Set Search Key.
+	  * Search key for the record in the format required - must be unique
+	  */
+	public void setValue (String Value);
+
+	/** Get Search Key.
+	  * Search key for the record in the format required - must be unique
+	  */
+	public String getValue();
 }
