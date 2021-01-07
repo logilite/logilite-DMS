@@ -302,8 +302,8 @@ public class WDLoadASIPanel extends Panel
 					Clients.scrollIntoView(editor.getComponent());
 					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 				}
-				if (value != null)
-					attributes[i].setMAttributeInstance(asiID, value);
+
+				attributes[i].setMAttributeInstance(asiID, value);
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attributes[i].getAttributeValueType()))
 			{
@@ -318,8 +318,8 @@ public class WDLoadASIPanel extends Panel
 				} // setMAttributeInstance doesn't work without decimal point
 				if (value != null && value.scale() == 0)
 					value = value.setScale(1, BigDecimal.ROUND_HALF_UP);
-				if (value != null)
-					attributes[i].setMAttributeInstance(asiID, value);
+
+				attributes[i].setMAttributeInstance(asiID, value);
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attributes[i].getAttributeValueType()))
 			{
@@ -333,8 +333,8 @@ public class WDLoadASIPanel extends Panel
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && (value == null || value.length() == 0))
 					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
-				if (value != null)
-					attributes[i].setMAttributeInstance(asiID, value);
+
+				attributes[i].setMAttributeInstance(asiID, value);
 			}
 			m_changed = true;
 		} // for all attributes
@@ -374,8 +374,8 @@ public class WDLoadASIPanel extends Panel
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
-			if (valueTimeStamp != null)
-				attributes.setMAttributeInstance(asiID, valueTimeStamp);
+
+			attributes.setMAttributeInstance(asiID, valueTimeStamp);
 		}
 		else if (DisplayType.isNumeric(displayType))
 		{
@@ -385,13 +385,11 @@ public class WDLoadASIPanel extends Panel
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
-			if (value != null)
-			{
-				if (displayType == DisplayType.Integer)
-					attributes.setMAttributeInstance(asiID, value == null ? 0 : ((Number) value).intValue(), null);
-				else
-					attributes.setMAttributeInstance(asiID, (BigDecimal) value);
-			}
+
+			if (displayType == DisplayType.Integer)
+				attributes.setMAttributeInstance(asiID, value == null ? 0 : ((Number) value).intValue(), null);
+			else
+				attributes.setMAttributeInstance(asiID, (BigDecimal) value);
 		}
 		else if (displayType == DisplayType.Image	|| displayType == DisplayType.Assignment || displayType == DisplayType.Locator
 					|| displayType == DisplayType.Payment || displayType == DisplayType.TableDir || displayType == DisplayType.Table
@@ -404,26 +402,30 @@ public class WDLoadASIPanel extends Panel
 				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
 
-			String valueLable = null;
+			String valueLabel = null;
 			if (displayType == DisplayType.TableDir || displayType == DisplayType.Table || displayType == DisplayType.Search
 				|| displayType == DisplayType.Account)
 			{
-				valueLable = editor.getDisplay();
+				valueLabel = editor.getDisplay();
 			}
-			if (!Util.isEmpty(valueLable, true) && value.intValue() > 0)
-				attributes.setMAttributeInstance(asiID, value == null ? 0 : value.intValue(), valueLable);
+
+			attributes.setMAttributeInstance(asiID, value == null ? 0 : value.intValue(), valueLabel);
 		}
 		else
 		{
-			String value = String.valueOf(editor.getValue());
+			String value = null;
+			if (editor.getValue() == null || Util.isEmpty(editor.getValue().toString(), true))
+				value = null;
+			else
+				value = String.valueOf(editor.getValue());
+
 			if (attributes.isMandatory() && Util.isEmpty(value))
 			{
 				Clients.scrollIntoView(editor.getComponent());
 				throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 			}
 
-			if (!Util.isEmpty(value))
-				attributes.setMAttributeInstance(asiID, value);
+			attributes.setMAttributeInstance(asiID, value);
 		}
 	} // setEditorValue
 

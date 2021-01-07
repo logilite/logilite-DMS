@@ -517,16 +517,15 @@ public class Utils
 						{
 							MAttributeValue atVal = (value != null && Integer.valueOf(value) > 0) ? new MAttributeValue(Env.getCtx(), Integer.valueOf(value),
 																														trxName) : null;
-							if (value != null)
-								attrs[i].setMAttributeInstance(asiID, atVal);
+							attrs[i].setMAttributeInstance(asiID, atVal);
 						}
 						else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attrs[i].getAttributeValueType()))
 						{
 							BigDecimal bd = new BigDecimal(value);
 							if (bd != null && bd.scale() == 0)
 								bd = bd.setScale(1, BigDecimal.ROUND_HALF_UP);
-							if (bd != null)
-								attrs[i].setMAttributeInstance(asiID, bd);
+
+							attrs[i].setMAttributeInstance(asiID, bd);
 						}
 						else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attrs[i].getAttributeValueType()))
 						{
@@ -534,14 +533,12 @@ public class Utils
 							switch (displayType)
 							{
 								case DisplayType.YesNo:
-
 									attrs[i].setMAttributeInstance(asiID, value);
 									break;
 
 								case DisplayType.Date:
 								case DisplayType.DateTime:
 								case DisplayType.Time:
-
 									try
 									{
 										Date parsedDate = DMSConstant.SDF_WITH_TIME.parse(value);
@@ -555,7 +552,6 @@ public class Utils
 									break;
 
 								case DisplayType.Integer:
-
 									attrs[i].setMAttributeInstance(asiID, value == null ? 0 : Integer.parseInt(value), value);
 									break;
 
@@ -563,7 +559,6 @@ public class Utils
 								case DisplayType.Number:
 								case DisplayType.CostPrice:
 								case DisplayType.Quantity:
-
 									attrs[i].setMAttributeInstance(asiID, new BigDecimal(value));
 									break;
 
@@ -575,20 +570,16 @@ public class Utils
 								case DisplayType.Table:
 								case DisplayType.Search:
 								case DisplayType.Account:
-
-									if (!Util.isEmpty(value, true) && Integer.parseInt(value) > 0)
-										attrs[i].setMAttributeInstance(asiID, Integer.parseInt(value), value);
+									attrs[i].setMAttributeInstance(asiID, Integer.parseInt(value), value);
 									break;
 
 								default:
-									if (!Util.isEmpty(value))
-										attrs[i].setMAttributeInstance(asiID, value);
+									attrs[i].setMAttributeInstance(asiID, value);
 							}
 						}
 						else
 						{
-							if (!Util.isEmpty(value))
-								attrs[i].setMAttributeInstance(asiID, value);
+							attrs[i].setMAttributeInstance(asiID, value);
 						}
 					}
 				}
