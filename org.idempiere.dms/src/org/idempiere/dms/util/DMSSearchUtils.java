@@ -13,10 +13,12 @@
 
 package org.idempiere.dms.util;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,7 +27,10 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.apache.solr.common.SolrDocument;
+import org.apache.solr.common.SolrDocumentList;
 import org.compiere.model.MAttributeInstance;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -39,6 +44,7 @@ import org.idempiere.model.MDMSContent;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
+import com.logilite.search.solr.tika.FileContentParsingThroughTika;
 
 /**
  * Util for DMS generic / advance searching from index server or normal content
@@ -48,7 +54,9 @@ import com.logilite.search.factory.ServiceUtils;
 public class DMSSearchUtils
 {
 
-	static CLogger log = CLogger.getCLogger(DMSSearchUtils.class);
+	static CLogger	log					= CLogger.getCLogger(DMSSearchUtils.class);
+
+	static boolean	isIndexingInitiated	= false;
 
 	/**
 	 * Get DMS Contents for rendering for specific level wise.
@@ -114,8 +122,8 @@ public class DMSSearchUtils
 	 * @param  content
 	 * @return            Map of Content with Association
 	 */
-	public static HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent(DMS dms, String searchText, int tableID, int recordID,
-		MDMSContent content)
+	public static HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
+																						MDMSContent content)
 	{
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
@@ -125,9 +133,9 @@ public class DMSSearchUtils
 			query.append(" OR ").append(DMSConstant.DESCRIPTION).append(":*").append(inputParam).append("*");
 
 			// Lookup from file content
-			if (ServiceUtils.isAllowDocumentContentSearch())
+			if (DMSSearchUtils.isAllowDocumentContentSearch())
 			{
-				query.append(" OR ").append(ServiceUtils.FILE_CONTENT).append(":*").append(inputParam).append("*");
+				query.append(" OR ").append(DMSConstant.FILE_CONTENT).append(":*").append(inputParam).append("*");
 			}
 
 			query.append(")");
@@ -180,8 +188,8 @@ public class DMSSearchUtils
 	 * @param  recordID
 	 * @return              Map of Content with Association
 	 */
-	public static HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent(DMS dms, HashMap<String, List<Object>> queryParamas, MDMSContent content,
-		int tableID, int recordID)
+	public static HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent(	DMS dms, HashMap<String, List<Object>> queryParamas, MDMSContent content,
+																					int tableID, int recordID)
 	{
 		String query = dms.buildSolrSearchQuery(queryParamas);
 
@@ -270,9 +278,10 @@ public class DMSSearchUtils
 	 * 
 	 * @param  DMSContent
 	 * @param  DMSAssociation
+	 * @param  file
 	 * @return                Map
 	 */
-	public static Map<String, Object> createIndexMap(MDMSContent DMSContent, MDMSAssociation DMSAssociation)
+	public static Map<String, Object> createIndexMap(MDMSContent DMSContent, MDMSAssociation DMSAssociation, File file)
 	{
 		Map<String, Object> solrValue = new HashMap<String, Object>();
 		solrValue.put(DMSConstant.AD_CLIENT_ID, DMSContent.getAD_Client_ID());
@@ -287,6 +296,12 @@ public class DMSSearchUtils
 		solrValue.put(DMSConstant.AD_Table_ID, DMSAssociation.getAD_Table_ID());
 		solrValue.put(DMSConstant.RECORD_ID, DMSAssociation.getRecord_ID());
 		solrValue.put(DMSConstant.SHOW_INACTIVE, !(DMSContent.isActive() && DMSAssociation.isActive()));
+
+		// File Content
+		if (DMSSearchUtils.isAllowDocumentContentSearch() && file != null)
+		{
+			solrValue.put(DMSConstant.FILE_CONTENT, new FileContentParsingThroughTika(file).getParsedDocumentContent());
+		}
 
 		if (DMSContent.getM_AttributeSetInstance_ID() > 0)
 		{
@@ -328,18 +343,102 @@ public class DMSSearchUtils
 			}
 		}
 
-		// File Content
-		if (ServiceUtils.isAllowDocumentContentSearch())
-		{
-			IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-			StringBuffer query = new StringBuffer("(").append(DMSConstant.DMS_CONTENT_ID).append(":\"").append(DMSContent.get_ID()).append("\")");
-			if (DMSContent.get_ID() > 0)
-			{
-				String fileContent = (String) indexSeracher.getColumnValue(query.toString(), ServiceUtils.FILE_CONTENT);
-				solrValue.put(ServiceUtils.FILE_CONTENT, fileContent);
-			}
-		}
 		return solrValue;
 	} // createIndexMap
+
+	public static boolean isAllowDocumentContentSearch()
+	{
+		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_DOCUMENT_CONTENT_SEARCH, false, Env.getAD_Client_ID(Env.getCtx()));
+	} // isAllowDocumentContentSearch
+
+	/**
+	 * Get index searcher
+	 * 
+	 * @param  AD_Client_ID
+	 * @return              {@link IIndexSearcher}
+	 */
+	public static IIndexSearcher getIndexSearcher(int AD_Client_ID)
+	{
+		IIndexSearcher idxSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
+		if (!isIndexingInitiated)
+		{
+			/*
+			 * Create Fields Type in schema if not exists
+			 */
+			Map<String, Object> mapAttribute = new HashMap<String, Object>();
+			if (!idxSearcher.getFieldTypeSet().contains(DMSConstant.SOLR_FIELDTYPE_TLONGS))
+			{
+				mapAttribute.put("name", DMSConstant.SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("class", "solr.TrieLongField");
+				mapAttribute.put("precisionStep", "8");
+				mapAttribute.put("multiValued", "true");
+				mapAttribute.put("positionIncrementGap", "0");
+
+				//
+				idxSearcher.createFieldTypeInIndexSchema(mapAttribute);
+			}
+
+			/*
+			 * Create Fields in schema if not exists
+			 */
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.FILE_CONTENT))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.FILE_CONTENT);
+				mapAttribute.put("type", "text_general");
+				mapAttribute.put("indexed", true);
+				mapAttribute.put("stored", false);
+				mapAttribute.put("multiValued", true);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.DMS_CONTENT_ID))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.DMS_CONTENT_ID);
+				mapAttribute.put("type", DMSConstant.SOLR_FIELDTYPE_TLONGS);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.SOLR_FIELD_DESCRIPTION))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.SOLR_FIELD_DESCRIPTION);
+				mapAttribute.put("type", "text_general");
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+
+			isIndexingInitiated = true;
+		}
+		return idxSearcher;
+	}
+
+	/**
+	 * From query to search the content reference
+	 * 
+	 * @param  indexSearcher
+	 * @param  query
+	 * @return               search result as list of DMS_Content_ID
+	 */
+	public static List<Integer> searchIndex(IIndexSearcher indexSearcher, String query)
+	{
+		Object docList = indexSearcher.searchIndexNoRestriction(query);
+
+		ArrayList<Integer> list = new ArrayList<Integer>();
+		if (docList != null && docList instanceof SolrDocumentList)
+		{
+			for (int i = 0; i < ((SolrDocumentList) docList).size(); i++)
+			{
+				SolrDocument solrDocument = ((SolrDocumentList) docList).get(i);
+				ArrayList<?> valueIDs = (ArrayList<?>) solrDocument.getFieldValue(DMSConstant.DMS_CONTENT_ID);
+				int contentID = ((Long) valueIDs.get(0)).intValue();
+				list.add(contentID);
+			}
+		}
+		return list;
+	} // searchIndex
 
 }

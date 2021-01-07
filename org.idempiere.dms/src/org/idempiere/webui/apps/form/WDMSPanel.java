@@ -366,7 +366,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
-		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");// 
+		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");//
 
 		// View Result Tab
 		Grid btnGrid = GridFactory.newGridLayout();
@@ -409,6 +409,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		DMS_ZK_Util.createCellUnderRow(row, 1, 3, vsearchBox);
 
+		ZKUpdateUtil.setWidth(vsearchBox, "100%");
 		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search", DMSConstant.TTT_SEARCH, this);
 		vsearchBox.addEventListener(Events.ON_OK, this);
 		vsearchBox.getButton().setStyle("margin: 0px !important;");
@@ -564,6 +565,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			borderViewSeparator.appendSouth(cell_attribute);
 
 			South south = borderViewSeparator.getSouth();
+			south.setZclass("SB-south " + south.getZclass());
 			south.setStyle("max-height: 100%;");
 			south.setSplittable(true);
 			south.setCollapsible(true);
@@ -579,7 +581,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			cell_layout.setWidth("70%");
 			cell_attribute.setWidth("30%");
-			
+
 			Hbox boxViewSeparator = new Hbox();
 			boxViewSeparator.setWidth("100%");
 			boxViewSeparator.setHeight("100%");
@@ -1016,6 +1018,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				editor.setValue(null);
 		}
 		Components.removeAllChildren(panelAttribute);
+		Components.removeAllChildren(grid);
 	} // clearComponents
 
 	/**

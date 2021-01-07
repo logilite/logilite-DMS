@@ -112,6 +112,7 @@ public class WDocumentViewer extends Window
 			borderViewSeparator.appendSouth(cellCPreview);
 
 			South south = borderViewSeparator.getSouth();
+			south.setZclass("SB-south " + south.getZclass());
 			south.setStyle("max-height: 100%; min-height: 80%;");
 			south.setSplittable(true);
 			south.setCollapsible(true);

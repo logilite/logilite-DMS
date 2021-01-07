@@ -1,5 +1,6 @@
 package org.idempiere.dms.process;
 
+import java.io.File;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -141,11 +142,12 @@ public class ResetIndexingProcess extends SvrProcess
 			{
 				if (!isAllReIndex)
 				{
-					indexSeracher.deleteIndex(content.getDMS_Content_ID());
+					indexSeracher.deleteIndexByField(DMSConstant.DMS_CONTENT_ID, "" + content.getDMS_Content_ID());
 				}
 
-				Map<String, Object> solrValue = DMSSearchUtils.createIndexMap(content, association);
-				indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPathByValue(content)));
+				File file = fsProvider.getFile(contentManager.getPathByValue(content));
+				Map<String, Object> solrValue = DMSSearchUtils.createIndexMap(content, association, file);
+				indexSeracher.indexContent(solrValue);
 				cntSuccess++;
 
 				// Update the value of IsIndexed flag in dmsContent

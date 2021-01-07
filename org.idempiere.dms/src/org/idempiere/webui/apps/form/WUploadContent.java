@@ -113,6 +113,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 	private boolean				isVersion			= false;
 	private boolean				isCancel			= false;
+	boolean						isDMSSignSupport	= false;
 
 	private AMedia				uploadedMedia		= null;
 	private WTableDirEditor		editorContentType;
@@ -142,6 +143,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		this.recordID = recordID;
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
+		isDMSSignSupport = MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx())).get_ValueAsBoolean("IsDMSSignSupport");
 
 		init();
 	}
@@ -153,7 +155,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	{
 		if (!isVersion)
 		{
-			this.setStyle("min-height:40%; max-height:100%; overflow-y:auto;");
+			this.setStyle("min-height:30%; max-height:100%; overflow-y:auto;");
+			if (isDMSSignSupport)
+				this.setHeight("50%");
+			else
+				this.setHeight("35%");
 			this.setWidth("50%");
 		}
 		else
@@ -161,7 +167,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			contentTypeRow.setVisible(false);
 			nameRow.setVisible(false);
 			tabBoxAttribute.setVisible(false);
-			this.setHeight("26%");
 			this.setWidth("40%");
 		}
 
@@ -220,7 +225,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		row.appendCellChild(lblDesc);
 		row.appendCellChild(txtDesc, 2);
 
-		boolean isDMSSignSupport = MRole.get(Env.getCtx(), Env.getAD_Role_ID(Env.getCtx())).get_ValueAsBoolean("IsDMSSignSupport");
 		if (isDMSSignSupport)
 		{
 			row = rows.newRow();
@@ -242,6 +246,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		tabPanelsAttribute.appendChild(tabPanelAttribute);
 		tabPanelAttribute.setStyle("min-height :20px; max-height: 200px; overflow: auto;");
 		tabBoxAttribute.setMold("accordion");
+		tabBoxAttribute.setVisible(false);
 
 		cell.appendChild(tabBoxAttribute);
 		row.appendChild(cell);
@@ -417,11 +422,13 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		if (event.getSource().equals(editorContentType))
 		{
 			Components.removeAllChildren(tabPanelAttribute);
+			tabBoxAttribute.setVisible(false);
 
 			if (editorContentType.getValue() != null)
 			{
 				asiPanel = new WDLoadASIPanel((int) editorContentType.getValue(), 0);
 				tabPanelAttribute.appendChild(asiPanel);
+				tabBoxAttribute.setVisible(true);
 			}
 		}
 	}

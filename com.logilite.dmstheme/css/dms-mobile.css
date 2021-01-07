@@ -19,3 +19,8 @@
 .SB-Grid-field span.grid-combobox-editor {
 	width: 98% !important;
 }
+
+span.SB-south {
+	background: #7a7a7a;
+    color: white;
+}

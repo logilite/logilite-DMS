@@ -198,7 +198,7 @@ public class DMS_ZK_Util
 		if (!ThemeManager.isUseFontIconForImage())
 			return;
 
-		loadCSSFile("/css/dms.css");
+		loadCSSFile("/css/dms.css", "ID_DMS_Style_Ref");
 	} // loadDMSThemeCSSFile
 	
 	/**
@@ -209,10 +209,10 @@ public class DMS_ZK_Util
 		if (!ClientInfo.isMobile())
 			return;
 
-		loadCSSFile("/css/dms-mobile.css");
+		loadCSSFile("/css/dms-mobile.css", "ID_DMS_Mobile_Style_Ref");
 	} // loadDMSThemeCSSFile
 
-	private static void loadCSSFile(String cssFileURL )
+	private static void loadCSSFile(String cssFileURL, String cssStyleID )
 	{
 		if (Util.isEmpty(cssFileURL, true))
 			return;
@@ -231,10 +231,10 @@ public class DMS_ZK_Util
 			StringBuffer sb = new StringBuffer();
 			sb.append(" var css  = '" + cssContents + "';");
 			sb.append(	" var head = document.head || document.getElementsByTagName('head')[0]; 	"
-						+ " if ($(head).find('Style[id=\"ID_DMS_Style_Ref\"]').length <= 0)	"
+						+ " if ($(head).find('Style[id=\"" + cssStyleID + "\"]').length <= 0)		"
 						+ " { 																"
 						+ " 	var style = document.createElement('style'); 				"
-						+ " 	style.id = 'ID_DMS_Style_Ref'; 								"
+						+ " 	style.id = '" + cssStyleID + "'; 							"
 						+ " 	style.type = 'text/css'; 									"
 						+ " 	style.title = 'DMSStyle'; 									"
 						+ " 	if 	(style.styleSheet) 										"

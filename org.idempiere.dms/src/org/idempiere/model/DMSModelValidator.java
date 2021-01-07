@@ -1,5 +1,6 @@
 package org.idempiere.model;
 
+import java.io.File;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -119,7 +120,6 @@ public class DMSModelValidator implements ModelValidator
 						{
 							MDMSAssociation association = MDMSAssociation.getAssociationFromContent(content.getDMS_Content_ID(), null);
 
-							Map<String, Object> solrValue = DMSSearchUtils.createIndexMap(content, association);
 							IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
 
 							if (indexSeracher == null)
@@ -135,9 +135,13 @@ public class DMSModelValidator implements ModelValidator
 							if (contentManager == null)
 								throw new AdempiereException("Content manager is not found.");
 
-							// Delete and Create Index
-							indexSeracher.deleteIndex(content.getDMS_Content_ID());
-							indexSeracher.indexContent(solrValue, fsProvider.getFile(contentManager.getPathByValue(content)));
+							// Delete existing index
+							indexSeracher.deleteIndexByField(DMSConstant.DMS_CONTENT_ID, "" + content.getDMS_Content_ID());
+
+							// Create index
+							File file = fsProvider.getFile(contentManager.getPathByValue(content));
+							Map<String, Object> solrValue = DMSSearchUtils.createIndexMap(content, association, file);
+							indexSeracher.indexContent(solrValue);
 
 							// Update the value of IsIndexed flag in Content
 							if (!content.isIndexed())
@@ -149,15 +153,14 @@ public class DMSModelValidator implements ModelValidator
 							{
 								// Create index of Linkable docs is exists
 								int[] linkAssociationIDs = DB.getIDsEx(	null, DMSConstant.SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT,
-																		MDMSAssociationType.VERSION_ID, content.getDMS_Content_ID(), content
-																																			.getDMS_Content_ID(),
-																		MDMSAssociationType.VERSION_ID);
+																		MDMSAssociationType.VERSION_ID, content.getDMS_Content_ID(),
+																		content.getDMS_Content_ID(), MDMSAssociationType.VERSION_ID);
 
 								for (int linkAssociationID : linkAssociationIDs)
 								{
 									MDMSAssociation associationLink = new MDMSAssociation(Env.getCtx(), linkAssociationID, null);
 
-									solrValue = DMSSearchUtils.createIndexMap(content, associationLink);
+									solrValue = DMSSearchUtils.createIndexMap(content, associationLink, file);
 
 									indexSeracher.indexContent(solrValue);
 								}
