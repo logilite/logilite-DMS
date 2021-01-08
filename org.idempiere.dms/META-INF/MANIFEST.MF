@@ -5,7 +5,7 @@ Bundle-SymbolicName: org.idempiere.dms;singleton:=true
 Bundle-Version: 6.3.0.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Import-Package: com.adaxa.signature.webui.component,
+Import-Package: com.logilite.esignature.topaz.webui.component,
  com.logilite.search.solr.tika,
  org.apache.commons.io;version="2.2.0",
  org.apache.commons.io.filefilter;version="2.2.0",
@@ -46,7 +46,16 @@ Bundle-ClassPath: .,
  lib/poi-scratchpad-3.9.jar,
  lib/tidy.jar,
  lib/itextpdf-5.4.1.jar,
- lib/xmlworker-5.4.1.1_LLP.jar
+ lib/xmlworker-5.4.1.1_LLP.jar,
+ lib/commons-collections4-4.3.jar,
+ lib/commons-compress-1.19.jar,
+ lib/fr.opensagres.poi.xwpf.converter.core-2.0.2.jar,
+ lib/fr.opensagres.poi.xwpf.converter.pdf-2.0.1.jar,
+ lib/fr.opensagres.xdocreport.itext.extension-2.0.1.jar,
+ lib/poi-4.1.0.jar,
+ lib/poi-ooxml-4.1.0.jar,
+ lib/poi-ooxml-schemas-4.1.0.jar,
+ lib/xmlbeans-3.1.0.jar
 Service-Component: OSGI-INF/*.xml
 Export-Package: com.lowagie.text,
  com.lowagie.text.pdf,

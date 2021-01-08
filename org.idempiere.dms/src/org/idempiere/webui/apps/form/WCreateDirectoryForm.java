@@ -16,7 +16,6 @@ package org.idempiere.webui.apps.form;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Label;
@@ -122,19 +121,8 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		Separator separator = new Separator();
 		separator.setOrient("horizontal");
 		separator.setBar(true);
+		separator.setStyle("padding-top: 40px");
 		
-		
-		if (ClientInfo.isMobile())
-		{
-			txtboxDirectory.setWidth("98%");
-			if (ClientInfo.get().isPortrait())
-				north.setHeight("50px");
-		}
-		else
-		{
-			separator.setStyle("padding-top: 40px");
-		}
-
 		parameterPanel.appendChild(separator);
 
 		South south = new South();
