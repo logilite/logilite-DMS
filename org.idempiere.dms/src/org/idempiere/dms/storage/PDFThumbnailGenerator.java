@@ -32,7 +32,7 @@ import org.compiere.util.CLogger;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.util.Utils;
-import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 
 import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
@@ -63,7 +63,7 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 	}
 
 	@Override
-	public void addThumbnail(I_DMS_Content content, File file, String size)
+	public void addThumbnail(I_DMS_Version version, File file, String size)
 	{
 		try
 		{
@@ -77,11 +77,11 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 			if (size == null)
 			{
 				for (int i = 0; i < thumbSizesList.size(); i++)
-					createThumbnail(content, thumbSizesList.get(i), page, rect);
+					createThumbnail(version, thumbSizesList.get(i), page, rect);
 			}
 			else
 			{
-				createThumbnail(content, size, page, rect);
+				createThumbnail(version, size, page, rect);
 			}
 			// Window OS Issue - Rename of file is not working after immediate
 			// upload.
@@ -101,17 +101,17 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 		}
 	} // addThumbnail
 
-	public void createThumbnail(I_DMS_Content content, String size, PDFPage page, Rectangle rect) throws IOException
+	public void createThumbnail(I_DMS_Version version, String size, PDFPage page, Rectangle rect) throws IOException
 	{
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		String path = dms.getThumbnailProvider().getThumbPath(content, size);
+		String path = dms.getThumbnailProvider().getThumbPath(version, size);
 
 		BufferedImage imagepx = Utils.toBufferedImage(page.getImage(Integer.parseInt(size), Integer.parseInt(size), rect, null, true, true));
 
 		ImageIO.write(imagepx, "jpg", baos);
 
-		dms.getThumbnailStorageProvider().writeBLOB(path, baos.toByteArray(), content);
+		dms.getThumbnailStorageProvider().writeBLOB(path, baos.toByteArray());
 	} // createThumbnail
 
 }

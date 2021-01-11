@@ -1,16 +1,20 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP								  *
- * This program is free software; you can redistribute it and/or modify it    *
+ * Product: iDempiere ERP & CRM Smart Business Solution                       *
+ * Copyright (C) 1999-2012 ComPiere, Inc. All Rights Reserved.                *
+ * This program is free software, you can redistribute it and/or modify it    *
  * under the terms version 2 of the GNU General Public License as published   *
  * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * that it will be useful, but WITHOUT ANY WARRANTY, without even the implied *
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
  * See the GNU General Public License for more details.                       *
  * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * with this program, if not, write to the Free Software Foundation, Inc.,    *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * For the text or an alternative of this public license, you may reach us    *
+ * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
+ * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
-
+/** Generated Model - DO NOT CHANGE */
 package org.idempiere.model;
 
 import java.sql.ResultSet;
@@ -19,14 +23,14 @@ import org.compiere.model.*;
 
 /** Generated Model for DMS_Association
  *  @author iDempiere (generated) 
- *  @version Release 3.1 - $Id$ */
+ *  @version Release 5.1 - $Id$ */
 public class X_DMS_Association extends PO implements I_DMS_Association, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20160215L;
+	private static final long serialVersionUID = 20210105L;
 
     /** Standard Constructor */
     public X_DMS_Association (Properties ctx, int DMS_Association_ID, String trxName)
@@ -207,26 +211,6 @@ public class X_DMS_Association extends PO implements I_DMS_Association, I_Persis
 	public int getRecord_ID () 
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Record_ID);
-		if (ii == null)
-			 return 0;
-		return ii.intValue();
-	}
-
-	/** Set Sequence.
-		@param SeqNo 
-		Method of ordering records; lowest number comes first
-	  */
-	public void setSeqNo (int SeqNo)
-	{
-		set_Value (COLUMNNAME_SeqNo, Integer.valueOf(SeqNo));
-	}
-
-	/** Get Sequence.
-		@return Method of ordering records; lowest number comes first
-	  */
-	public int getSeqNo () 
-	{
-		Integer ii = (Integer)get_Value(COLUMNNAME_SeqNo);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();

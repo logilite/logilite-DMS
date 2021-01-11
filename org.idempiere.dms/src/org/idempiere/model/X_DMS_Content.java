@@ -1,16 +1,20 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP								  *
- * This program is free software; you can redistribute it and/or modify it    *
+ * Product: iDempiere ERP & CRM Smart Business Solution                       *
+ * Copyright (C) 1999-2012 ComPiere, Inc. All Rights Reserved.                *
+ * This program is free software, you can redistribute it and/or modify it    *
  * under the terms version 2 of the GNU General Public License as published   *
  * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * that it will be useful, but WITHOUT ANY WARRANTY, without even the implied *
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
  * See the GNU General Public License for more details.                       *
  * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * with this program, if not, write to the Free Software Foundation, Inc.,    *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * For the text or an alternative of this public license, you may reach us    *
+ * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
+ * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
-
+/** Generated Model - DO NOT CHANGE */
 package org.idempiere.model;
 
 import java.sql.ResultSet;
@@ -20,14 +24,14 @@ import org.compiere.model.*;
 
 /** Generated Model for DMS_Content
  *  @author iDempiere (generated) 
- *  @version Release 3.1 - $Id$ */
+ *  @version Release 5.1 - $Id$ */
 public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20160725L;
+	private static final long serialVersionUID = 20210105L;
 
     /** Standard Constructor */
     public X_DMS_Content (Properties ctx, int DMS_Content_ID, String trxName)
@@ -38,7 +42,6 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 			setDMS_Content_ID (0);
 			setDMS_MimeType_ID (0);
 			setName (null);
-			setValue (null);
         } */
     }
 
@@ -126,9 +129,23 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		return ii.intValue();
 	}
 
-	public I_DMS_ContentType getDMS_ContentType() throws RuntimeException
+	/** Set DMS_Content_UU.
+		@param DMS_Content_UU DMS_Content_UU	  */
+	public void setDMS_Content_UU (String DMS_Content_UU)
+	{
+		set_Value (COLUMNNAME_DMS_Content_UU, DMS_Content_UU);
+	}
+
+	/** Get DMS_Content_UU.
+		@return DMS_Content_UU	  */
+	public String getDMS_Content_UU () 
+	{
+		return (String)get_Value(COLUMNNAME_DMS_Content_UU);
+	}
+
+	public org.idempiere.model.I_DMS_ContentType getDMS_ContentType() throws RuntimeException
     {
-		return (I_DMS_ContentType)MTable.get(getCtx(), I_DMS_ContentType.Table_Name)
+		return (org.idempiere.model.I_DMS_ContentType)MTable.get(getCtx(), org.idempiere.model.I_DMS_ContentType.Table_Name)
 			.getPO(getDMS_ContentType_ID(), get_TrxName());	}
 
 	/** Set DMS Content Type.
@@ -154,23 +171,9 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		return ii.intValue();
 	}
 
-	/** Set DMS_FileSize.
-		@param DMS_FileSize DMS_FileSize	  */
-	public void setDMS_FileSize (String DMS_FileSize)
-	{
-		set_Value (COLUMNNAME_DMS_FileSize, DMS_FileSize);
-	}
-
-	/** Get DMS_FileSize.
-		@return DMS_FileSize	  */
-	public String getDMS_FileSize () 
-	{
-		return (String)get_Value(COLUMNNAME_DMS_FileSize);
-	}
-
-	public I_DMS_MimeType getDMS_MimeType() throws RuntimeException
+	public org.idempiere.model.I_DMS_MimeType getDMS_MimeType() throws RuntimeException
     {
-		return (I_DMS_MimeType)MTable.get(getCtx(), I_DMS_MimeType.Table_Name)
+		return (org.idempiere.model.I_DMS_MimeType)MTable.get(getCtx(), org.idempiere.model.I_DMS_MimeType.Table_Name)
 			.getPO(getDMS_MimeType_ID(), get_TrxName());	}
 
 	/** Set Mime Type.
@@ -196,9 +199,9 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		return ii.intValue();
 	}
 
-	public I_DMS_Status getDMS_Status() throws RuntimeException
+	public org.idempiere.model.I_DMS_Status getDMS_Status() throws RuntimeException
     {
-		return (I_DMS_Status)MTable.get(getCtx(), I_DMS_Status.Table_Name)
+		return (org.idempiere.model.I_DMS_Status)MTable.get(getCtx(), org.idempiere.model.I_DMS_Status.Table_Name)
 			.getPO(getDMS_Status_ID(), get_TrxName());	}
 
 	/** Set Content Status.
@@ -222,6 +225,30 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
+	}
+
+	/** Set Indexed.
+		@param IsIndexed 
+		Index the document for the internal search engine
+	  */
+	public void setIsIndexed (boolean IsIndexed)
+	{
+		set_Value (COLUMNNAME_IsIndexed, Boolean.valueOf(IsIndexed));
+	}
+
+	/** Get Indexed.
+		@return Index the document for the internal search engine
+	  */
+	public boolean isIndexed () 
+	{
+		Object oo = get_Value(COLUMNNAME_IsIndexed);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
 	}
 
 	/** Set IsMounting.
@@ -360,41 +387,5 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 	public Timestamp getValidToDate () 
 	{
 		return (Timestamp)get_Value(COLUMNNAME_ValidToDate);
-	}
-
-	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
-	public void setValue (String Value)
-	{
-		set_Value (COLUMNNAME_Value, Value);
-	}
-
-	/** Get Search Key.
-		@return Search key for the record in the format required - must be unique
-	  */
-	public String getValue () 
-	{
-		return (String)get_Value(COLUMNNAME_Value);
-	}
-
-	@Override
-	public void setIsIndexed(boolean IsIndexed)
-	{
-		set_Value (COLUMNNAME_IsIndexed, Boolean.valueOf(IsIndexed));
-	}
-
-	@Override
-	public boolean isIndexed()
-	{
-		Object oo = get_Value(COLUMNNAME_IsIndexed);
-		if (oo != null) 
-		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
-			return "Y".equals(oo);
-		}
-		return false;
 	}
 }

@@ -110,7 +110,7 @@ public class WDAssociationType extends Window implements EventListener<Event>
 		this.setTitle("Association Type");
 		this.setClosable(true);
 		this.appendChild(gridView);
-		if(ClientInfo.isMobile())
+		if (ClientInfo.isMobile())
 			ZKUpdateUtil.setWindowWidthX(this, 320);
 		else
 			this.setWidth("35%");
@@ -189,7 +189,7 @@ public class WDAssociationType extends Window implements EventListener<Event>
 			if (countAssociations == 0)
 			{
 				dms.createAssociation(	associateContent.getDMS_Content_ID(), copyDMSContent.getDMS_Content_ID(), Record_ID, AD_Table_ID,
-										(int) associationType.getValue(), 0, null);
+										(int) associationType.getValue(), null);
 
 				if (AD_Table_ID > 0 && Record_ID > 0)
 					winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed(true);

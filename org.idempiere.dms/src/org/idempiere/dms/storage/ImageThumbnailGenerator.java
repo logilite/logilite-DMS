@@ -28,7 +28,7 @@ import org.compiere.util.CLogger;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.util.Utils;
-import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 
 public class ImageThumbnailGenerator implements IThumbnailGenerator
 {
@@ -55,36 +55,36 @@ public class ImageThumbnailGenerator implements IThumbnailGenerator
 	}
 
 	@Override
-	public void addThumbnail(I_DMS_Content content, File file, String size)
+	public void addThumbnail(I_DMS_Version version, File file, String size)
 	{
 		try
 		{
 			if (size == null)
 			{
 				for (int i = 0; i < thumbSizesList.size(); i++)
-					createThumbnail(content, file, thumbSizesList.get(i));
+					createThumbnail(version, file, thumbSizesList.get(i));
 			}
 			else
 			{
-				createThumbnail(content, file, size);
+				createThumbnail(version, file, size);
 			}
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Image thumbnail creation failure:", e);
 		}
-	}
+	} // addThumbnail
 
-	public void createThumbnail(I_DMS_Content content, File file, String size) throws IOException
+	public void createThumbnail(I_DMS_Version version, File file, String size) throws IOException
 	{
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		String path = dms.getThumbnailProvider().getThumbPath(content, size);
+		String path = dms.getThumbnailProvider().getThumbPath(version, size);
 
 		BufferedImage thumbnailImage = Utils.getImageThumbnail(file, size);
 
 		ImageIO.write(thumbnailImage, "jpg", baos);
 
-		dms.getThumbnailStorageProvider().writeBLOB(path, baos.toByteArray(), content);
+		dms.getThumbnailStorageProvider().writeBLOB(path, baos.toByteArray());
 	} // createThumbnail
 }

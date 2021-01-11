@@ -34,6 +34,7 @@ import org.adempiere.util.Callback;
 import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.adwindow.BreadCrumbLink;
+import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Checkbox;
@@ -90,12 +91,13 @@ import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.dms.util.DMSConvertToPDFUtils;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
+import org.idempiere.model.MDMSVersion;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
@@ -178,7 +180,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private MDMSContent				copyDMSContent			= null;
 	private MDMSContent				dirContent				= null;
 
-	private Stack<MDMSContent>		selectedDMSContent		= new Stack<MDMSContent>();
+	private Stack<MDMSVersion>		selectedDMSVersionStack	= new Stack<MDMSVersion>();
 
 	//
 	private Component				compCellRowViewer		= null;
@@ -201,6 +203,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem				mnu_createLink			= null;
 	private Menuitem				mnu_versionList			= null;
 	private Menuitem				mnu_uploadVersion		= null;
+	private Menuitem				mnu_zoomContentWin		= null;
 
 	private Menuitem				mnu_canvasPaste			= null;
 	private Menuitem				mnu_canvasCreateLink	= null;
@@ -341,7 +344,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public void setCurrDMSContent(MDMSContent currDMSContent)
 	{
 		this.currDMSContent = currDMSContent;
-		selectedDMSContent.add(currDMSContent);
+		MDMSVersion version = null;
+		if (currDMSContent != null)
+			version = (MDMSVersion) MDMSVersion.getLatestVersion(currDMSContent);
+		selectedDMSVersionStack.add(version);
 	}
 
 	public boolean isTabViewer()
@@ -615,6 +621,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link", this);
 		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
 		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
+		mnu_zoomContentWin = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ZOOMCONTENTWIN, "Zoom", this);
 
 		// Context Menu item for Right click on Canvas area
 		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
@@ -666,7 +673,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (isTabViewer())
 			{
 				MDMSContent mountingContent = dms.getDMSMountingParent(tableID, recordID);
-				selectedDMSContent.removeAllElements();
+				selectedDMSVersionStack.removeAllElements();
 				setCurrDMSContent(mountingContent);
 
 				if (currDMSContent != null)
@@ -707,8 +714,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			compCellRowViewer = event.getTarget();
 			openContentContextMenu(compCellRowViewer);
 
-			// show only download option on menu context if access are
-			// read-only.
+			// show only download option on menu context if access are read-only.
 			if (!isWindowAccess)
 			{
 				mnu_download.setDisabled(false);
@@ -733,6 +739,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					}
 				}
 			});
+		}
+		else if (event.getTarget().equals(mnu_zoomContentWin))
+		{
+			AEnv.zoom(MDMSContent.Table_ID, dirContent.getDMS_Content_ID());
 		}
 		else if (event.getTarget().equals(mnu_copy))
 		{
@@ -774,7 +784,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_download))
 		{
-			DMS_ZK_Util.downloadDocument(dms, dirContent);
+			DMS_ZK_Util.downloadDocument(dms, MDMSVersion.getLatestVersion(dirContent));
 		}
 		else if (event.getTarget().equals(mnu_rename))
 		{
@@ -793,7 +803,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_delete))
 		{
-			// TODO inactive DMS_content and same change in solr index
 			Callback<Boolean> callback = new Callback<Boolean>() {
 				@Override
 				public void onCallback(Boolean result)
@@ -813,8 +822,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 								{
 									if (result)
 									{
-										// For re-index of inActive linkable ref
-										deletableContent.setSyncIndexForLinkableDocs(true);
 										//
 										dms.deleteContent(deletableContent, deletableAssociation, true);
 										renderViewer();
@@ -823,7 +830,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							};
 
 							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete,
-										"<b> Are you want to delete linkable documents associated with actual docs ? </b>" + warningMsg, callbackWarning);
+										"<b> Are you want to delete actual docs and associated its linkable documents ? </b>" + warningMsg, callbackWarning);
 						}
 						else
 						{
@@ -920,7 +927,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (isRoot)
 		{
-			selectedDMSContent.removeAllElements();
+			selectedDMSVersionStack.removeAllElements();
 			setNavigationButtonEnabled(false);
 
 			isMountingBaseStructure = false;
@@ -962,7 +969,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		if (recordID > 0 || isDocExplorerWindow)
 		{
-			HashMap<I_DMS_Content, I_DMS_Association> contentsMap = null;
+			HashMap<I_DMS_Version, I_DMS_Association> contentsMap = null;
 
 			// Setting current dms content value on label
 			if (isTabViewer())
@@ -980,7 +987,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			// Content Type wise access restriction
 			IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
-			HashMap<I_DMS_Content, I_DMS_Association> contentsMapFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
+			HashMap<I_DMS_Version, I_DMS_Association> contentsMapFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
 
 			// Component Viewer
 			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
@@ -1029,11 +1036,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void openDirectoryORContent(Component component) throws FileNotFoundException, IOException
 	{
-		selectedDMSContent.push((MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT));
+		MDMSVersion version = (MDMSVersion) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION);
+		MDMSContent selectedContent = (MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
 		MDMSAssociation selectedAssociation = (MDMSAssociation) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION);
-		if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+
+		selectedDMSVersionStack.push(version);
+		if (selectedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
-			currDMSContent = selectedDMSContent.pop();
+			currDMSContent = (MDMSContent) selectedDMSVersionStack.pop().getDMS_Content();
 			showBreadcumb(currDMSContent);
 
 			renderViewer();
@@ -1045,17 +1055,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (currDMSContent.isMounting() && isDocExplorerWindow)
 				isMountingBaseStructure = true;
 		}
-		else if (selectedDMSContent.peek().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
+		else if (selectedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
-			MDMSMimeType mimeType = (MDMSMimeType) selectedDMSContent.peek().getDMS_MimeType();
-			File documentToPreview = dms.getFileFromStorage(selectedDMSContent.peek());
+			MDMSMimeType mimeType = (MDMSMimeType) selectedContent.getDMS_MimeType();
+			File documentToPreview = dms.getFileFromStorage(version);
 
 			if (documentToPreview != null)
 			{
-				String name = selectedDMSContent.peek().getName();
+				String name = selectedContent.getName();
 
-				if (name.contains("(") && name.contains(")"))
-					name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") + 1), "");
+				// if (name.contains("(") && name.contains(")"))
+				// name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") +
+				// 1), "");
 
 				try
 				{
@@ -1075,8 +1086,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					tabs.appendChild(tabData);
 					tabBox.setSelectedTab(tabData);
 
-					WDocumentViewer documentViewer = new WDocumentViewer(	dms, tabBox, documentToPreview, selectedDMSContent.peek(), tableID, recordID, windowNo,
-																			tabNo);
+					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedContent, tableID, recordID, windowNo, tabNo);
 					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure, MDMSAssociationType.isLink(selectedAssociation));
 					tabPanels.appendChild(tabPanel);
 					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
@@ -1086,7 +1096,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 					// Fix for search --> download content --> back (which was
 					// navigate to home/root folder)
-					selectedDMSContent.pop();
+					selectedDMSVersionStack.pop();
 				}
 				else
 				{
@@ -1095,7 +1105,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			else
 			{
-				FDialog.error(0, dms.getPathFromContentManager(currDMSContent) + " Content missing in storage,");
+				FDialog.error(0, dms.getPathFromContentManager(version) + " Content missing in storage,");
 			}
 		}
 	} // openDirectoryORContent
@@ -1160,7 +1170,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			lblPositionInfo.setValue(null);
 			btnBack.setEnabled(false);
 			isMountingBaseStructure = false;
-
 		}
 		else
 		{
@@ -1178,7 +1187,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			// Getting initial mounting content for disabling back navigation
 			MDMSContent mountingContent = dms.getDMSMountingParent(tableID, recordID);
 			if (currDMSContent == null)
-				currDMSContent = selectedDMSContent.peek();
+				currDMSContent = (MDMSContent) selectedDMSVersionStack.peek().getDMS_Content();
 
 			if (currDMSContent.getDMS_Content_ID() == mountingContent.getDMS_Content_ID())
 			{
@@ -1429,7 +1438,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		canvasContextMenu.open(this, "at_pointer");
 	} // openCanvasContextMenu
 
-	// TODO Need check for refactoring
 	/**
 	 * @param contentReferenceTo
 	 * @param isDir
@@ -1619,7 +1627,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		if (tableID > 0)
-			setSearchParams(DMSConstant.AD_Table_ID, dms.validTableID(tableID), null, params);
+			setSearchParams(DMSConstant.AD_TABLE_ID, dms.validTableID(tableID), null, params);
 
 		if (recordID > 0)
 			setSearchParams(DMSConstant.RECORD_ID, dms.validRecordID(recordID), null, params);

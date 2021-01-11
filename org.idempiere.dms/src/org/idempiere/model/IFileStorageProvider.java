@@ -32,7 +32,7 @@ public interface IFileStorageProvider
 
 	public byte[] getBLOB(String path);
 
-	public boolean writeBLOB(String path, byte[] data, I_DMS_Content DMS_Content);
+	public boolean writeBLOB(String path, byte[] data);
 
 	public String getBaseDirectory(String path);
 }
