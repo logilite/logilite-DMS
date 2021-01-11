@@ -14,7 +14,11 @@
 package org.idempiere.model;
 
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.Properties;
+
+import org.compiere.model.Query;
+import org.compiere.util.Env;
 
 public class MDMSAssociationType extends X_DMS_AssociationType
 {
@@ -68,5 +72,16 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 	{
 		return associationTypeID == LINK_ID;
 	} // isLink
+	
+	public static MDMSAssociationType getByValue(String value) {
+		String where = " IsActive = 'Y' AND Value = ? ";
+		Query query = new Query(Env.getCtx(), MDMSAssociationType.Table_Name, where, null);
+		query.setParameters(value);
+		List<MDMSAssociationType> associationTypes = query.list();
+		if (associationTypes != null && associationTypes.size() > 0) {
+			return associationTypes.get(0);
+		} else
+			return null;
+	}
 
 }
