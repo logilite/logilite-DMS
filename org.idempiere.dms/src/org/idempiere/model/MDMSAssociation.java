@@ -14,14 +14,14 @@
 package org.idempiere.model;
 
 import java.sql.ResultSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
 import org.compiere.model.MTable;
+import org.compiere.model.Query;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.idempiere.dms.constant.DMSConstant;
 
 public class MDMSAssociation extends X_DMS_Association
 {
@@ -31,7 +31,7 @@ public class MDMSAssociation extends X_DMS_Association
 	 */
 	private static final long	serialVersionUID	= -4536595975268643483L;
 
-	static CLogger				log					= CLogger.getCLogger(MDMSAssociation.class);
+	private static CLogger		log					= CLogger.getCLogger(MDMSAssociation.class);
 
 	//
 	public MDMSAssociation(Properties ctx, int DMS_Association_ID, String trxName)
@@ -66,14 +66,12 @@ public class MDMSAssociation extends X_DMS_Association
 	 * @param  Record_ID
 	 * @param  AD_Table_ID
 	 * @param  associationTypeID
-	 * @param  seqNo
 	 * @param  trxName
 	 * @return                   DMS_Association_ID
 	 */
-	public static int create(int contentID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, int seqNo, String trxName)
+	public static int create(int contentID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, String trxName)
 	{
 		MDMSAssociation association = (MDMSAssociation) MTable.get(Env.getCtx(), MDMSAssociation.Table_ID).getPO(0, trxName);
-		association.setSeqNo(seqNo);
 		association.setDMS_Content_ID(contentID);
 		association.setDMS_Content_Related_ID(contentRelatedID);
 		if (Record_ID > 0)
@@ -93,40 +91,48 @@ public class MDMSAssociation extends X_DMS_Association
 	 * Get association from content ID with referring linkable association
 	 * 
 	 * @param  contentID
-	 * @return           {@link MDMSAssociation} - Linkable association
+	 * @param  isActiveOnly
+	 * @return              Linkable association list
 	 */
-	public static MDMSAssociation getLinkableAssociationFromContent(int contentID)
+	public static List<MDMSAssociation> getLinkableAssociationFromContent(int contentID, boolean isActiveOnly)
 	{
-		return MDMSAssociation.getAssociationFromContent(contentID, true, null);
+		return MDMSAssociation.getAssociationFromContent(contentID, isActiveOnly, true, null);
 	} // getLinkableAssociationFromContent
 
 	/**
 	 * Get association from content ID without referring linkable association
 	 * 
 	 * @param  contentID
+	 * @param  isActiveOnly
 	 * @param  trxName
-	 * @return           {@link MDMSAssociation} - Non-Linkable Association
+	 * @return              {@link MDMSAssociation} - Non-Linkable Association
 	 */
-	public static MDMSAssociation getAssociationFromContent(int contentID, String trxName)
+	public static MDMSAssociation getAssociationFromContent(int contentID, boolean isActiveOnly, String trxName)
 	{
-		return MDMSAssociation.getAssociationFromContent(contentID, false, trxName);
+		List<MDMSAssociation> list = MDMSAssociation.getAssociationFromContent(contentID, isActiveOnly, false, trxName);
+		if (list.size() > 0)
+			return list.get(0);
+		return null;
 	} // getAssociationFromContent
 
 	/**
 	 * Get association from content ID with/without referring linkable association
 	 * 
 	 * @param  contentID
-	 * @param  isLinkAssociationOnly - True if only Get Linkable Association
+	 * @param  isActiveOnly          - If TRUE then Only Active Records else all
+	 * @param  isLinkAssociationOnly - True if only Get Linkable Association list
 	 * @param  trxName
-	 * @return                       {@link MDMSAssociation}
+	 * @return                       List of MDMSAssociation
 	 */
-	public static MDMSAssociation getAssociationFromContent(int contentID, boolean isLinkAssociationOnly, String trxName)
+	public static List<MDMSAssociation> getAssociationFromContent(int contentID, boolean isActiveOnly, boolean isLinkAssociationOnly, String trxName)
 	{
-		String sql = DMSConstant.SQL_GET_ASSOCIATION_ID_FROM_CONTENT + (isLinkAssociationOnly ? " = " : " <> " + MDMSAssociationType.LINK_ID);
-		int DMS_Association_ID = DB.getSQLValue(trxName, sql, contentID);
-		if (DMS_Association_ID > 0)
-			return new MDMSAssociation(Env.getCtx(), DMS_Association_ID, trxName);
-		return null;
+		String whereClause = " DMS_Content_ID=? AND NVL(DMS_AssociationType_ID, 0) " + (isLinkAssociationOnly ? " = 1000003 " : " IN (0, 1000001) ");
+		Query query = new Query(Env.getCtx(), MDMSAssociation.Table_Name, whereClause, trxName);
+		query.setClient_ID();
+		query.setParameters(contentID);
+		query.setOnlyActiveRecords(isActiveOnly);
+		List<MDMSAssociation> associationList = query.list();
+		return associationList;
 	} // getAssociationFromContent
 
 }

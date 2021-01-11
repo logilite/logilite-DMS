@@ -25,6 +25,7 @@ import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
 import org.idempiere.model.MDMSStatus;
 import org.idempiere.model.MDMSSubstitute;
+import org.idempiere.model.MDMSVersion;
 
 public class ModelFactory implements IModelFactory
 {
@@ -46,6 +47,8 @@ public class ModelFactory implements IModelFactory
 			return MDMSStatus.class;
 		else if (tableName.equals(MDMSSubstitute.Table_Name))
 			return MDMSSubstitute.class;
+		else if (tableName.equals(MDMSVersion.Table_Name))
+			return MDMSVersion.class;
 
 		return null;
 	}
@@ -67,6 +70,8 @@ public class ModelFactory implements IModelFactory
 			return new MDMSStatus(Env.getCtx(), Record_ID, trxName);
 		else if (tableName.equals(MDMSSubstitute.Table_Name))
 			return new MDMSSubstitute(Env.getCtx(), Record_ID, trxName);
+		else if (tableName.equals(MDMSVersion.Table_Name))
+			return new MDMSVersion(Env.getCtx(), Record_ID, trxName);
 
 		return null;
 	}
@@ -88,6 +93,8 @@ public class ModelFactory implements IModelFactory
 			return new MDMSStatus(Env.getCtx(), rs, trxName);
 		else if (tableName.equals(MDMSSubstitute.Table_Name))
 			return new MDMSSubstitute(Env.getCtx(), rs, trxName);
+		else if (tableName.equals(MDMSVersion.Table_Name))
+			return new MDMSVersion(Env.getCtx(), rs, trxName);
 
 		return null;
 	}

@@ -16,10 +16,13 @@ import org.idempiere.dms.DMS;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_MimeType;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
+import org.idempiere.model.MDMSVersion;
 import org.idempiere.model.X_DMS_Content;
 
+// TODO NEED TO CORRECT - Didn't make compatible with versioning implementation
 public class FileSizeFixProcess extends SvrProcess
 {
 
@@ -167,7 +170,7 @@ public class FileSizeFixProcess extends SvrProcess
 	private boolean renameFile(MDMSContent content, MDMSAssociation association, String newName)
 	{
 		boolean flag = false;
-		if (dms.getFileFromStorage(content) != null)
+		if (dms.getFileFromStorage(MDMSVersion.getLatestVersion(content)) != null)
 		{
 			addLog(	content.getDMS_Content_ID() + "| old name [" + content.getName() + "] to new name [" + newName + "] |parentPath [" + content.getParentURL()
 					+ "] | SUCCESS");
@@ -219,6 +222,7 @@ public class FileSizeFixProcess extends SvrProcess
 			int DMS_Content_ID = mdmsContent.getDMS_Content_ID();
 			MDMSContent content = null;
 			MDMSAssociation association = null;
+			I_DMS_Version version = null;
 			try
 			{
 				String sql = "SELECT a.DMS_Content_ID, a.DMS_Association_ID "
@@ -234,7 +238,10 @@ public class FileSizeFixProcess extends SvrProcess
 				{
 					content = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
 					association = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
-					String newVersionName = oldname + "(" + association.getSeqNo() + ")" + mimytype.getFileExtension();
+
+					// TODO - check is it valid SeqNo
+					version = MDMSVersion.getLatestVersion(content);
+					String newVersionName = oldname + "(" + version.getSeqNo() + ")" + mimytype.getFileExtension();
 					// addLog("start rename version : [" + content.getName()
 					// +"] to [" + newVersionName +"] dms_content_id[" +
 					// content.getDMS_Content_ID() + "]" );

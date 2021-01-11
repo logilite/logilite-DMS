@@ -15,21 +15,20 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 
 public class DefaultContentTypeAccessFiltered implements IContentTypeAccess
 {
 
 	@Override
-	public HashMap<I_DMS_Content, I_DMS_Association> getFilteredContentList(HashMap<I_DMS_Content, I_DMS_Association> contentMap) throws DBException
+	public HashMap<I_DMS_Version, I_DMS_Association> getFilteredContentList(HashMap<I_DMS_Version, I_DMS_Association> contentMap) throws DBException
 	{
-
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		ArrayList<Integer> contentIDList = new ArrayList<Integer>();
 		try
 		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_CONTENT_BASED_ON_CONTENTTTYPE_ACCESS, null);
+			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_CONTENT_ON_CONTENTTTYPE_ACCESS, null);
 			pstmt.setInt(1, Env.getAD_Role_ID(Env.getCtx()));
 			rs = pstmt.executeQuery();
 			while (rs.next())
@@ -49,13 +48,14 @@ public class DefaultContentTypeAccessFiltered implements IContentTypeAccess
 		}
 
 		//
-		HashMap<I_DMS_Content, I_DMS_Association> contentsMapFiltered = new HashMap<I_DMS_Content, I_DMS_Association>();
+		HashMap<I_DMS_Version, I_DMS_Association> contentsMapFiltered = new HashMap<I_DMS_Version, I_DMS_Association>();
 
-		Iterator<Entry<I_DMS_Content, I_DMS_Association>> it = contentMap.entrySet().iterator();
+		Iterator<Entry<I_DMS_Version, I_DMS_Association>> it = contentMap.entrySet().iterator();
 		while (it.hasNext())
 		{
-			Map.Entry<I_DMS_Content, I_DMS_Association> mapEntry = (Entry<I_DMS_Content, I_DMS_Association>) it.next();
-			if (contentIDList.contains(mapEntry.getKey().getDMS_Content_ID()) || mapEntry.getKey().getDMS_ContentType_ID() == 0)
+			Map.Entry<I_DMS_Version, I_DMS_Association> mapEntry = (Entry<I_DMS_Version, I_DMS_Association>) it.next();
+			I_DMS_Version version = mapEntry.getKey();
+			if (contentIDList.contains(version.getDMS_Content_ID()) || version.getDMS_Content().getDMS_ContentType_ID() == 0)
 			{
 				contentsMapFiltered.put(mapEntry.getKey(), mapEntry.getValue());
 			}

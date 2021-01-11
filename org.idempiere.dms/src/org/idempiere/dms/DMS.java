@@ -15,7 +15,9 @@ package org.idempiere.dms;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +28,7 @@ import org.compiere.model.PO;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IMountingStrategy;
@@ -39,9 +42,11 @@ import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
+import org.idempiere.model.MDMSVersion;
 
 import com.logilite.search.factory.IIndexSearcher;
 
@@ -99,6 +104,9 @@ public class DMS
 
 		if (indexSearcher == null)
 			throw new AdempiereException("Index server is not found.");
+
+		// When open Document Explorer
+		ssTableInfo = new DMSSubstituteTableInfo(0);
 	} // Constructor
 
 	/**
@@ -204,14 +212,14 @@ public class DMS
 		return dirContent;
 	} // createDirHierarchy
 
-	public String getThumbnailURL(I_DMS_Content content, String size)
+	public String getThumbnailURL(I_DMS_Version version, String size)
 	{
-		return thumbnailProvider.getURL(content, size);
+		return thumbnailProvider.getURL(version, size);
 	} // getThumbnailURL
 
-	public File getThumbnailFile(I_DMS_Content content, String size)
+	public File getThumbnailFile(I_DMS_Version version, String size)
 	{
-		return thumbnailProvider.getFile(content, size);
+		return thumbnailProvider.getFile(version, size);
 	} // getThumbnailFile
 
 	public MImage getDirThumbnail()
@@ -229,14 +237,19 @@ public class DMS
 		return contentManager.getPathByValue(content);
 	} // getPathFromContentManager
 
+	public String getPathFromContentManager(I_DMS_Version version)
+	{
+		return contentManager.getPathByValue(version);
+	} // getPathFromContentManager
+
 	public String getActualFileOrDirName(String contentType, I_DMS_Content content, String fileName, String extention, String type, String operationType)
 	{
 		return contentManager.getContentName(fileStorageProvider, contentType, content, fileName, extention, type, operationType);
 	} // getActualFileOrDirName
 
-	public File getFileFromStorage(I_DMS_Content content)
+	public File getFileFromStorage(I_DMS_Version version)
 	{
-		return fileStorageProvider.getFile(this.getPathFromContentManager(content));
+		return fileStorageProvider.getFile(this.getPathFromContentManager(version));
 	} // getFileFromStorage
 
 	public File getFileFromStorage(String path)
@@ -244,12 +257,21 @@ public class DMS
 		return fileStorageProvider.getFile(path);
 	} // getFileFromStorage
 
-	public String getBaseDirPath(MDMSContent content)
+	public String getBaseDirPath(I_DMS_Content content)
 	{
 		return fileStorageProvider.getBaseDirectory(this.getPathFromContentManager(content));
 	} // getBaseDirPath
 
-	public List<Integer> searchIndex(String query)
+	public String getBaseDirPath(MDMSVersion version)
+	{
+		return fileStorageProvider.getBaseDirectory(this.getPathFromContentManager(version));
+	} // getBaseDirPath
+
+	/*
+	 * Index server util methods
+	 */
+
+	public HashSet<Integer> searchIndex(String query)
 	{
 		return DMSSearchUtils.searchIndex(indexSearcher, query);
 	} // searchIndex
@@ -261,10 +283,29 @@ public class DMS
 
 	public void createIndexContent(MDMSContent content, MDMSAssociation association)
 	{
-		File file = fileStorageProvider.getFile(contentManager.getPathByValue(content));
-		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(content, association, file));
+		this.createIndexContent(content, association, MDMSVersion.getLatestVersion(content, false));
 	} // createIndexContent
 
+	public void createIndexContent(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version)
+	{
+		File file = getFileFromStorage(version);
+		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(content, association, version, file));
+	} // createIndexContent
+
+	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(String searchText, int tableID, int recordID, MDMSContent content)
+	{
+		return DMSSearchUtils.getGenericSearchedContent(this, searchText, validTableID(tableID), validRecordID(recordID), content);
+	} // getGenericSearchedContent
+
+	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
+																			int recordID)
+	{
+		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, validTableID(tableID), validRecordID(recordID));
+	} // renderSearchedContent
+
+	/*
+	 * Initial mounting content creation util methods
+	 */
 	public void initiateMountingContent(String tableName, int recordID, int tableID)
 	{
 		this.initiateMountingContent(Utils.getDMSMountingBase(AD_Client_ID), tableName, recordID, tableID);
@@ -276,28 +317,51 @@ public class DMS
 		Utils.initiateMountingContent(mountingBaseName, validTableName(tableName), validRecordID(recordID), validTableID(tableID));
 	} // initiateMountingContent
 
-	public int createDMSContent(String name, String value, String contentBaseType, String parentURL, String desc, File file, int contentTypeID, int asiID,
+	/*
+	 * Object creation util methods
+	 */
+
+	public int createDMSContent(String name, String contentBaseType, String parentURL, String desc, File file, int contentTypeID, int asiID,
 								boolean isMounting, String trxName)
 	{
-		return MDMSContent.create(name, value, contentBaseType, parentURL, desc, file, contentTypeID, asiID, isMounting, trxName);
+		return MDMSContent.create(name, contentBaseType, parentURL, desc, file, contentTypeID, asiID, isMounting, trxName);
 	} // createDMSContent
 
-	public int createAssociation(int dms_Content_ID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, int seqNo, String trxName)
+	public int createAssociation(int dms_Content_ID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, String trxName)
 	{
-		return MDMSAssociation.create(dms_Content_ID, contentRelatedID, validRecordID(Record_ID), validTableID(AD_Table_ID), associationTypeID, seqNo, trxName);
+		return MDMSAssociation.create(dms_Content_ID, contentRelatedID, validRecordID(Record_ID), validTableID(AD_Table_ID), associationTypeID, trxName);
 	} // createAssociation
+
+	public MDMSVersion createVersion(String value, int contentID, int seqNo, File file, String trxName)
+	{
+		return MDMSVersion.create(contentID, value, seqNo, file, trxName);
+	} // createVersion
+
+	public String createLink(MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
+	{
+		return DMSOprUtils.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
+	} // createLink
+
+	/*
+	 * Content and Association related util methods
+	 */
 
 	public MDMSAssociation getAssociationFromContent(int contentID)
 	{
-		return MDMSAssociation.getAssociationFromContent(contentID, null);
+		return MDMSAssociation.getAssociationFromContent(contentID, true, null);
 	} // getAssociationFromContent
 
-	public MDMSAssociation getAssociationFromContent(int contentID, boolean isLinkAssociationOnly)
+	public List<MDMSAssociation> getLinkableAssociationFromContent(int contentID)
 	{
-		return MDMSAssociation.getAssociationFromContent(contentID, isLinkAssociationOnly, null);
-	} // getAssociationFromContent
+		return MDMSAssociation.getLinkableAssociationFromContent(contentID, true);
+	} // getLinkableAssociationFromContent
 
-	public HashMap<I_DMS_Content, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, boolean isActiveOnly)
+	public List<MDMSAssociation> getLinkableAssociationFromContent(int contentID, boolean isActiveOnly)
+	{
+		return MDMSAssociation.getLinkableAssociationFromContent(contentID, isActiveOnly);
+	} // getLinkableAssociationFromContent
+
+	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, boolean isActiveOnly)
 	{
 		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, isActiveOnly);
 	} // getDMSContentsWithAssociation
@@ -307,9 +371,10 @@ public class DMS
 		return ((MDMSContent) content).getLinkableAssociationWithContentRelated();
 	} // getLinkableAssociationWithContentRelated
 
-	/**
-	 * Adding files and File Version
+	/*
+	 * Add file util methods
 	 */
+
 	public int addFile(File file)
 	{
 		return addFile(null, file);
@@ -350,8 +415,8 @@ public class DMS
 		return DMSOprUtils.addFile(this, parentContent, file, name, desc, contentTypeID, asiID, validTableID(AD_Table_ID), validRecordID(Record_ID), false);
 	} // addFile
 
-	/**
-	 * Add Version File
+	/*
+	 * Add Version File util methods
 	 */
 	public int addFileVersion(int DMS_Content_ID, File file)
 	{
@@ -374,9 +439,10 @@ public class DMS
 		return DMSOprUtils.addFile(this, parentContent, file, null, desc, 0, 0, validTableID(AD_Table_ID), validRecordID(Record_ID), true);
 	} // addFileVersion
 
-	/**
-	 * Select Content
+	/*
+	 * Select Content util methods
 	 */
+
 	public MDMSContent[] selectContent(String dirPath)
 	{
 		// TODO
@@ -389,8 +455,8 @@ public class DMS
 		return null;
 	} // selectContent
 
-	/**
-	 * Other operations on Content
+	/*
+	 * Other operations on Content util methods
 	 */
 
 	/**
@@ -434,16 +500,31 @@ public class DMS
 	/**
 	 * Rename Content File/Directory
 	 * 
-	 * @param fileName
-	 * @param content
-	 * @param parent_Content
-	 * @param tableID
-	 * @param recordID
+	 * @param      fileName
+	 * @param      content
+	 * @param      parent_Content
+	 * @param      tableID
+	 * @param      recordID
+	 * @deprecated                After version table implementation no required to utilize
+	 *                            this method, Just need to re-index its all versioning content
+	 *                            if it is a content document.
 	 */
 	public void renameContent(String fileName, MDMSContent content, MDMSContent parent_Content, int tableID, int recordID)
 	{
 		DMSOprUtils.renameContent(this, fileName, content, parent_Content, validTableID(tableID), validRecordID(recordID), isDocExplorerWindow);
 	} // renameContent
+
+	/**
+	 * Rename Content File/Directory only in Content not in physical path
+	 * 
+	 * @param content     - Content
+	 * @param fileName    - File name - without extension
+	 * @param description - Description for the content
+	 */
+	public void renameContentOnly(MDMSContent content, String fileName, String description)
+	{
+		DMSOprUtils.renameContentOnly(this, content, fileName, description, isDocExplorerWindow);
+	} // renameContentOnly
 
 	/**
 	 * Rename File
@@ -457,11 +538,6 @@ public class DMS
 	{
 		DMSOprUtils.renameFile(this, content, fileName, isAddFileExtention);
 	} // renameFile
-
-	public String createLink(MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
-	{
-		return DMSOprUtils.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
-	} // createLink
 
 	/**
 	 * Delete Content from Storage and DB entry
@@ -483,7 +559,19 @@ public class DMS
 	 */
 	public void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isDeleteLinkableRefs)
 	{
-		DMSOprUtils.deleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs);
+		String trxName = Trx.createTrxName("DeleteContent");
+		Trx trx = Trx.get(trxName, true);
+
+		DMSOprUtils.deleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
+
+		try
+		{
+			trx.commit(true);
+		}
+		catch (SQLException e)
+		{
+			throw new AdempiereException("Error while committing transaction for delete content:" + e.getLocalizedMessage(), e);
+		}
 	} // deleteContent
 
 	/**
@@ -497,17 +585,6 @@ public class DMS
 	{
 		return DMSOprUtils.hasLinkableDocs(this, content, association);
 	} // hasLinkableDocs
-
-	public HashMap<I_DMS_Content, I_DMS_Association> getGenericSearchedContent(String searchText, int tableID, int recordID, MDMSContent content)
-	{
-		return DMSSearchUtils.getGenericSearchedContent(this, searchText, validTableID(tableID), validRecordID(recordID), content);
-	} // getGenericSearchedContent
-
-	public HashMap<I_DMS_Content, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
-																			int recordID)
-	{
-		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, validTableID(tableID), validRecordID(recordID));
-	} // renderSearchedContent
 
 	/**
 	 * Check copy/cut content exists in same Hierarchy.

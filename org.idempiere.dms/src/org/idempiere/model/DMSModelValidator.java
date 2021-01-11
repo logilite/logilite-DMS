@@ -1,31 +1,23 @@
 package org.idempiere.model;
 
-import java.io.File;
-import java.util.Map;
+import java.util.List;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MClient;
+import org.compiere.model.MTable;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.ModelValidator;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
-import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.TrxEventListener;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSSearchUtils;
-
-import com.logilite.search.factory.IIndexSearcher;
-import com.logilite.search.factory.ServiceUtils;
 
 public class DMSModelValidator implements ModelValidator
 {
-
 	private int				m_AD_Client_ID;
 	private static CLogger	log	= CLogger.getCLogger(DMSModelValidator.class);
 
@@ -40,6 +32,7 @@ public class DMSModelValidator implements ModelValidator
 				log.info(client.toString());
 		}
 
+		engine.addModelChange(MDMSVersion.Table_Name, this);
 		engine.addModelChange(MDMSContent.Table_Name, this);
 		engine.addModelChange(MDMSAssociation.Table_Name, this);
 		engine.addModelChange(MAttributeInstance.Table_Name, this);
@@ -64,52 +57,44 @@ public class DMSModelValidator implements ModelValidator
 		 * Before save event of attributeInstance table Set indexed flag on
 		 * change of attribute value
 		 */
-		if (MAttributeInstance.Table_Name.equals(po.get_TableName())
-			&& type == TYPE_BEFORE_CHANGE
-			&& (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value)
-				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueDate)
-				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber)))
+		if (MAttributeInstance.Table_Name.equals(po.get_TableName()) && type == TYPE_AFTER_CHANGE)
 		{
 			MAttributeInstance attributeInstance = (MAttributeInstance) po;
-
-			int dmsContentID = DB.getSQLValue(	po.get_TrxName(), "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? ",
-												attributeInstance.getM_AttributeSetInstance_ID());
-
-			if (dmsContentID > 0)
+			if (po.is_ValueChanged(MAttributeInstance.COLUMNNAME_Value)
+				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueDate)
+				|| po.is_ValueChanged(MAttributeInstance.COLUMNNAME_ValueNumber))
 			{
-				MDMSContent content = new MDMSContent(po.getCtx(), dmsContentID, po.get_TrxName());
-				content.setIsIndexed(false);
-				content.saveEx();
+				int contentID = DB.getSQLValue(po.get_TrxName(), DMSConstant.SQL_CONTENT_FROM_ASI, attributeInstance.getM_AttributeSetInstance_ID());
+				if (contentID > 0)
+				{
+					doReIndexInAllVersions((MDMSContent) MTable.get(po.getCtx(), MDMSContent.Table_ID).getPO(contentID, po.get_TrxName()));
+				}
 			}
 		}
-
-		/*
-		 * Before Save event Set isIndexed flag false for eligible for create
-		 * index again
-		 */
-		if (MDMSContent.Table_Name.equals(po.get_TableName())
-			&& type == TYPE_BEFORE_CHANGE
-			&& (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
+		else if (MDMSContent.Table_Name.equals(po.get_TableName()) && type == TYPE_AFTER_CHANGE)
+		{
+			if (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
+				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)
 				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
 				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)
 				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_DMS_ContentType_ID)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_M_AttributeSetInstance_ID)))
-		{
-			MDMSContent dmsContent = (MDMSContent) po;
-			dmsContent.setIsIndexed(false);
-		}
-
-		/*
-		 * After Save event Create Indexing after commit transaction.
-		 */
-		if (MDMSContent.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE))
-		{
-			final MDMSContent content = (MDMSContent) po;
-
-			if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !content.isIndexed())
+				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_M_AttributeSetInstance_ID))
 			{
-				Trx trx = Trx.get(content.get_TrxName(), false);
+				MDMSContent content = (MDMSContent) po;
+				doReIndexInAllVersions(content);
+			}
+		}
+		else if ((MDMSVersion.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE)))
+		{
+			/*
+			 * Create Indexing after commit transaction.
+			 */
+			final MDMSVersion version = (MDMSVersion) po;
+			final MDMSContent content = (MDMSContent) version.getDMS_Content();
+
+			if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed())
+			{
+				Trx trx = Trx.get(version.get_TrxName(), false);
 				if (trx != null)
 				{
 					trx.addTrxEventListener(new TrxEventListener() {
@@ -117,54 +102,30 @@ public class DMSModelValidator implements ModelValidator
 						@Override
 						public void afterCommit(Trx trx, boolean success)
 						{
-							MDMSAssociation association = MDMSAssociation.getAssociationFromContent(content.getDMS_Content_ID(), null);
-
-							IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(Env.getAD_Client_ID(Env.getCtx()));
-
-							if (indexSeracher == null)
+							if (success)
 							{
-								throw new AdempiereException("Index Server not found");
-							}
+								MDMSAssociation association = MDMSAssociation.getAssociationFromContent(content.getDMS_Content_ID(), false, null);
 
-							IFileStorageProvider fsProvider = FileStorageUtil.get(Env.getAD_Client_ID(Env.getCtx()), false);
-							if (fsProvider == null)
-								throw new AdempiereException("Storage provider is not define on clientInfo.");
+								// Delete index for version wise and create same
+								String deleteIndexQuery = DMSConstant.DMS_VERSION_ID + ":" + version.getDMS_Version_ID();
+								DMSSearchUtils.doIndexingInServer(content, association, version, deleteIndexQuery);
 
-							IContentManager contentManager = DMSFactoryUtils.getContentManager(Env.getAD_Client_ID(Env.getCtx()));
-							if (contentManager == null)
-								throw new AdempiereException("Content manager is not found.");
-
-							// Delete existing index
-							indexSeracher.deleteIndexByField(DMSConstant.DMS_CONTENT_ID, "" + content.getDMS_Content_ID());
-
-							// Create index
-							File file = fsProvider.getFile(contentManager.getPathByValue(content));
-							Map<String, Object> solrValue = DMSSearchUtils.createIndexMap(content, association, file);
-							indexSeracher.indexContent(solrValue);
-
-							// Update the value of IsIndexed flag in Content
-							if (!content.isIndexed())
-							{
-								DB.executeUpdate("UPDATE DMS_Content SET IsIndexed = 'Y' WHERE DMS_Content_ID = ? ", content.get_ID(), null);
-							}
-
-							if (content.isSyncIndexForLinkableDocs())
-							{
-								// Create index of Linkable docs is exists
-								int[] linkAssociationIDs = DB.getIDsEx(	null, DMSConstant.SQL_LINK_ASSOCIATIONS_FROM_RELATED_TO_CONTENT,
-																		MDMSAssociationType.VERSION_ID, content.getDMS_Content_ID(),
-																		content.getDMS_Content_ID(), MDMSAssociationType.VERSION_ID);
-
-								for (int linkAssociationID : linkAssociationIDs)
+								/***
+								 * Get linkable association and do indexing for same
+								 */
+								List<MDMSAssociation> associationList = MDMSAssociation.getLinkableAssociationFromContent(version.getDMS_Content_ID(), false);
+								for (MDMSAssociation linkAssociation : associationList)
 								{
-									MDMSAssociation associationLink = new MDMSAssociation(Env.getCtx(), linkAssociationID, null);
+									I_DMS_Content linkContent = linkAssociation.getDMS_Content();
+									I_DMS_Version linkVersion = MDMSVersion.getLatestVersion(linkContent, false);
 
-									solrValue = DMSSearchUtils.createIndexMap(content, associationLink, file);
-
-									indexSeracher.indexContent(solrValue);
+									// Delete index for linkable association and Create indexing
+									deleteIndexQuery = DMSConstant.DMS_ASSOCIATION_ID + ":" + linkAssociation.getDMS_Association_ID();
+									DMSSearchUtils.doIndexingInServer(linkContent, linkAssociation, linkVersion, deleteIndexQuery);
 								}
 							}
 						}
+
 
 						@Override
 						public void afterRollback(Trx trx, boolean success)
@@ -181,17 +142,16 @@ public class DMSModelValidator implements ModelValidator
 		}
 		else if (MDMSAssociation.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE))
 		{
-			// For index changes of deleting linkable content.
+			// Index creation for any changes in linkable association
 			MDMSAssociation association = (MDMSAssociation) po;
 			if (MDMSAssociationType.isLink(association)
 				&& association.getDMS_Content().isActive()
-				&& association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)
-				&& !association.isActive())
+				&& (type == TYPE_AFTER_NEW || association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)))
 			{
 				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
-				linkContent.setIsIndexed(false);
-				linkContent.setSyncIndexForLinkableDocs(true);
-				linkContent.saveEx();
+				//
+				String deleteIndexQuery = DMSConstant.DMS_ASSOCIATION_ID + ":" + association.getDMS_Association_ID();
+				DMSSearchUtils.doIndexingInServer(linkContent, association, MDMSVersion.getLatestVersion(linkContent), deleteIndexQuery);
 			}
 		}
 
@@ -203,5 +163,21 @@ public class DMSModelValidator implements ModelValidator
 	{
 		return null;
 	}
+
+	public void doReIndexInAllVersions(MDMSContent content)
+	{
+		for (MDMSVersion version : MDMSVersion.getVersionHistory(content))
+		{
+			// if indexed false then need to fire model validator event for value change
+			if (!version.isIndexed())
+			{
+				version.setIsIndexed(true);
+				version.save();
+			}
+
+			version.setIsIndexed(false);
+			version.save(content.get_TrxName());
+		}
+	} // doReIndexInAllVersions
 
 }

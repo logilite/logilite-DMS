@@ -60,9 +60,11 @@ import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
+import org.idempiere.model.MDMSVersion;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -117,7 +119,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	private DMS					dms;
 	private MDMSContent			content					= null;
 	private MDMSContent			parentContent			= null;
-	private MDMSContent			contentVersionSeleted	= null;
+	private MDMSVersion			versionSelected			= null;
 
 	private Tabbox				tabBox					= null;
 	private ConfirmPanel		confirmPanel			= null;
@@ -215,7 +217,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		tabpanelsAttribute.setWidth("100%");
 
 		tabpanelsAttribute.appendChild(tabpanelVersionHitory);
-		if (ClientInfo.maxHeight(500)) // TODO Check working
+		if (ClientInfo.maxHeight(500))
 			ZKUpdateUtil.setWindowHeightX(tabpanelVersionHitory, (ClientInfo.get().desktopHeight - 100));
 		else
 			tabpanelVersionHitory.setHeight("500px");
@@ -309,9 +311,9 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 
 		MDMSAssociation dmsAssociation = dms.getAssociationFromContent(content.getDMS_Content_ID());
 
-		HashMap<I_DMS_Content, I_DMS_Association> contentsMap = new HashMap<I_DMS_Content, I_DMS_Association>();
-		List<I_DMS_Content> contentVersions = MDMSContent.getVersionHistory(content);
-		for (I_DMS_Content contentVersion : contentVersions)
+		HashMap<I_DMS_Version, I_DMS_Association> contentsMap = new HashMap<I_DMS_Version, I_DMS_Association>();
+		List<MDMSVersion> contentVersions = MDMSVersion.getVersionHistory(content);
+		for (MDMSVersion contentVersion : contentVersions)
 		{
 			contentsMap.put(contentVersion, dmsAssociation);
 		}
@@ -328,7 +330,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	{
 		Components.removeAllChildren(tabpanelAttribute);
 		Grid commGrid = GridFactory.newGridLayout();
-
 
 		Rows rows = new Rows();
 
@@ -492,10 +493,10 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 			// Resolve NPE after file rename and try to download
 			content.load(content.get_TrxName());
 			//
-			if (contentVersionSeleted != null)
-				DMS_ZK_Util.downloadDocument(dms, contentVersionSeleted);
+			if (versionSelected != null)
+				DMS_ZK_Util.downloadDocument(dms, versionSelected);
 			else
-				DMS_ZK_Util.downloadDocument(dms, content);
+				DMS_ZK_Util.downloadDocument(dms, MDMSVersion.getLatestVersion(content));
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
 		{
@@ -526,13 +527,12 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		}
 		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Row.class))
 		{
-			contentVersionSeleted = (MDMSContent) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
-			DMS_ZK_Util.downloadDocument(dms, contentVersionSeleted);
+			versionSelected = (MDMSVersion) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION);
+			DMS_ZK_Util.downloadDocument(dms, versionSelected);
 		}
 		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Row.class))
 		{
-			contentVersionSeleted = (MDMSContent) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
-
+			versionSelected = (MDMSVersion) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION);
 		}
 	} // onEvent
 

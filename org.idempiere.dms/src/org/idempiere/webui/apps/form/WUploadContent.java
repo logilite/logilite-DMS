@@ -13,6 +13,7 @@
 
 package org.idempiere.webui.apps.form;
 
+import com.logilite.esignature.topaz.webui.component.SignatureImgBox;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -67,7 +68,6 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Space;
 
-import com.logilite.esignature.topaz.webui.component.SignatureImgBox;
 
 public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
 {
@@ -232,7 +232,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			row.appendCellChild(lblSignature);
 			row.appendCellChild(signatureBox, 2);
 			signatureBox.addEventListener(Events.ON_CHANGE, this);
-			signatureBox.setContent(null);
 		}
 
 		row = rows.newRow();
@@ -297,7 +296,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			isCancel = true;
 			this.detach();
 		}
-		else if (e.getTarget().equals(signatureBox))
+		else if (e.getTarget().equals(signatureBox.getImage()))
 		{
 			signatureBox.setContent(signatureBox.getAImage());
 			if (signatureBox.getAImage() != null)

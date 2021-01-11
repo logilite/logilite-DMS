@@ -27,10 +27,12 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 	public static final String	TYPE_PARENT			= "Parent";
 	public static final String	TYPE_RECORD			= "Record";
 	public static final String	TYPE_LINK			= "Link";
-	// Extra Type for Renaming the content [ Out of the Record ]
+	/**
+	 * Extra Type for Renaming the content [ Out of the Record ]
+	 */
 	public static final String	TYPE_VERSIONPARENT	= "VersionParent";
 
-	public static final int		VERSION_ID			= 1000000;
+	// public static final int VERSION_ID = 1000000;
 	public static final int		PARENT_ID			= 1000001;
 	public static final int		RECORD_ID			= 1000002;
 	public static final int		LINK_ID				= 1000003;
@@ -43,11 +45,6 @@ public class MDMSAssociationType extends X_DMS_AssociationType
 	public MDMSAssociationType(Properties ctx, ResultSet rs, String trxName)
 	{
 		super(ctx, rs, trxName);
-	}
-
-	public static int getVersionType(boolean isParent)
-	{
-		return isParent ? PARENT_ID : VERSION_ID;
 	}
 
 	/**
