@@ -115,7 +115,7 @@ public class DMSOprUtils
 
 			MDMSContentType cType = new MDMSContentType(Env.getCtx(), contentTypeID, trx.getTrxName());
 			if (attributeMap != null && !attributeMap.isEmpty())
-				asiID = Utils.createASI(attributeMap, cType.getM_AttributeSet_ID(), trx.getTrxName());
+				asiID = Utils.createOrUpdateASI(attributeMap, 0, cType.getM_AttributeSet_ID(), trx.getTrxName());
 		}
 
 		try
@@ -169,7 +169,7 @@ public class DMSOprUtils
 		finally
 		{
 			if (trx != null)
-			{	
+			{
 				if (isError)
 				{
 					trx.rollback();
@@ -254,7 +254,7 @@ public class DMSOprUtils
 		// check if file exists
 		if (!isVersion)
 		{
-			dms_content_id = Utils.checkExistsFileDir(parentURL, fileName);
+			dms_content_id = Utils.checkExistsFileDir(parentURL, fileName, true);
 		}
 
 		if (dms_content_id > 0)
@@ -289,6 +289,38 @@ public class DMSOprUtils
 			return parentContent.get_ID();
 		}
 	} // createContentAssociationFileStoreAndThumnail
+
+	public static void updateContentTypeAndAttribute(DMS dms, int contentID, String contentType, Map<String, String> attributeMap)
+	{
+		String trxName = Trx.createTrxName("UpdateAttrs");
+		Trx trx = Trx.get(trxName, true);
+
+		try
+		{
+			int contentTypeID = 0;
+			int asiID = 0;
+
+			MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(contentID, trx.getTrxName());
+			if (!Util.isEmpty(contentType, true))
+			{
+				contentTypeID = MDMSContentType.getContentTypeIDFromName(contentType, dms.AD_Client_ID);
+				MDMSContentType cType = (MDMSContentType) MTable.get(Env.getCtx(), MDMSContentType.Table_ID).getPO(contentTypeID, trx.getTrxName());
+				if (attributeMap != null && !attributeMap.isEmpty())
+					asiID = Utils.createOrUpdateASI(attributeMap, content.getM_AttributeSetInstance_ID(), cType.getM_AttributeSet_ID(), trx.getTrxName());
+			}
+
+			content.setDMS_ContentType_ID(contentTypeID);
+			content.setM_AttributeSetInstance_ID(asiID);
+			content.saveEx();
+		}
+		finally
+		{
+			if (trx != null)
+			{
+				trx.close();
+			}
+		}
+	}
 
 	/**
 	 * File write on Storage provider and create thumbnail

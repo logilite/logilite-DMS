@@ -440,6 +440,15 @@ public class DMS
 	} // addFileVersion
 
 	/*
+	 * Update Content util methods
+	 */
+
+	public void updateContentTypeAndAttribute(int contentID, String contentType, Map<String, String> attributeMap)
+	{
+		DMSOprUtils.updateContentTypeAndAttribute(this, contentID, contentType, attributeMap);
+	}
+
+	/*
 	 * Select Content util methods
 	 */
 

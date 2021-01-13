@@ -51,6 +51,7 @@ import org.compiere.model.MClientInfo;
 import org.compiere.model.MImage;
 import org.compiere.model.MStorageProvider;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CCache;
@@ -486,17 +487,26 @@ public class Utils
 	 * 
 	 * @param  asiMap          - Map of Key & Value of the attribute set
 	 * @param  attributeSet_ID
+	 * @param  existingASIID
 	 * @param  trxName
 	 * @return                 ASI_ID
 	 */
-	public static int createASI(Map<String, String> asiMap, int attributeSet_ID, String trxName)
+	public static int createOrUpdateASI(Map<String, String> asiMap, int existingASIID, int attributeSet_ID, String trxName)
 	{
 		int asiID = 0;
 
 		if (asiMap != null && asiMap.size() > 0)
 		{
-			MAttributeSetInstance asi = new MAttributeSetInstance(Env.getCtx(), 0, attributeSet_ID, trxName);
-			asi.saveEx();
+			MAttributeSetInstance asi;
+			if (existingASIID > 0)
+			{
+				asi = (MAttributeSetInstance) MTable.get(Env.getCtx(), MAttributeSetInstance.Table_ID).getPO(existingASIID, trxName);
+			}
+			else
+			{
+				asi = new MAttributeSetInstance(Env.getCtx(), 0, attributeSet_ID, trxName);
+				asi.saveEx();
+			}
 
 			asiID = asi.getM_AttributeSetInstance_ID();
 			MAttributeSet attrSet = new MAttributeSet(Env.getCtx(), attributeSet_ID, trxName);
@@ -513,7 +523,8 @@ public class Utils
 						String value = asiMap.get(key);
 						boolean isMandatory = attrs[i].isMandatory();
 
-						if (isMandatory && Util.isEmpty(value, true))
+						if ((isMandatory && Util.isEmpty(value, true) && existingASIID <= 0)
+							|| (existingASIID > 0 && attrs[i].getMAttributeInstance(existingASIID).getValue() == null))
 							throw new AdempiereException("Fill Mandatory Attribute:" + key);
 
 						if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attrs[i].getAttributeValueType()))
@@ -590,7 +601,7 @@ public class Utils
 		}
 
 		return asiID;
-	} // createASI
+	} // createOrUpdateASI
 
 	/**
 	 * Copy/Duplicate ASI Create
@@ -760,23 +771,30 @@ public class Utils
 
 	public static int checkExistsDir(String ParentURL, String dirName)
 	{
-		return checkContentExists(ParentURL, dirName, false);
+		return checkContentExists(ParentURL, dirName, false, false);
 	}
 
 	public static int checkExistsFileDir(String parentURL, String contentName)
 	{
-		return checkContentExists(parentURL, contentName, true);
+		return checkExistsFileDir(parentURL, contentName, false);
 	}
 
-	public static int checkContentExists(String parentURL, String contentName, boolean isCheckByContentName)
+	public static int checkExistsFileDir(String parentURL, String contentName, boolean isActiveOnly)
+	{
+		return checkContentExists(parentURL, contentName, isActiveOnly, true);
+	}
+
+	public static int checkContentExists(String parentURL, String contentName, boolean isActiveOnly, boolean isCheckByContentName)
 	{
 		int DMS_Content_ID = 0;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement(isCheckByContentName ? DMSConstant.SQL_GET_CONTENT_ID_BY_CONTENT_NAME : DMSConstant.SQL_GET_CONTENT_ID_BY_CONTENT_VALUE,
-										null);
+			String sql = isCheckByContentName ? DMSConstant.SQL_GET_CONTENT_ID_BY_CONTENT_NAME : DMSConstant.SQL_GET_CONTENT_ID_BY_CONTENT_VALUE;
+			sql += isActiveOnly ? " c.IsActive = 'Y' " : "";
+
+			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setString(2, contentName);
 			if (!Util.isEmpty(parentURL, true))
