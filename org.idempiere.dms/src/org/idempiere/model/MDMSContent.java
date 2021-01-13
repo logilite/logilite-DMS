@@ -191,7 +191,7 @@ public class MDMSContent extends X_DMS_Content
 		}
 		else
 		{
-			MDMSAssociation DMSAssociation = MDMSAssociation.getAssociationFromContent(getDMS_Content_ID(), true, null);
+			MDMSAssociation DMSAssociation = MDMSAssociation.getParentAssociationFromContent(getDMS_Content_ID(), true, null);
 
 			if (DMSAssociation.getDMS_Content_Related_ID() > 0)
 			{

@@ -93,7 +93,6 @@ public class DMSSearchUtils
 			pstmt.setInt(i++, contentID);
 			pstmt.setInt(i++, contentID);
 
-			System.out.println(" contentID = " + contentID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{

@@ -104,7 +104,7 @@ public class DMSModelValidator implements ModelValidator
 						{
 							if (success)
 							{
-								MDMSAssociation association = MDMSAssociation.getAssociationFromContent(content.getDMS_Content_ID(), false, null);
+								MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), false, null);
 
 								// Delete index for version wise and create same
 								String deleteIndexQuery = DMSConstant.DMS_VERSION_ID + ":" + version.getDMS_Version_ID();

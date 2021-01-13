@@ -792,7 +792,7 @@ public class Utils
 		try
 		{
 			String sql = isCheckByContentName ? DMSConstant.SQL_GET_CONTENT_ID_BY_CONTENT_NAME : DMSConstant.SQL_GET_CONTENT_ID_BY_CONTENT_VALUE;
-			sql += isActiveOnly ? " c.IsActive = 'Y' " : "";
+			sql += isActiveOnly ? " AND c.IsActive = 'Y' " : "";
 
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, Env.getAD_Client_ID(Env.getCtx()));
