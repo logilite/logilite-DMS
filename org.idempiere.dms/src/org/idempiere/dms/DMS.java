@@ -445,12 +445,17 @@ public class DMS
 	} // addFileVersion
 
 	/*
-	 * Update Content util methods
+	 * Update Content/Association util methods
 	 */
 
 	public void updateContentTypeAndAttribute(int contentID, String contentType, Map<String, String> attributeMap)
 	{
 		DMSOprUtils.updateContentTypeAndAttribute(this, contentID, contentType, attributeMap);
+	}
+
+	public void updateAssociation(MDMSAssociation association, int AD_Table_ID, int Record_ID)
+	{
+		association.updateTableRecordRef(validTableID(AD_Table_ID), validRecordID(Record_ID));
 	}
 
 	/*
