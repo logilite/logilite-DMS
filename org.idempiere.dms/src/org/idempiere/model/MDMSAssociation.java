@@ -96,7 +96,7 @@ public class MDMSAssociation extends X_DMS_Association
 	 */
 	public static List<MDMSAssociation> getLinkableAssociationFromContent(int contentID, boolean isActiveOnly)
 	{
-		return MDMSAssociation.getAssociationFromContent(contentID, isActiveOnly, true, null);
+		return MDMSAssociation.getAssociationFromContent(contentID, MDMSAssociationType.LINK_ID, isActiveOnly, null);
 	} // getLinkableAssociationFromContent
 
 	/**
@@ -107,29 +107,30 @@ public class MDMSAssociation extends X_DMS_Association
 	 * @param  trxName
 	 * @return              {@link MDMSAssociation} - Non-Linkable Association
 	 */
-	public static MDMSAssociation getAssociationFromContent(int contentID, boolean isActiveOnly, String trxName)
+	public static MDMSAssociation getParentAssociationFromContent(int contentID, boolean isActiveOnly, String trxName)
 	{
-		List<MDMSAssociation> list = MDMSAssociation.getAssociationFromContent(contentID, isActiveOnly, false, trxName);
+		List<MDMSAssociation> list = MDMSAssociation.getAssociationFromContent(contentID, MDMSAssociationType.PARENT_ID, isActiveOnly, trxName);
 		if (list.size() > 0)
 			return list.get(0);
 		return null;
-	} // getAssociationFromContent
+	} // getParentAssociationFromContent
 
 	/**
 	 * Get association from content ID with/without referring linkable association
 	 * 
-	 * @param  contentID
-	 * @param  isActiveOnly          - If TRUE then Only Active Records else all
-	 * @param  isLinkAssociationOnly - True if only Get Linkable Association list
+	 * @param  contentID         - DMS Content ID
+	 * @param  associationTypeID - Association Type ID
+	 * @param  isActiveOnly      - If TRUE then Only Active Records else all
 	 * @param  trxName
-	 * @return                       List of MDMSAssociation
+	 * @return                   List of MDMSAssociation
 	 */
-	public static List<MDMSAssociation> getAssociationFromContent(int contentID, boolean isActiveOnly, boolean isLinkAssociationOnly, String trxName)
+	public static List<MDMSAssociation> getAssociationFromContent(int contentID, int associationTypeID, boolean isActiveOnly, String trxName)
 	{
-		String whereClause = " DMS_Content_ID=? AND NVL(DMS_AssociationType_ID, 0) " + (isLinkAssociationOnly ? " = 1000003 " : " IN (0, 1000001) ");
+		String whereClause = " DMS_Content_ID=? AND NVL(DMS_AssociationType_ID, 0) "
+								+ (associationTypeID == MDMSAssociationType.PARENT_ID ? " IN (0, ?)" : " = ? ");
 		Query query = new Query(Env.getCtx(), MDMSAssociation.Table_Name, whereClause, trxName);
 		query.setClient_ID();
-		query.setParameters(contentID);
+		query.setParameters(contentID, associationTypeID);
 		query.setOnlyActiveRecords(isActiveOnly);
 		List<MDMSAssociation> associationList = query.list();
 		return associationList;

@@ -102,7 +102,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 	public String renderDMSVersion(MDMSContent DMS_Content) throws IOException
 	{
-		MDMSAssociation association = dms.getAssociationFromContent(DMS_Content.getDMS_Content_ID());
+		MDMSAssociation association = dms.getParentAssociationFromContent(DMS_Content.getDMS_Content_ID());
 
 		List<MDMSVersion> versionList = MDMSVersion.getVersionHistory(DMS_Content);
 		if (versionList.size() == 0)

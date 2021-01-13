@@ -346,10 +346,15 @@ public class DMS
 	 * Content and Association related util methods
 	 */
 
-	public MDMSAssociation getAssociationFromContent(int contentID)
+	public List<MDMSAssociation> getAssociationFromContent(int contentID, int associationTypeID, boolean isActiveOnly, String trxName)
 	{
-		return MDMSAssociation.getAssociationFromContent(contentID, true, null);
+		return MDMSAssociation.getAssociationFromContent(contentID, associationTypeID, isActiveOnly, trxName);
 	} // getAssociationFromContent
+
+	public MDMSAssociation getParentAssociationFromContent(int contentID)
+	{
+		return MDMSAssociation.getParentAssociationFromContent(contentID, true, null);
+	} // getParentAssociationFromContent
 
 	public List<MDMSAssociation> getLinkableAssociationFromContent(int contentID)
 	{
