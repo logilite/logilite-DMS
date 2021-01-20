@@ -353,7 +353,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			if (DMSContent != null && DMSContent.getDMS_Content_ID() > 0)
 			{
-				MDMSAssociation destAssociation = dms.getAssociationFromContent(DMSContent.getDMS_Content_ID());
+				MDMSAssociation destAssociation = dms.getParentAssociationFromContent(DMSContent.getDMS_Content_ID());
 				tableID = destAssociation.getAD_Table_ID();
 				recordID = destAssociation.getRecord_ID();
 			}

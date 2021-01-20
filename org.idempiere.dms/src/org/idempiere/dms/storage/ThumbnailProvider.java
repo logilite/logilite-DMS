@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.compiere.model.MStorageProvider;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
@@ -109,6 +110,8 @@ public class ThumbnailProvider implements IThumbnailProvider
 
 		if (!Util.isEmpty(size, true))
 			path += "-" + size;
+		else
+			path += "-" + MSysConfig.getValue(DMS_THUMBNAILS_SIZES, "150,300,500").split(",")[0];
 
 		return path + ".jpg";
 	}

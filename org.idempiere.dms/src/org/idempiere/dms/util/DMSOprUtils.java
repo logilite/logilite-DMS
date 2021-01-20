@@ -115,7 +115,7 @@ public class DMSOprUtils
 
 			MDMSContentType cType = new MDMSContentType(Env.getCtx(), contentTypeID, trx.getTrxName());
 			if (attributeMap != null && !attributeMap.isEmpty())
-				asiID = Utils.createASI(attributeMap, cType.getM_AttributeSet_ID(), trx.getTrxName());
+				asiID = Utils.createOrUpdateASI(attributeMap, 0, cType.getM_AttributeSet_ID(), trx.getTrxName());
 		}
 
 		try
@@ -169,7 +169,7 @@ public class DMSOprUtils
 		finally
 		{
 			if (trx != null)
-			{	
+			{
 				if (isError)
 				{
 					trx.rollback();
@@ -254,7 +254,7 @@ public class DMSOprUtils
 		// check if file exists
 		if (!isVersion)
 		{
-			dms_content_id = Utils.checkExistsFileDir(parentURL, fileName);
+			dms_content_id = Utils.checkExistsFileDir(parentURL, fileName, true);
 		}
 
 		if (dms_content_id > 0)
@@ -289,6 +289,38 @@ public class DMSOprUtils
 			return parentContent.get_ID();
 		}
 	} // createContentAssociationFileStoreAndThumnail
+
+	public static void updateContentTypeAndAttribute(DMS dms, int contentID, String contentType, Map<String, String> attributeMap)
+	{
+		String trxName = Trx.createTrxName("UpdateAttrs");
+		Trx trx = Trx.get(trxName, true);
+
+		try
+		{
+			int contentTypeID = 0;
+			int asiID = 0;
+
+			MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(contentID, trx.getTrxName());
+			if (!Util.isEmpty(contentType, true))
+			{
+				contentTypeID = MDMSContentType.getContentTypeIDFromName(contentType, dms.AD_Client_ID);
+				MDMSContentType cType = (MDMSContentType) MTable.get(Env.getCtx(), MDMSContentType.Table_ID).getPO(contentTypeID, trx.getTrxName());
+				if (attributeMap != null && !attributeMap.isEmpty())
+					asiID = Utils.createOrUpdateASI(attributeMap, content.getM_AttributeSetInstance_ID(), cType.getM_AttributeSet_ID(), trx.getTrxName());
+			}
+
+			content.setDMS_ContentType_ID(contentTypeID);
+			content.setM_AttributeSetInstance_ID(asiID);
+			content.saveEx();
+		}
+		finally
+		{
+			if (trx != null)
+			{
+				trx.close();
+			}
+		}
+	}
 
 	/**
 	 * File write on Storage provider and create thumbnail
@@ -660,7 +692,7 @@ public class DMSOprUtils
 	{
 		if (destContent != null && destContent.getDMS_Content_ID() > 0)
 		{
-			MDMSAssociation destAssociation = dms.getAssociationFromContent(destContent.getDMS_Content_ID());
+			MDMSAssociation destAssociation = dms.getParentAssociationFromContent(destContent.getDMS_Content_ID());
 			tableID = destAssociation.getAD_Table_ID();
 			recordID = destAssociation.getRecord_ID();
 		}
@@ -684,7 +716,7 @@ public class DMSOprUtils
 			newDMSContent.saveEx();
 
 			// Copy Association
-			MDMSAssociation oldDMSAssociation = dms.getAssociationFromContent(copiedContent.getDMS_Content_ID());
+			MDMSAssociation oldDMSAssociation = dms.getParentAssociationFromContent(copiedContent.getDMS_Content_ID());
 			MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
 			PO.copyValues(oldDMSAssociation, newDMSAssociation);
 			newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
@@ -805,7 +837,7 @@ public class DMSOprUtils
 
 		if (destContent != null && destContent.getDMS_Content_ID() > 0)
 		{
-			MDMSAssociation destAssociation = dms.getAssociationFromContent(destContent.getDMS_Content_ID());
+			MDMSAssociation destAssociation = dms.getParentAssociationFromContent(destContent.getDMS_Content_ID());
 			tableID = destAssociation.getAD_Table_ID();
 			recordID = destAssociation.getRecord_ID();
 		}
@@ -835,7 +867,7 @@ public class DMSOprUtils
 			DMSOprUtils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
 			dirPath.renameTo(newFile);
 
-			MDMSAssociation association = dms.getAssociationFromContent(cutContent.getDMS_Content_ID());
+			MDMSAssociation association = dms.getParentAssociationFromContent(cutContent.getDMS_Content_ID());
 			if (destContent != null && destContent.getDMS_Content_ID() > 0)
 			{
 				association.setDMS_Content_Related_ID(destContent.getDMS_Content_ID());
@@ -870,7 +902,7 @@ public class DMSOprUtils
 				}
 			}
 
-			MDMSAssociation association = MDMSAssociation.getAssociationFromContent(dmsContent.getDMS_Content_ID(), true, null);
+			MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(dmsContent.getDMS_Content_ID(), true, null);
 			if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID)
 			{
 				if (destContent != null && destContent.getDMS_Content_ID() == 0)
@@ -1115,7 +1147,7 @@ public class DMSOprUtils
 					dmsContent.setParentURL(Utils.replacePath(baseURL, renamedURL, parentURL));
 				DMSOprUtils.renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
 
-				MDMSAssociation associationDir = MDMSAssociation.getAssociationFromContent(dmsContent.getDMS_Content_ID(), false, null);
+				MDMSAssociation associationDir = MDMSAssociation.getParentAssociationFromContent(dmsContent.getDMS_Content_ID(), false, null);
 				associationDir.updateTableRecordRef(tableID, recordID);
 
 				// Note: Must save association first other wise creating issue of wrong info in solr
@@ -1171,7 +1203,7 @@ public class DMSOprUtils
 		if (contentFile.getParentURL().startsWith(baseURL))
 			contentFile.setParentURL(Utils.replacePath(baseURL, renamedURL, contentFile.getParentURL()));
 
-		MDMSAssociation associationFile = MDMSAssociation.getAssociationFromContent(contentFile.getDMS_Content_ID(), false, null);
+		MDMSAssociation associationFile = MDMSAssociation.getParentAssociationFromContent(contentFile.getDMS_Content_ID(), false, null);
 		associationFile.updateTableRecordRef(tableID, recordID);
 
 		// Note: Must save association first other wise creating issue of wrong info in solr
@@ -1179,7 +1211,7 @@ public class DMSOprUtils
 		contentFile.saveEx();
 
 		contentFile = (MDMSContent) associationFile.getDMS_Content_Related();
-		MDMSAssociation as = MDMSAssociation.getAssociationFromContent(contentFile.getDMS_Content_ID(), true, null);
+		MDMSAssociation as = MDMSAssociation.getParentAssociationFromContent(contentFile.getDMS_Content_ID(), true, null);
 		if (contentFile.getDMS_Content_ID() != parentContent.getDMS_Content_ID()
 			&& (as.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID))
 		{
@@ -1312,7 +1344,7 @@ public class DMSOprUtils
 			if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.RECORD_ID)
 			{
 				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
-				MDMSAssociation parentAssociation = dms.getAssociationFromContent(parentContent.getDMS_Content_ID());
+				MDMSAssociation parentAssociation = dms.getParentAssociationFromContent(parentContent.getDMS_Content_ID());
 				setContentAndAssociationInActive(parentContent, parentAssociation, trxName);
 				relatedContentList = DMSOprUtils.getRelatedContents(parentContent);
 			}

@@ -18,6 +18,7 @@ import org.compiere.model.PO;
 import org.compiere.util.CCache;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.MDMSContent;
@@ -41,14 +42,10 @@ public class DefaultMountingStrategy implements IMountingStrategy
 	}
 
 	@Override
-	public MDMSContent getMountingParent(PO po)
-	{
-		return this.getMountingParent(po.get_Table_ID(), po.get_ID());
-	}
-
-	@Override
 	public MDMSContent getMountingParent(String Table_Name, int Record_ID)
 	{
+		if (Util.isEmpty(Table_Name, true))
+			return null;
 		return getMountingParent(MTable.get(Env.getCtx(), Table_Name).getAD_Table_ID(), Record_ID);
 	}
 

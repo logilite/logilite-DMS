@@ -260,7 +260,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		dms.initMountingStrategy(tableName);
 		dms.initiateMountingContent(tableName, Record_ID, Table_ID);
 
-		currDMSContent = dms.getRootContent(Table_ID, Record_ID);
+		currDMSContent = dms.getRootMountingContent(Table_ID, Record_ID);
 
 		btnUploadContent.setEnabled(isWindowAccess);
 
@@ -672,7 +672,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			if (isTabViewer())
 			{
-				MDMSContent mountingContent = dms.getDMSMountingParent(tableID, recordID);
+				MDMSContent mountingContent = dms.getRootMountingContent(tableID, recordID);
 				selectedDMSVersionStack.removeAllElements();
 				setCurrDMSContent(mountingContent);
 
@@ -915,7 +915,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			if (isRoot)
 			{
-				MDMSContent mountingContent = dms.getDMSMountingParent(tableID, recordID);
+				MDMSContent mountingContent = dms.getRootMountingContent(tableID, recordID);
 				breadCrumbEvent.setPathId(String.valueOf(mountingContent.getDMS_Content_ID()));
 			}
 
@@ -1185,7 +1185,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (isTabViewer())
 		{
 			// Getting initial mounting content for disabling back navigation
-			MDMSContent mountingContent = dms.getDMSMountingParent(tableID, recordID);
+			MDMSContent mountingContent = dms.getRootMountingContent(tableID, recordID);
 			if (currDMSContent == null)
 				currDMSContent = (MDMSContent) selectedDMSVersionStack.peek().getDMS_Content();
 

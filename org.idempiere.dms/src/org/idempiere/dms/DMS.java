@@ -168,12 +168,11 @@ public class DMS
 	/**
 	 * Utils Methods
 	 */
-	public MDMSContent getRootContent(int AD_Table_ID, int Record_ID)
+	public MDMSContent getRootMountingContent(int AD_Table_ID, int Record_ID)
 	{
-		return getMountingStrategy().getMountingParent(MTable.getTableName(Env.getCtx(), validTableID(AD_Table_ID)), validRecordID(Record_ID));
-	} // getRootContent
+		return getDMSMountingParent(AD_Table_ID, Record_ID);
+	}
 
-	// Get DMS MountainingParent for DMSSubstitute content
 	public MDMSContent getDMSMountingParent(int AD_Table_ID, int Record_ID)
 	{
 		return getMountingStrategy().getMountingParent(validTableID(AD_Table_ID), validRecordID(Record_ID));
@@ -186,7 +185,7 @@ public class DMS
 
 	public MDMSContent getDMSMountingParent(PO po)
 	{
-		return getMountingStrategy().getMountingParent(validTableID(po.get_Table_ID()), validRecordID(po.get_ID()));
+		return getDMSMountingParent(po.get_Table_ID(), po.get_ID());
 	}
 
 	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)
@@ -346,10 +345,15 @@ public class DMS
 	 * Content and Association related util methods
 	 */
 
-	public MDMSAssociation getAssociationFromContent(int contentID)
+	public List<MDMSAssociation> getAssociationFromContent(int contentID, int associationTypeID, boolean isActiveOnly, String trxName)
 	{
-		return MDMSAssociation.getAssociationFromContent(contentID, true, null);
+		return MDMSAssociation.getAssociationFromContent(contentID, associationTypeID, isActiveOnly, trxName);
 	} // getAssociationFromContent
+
+	public MDMSAssociation getParentAssociationFromContent(int contentID)
+	{
+		return MDMSAssociation.getParentAssociationFromContent(contentID, true, null);
+	} // getParentAssociationFromContent
 
 	public List<MDMSAssociation> getLinkableAssociationFromContent(int contentID)
 	{
@@ -438,6 +442,20 @@ public class DMS
 	{
 		return DMSOprUtils.addFile(this, parentContent, file, null, desc, 0, 0, validTableID(AD_Table_ID), validRecordID(Record_ID), true);
 	} // addFileVersion
+
+	/*
+	 * Update Content/Association util methods
+	 */
+
+	public void updateContentTypeAndAttribute(int contentID, String contentType, Map<String, String> attributeMap)
+	{
+		DMSOprUtils.updateContentTypeAndAttribute(this, contentID, contentType, attributeMap);
+	}
+
+	public void updateAssociation(MDMSAssociation association, int AD_Table_ID, int Record_ID)
+	{
+		association.updateTableRecordRef(validTableID(AD_Table_ID), validRecordID(Record_ID));
+	}
 
 	/*
 	 * Select Content util methods
