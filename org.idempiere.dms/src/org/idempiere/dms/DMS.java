@@ -168,12 +168,11 @@ public class DMS
 	/**
 	 * Utils Methods
 	 */
-	public MDMSContent getRootContent(int AD_Table_ID, int Record_ID)
+	public MDMSContent getRootMountingContent(int AD_Table_ID, int Record_ID)
 	{
-		return getMountingStrategy().getMountingParent(MTable.getTableName(Env.getCtx(), validTableID(AD_Table_ID)), validRecordID(Record_ID));
-	} // getRootContent
+		return getDMSMountingParent(AD_Table_ID, Record_ID);
+	}
 
-	// Get DMS MountainingParent for DMSSubstitute content
 	public MDMSContent getDMSMountingParent(int AD_Table_ID, int Record_ID)
 	{
 		return getMountingStrategy().getMountingParent(validTableID(AD_Table_ID), validRecordID(Record_ID));
@@ -186,7 +185,7 @@ public class DMS
 
 	public MDMSContent getDMSMountingParent(PO po)
 	{
-		return getMountingStrategy().getMountingParent(validTableID(po.get_Table_ID()), validRecordID(po.get_ID()));
+		return getDMSMountingParent(po.get_Table_ID(), po.get_ID());
 	}
 
 	public MDMSContent createDirectory(String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists, String trxName)

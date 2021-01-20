@@ -63,7 +63,7 @@ public class CustomToolbarFactory implements IAction
 			return;
 
 		dmsPanel = new WDMSPanel(tableID, recordID, winContent);
-		dmsPanel.setCurrDMSContent(dmsPanel.getDMS().getDMSMountingParent(tableID, recordID));
+		dmsPanel.setCurrDMSContent(dmsPanel.getDMS().getRootMountingContent(tableID, recordID));
 
 		dmsWindow = new Window();
 		if (ClientInfo.isMobile())
