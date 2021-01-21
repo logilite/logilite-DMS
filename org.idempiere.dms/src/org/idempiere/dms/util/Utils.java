@@ -158,15 +158,15 @@ public class Utils
 			MDMSVersion.create(mountingContentID, mountingBaseName, 0, file, null);
 		}
 
-		if (!Util.isEmpty(table_Name) && Record_ID > 0)
+		/**
+		 * Table Name Mounting
+		 */
+		int tableNameContentID = 0;
+		if (!Util.isEmpty(table_Name))
 		{
-			/**
-			 * Table Name Mounting
-			 */
 			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name);
 
-			int tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID, AD_Table_ID,
-													table_Name);
+			tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID, AD_Table_ID, table_Name);
 			if (!file.exists())
 			{
 				file.mkdirs();
@@ -179,10 +179,13 @@ public class Utils
 				MDMSAssociation.create(tableNameContentID, mountingContentID, 0, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
 				MDMSVersion.create(tableNameContentID, table_Name, 0, file, null);
 			}
+		}
 
-			/**
-			 * Record_ID Mounting
-			 */
+		/**
+		 * Record_ID Mounting
+		 */
+		if (tableNameContentID > 0 && Record_ID > 0)
+		{
 			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
 							+ Record_ID);
 			if (!file.exists())

@@ -60,9 +60,12 @@ import com.logilite.search.solr.tika.FileContentParsingThroughTika;
 public class DMSSearchUtils
 {
 
-	static CLogger	log					= CLogger.getCLogger(DMSSearchUtils.class);
+	static CLogger				log							= CLogger.getCLogger(DMSSearchUtils.class);
 
-	static boolean	isIndexingInitiated	= false;
+	public static final String	SOLR_FIELDTYPE_TLONGS		= "tlongs";
+	public static final String	SOLR_FIELDTYPE_TEXT_GENERAL	= "text_general";
+
+	static boolean				isIndexingInitiated			= false;
 
 	/**
 	 * Get DMS Contents for rendering for specific level wise.
@@ -379,9 +382,9 @@ public class DMSSearchUtils
 			 * Create Fields Type in schema if not exists
 			 */
 			Map<String, Object> mapAttribute = new HashMap<String, Object>();
-			if (!idxSearcher.getFieldTypeSet().contains(DMSConstant.SOLR_FIELDTYPE_TLONGS))
+			if (!idxSearcher.getFieldTypeSet().contains(SOLR_FIELDTYPE_TLONGS))
 			{
-				mapAttribute.put("name", DMSConstant.SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("name", SOLR_FIELDTYPE_TLONGS);
 				mapAttribute.put("class", "solr.TrieLongField");
 				mapAttribute.put("precisionStep", "8");
 				mapAttribute.put("multiValued", "true");
@@ -398,7 +401,7 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.FILE_CONTENT);
-				mapAttribute.put("type", "text_general");
+				mapAttribute.put("type", SOLR_FIELDTYPE_TEXT_GENERAL);
 				mapAttribute.put("indexed", true);
 				mapAttribute.put("stored", false);
 				mapAttribute.put("multiValued", true);
@@ -411,7 +414,7 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.DMS_CONTENT_ID);
-				mapAttribute.put("type", DMSConstant.SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("type", SOLR_FIELDTYPE_TLONGS);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
@@ -421,7 +424,7 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.DMS_VERSION_ID);
-				mapAttribute.put("type", DMSConstant.SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("type", SOLR_FIELDTYPE_TLONGS);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
@@ -431,16 +434,16 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.DMS_ASSOCIATION_ID);
-				mapAttribute.put("type", DMSConstant.SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("type", SOLR_FIELDTYPE_TLONGS);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
 
-			if (!idxSearcher.getFieldSet().contains(DMSConstant.SOLR_FIELD_DESCRIPTION))
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.DESCRIPTION))
 			{
 				mapAttribute.clear();
-				mapAttribute.put("name", DMSConstant.SOLR_FIELD_DESCRIPTION);
-				mapAttribute.put("type", "text_general");
+				mapAttribute.put("name", DMSConstant.DESCRIPTION);
+				mapAttribute.put("type", SOLR_FIELDTYPE_TEXT_GENERAL);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
