@@ -245,7 +245,7 @@ public final class DMSConstant
 
 	public static final String				SQL_GET_VERSION_SEQ_NO					= "SELECT NVL(MAX(SeqNo), 0) + 1  FROM DMS_Version WHERE DMS_Content_ID = ? AND AD_Client_ID = ?";
 
-	public static final String				SQL_GET_ASI_INFO						= "SELECT REPLACE(a.Name,' ','_') AS Name, ai.Value, ai.ValueTimestamp, ai.ValueNumber, ai.ValueInt FROM M_AttributeInstance ai "
+	public static final String				SQL_GET_ASI_INFO						= "SELECT REPLACE(a.Name,' ','_') AS Name, ai.Value, ai.ValueDate, ai.ValueNumber FROM M_AttributeInstance ai "
 																						+ " INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID) "
 																						+ " WHERE ai.M_AttributeSetInstance_ID = ?";
 
