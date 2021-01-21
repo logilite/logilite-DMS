@@ -115,9 +115,6 @@ public final class DMSConstant
 	public static final String				VERSION_SEQ_NO							= "Version_Seq_No";
 	public static final String				FILE_CONTENT							= "File_Content";
 
-	public static final String				SOLR_FIELDTYPE_TLONGS					= "tlongs";
-	public static final String				SOLR_FIELD_DESCRIPTION					= "description";
-
 	// Msg translate
 	public static final String				MSG_NAME								= Msg.translate(Env.getCtx(), "Name");
 	public static final String				MSG_CREATED								= Msg.translate(Env.getCtx(), "Created");
