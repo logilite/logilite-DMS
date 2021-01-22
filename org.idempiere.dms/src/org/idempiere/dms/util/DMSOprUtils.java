@@ -34,6 +34,7 @@ import org.compiere.Adempiere;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
+import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
@@ -1156,68 +1157,31 @@ public class DMSOprUtils
 			}
 			else
 			{
-				PreparedStatement pstmt = null;
-				ResultSet rs = null;
-				try
-				{
-					pstmt = DB.prepareStatement(DMSConstant.SQL_GET_CONTENT_ASSOCIATION_TYPE, null);
-					pstmt.setInt(1, dmsContent.getDMS_Content_ID());
-					pstmt.setInt(2, dmsContent.getDMS_Content_ID());
+				Query query = new Query(Env.getCtx(), MDMSAssociation.Table_Name, " DMS_Content_ID = ? AND DMS_AssociationType_ID <> 1000003 ", null);
+				query.setClient_ID();
+				query.setParameters(dmsContent.getDMS_Content_ID());
+				query.setOrderBy(MDMSAssociation.COLUMNNAME_DMS_Association_ID);
+				List<MDMSAssociation> associationList = query.list();
 
-					rs = pstmt.executeQuery();
-					while (rs.next())
-					{
-						int contentID = rs.getInt("DMS_Content_ID");
-						int assTypeID = rs.getInt("DMS_AssociationType_ID");
-						if (!MDMSAssociationType.isLink(assTypeID))
-						{
-							MDMSContent contentFile = new MDMSContent(Env.getCtx(), contentID, null);
-							DMSOprUtils.updateRenameAllVersions(baseURL, renamedURL, tableID, recordID, contentFile, dmsContent);
-						}
-					}
-				}
-				catch (Exception e)
-				{}
-				finally
+				boolean isUpdateContent = true;
+				for (MDMSAssociation association : associationList)
 				{
-					DB.close(rs, pstmt);
-					rs = null;
-					pstmt = null;
+					if (isUpdateContent && dmsContent.getParentURL().startsWith(baseURL))
+						dmsContent.setParentURL(Utils.replacePath(baseURL, renamedURL, dmsContent.getParentURL()));
+
+					association.updateTableRecordRef(tableID, recordID);
+
+					// Note: Must save association first other wise creating issue of wrong info in
+					// solr indexing entry
+					if (isUpdateContent)
+					{
+						dmsContent.saveEx();
+						isUpdateContent = false;
+					}
 				}
 			}
 		}
 	} // renameFolder
-
-	/**
-	 * Update rename to all versions as applicable
-	 * 
-	 * @param baseURL
-	 * @param renamedURL
-	 * @param tableID
-	 * @param recordID
-	 * @param contentFile
-	 * @param parentContent
-	 */
-	public static void updateRenameAllVersions(String baseURL, String renamedURL, int tableID, int recordID, MDMSContent contentFile, MDMSContent parentContent)
-	{
-		if (contentFile.getParentURL().startsWith(baseURL))
-			contentFile.setParentURL(Utils.replacePath(baseURL, renamedURL, contentFile.getParentURL()));
-
-		MDMSAssociation associationFile = MDMSAssociation.getParentAssociationFromContent(contentFile.getDMS_Content_ID(), false, null);
-		associationFile.updateTableRecordRef(tableID, recordID);
-
-		// Note: Must save association first other wise creating issue of wrong info in solr
-		// indexing entry
-		contentFile.saveEx();
-
-		contentFile = (MDMSContent) associationFile.getDMS_Content_Related();
-		MDMSAssociation as = MDMSAssociation.getParentAssociationFromContent(contentFile.getDMS_Content_ID(), true, null);
-		if (contentFile.getDMS_Content_ID() != parentContent.getDMS_Content_ID()
-			&& (as.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID))
-		{
-			DMSOprUtils.updateRenameAllVersions(baseURL, renamedURL, tableID, recordID, contentFile, parentContent);
-		}
-	} // updateRenameAllVersions
 
 	/**
 	 * Rename File
