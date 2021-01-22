@@ -69,7 +69,6 @@ public class MDMSVersion extends X_DMS_Version
 
 		Query query = new Query(Env.getCtx(), MDMSVersion.Table_Name, "DMS_Content_ID=?", null);
 		query.setParameters(content.getDMS_Content_ID());
-		query.setOnlyActiveRecords(true);
 		query.setClient_ID();
 		query.setOrderBy(COLUMNNAME_SeqNo);
 
