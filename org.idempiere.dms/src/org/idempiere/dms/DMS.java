@@ -266,6 +266,16 @@ public class DMS
 		return fileStorageProvider.getBaseDirectory(this.getPathFromContentManager(version));
 	} // getBaseDirPath
 
+	public int checkContentSoftNameExists(MDMSContent parentContent, String fileName)
+	{
+		return Utils.checkContentExists(getPathFromContentManager(parentContent), fileName, false, true);
+	} // checkContentSoftNameExists
+
+	public int checkContentPhysicalNameExists(MDMSContent parentContent, String fileName)
+	{
+		return Utils.checkContentExists(getPathFromContentManager(parentContent), fileName, false, false);
+	} // checkContentPhysicalNameExists
+
 	/*
 	 * Index server util methods
 	 */
@@ -406,7 +416,14 @@ public class DMS
 
 	public int addFile(String dirPath, File file, String fileName, String contentType, Map<String, String> attributeMap, int AD_Table_ID, int Record_ID)
 	{
-		return DMSOprUtils.addFile(this, dirPath, file, fileName, null, contentType, attributeMap, validTableID(AD_Table_ID), validRecordID(Record_ID), false);
+		return addFile(dirPath, file, fileName, null, contentType, attributeMap, AD_Table_ID, Record_ID);
+	} // addFile
+
+	public int addFile(	String dirPath, File file, String fileName, String description, String contentType, Map<String, String> attributeMap, int AD_Table_ID,
+						int Record_ID)
+	{
+		return DMSOprUtils.addFile(	this, dirPath, file, fileName, description, contentType, attributeMap, validTableID(AD_Table_ID), validRecordID(Record_ID),
+									false);
 	} // addFile
 
 	public int addFile(MDMSContent parentContent, File file, int AD_Table_ID, int Record_ID)
