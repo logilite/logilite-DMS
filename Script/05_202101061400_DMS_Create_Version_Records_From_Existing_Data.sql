@@ -97,8 +97,43 @@ SELECT * FROM dual
 ;
 
 --
--- 3) UPDATE SEQUENCE of the DMS_Version table
+-- 3) UPDATE SEQUENCE of the DMS_Version table based on flag for maintaining @ ERP or Native DB side
 --
-UPDATE AD_Sequence SET CurrentNext=(SELECT MAX(DMS_Version_ID)+1 FROM DMS_Version) 
-WHERE AD_Sequence_ID=(SELECT  AD_Sequence_ID FROM AD_Sequence WHERE Name='DMS_Version' AND IsActive='Y' AND IsTableID='Y' AND IsAutoSequence='Y')
+
+DO
+$$
+DECLARE
+	isNativeSeq boolean;
+	isVersionSeqExists boolean;
+	newSeqNo int;
+BEGIN
+	SELECT Value='Y' FROM AD_SysConfig WHERE Name = 'SYSTEM_NATIVE_SEQUENCE'
+	INTO isNativeSeq;
+
+	SELECT COUNT(1) > 0 FROM pg_class WHERE relname ILIKE 'DMS_Version_SQ'
+	INTO isVersionSeqExists;
+
+	IF isNativeSeq IS TRUE THEN
+		SELECT MAX(DMS_Version_ID)+1 FROM DMS_Version 
+		INTO newSeqNo;
+
+		IF isVersionSeqExists IS NOT TRUE THEN
+			CREATE SEQUENCE DMS_Version_SQ
+			INCREMENT BY 1 
+			MINVALUE 1000000
+			MAXVALUE 2147483647 
+			START WITH 1000000;
+
+			Raise Notice 'Creating new sequence in DB... %', (SELECT setval('DMS_Version_SQ', newSeqNo));
+		ELSE
+			Raise Notice 'Altering sequence in DB... %', (SELECT setval('DMS_Version_SQ', newSeqNo));
+		END IF;
+	ELSE
+		UPDATE AD_Sequence SET CurrentNext=(SELECT MAX(DMS_Version_ID)+1 FROM DMS_Version) 
+		WHERE AD_Sequence_ID=(SELECT AD_Sequence_ID FROM AD_Sequence WHERE Name='DMS_Version' AND IsActive='Y' AND IsTableID='Y' AND IsAutoSequence='Y');
+
+		Raise Notice 'Altering AD_Sequence in DB... %', (SELECT MAX(DMS_Version_ID)+1 FROM DMS_Version);
+	END IF;
+END
+$$
 ;
