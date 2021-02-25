@@ -26,13 +26,23 @@
 -- Changeset:342 (e2c4e9006902) Allow to create content entry when folder exists but no DB records. - Correction SQL script for wrong DMS Mounting structure.
 -- 
 
+-- 0)
+-- Add column for Ignorable that records if it is markes as 'Y', So later on those records not usable and user can delete it.
+-- 
+ALTER TABLE DMS_Association
+ADD COLUMN IsIgnorable character(1)
+;
+
+ALTER TABLE DMS_Content
+ADD COLUMN IsIgnorable character(1)
+;
 
 -- 1)
 -- Set Table and Record_ID as NULL for Mounting Root content
 --
 UPDATE 	DMS_Association
 SET 	AD_Table_ID = NULL, 
-	Record_ID = NULL
+		Record_ID = NULL
 FROM DMS_Content 
 WHERE 		DMS_Content.ParentURL IS NULL 
 	AND 	DMS_Content.ContentBaseType = 'DIR' 
@@ -89,7 +99,8 @@ DoInActive AS
 -- SELECT * FROM DoInActive
 
 UPDATE 	DMS_Association
-SET 	IsActive = 'N'
+SET 	IsActive = 'N',
+		IsIgnorable = 'Y'
 FROM 	DoInActive
 WHERE 	DoInActive.DMS_Association_ID = DMS_Association.DMS_Association_ID
 ;
@@ -126,7 +137,8 @@ DoInActive AS
 -- SELECT * FROM DoInActive
 
 UPDATE 	DMS_Content
-SET 	IsActive = 'N'
+SET 	IsActive = 'N',
+		IsIgnorable = 'Y'
 FROM 	DoInActive
 WHERE 	DoInActive.DMS_Content_ID = DMS_Content.DMS_Content_ID
 ;
@@ -200,7 +212,7 @@ WITH SubAttachmentContent AS
 		AND 	c.ContentBaseType = 'DIR' 
 		AND 	c.IsMounting = 'Y'
 		AND 	a.AD_Table_ID IS NOT NULL  
-		AND	a.Record_ID IS NULL
+		AND		a.Record_ID IS NULL
 		AND 	a.DMS_Content_ID = c.DMS_Content_ID
 )
 
@@ -222,7 +234,8 @@ WITH SubAttachmentContent AS
 , InActiveAssosiation AS
 (
  	UPDATE 	DMS_Association	
- 	SET 	IsActive = 'N'
+ 	SET 	IsActive = 'N',
+			IsIgnorable = 'Y'
  	FROM 	DoInActive 
  	WHERE DoInActive.DMS_Association_ID = DMS_Association.DMS_Association_ID
 )
@@ -230,7 +243,8 @@ WITH SubAttachmentContent AS
 , InActiveContent AS
 (
  	UPDATE 	DMS_Content 
-	SET 	IsActive = 'N'
+	SET 	IsActive = 'N',
+			IsIgnorable = 'Y'
  	FROM 	DoInActive 
  	WHERE DoInActive.DMS_Content_ID = DMS_Content.DMS_Content_ID
 )
