@@ -296,7 +296,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			isCancel = true;
 			this.detach();
 		}
-		else if (e.getTarget().equals(signatureBox.getImage()))
+		else if (e.getTarget().equals(signatureBox))
 		{
 			signatureBox.setContent(signatureBox.getAImage());
 			if (signatureBox.getAImage() != null)
