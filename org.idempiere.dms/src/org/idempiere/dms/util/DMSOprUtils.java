@@ -1485,4 +1485,23 @@ public class DMSOprUtils
 		return map;
 	} // getRelatedContents
 
+	/**
+	 * Get Files from storage for all version of content
+	 * 
+	 * @param  dms     DMS
+	 * @param  content - Content
+	 * @return         Files
+	 */
+	public static File[] getFileFromStorageAllVersion(DMS dms, I_DMS_Content content)
+	{
+		ArrayList<File> files = new ArrayList<File>();
+		for (MDMSVersion version : MDMSVersion.getVersionHistory(content))
+		{
+			File file = dms.getFileFromStorage(version);
+			if (file != null)
+				files.add(file);
+		}
+		return (File[]) files.toArray();
+	} // getFileFromStorageAllVersion
+
 }
