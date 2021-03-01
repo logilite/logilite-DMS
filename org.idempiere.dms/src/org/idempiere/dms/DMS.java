@@ -246,6 +246,16 @@ public class DMS
 		return contentManager.getContentName(fileStorageProvider, contentType, content, fileName, extention, type, operationType);
 	} // getActualFileOrDirName
 
+	public File getFileFromStorageLatestVersionOnly(I_DMS_Content content)
+	{
+		return getFileFromStorage(MDMSVersion.getLatestVersion(content));
+	} // getFileFromStorageLatestVersionOnly
+
+	public File[] getFileFromStorageAllVersion(I_DMS_Content content)
+	{
+		return DMSOprUtils.getFileFromStorageAllVersion(this, content);
+	} // getFileFromStorageAllVersion
+
 	public File getFileFromStorage(I_DMS_Version version)
 	{
 		return fileStorageProvider.getFile(this.getPathFromContentManager(version));
