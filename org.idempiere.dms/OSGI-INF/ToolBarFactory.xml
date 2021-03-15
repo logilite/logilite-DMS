@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.idempiere.dms.toolbar.CustomToolbarFactory">
    <implementation class="org.idempiere.dms.toolbar.CustomToolbarFactory"/>
-   <property name="service.ranking" type="Integer" value="1"/>
+   <property name="service.ranking" type="Integer" value="5"/>
    <service>
       <provide interface="org.adempiere.webui.action.IAction"/>
    </service>
