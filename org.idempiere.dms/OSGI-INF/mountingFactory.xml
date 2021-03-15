@@ -4,5 +4,5 @@
    <property name="service.ranking" type="Integer" value="5"/>
    <service>
       <provide interface="org.idempiere.dms.factories.IMountingFactory"/>
-   </service>ice>
+   </service>
 </scr:component>
