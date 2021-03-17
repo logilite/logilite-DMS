@@ -488,17 +488,35 @@ public class DMS
 	 * Select Content util methods
 	 */
 
-	public MDMSContent[] selectContent(String dirPath)
+	public I_DMS_Content[] selectContent(int AD_Table_ID, int Record_ID)
 	{
-		// TODO
-		return null;
-	} // selectContent
+		return selectContent(AD_Table_ID, Record_ID, 0);
+	}
 
-	public MDMSContent[] selectContent(String dirPath, int AD_Table_ID, int Record_ID)
+	public I_DMS_Content[] selectContent(int AD_Table_ID, int Record_ID, int associationTypeID)
 	{
-		// TODO
-		return null;
-	} // selectContent
+		return selectContent(AD_Table_ID, Record_ID, associationTypeID, null);
+	}
+
+	public I_DMS_Content[] selectContent(int AD_Table_ID, int Record_ID, int associationTypeID, String filename)
+	{
+		return selectContent(getRootMountingContent(AD_Table_ID, Record_ID), associationTypeID, filename);
+	}
+
+	public I_DMS_Content[] selectContent(MDMSContent parentContent)
+	{
+		return selectContent(parentContent, 0);
+	}
+
+	public I_DMS_Content[] selectContent(MDMSContent parentContent, int associationTypeID)
+	{
+		return selectContent(parentContent, associationTypeID, null);
+	}
+
+	public I_DMS_Content[] selectContent(MDMSContent parentContent, int associationTypeID, String filename)
+	{
+		return DMSSearchUtils.selectContentActiveOnly(parentContent, associationTypeID, filename);
+	}
 
 	/*
 	 * Other operations on Content util methods

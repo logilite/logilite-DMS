@@ -45,6 +45,7 @@ import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
+import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSVersion;
 
@@ -515,5 +516,70 @@ public class DMSSearchUtils
 			DB.executeUpdate("UPDATE DMS_Version SET IsIndexed='Y' WHERE DMS_Version_ID = ? ", version.getDMS_Version_ID(), null);
 		}
 	} // doIndexing
+
+	/**
+	 * Retrieve content based on params with sub-level only
+	 * 
+	 * @param  parentContent     - Parent Content
+	 * @param  associationTypeID - Association Type ID [ optional ]
+	 * @param  fileName          - FileName [ optional ]
+	 * @return                   Array of Contents
+	 */
+	public static I_DMS_Content[] selectContentActiveOnly(I_DMS_Content parentContent, int associationTypeID, String fileName)
+	{
+		int contentID = 0;
+		if (parentContent != null)
+			contentID = parentContent.getDMS_Content_ID();
+
+		StringBuffer sql = new StringBuffer(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE);
+		if (associationTypeID > 0)
+			sql.append(" AND c.DMS_AssociationType_ID = ").append(associationTypeID);
+
+		ArrayList<I_DMS_Content> arrContents = new ArrayList<I_DMS_Content>();
+		PreparedStatement pstmt = null;
+		ResultSet rs = null;
+		try
+		{
+			int i = 1;
+			pstmt = DB.prepareStatement(sql.toString(), null);
+			pstmt.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
+			pstmt.setInt(i++, contentID);
+			pstmt.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
+			pstmt.setInt(i++, contentID);
+			pstmt.setInt(i++, contentID);
+
+			rs = pstmt.executeQuery();
+			while (rs.next())
+			{
+				MDMSContent childContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				if (!Util.isEmpty(fileName, true))
+				{
+					MDMSVersion version = (MDMSVersion) MDMSVersion.getLatestVersion(childContent, true, 0);
+					if (version.getValue().equals(fileName.trim()))
+					{
+						arrContents.add(childContent);
+						break;
+					}
+				}
+				else
+				{
+					arrContents.add(childContent);
+				}
+			}
+		}
+		catch (SQLException e)
+		{
+			log.log(Level.SEVERE, "Based on params to get content directory level wise fetching failure: ", e);
+			throw new AdempiereException("Based on params to get content directory level wise fetching failure: " + e, e);
+		}
+		finally
+		{
+			DB.close(rs, pstmt);
+			rs = null;
+			pstmt = null;
+		}
+
+		return (I_DMS_Content[]) arrContents.toArray(new I_DMS_Content[0]);
+	} // selectContentActiveOnly
 
 }
