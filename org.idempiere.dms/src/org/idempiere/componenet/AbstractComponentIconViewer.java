@@ -46,6 +46,8 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 	protected String[]							eventsList;
 	protected EventListener<? extends Event>	listener;
+	
+	protected boolean							isContentActive	= true;
 
 	// Abstract method definition
 	public abstract void createHeaderPart();
@@ -80,8 +82,16 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		}
 		else
 		{
-			for (Map.Entry<I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
-				createComponent(rows, entry.getKey(), entry.getValue(), compWidth, compHeight);
+			// handle active , create var isContentActive
+			for (Map.Entry <I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
+			{
+				I_DMS_Version version = entry.getKey();
+				I_DMS_Association association = entry.getValue();
+				isContentActive =  (version != null && association != null && version.getDMS_Content().isActive() && association.isActive());
+				if (association != null && MDMSAssociationType.isLink(association))
+					isContentActive = association.isActive();
+				createComponent(rows, version, association, compWidth, compHeight);
+			}
 		}
 	} // init
 
@@ -102,7 +112,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	{
 		String name = content.getName();
 
-		if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content) && version > 0)
+		if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && version > 0)
 			name = name + " - V" + version;
 
 		return name;

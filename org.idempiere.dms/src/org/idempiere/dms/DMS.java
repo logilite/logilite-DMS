@@ -311,9 +311,9 @@ public class DMS
 		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(content, association, version, file));
 	} // createIndexContent
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(String searchText, int tableID, int recordID, MDMSContent content)
+	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(String searchText, int tableID, int recordID, MDMSContent content, String documentView)
 	{
-		return DMSSearchUtils.getGenericSearchedContent(this, searchText, validTableID(tableID), validRecordID(recordID), content);
+		return DMSSearchUtils.getGenericSearchedContent(this, searchText, validTableID(tableID), validRecordID(recordID), content, documentView);
 	} // getGenericSearchedContent
 
 	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
@@ -372,7 +372,12 @@ public class DMS
 
 	public MDMSAssociation getParentAssociationFromContent(int contentID)
 	{
-		return MDMSAssociation.getParentAssociationFromContent(contentID, true, null);
+		return getParentAssociationFromContent(contentID, true);
+	} // getParentAssociationFromContent
+	
+	public MDMSAssociation getParentAssociationFromContent(int contentID, boolean isActiveOnly)
+	{
+		return MDMSAssociation.getParentAssociationFromContent(contentID, isActiveOnly, null);
 	} // getParentAssociationFromContent
 
 	public List<MDMSAssociation> getLinkableAssociationFromContent(int contentID)
@@ -387,12 +392,22 @@ public class DMS
 
 	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, boolean isActiveOnly)
 	{
-		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, isActiveOnly);
+		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, (isActiveOnly ? DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE : DMSConstant.DOCUMENT_VIEW_ALL_VALUE));
+	} // getDMSContentsWithAssociation
+
+	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, String documentView)
+	{
+		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, documentView);
 	} // getDMSContentsWithAssociation
 
 	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(I_DMS_Content content)
 	{
-		return ((MDMSContent) content).getLinkableAssociationWithContentRelated();
+		return getLinkableAssociationWithContentRelated(content, true);
+	} // getLinkableAssociationWithContentRelated
+	
+	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(I_DMS_Content content, boolean isActiveonly)
+	{
+		return ((MDMSContent) content).getLinkableAssociationWithContentRelated(isActiveonly);
 	} // getLinkableAssociationWithContentRelated
 
 	/*
@@ -636,6 +651,30 @@ public class DMS
 			throw new AdempiereException("Error while committing transaction for delete content:" + e.getLocalizedMessage(), e);
 		}
 	} // deleteContent
+
+	/**
+	 * This will be a undo soft deletion. System will only active the files.
+	 * 
+	 * @param dmsContent
+	 * @param dmsAssociation
+	 * @param isDeleteLinkableRefs - Is Delete References of Links to another place
+	 */
+	public void undoDeleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isDeleteLinkableRefs)
+	{
+		String trxName = Trx.createTrxName("DMSUndoDelete");
+		Trx trx = Trx.get(trxName, true);
+
+		DMSOprUtils.undoDeleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
+
+		try
+		{
+			trx.commit(true);
+		}
+		catch (SQLException e)
+		{
+			throw new AdempiereException("Error while committing transaction for undo delete content:" + e.getLocalizedMessage(), e);
+		}
+	} // undoDeleteContent
 
 	/**
 	 * Get info about linkable docs of the given content

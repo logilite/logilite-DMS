@@ -86,7 +86,7 @@ public class DMS_ZK_Util
 			if (thumbFile == null)
 			{
 				MImage mImage = null;
-				if (version.getDMS_Content().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+				if (MDMSContent.CONTENTBASETYPE_Directory.equals(version.getDMS_Content().getContentBaseType()))
 					mImage = dms.getDirThumbnail();
 				else
 					mImage = dms.getMimetypeThumbnail(version.getDMS_Content().getDMS_MimeType_ID());
