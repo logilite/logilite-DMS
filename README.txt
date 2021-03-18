@@ -1,6 +1,6 @@
 -- README
 -- If customer using existing DMS with data Then check out below Script first  [ 2020 - May - 07 ]
-	1) Execute			Script/01_202005071200_Migrate existing DMS with SoftDelete functionality.sql
+	1) Execute			Script/01_202005071200_Migrate_Existing_DMS_With_SoftDelete_Functionality.sql
 
 -- In Existing DMS structure having issue of Mounting structure then execute below sql to correct same [ 2020 - June - 17 ]
 	1) Export result of Script/02_202006172121_DMS_Dir_Structure_Hierarchy.sql [ This script for data comparison purpose ]
