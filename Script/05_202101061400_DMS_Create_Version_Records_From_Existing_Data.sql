@@ -9,6 +9,10 @@ ALTER TABLE DMS_Content
 DROP CONSTRAINT dms_content_isactive_check
 ;
 
+-- Add uuid extension if not exists
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp"
+;
+
 --
 -- 2) Create version records from existing content and association. also its linkable & version of the versioning content too.
 --
