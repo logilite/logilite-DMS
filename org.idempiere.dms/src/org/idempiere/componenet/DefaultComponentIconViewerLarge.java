@@ -60,8 +60,8 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		// Content Label
 		Label lblName = new Label(getContentName(version.getDMS_Content(), version.getSeqNo()));
 		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 20px; width: "
-							+ (compWidth - 10) + "px; display: inline-block;");
-
+							+ (compWidth - 10) + "px; display: inline-block;" + (isContentActive ? " " : "color: red;"));
+		
 		// Content Thumbnail
 		Image thumbImg = new Image();
 		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
@@ -85,6 +85,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, version.getDMS_Content());
 		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
 		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
 
 		// Listener for component selection
 		cell.addEventListener(Events.ON_CLICK, this);
@@ -117,6 +118,15 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 	@Override
 	public void setSelection(Component component)
 	{
-		((Cell) component).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED);
+		Cell cell = (Cell) component;
+		Object isActive = cell.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
+		if (isActive != null && isActive instanceof Boolean)
+		{
+			cell.setStyle((Boolean)isActive ? DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED : DMSConstant.CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE);
+		}
+		else
+		{
+			cell.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED);
+		}
 	}
 }

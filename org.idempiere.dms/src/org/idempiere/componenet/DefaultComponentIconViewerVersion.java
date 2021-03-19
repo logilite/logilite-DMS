@@ -96,11 +96,13 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 		cell.setHeight(compHeight + "px");
 		// cell.setStyle("background: #f3f3f3;");
 		row.appendChild(cell);
-
+		row.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
+		row.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
 		//
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, content);
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
 
 		// Listener for component selection
 		row.addEventListener(Events.ON_CLICK, this);
@@ -122,6 +124,11 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 	@Override
 	public void setSelection(Component component)
 	{
-		((Row) component).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED);
+		Row row = (Row) component;
+		Object isActive = row.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
+		if (isActive != null && isActive instanceof Boolean)
+			row.setStyle((Boolean) isActive ? DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED : DMSConstant.CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE);
+		else
+			row.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED);
 	}
 }

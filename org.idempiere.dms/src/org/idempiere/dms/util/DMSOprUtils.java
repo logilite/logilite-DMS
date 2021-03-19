@@ -1130,7 +1130,7 @@ public class DMSOprUtils
 	 */
 	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID, boolean isDocExplorerWindow)
 	{
-		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, content.getAD_Client_ID(), false);
+		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, content.getAD_Client_ID(), DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
 
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
@@ -1299,7 +1299,7 @@ public class DMSOprUtils
 	{
 		if (MDMSAssociationType.isLink(dmsAssociation))
 		{
-			setContentAndAssociationInActive(null, dmsAssociation, trxName);
+			setContentAndAssociation(null, dmsAssociation, false, trxName);
 			return;
 		}
 		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Content))
@@ -1309,27 +1309,27 @@ public class DMSOprUtils
 			{
 				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
 				MDMSAssociation parentAssociation = dms.getParentAssociationFromContent(parentContent.getDMS_Content_ID());
-				setContentAndAssociationInActive(parentContent, parentAssociation, trxName);
-				relatedContentList = DMSOprUtils.getRelatedContents(parentContent);
+				setContentAndAssociation(parentContent, parentAssociation, false, trxName);
+				relatedContentList = DMSOprUtils.getRelatedContents(parentContent, true, trxName);
 			}
 			else
 			{
-				setContentAndAssociationInActive(dmsContent, dmsAssociation, trxName);
-				relatedContentList = DMSOprUtils.getRelatedContents(dmsContent);
+				setContentAndAssociation(dmsContent, dmsAssociation, false, trxName);
+				relatedContentList = DMSOprUtils.getRelatedContents(dmsContent, true, trxName);
 			}
 
 			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
 			{
 				MDMSContent content = (MDMSContent) entry.getKey();
 				MDMSAssociation association = (MDMSAssociation) entry.getValue();
-				setContentAndAssociationInActive(content, association, trxName);
+				setContentAndAssociation(content, association, false, trxName);
 			}
 		}
 		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			// Inactive Directory content and its child recursively
-			setContentAndAssociationInActive(dmsContent, dmsAssociation, trxName);
-			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = DMSOprUtils.getRelatedContents(dmsContent);
+			setContentAndAssociation(dmsContent, dmsAssociation, false, trxName);
+			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = DMSOprUtils.getRelatedContents(dmsContent, true, trxName);
 			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
 			{
 				MDMSContent content = (MDMSContent) entry.getKey();
@@ -1351,22 +1351,107 @@ public class DMSOprUtils
 			}
 		}
 	} // deleteContent
+	
+	/**
+	 * Undo Delete Content [ Do Active ]
+	 * 
+	 * @param dms
+	 * @param dmsContent
+	 * @param dmsAssociation
+	 * @param isUnDeleteLinkableRefs
+	 * @param trxName
+	 */
+	public static void undoDeleteContent(DMS dms, MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isUnDeleteLinkableRefs, String trxName)
+	{
+		if (MDMSAssociationType.isLink(dmsAssociation))
+		{
+			setContentAndAssociation(null, dmsAssociation, true, trxName);
+			return;
+		}
+		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Content))
+		{
+			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = null;
+			if (dmsAssociation.getDMS_AssociationType_ID() == MDMSAssociationType.RECORD_ID)
+			{
+				MDMSContent parentContent = new MDMSContent(Env.getCtx(), dmsAssociation.getDMS_Content_Related_ID(), null);
+				MDMSAssociation parentAssociation = dms.getParentAssociationFromContent(parentContent.getDMS_Content_ID());
+				setContentAndAssociation(parentContent, parentAssociation, true, trxName);
+				relatedContentList = DMSOprUtils.getRelatedContents(parentContent, false, trxName);
+			}
+			else
+			{
+				setContentAndAssociation(dmsContent, dmsAssociation, true, trxName);
+				relatedContentList = DMSOprUtils.getRelatedContents(dmsContent, false, trxName);
+			}
 
-	public static void setContentAndAssociationInActive(MDMSContent content, MDMSAssociation association, String trxName)
+			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
+			{
+				MDMSContent content = (MDMSContent) entry.getKey();
+				MDMSAssociation association = (MDMSAssociation) entry.getValue();
+				setContentAndAssociation(content, association, true, trxName);
+			}
+		}
+		else if (dmsContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Directory))
+		{
+			// Active Directory content and its child recursively
+			setContentAndAssociation(dmsContent, dmsAssociation, true, trxName);
+			HashMap<I_DMS_Content, I_DMS_Association> relatedContentList = DMSOprUtils.getRelatedContents(dmsContent, false, trxName);
+			for (Map.Entry<I_DMS_Content, I_DMS_Association> entry : relatedContentList.entrySet())
+			{
+				MDMSContent content = (MDMSContent) entry.getKey();
+				MDMSAssociation association = (MDMSAssociation) entry.getValue();
+				// recursive call
+				DMSOprUtils.undoDeleteContent(dms, content, association, isUnDeleteLinkableRefs, trxName);
+			}
+		}
+
+		// Linkable association references to set as Active
+		if (isUnDeleteLinkableRefs)
+		{
+			HashMap<I_DMS_Association, I_DMS_Content> linkRefs = dms.getLinkableAssociationWithContentRelated(dmsContent, false);
+			for (Entry<I_DMS_Association, I_DMS_Content> linkRef : linkRefs.entrySet())
+			{
+				MDMSAssociation linkAssociation = (MDMSAssociation) linkRef.getKey();
+				linkAssociation.setIsActive(true);
+				linkAssociation.save();
+			}
+		}
+		
+		MDMSAssociation parentAssociation = dmsAssociation;
+		while (parentAssociation != null && parentAssociation.getDMS_Content_Related_ID() > 0)
+		{
+			MDMSContent parentContent = new MDMSContent(Env.getCtx(), parentAssociation.getDMS_Content_Related_ID(), null);
+			if (parentContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Directory) && !parentContent.isActive())
+			{
+				List <MDMSAssociation> associationlist = dms.getAssociationFromContent(parentContent.getDMS_Content_ID(), 0, false, trxName);
+				if (!associationlist.isEmpty())
+				{
+					parentAssociation = (MDMSAssociation) associationlist.get(0);
+					setContentAndAssociation(parentContent, parentAssociation, true, trxName);
+				}
+			}
+			else
+			{
+				break;
+			}
+		}
+	} // undoDeleteContent
+
+	public static void setContentAndAssociation(MDMSContent content, MDMSAssociation association, boolean isActive, String trxName)
 	{
 		if (association != null)
 		{
-			association.setIsActive(false);
+			association.setIsActive(isActive);
 			association.saveEx(trxName);
 		}
 
 		if (content != null)
 		{
-			content.setIsActive(false);
+			content.setIsActive(isActive);
 			content.saveEx(trxName);
 		}
 	} // setContentAndAssociationInActive
-
+	
 	/**
 	 * Delete Content With Physical Document
 	 * 
@@ -1416,7 +1501,7 @@ public class DMSOprUtils
 		else
 		{
 			int count = 0;
-			HashMap<I_DMS_Association, I_DMS_Content> linkRefs = dms.getLinkableAssociationWithContentRelated(content);
+			HashMap<I_DMS_Association, I_DMS_Content> linkRefs = dms.getLinkableAssociationWithContentRelated(content, content.isActive());
 			for (Entry<I_DMS_Association, I_DMS_Content> linkRef : linkRefs.entrySet())
 			{
 				String contentName = content.getName();
@@ -1452,9 +1537,11 @@ public class DMSOprUtils
 	 * Get the related contents of give content like versions, Linkable docs etc
 	 * 
 	 * @param  dmsContent
+	 * @param trxName 
+	 * @param isActive 
 	 * @return            Map of related contents
 	 */
-	public static HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent)
+	public static HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent, boolean isActive, String trxName)
 	{
 		HashMap<I_DMS_Content, I_DMS_Association> map = new LinkedHashMap<I_DMS_Content, I_DMS_Association>();
 
@@ -1462,13 +1549,14 @@ public class DMSOprUtils
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_RELATED_CONTENT, null);
+			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_RELATED_CONTENT, trxName);
 			pstmt.setInt(1, dmsContent.getDMS_Content_ID());
+			pstmt.setString(2, isActive ? "Y" : "N");
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
-				map.put(new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null),
-						new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null));
+				map.put(new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), trxName),
+						new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), trxName));
 			}
 		}
 		catch (SQLException e)

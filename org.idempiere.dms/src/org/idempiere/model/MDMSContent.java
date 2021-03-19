@@ -191,7 +191,7 @@ public class MDMSContent extends X_DMS_Content
 		}
 		else
 		{
-			MDMSAssociation DMSAssociation = MDMSAssociation.getParentAssociationFromContent(getDMS_Content_ID(), true, null);
+			MDMSAssociation DMSAssociation = MDMSAssociation.getParentAssociationFromContent(getDMS_Content_ID(), isActive(), null);
 
 			if (DMSAssociation.getDMS_Content_Related_ID() > 0)
 			{
@@ -210,22 +210,24 @@ public class MDMSContent extends X_DMS_Content
 
 	/**
 	 * Get linkable Association and its Content related references
+	 * @param isActiveonly 
 	 * 
 	 * @return {@code Map<I_DMS_Association, I_DMS_Content>}
 	 */
-	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated()
+	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(boolean isActiveonly)
 	{
 		HashMap<I_DMS_Association, I_DMS_Content> map = new LinkedHashMap<I_DMS_Association, I_DMS_Content>();
 
 		String sql = "SELECT DMS_Association_ID, DMS_Content_Related_ID 	 FROM DMS_Association "
-						+ " WHERE IsActive = 'Y' AND DMS_Content_ID = ? AND DMS_AssociationType_ID = ? ";
+						+ " WHERE IsActive = ? AND DMS_Content_ID = ? AND DMS_AssociationType_ID = ? ";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
 		{
 			pstmt = DB.prepareStatement(sql, null);
-			pstmt.setInt(1, getDMS_Content_ID());
-			pstmt.setInt(2, MDMSAssociationType.LINK_ID);
+			pstmt.setString(1, isActiveonly ? "Y" : "N");
+			pstmt.setInt(2, getDMS_Content_ID());
+			pstmt.setInt(3, MDMSAssociationType.LINK_ID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
