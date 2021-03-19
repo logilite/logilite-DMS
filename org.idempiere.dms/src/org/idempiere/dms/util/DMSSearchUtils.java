@@ -45,7 +45,6 @@ import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSVersion;
 
@@ -73,10 +72,10 @@ public class DMSSearchUtils
 	 * 
 	 * @param  content
 	 * @param  AD_Client_ID
-	 * @param  isActiveOnly
+	 * @param documentView 
 	 * @return              map of DMS content and association
 	 */
-	public static HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, boolean isActiveOnly)
+	public static HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView)
 	{
 		int contentID = 0;
 		if (content != null)
@@ -88,9 +87,17 @@ public class DMSSearchUtils
 		ResultSet rs = null;
 		try
 		{
+			String sql = "";
+			
+			if (DMSConstant.DOCUMENT_VIEW_ALL_VALUE.equalsIgnoreCase(documentView))
+				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL;
+			else if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
+				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE;
+			else
+				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE;
+
 			int i = 1;
-			pstmt = DB.prepareStatement(isActiveOnly	? DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE
-														: DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL, null);
+			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(i++, AD_Client_ID);
 			pstmt.setInt(i++, contentID);
 			pstmt.setInt(i++, AD_Client_ID);
@@ -129,10 +136,11 @@ public class DMSSearchUtils
 	 * @param  tableID
 	 * @param  recordID
 	 * @param  content
+	 * @param documentView 
 	 * @return            Map of Content with Association
 	 */
 	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
-																						MDMSContent content)
+																						MDMSContent content, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
@@ -178,7 +186,12 @@ public class DMSSearchUtils
 			query.append(" AND ");
 
 		query	.append(DMSConstant.AD_CLIENT_ID).append(":(").append(Env.getAD_Client_ID(Env.getCtx())).append(")")
-				.append(" AND ").append(DMSConstant.SHOW_INACTIVE).append(" : 'false'");
+				.append(" AND ");
+
+		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
+			query.append(DMSConstant.SHOW_INACTIVE).append(" :true");
+		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
+			query.append(DMSConstant.SHOW_INACTIVE).append(" :false");
 
 		if (recordID > 0)
 			query.append(" AND ").append(DMSConstant.RECORD_ID).append(":").append(recordID);
@@ -244,7 +257,7 @@ public class DMSSearchUtils
 	private static void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int AD_Client_ID, int tableID, int recordID)
 	{
 		MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, false);
+		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSVersion version = (MDMSVersion) mapEntry.getKey();

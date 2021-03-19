@@ -37,7 +37,7 @@ import org.adempiere.webui.adwindow.BreadCrumbLink;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
-import org.adempiere.webui.component.Checkbox;
+import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
 import org.adempiere.webui.component.DatetimeBox;
@@ -147,6 +147,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Label					lblDescription			= new Label(DMSConstant.MSG_DESCRIPTION);
 	private Label					lblCreatedBy			= new Label(DMSConstant.MSG_CREATEDBY);
 	private Label					lblUpdatedBy			= new Label(DMSConstant.MSG_UPDATEDBY);
+	private Label					lblDocumentView			= new Label(DMSConstant.MSG_DOCUMENT_VIEW);
 	private Label					lblPositionInfo			= new Label();
 	private Label					lblShowBreadCrumb		= null;
 
@@ -168,11 +169,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Textbox					txtDocumentName			= new Textbox();
 	private Textbox					txtDescription			= new Textbox();
+	
+	private Combobox				cobDocumentView			= null;
 
 	private WTableDirEditor			lstboxContentType		= null;
 	private WSearchEditor			lstboxCreatedBy			= null;
 	private WSearchEditor			lstboxUpdatedBy			= null;
-	private Checkbox				chkInActive				= new Checkbox();
 
 	private DMS						dms						= null;
 	private MDMSContent				currDMSContent			= null;
@@ -201,6 +203,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem				mnu_download			= null;
 	private Menuitem				mnu_associate			= null;
 	private Menuitem				mnu_createLink			= null;
+	private Menuitem				mnu_undoDelete			= null;
 	private Menuitem				mnu_versionList			= null;
 	private Menuitem				mnu_uploadVersion		= null;
 	private Menuitem				mnu_zoomContentWin		= null;
@@ -281,11 +284,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			btnCreateDir.setEnabled(false);
 		}
 
-		if (isMountingBaseStructure)
+		if (isMountingBaseStructure || (currDMSContent != null && !currDMSContent.isActive()))
 		{
 			setButtonsContentCreationEnabled(false);
 		}
-		else if (isDocExplorerWindow)
+		else if (isDocExplorerWindow || (currDMSContent != null && currDMSContent.isActive()))
 		{
 			setButtonsContentCreationEnabled(true);
 		}
@@ -404,6 +407,21 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox.appendChild(btnCreateDir);
 		hbox.appendChild(btnUploadContent);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 3, hbox);
+		
+		cobDocumentView = new Combobox();
+		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_ALL, DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
+		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_DELETED_ONLY, DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE);
+		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_NON_DELETED, DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE);
+		cobDocumentView.setSelectedIndex(2);
+		
+		if (MRole.getDefault().get_ValueAsBoolean("IsDMSAdmin"))
+		{
+			row = rowsBtn.newRow();
+			DMS_ZK_Util.createCellUnderRow(row, 1, 1, lblDocumentView);
+			DMS_ZK_Util.createCellUnderRow(row, 1, 2, cobDocumentView);
+			ZKUpdateUtil.setWidth(cobDocumentView, "99%");
+			cobDocumentView.addEventListener(Events.ON_SELECT, this);
+		}
 
 		//
 		Grid searchGridView = GridFactory.newGridLayout();
@@ -501,14 +519,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendCellChild(lstboxContentType.getComponent(), 2);
 		lblContentType.setStyle("float: left;");
 		lstboxContentType.addValueChangeListener(this);
-
-		//
-		row = rowsSearch.newRow();
-		row.appendCellChild(new Space());
-		row.appendCellChild(chkInActive, 2);
-		chkInActive.setChecked(false);
-		chkInActive.setLabel(DMSConstant.MSG_SHOW_IN_ACTIVE);
-		chkInActive.addEventListener(Events.ON_CLICK, this);
 
 		//
 		row = rowsSearch.newRow();
@@ -619,6 +629,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Download", this);
 		mnu_associate = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ASSOCIATE, "Associate", this);
 		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link", this);
+		mnu_undoDelete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UN_ARCHIVE, "UndoDelete", this);
 		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
 		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
 		mnu_zoomContentWin = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ZOOMCONTENTWIN, "Zoom", this);
@@ -849,6 +860,53 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						callback);
 
 		}
+		else if (event.getTarget().equals(mnu_undoDelete))
+		{
+			Callback<Boolean> callback = new Callback<Boolean>() {
+				@Override
+				public void onCallback(Boolean result)
+				{
+					if (result)
+					{
+						final MDMSContent deletableContent = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+						final MDMSAssociation deletableAssociation = (MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION);
+
+						String warningMsg = dms.hasLinkableDocs(deletableContent, deletableAssociation);
+						if (!Util.isEmpty(warningMsg, true))
+						{
+							Callback<Boolean> callbackWarning = new Callback<Boolean>() {
+
+								@Override
+								public void onCallback(Boolean result)
+								{
+									if (result)
+									{
+										//
+										dms.undoDeleteContent(deletableContent, deletableAssociation, true);
+										renderViewer();
+									}
+								}
+							};
+
+							FDialog.ask("Want to un-Delete linkable references ?", 0, mnu_delete,
+										"<b> Are you want to un-Delete actual docs and associated its linkable documents ? </b>" + warningMsg, callbackWarning);
+						}
+						else
+						{
+							dms.undoDeleteContent(deletableContent, deletableAssociation, false);
+							renderViewer();
+						}
+					}
+					else
+					{
+						return;
+					}
+				}
+			};
+
+			FDialog.ask(0, this, "Are you sure to un delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
+						callback);
+		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
 			new WDAssociationType(	dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(),
@@ -871,6 +929,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(BreadCrumbLink.class))
 		{
 			renderBreadCrumb(event);
+		}
+		else if (cobDocumentView != null && Events.ON_SELECT.equals(event.getName()) && event.getTarget().equals(cobDocumentView))
+		{
+			renderViewer();
 		}
 
 		allowUserToCreateDir();
@@ -981,9 +1043,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (isSearch)
 				contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
 			else if (isGenericSearch)
-				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent);
+				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent, cobDocumentView.getSelectedItem().getValue());
 			else
-				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, true);
+				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, cobDocumentView.getSelectedItem().getValue());
 
 			// Content Type wise access restriction
 			IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
@@ -1017,7 +1079,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		dbCreatedTo.setValue(null);
 		dbUpdatedFrom.setValue(null);
 		dbUpdatedTo.setValue(null);
-		chkInActive.setChecked(false);
 
 		if (m_editors != null)
 		{
@@ -1081,7 +1142,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				if (DMSFactoryUtils.getContentEditor(mimeType.getMimeType()) != null)
 				{
+					boolean isContentActive = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
+					
 					Tab tabData = new Tab(name);
+					tabData.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
 					tabData.setClosable(true);
 					tabs.appendChild(tabData);
 					tabBox.setSelectedTab(tabData);
@@ -1376,6 +1440,32 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_canvasPaste.setDisabled(true);
 			}
 		}
+		
+		
+		if (compCellRowViewer != null && MRole.getDefault().get_ValueAsBoolean("IsDMSAdmin"))
+		{
+			boolean isActive = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);;
+
+			mnu_cut.setVisible(isActive);
+			mnu_copy.setVisible(isActive);
+			mnu_paste.setVisible(isActive);
+			mnu_rename.setVisible(isActive);
+			mnu_delete.setVisible(isActive);
+			mnu_download.setVisible(isActive);
+			mnu_associate.setVisible(isActive);
+			mnu_createLink.setVisible(isActive);
+			mnu_versionList.setVisible(isActive);
+			mnu_uploadVersion.setVisible(isActive);
+			mnu_zoomContentWin.setVisible(isActive);
+
+			mnu_undoDelete.setDisabled(isActive);
+			mnu_undoDelete.setVisible(!isActive);
+
+		}
+		else
+		{
+			mnu_undoDelete.setVisible(false);
+		}
 	} // openContentContextMenu
 
 	/**
@@ -1424,7 +1514,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (currDMSContent != null)
 		{
-			if (isMountingBaseStructure)
+			if (isMountingBaseStructure || !currDMSContent.isActive())
 			{
 				mnu_canvasCreateLink.setDisabled(true);
 				mnu_canvasPaste.setDisabled(true);
@@ -1501,10 +1591,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (lstboxUpdatedBy.getValue() != null)
 			setSearchParams(DMSConstant.UPDATEDBY, lstboxUpdatedBy.getValue(), null, params);
 
-		// if chkInActive = true, display all files
-		// if chkInActive = false, display only active files
-		if (chkInActive != null)
-			setSearchParams(DMSConstant.SHOW_INACTIVE, chkInActive.isChecked(), chkInActive.isChecked() ? false : null, params);
+		String documentView = cobDocumentView.getSelectedItem().getValue();
+		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
+			setSearchParams(DMSConstant.SHOW_INACTIVE, true, null, params);
+		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
+			setSearchParams(DMSConstant.SHOW_INACTIVE, false, null, params);
 
 		//
 		if (lstboxContentType.getValue() != null)

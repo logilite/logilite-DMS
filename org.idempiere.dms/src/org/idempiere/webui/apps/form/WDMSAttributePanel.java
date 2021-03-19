@@ -289,7 +289,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
 
-		btnVersionUpload.setDisabled(!isWindowAccess || isMountingBaseStructure);
+		btnVersionUpload.setDisabled(!isWindowAccess || isMountingBaseStructure || content == null || !content.isActive());
 		btnEdit.setDisabled(!isWindowAccess || isMountingBaseStructure || isLink);
 	} // init
 
@@ -309,7 +309,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 
 		tabpanelVersionHitory.appendChild(versionGrid);
 
-		MDMSAssociation dmsAssociation = dms.getParentAssociationFromContent(content.getDMS_Content_ID());
+		MDMSAssociation dmsAssociation = dms.getParentAssociationFromContent(content.getDMS_Content_ID(), content.isActive());
 
 		HashMap<I_DMS_Version, I_DMS_Association> contentsMap = new HashMap<I_DMS_Version, I_DMS_Association>();
 		List<MDMSVersion> contentVersions = MDMSVersion.getVersionHistory(content);

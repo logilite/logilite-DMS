@@ -45,6 +45,7 @@ public final class DMSConstant
 	public static final String				COMP_ATTRIBUTE_CONTENT					= "ATTR_CONTENT";
 	public static final String				COMP_ATTRIBUTE_VERSION					= "ATTR_VERSION";
 	public static final String				COMP_ATTRIBUTE_ASSOCIATION				= "ATTR_ASSOCIATION";
+	public static final String				COMP_ATTRIBUTE_ISACTIVE					= "ATTR_ISACTIVE";
 
 	// View thumbnail toggle action
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
@@ -86,6 +87,7 @@ public final class DMSConstant
 	public static final String				MENUITEM_DOWNLOAD						= "Download";
 	public static final String				MENUITEM_ASSOCIATE						= "Associate";
 	public static final String				MENUITEM_CREATELINK						= "Create Link";
+	public static final String				MENUITEM_UN_ARCHIVE						= "Un-Archive";
 	public static final String				MENUITEM_VERSIONlIST					= "Version List";
 	public static final String				MENUITEM_UPLOADVERSION					= "Upload Version";
 	public static final String				MENUITEM_ZOOMCONTENTWIN					= "Zoom";
@@ -138,6 +140,7 @@ public final class DMSConstant
 	public static final String				MSG_ATTRIBUTES							= Msg.getMsg(Env.getCtx(), "Attributes");
 	public static final String				MSG_SELECT_FILE							= Msg.getMsg(Env.getCtx(), "SelectFile");
 	public static final String				MSG_ATTRIBUTE_SET						= Msg.getMsg(Env.getCtx(), "attribute.set");
+	public static final String				MSG_DOCUMENT_VIEW						= Msg.getMsg(Env.getCtx(), "DocumentView");
 	public static final String				MSG_SIZE								= "Size";
 	public static final String				MSG_LINK								= "Link";
 	public static final String				MSG_FILE_TYPE							= "File Type";
@@ -170,6 +173,14 @@ public final class DMSConstant
 	public static final String				OPERATION_RENAME						= "OpsRename";
 	public static final String				OPERATION_COPY							= "OpsCopy";
 
+	// Document View List
+	public static final String				DOCUMENT_VIEW_ALL								= "All";
+	public static final String				DOCUMENT_VIEW_ALL_VALUE							= "AL";
+	public static final String				DOCUMENT_VIEW_DELETED_ONLY						= "Deleted Only";
+	public static final String				DOCUMENT_VIEW_DELETED_ONLY_VALUE				= "DO";
+	public static final String				DOCUMENT_VIEW_NON_DELETED						= "Non-Deleted";
+	public static final String				DOCUMENT_VIEW_NON_DELETED_VALUE					= "ND";
+
 	/*
 	 * Date Format
 	 */
@@ -194,6 +205,9 @@ public final class DMSConstant
 
 	public static final String				CSS_HIGHLIGHT_LABEL						= "font-weight: bold; text-align: center; border: 4px double #909090; padding: 4px 0px;";
 
+	public static final String				CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE	= "margin: 5px; background: #abcdff; border: red solid;";
+	public static final String				CSS_CONTENT_VIEWER_LIST_SEL_INACTIVE	= "border-top: 1px solid red; border-bottom: 1px double red;";
+	
 	/*
 	 * Queries
 	 */
@@ -248,9 +262,9 @@ public final class DMSConstant
 
 	public static final String				SQL_CONTENT_FROM_ASI					= "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? 		";
 
-	public static final String				SQL_GET_RELATED_CONTENT					= "SELECT c.DMS_Content_ID, a.DMS_Association_ID FROM DMS_Content c					"
-																						+ " INNER JOIN DMS_Association a ON c.DMS_Content_ID = a.DMS_Content_ID 		"
-																						+ " WHERE a.DMS_Content_Related_ID = ? AND c.IsActive='Y' AND a.IsActive='Y' 	";
+	public static final String				SQL_GET_RELATED_CONTENT					= "SELECT c.DMS_Content_ID, a.DMS_Association_ID FROM DMS_Content c											"
+																						+ " INNER JOIN DMS_Association a ON c.DMS_Content_ID = a.DMS_Content_ID AND a.IsActive = c.IsActive 	"
+																						+ " WHERE a.DMS_Content_Related_ID = ? AND c.IsActive=?  												";
 
 	public static final String				SQL_GET_ASSOCIATION_FOR_COPY_PASTE		= "SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association 					"
 																						+ " WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ? OR DMS_Content_ID = ? AND DMS_AssociationType_ID != ?"
@@ -286,8 +300,10 @@ public final class DMSConstant
 
 	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL		= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "");
 
-	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace(	"#IsActive#",
-																																"AND c.IsActive='Y' AND a.IsActive='Y'");
+	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "AND c.IsActive='Y' AND a.IsActive='Y'");
+
+	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "AND c.IsActive='N' AND a.IsActive='N'");
+
 	// Restrict copy paste while parent directory copy paste into itself or it's child directory.
 	public static String					SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY	= " WITH RECURSIVE ContentHierarchy AS "
 																						+ " (	SELECT DMS_Content_ID,DMS_Content_Related_ID FROM DMS_Association "

@@ -99,11 +99,13 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		row.appendCellChild(lblFileType);
 		row.appendCellChild(lblModifiedBy);
 		row.appendCellChild(linkIcon);
+		row.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
 
 		//
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, version.getDMS_Content());
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
 
 		// Listener for component selection
 		row.addEventListener(Events.ON_CLICK, this);
@@ -127,7 +129,12 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	@Override
 	public void setSelection(Component component)
 	{
-		((Row) component).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_SELECTED);
+		Row selectedRow = (Row) component;
+		Object isActive = selectedRow.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
+		if (isActive != null && isActive instanceof Boolean)
+			selectedRow.setStyle((Boolean) isActive ? DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_SELECTED : DMSConstant.CSS_CONTENT_VIEWER_LIST_SEL_INACTIVE);
+		else
+			selectedRow.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_SELECTED);
 	}
 
 	private Column createColumn(String labelName, String size, String align)
