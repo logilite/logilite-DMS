@@ -23,7 +23,7 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="6.1.0",
  zhtml;bundle-version="8.0.2",
  zel;bundle-version="8.0.2",
  zul;bundle-version="8.0.2",
- zk;bundle-version="8.0.2"
+ zk;bundle-version="8.0.2",
  com.logilite.search.solr,
  zcommon
 Bundle-Vendor: Logilite
