@@ -122,17 +122,7 @@ public class WCreateDirectoryForm extends Window implements EventListener<Event>
 		Separator separator = new Separator();
 		separator.setOrient("horizontal");
 		separator.setBar(true);
-
-		if (ClientInfo.isMobile())
-		{
-			txtboxDirectory.setWidth("98%");
-			if (ClientInfo.get().isPortrait())
-				north.setHeight("50px");
-		}
-		else
-		{
-			separator.setStyle("padding-top: 40px");
-		}
+		separator.setStyle("padding-top: 40px");
 
 		parameterPanel.appendChild(separator);
 
