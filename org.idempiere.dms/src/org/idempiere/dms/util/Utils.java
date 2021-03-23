@@ -64,13 +64,8 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
-import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSMimeType;
-import org.idempiere.model.MDMSVersion;
 
 /**
  * @author deepak@logilite.com
@@ -124,90 +119,6 @@ public class Utils
 		else
 			return null;
 	} // getThumbnailStorageProvider
-
-	// TODO Move to MountingStrategy
-	/**
-	 * Initialize Mounting Content
-	 * 
-	 * @param mountingBaseName
-	 * @param table_Name
-	 * @param Record_ID
-	 * @param AD_Table_ID
-	 */
-	public static void initiateMountingContent(String mountingBaseName, String table_Name, int Record_ID, int AD_Table_ID)
-	{
-		int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
-
-		/**
-		 * Base Mounting
-		 */
-		IFileStorageProvider fileStorageProvider = FileStorageUtil.get(AD_Client_ID, false);
-		String baseDir = fileStorageProvider.getBaseDirectory(null);
-		File file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName);
-
-		int mountingContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_ROOT_MOUNTING_BASE_CONTENT, mountingBaseName, AD_Client_ID);
-
-		if (!file.exists())
-		{
-			file.mkdirs();
-		}
-
-		// Check if already DMS content created for Mounting Base Folder but storage moved or
-		// something happen to prevent to create another content for same
-		if (mountingContentID <= 0)
-		{
-			mountingContentID = MDMSContent.create(mountingBaseName, MDMSContent.CONTENTBASETYPE_Directory, null, true);
-			MDMSAssociation.create(mountingContentID, 0, 0, 0, 0, null);
-			MDMSVersion.create(mountingContentID, mountingBaseName, 0, file, null);
-		}
-
-		/**
-		 * Table Name Mounting
-		 */
-		int tableNameContentID = 0;
-		if (!Util.isEmpty(table_Name))
-		{
-			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name);
-
-			tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID, AD_Table_ID, table_Name);
-			if (!file.exists())
-			{
-				file.mkdirs();
-			}
-
-			// Check if already DMS content created for Table
-			if (tableNameContentID <= 0)
-			{
-				tableNameContentID = MDMSContent.create(table_Name, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + mountingBaseName, true);
-				MDMSAssociation.create(tableNameContentID, mountingContentID, 0, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
-				MDMSVersion.create(tableNameContentID, table_Name, 0, file, null);
-			}
-		}
-
-		/**
-		 * Record_ID Mounting
-		 */
-		if (tableNameContentID > 0 && Record_ID > 0)
-		{
-			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
-							+ Record_ID);
-			if (!file.exists())
-			{
-				file.mkdirs();
-			}
-
-			// Check if already DMS content created for Record
-			int recordContentID = DB.getSQLValue(	null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT + " AND a.Record_ID = ?", AD_Client_ID, tableNameContentID,
-													AD_Table_ID, String.valueOf(Record_ID), Record_ID);
-			if (recordContentID <= 0)
-			{
-				String parentURL = DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name;
-				recordContentID = MDMSContent.create(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, parentURL, true);
-				MDMSAssociation.create(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
-				MDMSVersion.create(recordContentID, String.valueOf(Record_ID), 0, file, null);
-			}
-		}
-	} // initiateMountingContent
 
 	/**
 	 * get thumbnail of directory
