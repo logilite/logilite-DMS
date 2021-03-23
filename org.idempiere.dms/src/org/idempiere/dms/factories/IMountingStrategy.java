@@ -27,4 +27,6 @@ public interface IMountingStrategy
 	public MDMSContent getMountingParent(int AD_Table_ID, int Record_ID);
 
 	public MDMSContent getMountingParentForArchive();
+
+	public void initiateMountingContent(String mountingBaseName, String Table_Name, int RecordID, int AD_Table_ID);
 }

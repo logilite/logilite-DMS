@@ -333,7 +333,7 @@ public class DMS
 	public void initiateMountingContent(String mountingBaseName, String tableName, int recordID, int tableID)
 	{
 		this.ssTableInfo.updateRecord(recordID);
-		Utils.initiateMountingContent(mountingBaseName, validTableName(tableName), validRecordID(recordID), validTableID(tableID));
+		getMountingStrategy().initiateMountingContent(mountingBaseName, validTableName(tableName), validRecordID(recordID), validTableID(tableID));
 	} // initiateMountingContent
 
 	/*
