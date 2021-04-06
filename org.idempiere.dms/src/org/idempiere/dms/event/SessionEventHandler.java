@@ -17,6 +17,7 @@ import org.adempiere.base.event.AbstractEventHandler;
 import org.adempiere.base.event.IEventTopics;
 import org.compiere.model.MSession;
 import org.compiere.model.PO;
+import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.osgi.service.event.Event;
 
@@ -32,6 +33,16 @@ public class SessionEventHandler extends AbstractEventHandler
 		if (event.getTopic().equals(IEventTopics.PO_AFTER_CHANGE) && po instanceof MSession && ((MSession) po).isProcessed())
 		{
 			DMSClipboard.removeSessionId(mSession.getAD_Session_ID());
+		}
+		else
+		{
+			/*
+			 * When user login to the account then load the CSS file for DMS
+			 */
+
+			// Load DMS CSS file content and attach as style tag in Head tab
+			DMS_ZK_Util.loadDMSThemeCSSFile();
+			DMS_ZK_Util.loadDMSMobileCSSFile();
 		}
 	}
 

@@ -25,7 +25,6 @@ import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.session.SessionManager;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
-import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.webui.apps.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
@@ -44,10 +43,6 @@ public class CustomToolbarFactory implements IAction
 	public CustomToolbarFactory()
 	{
 		super();
-
-		// Load DMS CSS file content and attach as style tag in Head tab
-		DMS_ZK_Util.loadDMSThemeCSSFile();
-		DMS_ZK_Util.loadDMSMobileCSSFile();
 	}
 
 	@Override
