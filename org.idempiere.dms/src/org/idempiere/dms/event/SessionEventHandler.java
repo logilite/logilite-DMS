@@ -15,8 +15,11 @@ package org.idempiere.dms.event;
 
 import org.adempiere.base.event.AbstractEventHandler;
 import org.adempiere.base.event.IEventTopics;
+import org.adempiere.webui.session.SessionManager;
 import org.compiere.model.MSession;
 import org.compiere.model.PO;
+import org.compiere.util.Env;
+import org.compiere.util.Util;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.osgi.service.event.Event;
@@ -29,12 +32,13 @@ public class SessionEventHandler extends AbstractEventHandler
 	{
 		PO po = getPO(event);
 		MSession mSession = (MSession) po;
+		String webSession = mSession.getWebSession();
 
 		if (event.getTopic().equals(IEventTopics.PO_AFTER_CHANGE) && po instanceof MSession && ((MSession) po).isProcessed())
 		{
 			DMSClipboard.removeSessionId(mSession.getAD_Session_ID());
 		}
-		else
+		else if (SessionManager.isUserLoggedIn(Env.getCtx()) && (Util.isEmpty(webSession) || !(webSession.equals("Server") || webSession.equals("WebService"))))
 		{
 			/*
 			 * When user login to the account then load the CSS file for DMS
