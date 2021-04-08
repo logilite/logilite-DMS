@@ -88,6 +88,7 @@ import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentTypeAccess;
+import org.idempiere.dms.factories.IPermission;
 import org.idempiere.dms.util.DMSConvertToPDFUtils;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.model.I_DMS_Association;
@@ -203,6 +204,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem				mnu_download			= null;
 	private Menuitem				mnu_associate			= null;
 	private Menuitem				mnu_createLink			= null;
+	private Menuitem				mnu_permission			= null;
 	private Menuitem				mnu_undoDelete			= null;
 	private Menuitem				mnu_versionList			= null;
 	private Menuitem				mnu_uploadVersion		= null;
@@ -292,6 +294,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			setButtonsContentCreationEnabled(true);
 		}
+		
+		if (currDMSContent != null && !dms.isWritePermission(currDMSContent) && !dms.isAllPermissionPermission(currDMSContent))
+			setButtonsContentCreationEnabled(false);
+		
 	} // allowUserToCreateDir
 
 	public DMS getDMS()
@@ -629,6 +635,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Download", this);
 		mnu_associate = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ASSOCIATE, "Associate", this);
 		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link", this);
+		mnu_permission = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PERMISSION, "permission", this);
 		mnu_undoDelete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UN_ARCHIVE, "UndoDelete", this);
 		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
 		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
@@ -912,6 +919,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			new WDAssociationType(	dms, copyDMSContent, (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT), getTable_ID(),
 									getRecord_ID(), winContent);
 		}
+		else if (event.getTarget().equals(mnu_permission))
+		{
+			MDMSContent content = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+			new WDMSPermissionPanel(content);
+			IPermission validator = dms.getPermission();
+			validator.initContentPermission(content);
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, validator.isRead());
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, validator.isWrite());
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, validator.isDelete());
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, validator.isNavigation());
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISALLPERMISSION, validator.isAllPermission());
+		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
 			linkCopyDocument(currDMSContent, false);
@@ -1100,6 +1119,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		MDMSVersion version = (MDMSVersion) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION);
 		MDMSContent selectedContent = (MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
 		MDMSAssociation selectedAssociation = (MDMSAssociation) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION);
+
+		boolean isRead = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
+		boolean isNavigation = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION);
+
+		if (!isRead && !isNavigation)
+			throw new AdempiereException("You do not have Read or Navigation access");
 
 		selectedDMSVersionStack.push(version);
 		if (selectedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
@@ -1344,6 +1369,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			|| isMountingBaseStructure)
 		{
 			ctxMenuItemDisabled(true);
+			mnu_undoDelete.setVisible(false);
 
 			((XulElement) compCellRowViewer).setContext(contentContextMenu);
 			contentContextMenu.open(this, "at_pointer");
@@ -1429,6 +1455,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_download.setDisabled(false);
 				mnu_associate.setDisabled(true);
 				mnu_createLink.setDisabled(true);
+				mnu_permission.setDisabled(false);
 				mnu_versionList.setDisabled(false);
 				mnu_canvasPaste.setDisabled(true);
 				mnu_uploadVersion.setDisabled(false);
@@ -1441,30 +1468,64 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 		
-		
-		if (compCellRowViewer != null && MRole.getDefault().get_ValueAsBoolean("IsDMSAdmin"))
+		if (compCellRowViewer != null)
 		{
-			boolean isActive = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);;
+			boolean isRead = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
+			boolean isWrite = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE);
+			boolean isDelete = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE);
 
-			mnu_cut.setVisible(isActive);
-			mnu_copy.setVisible(isActive);
-			mnu_paste.setVisible(isActive);
-			mnu_rename.setVisible(isActive);
-			mnu_delete.setVisible(isActive);
-			mnu_download.setVisible(isActive);
-			mnu_associate.setVisible(isActive);
-			mnu_createLink.setVisible(isActive);
-			mnu_versionList.setVisible(isActive);
-			mnu_uploadVersion.setVisible(isActive);
-			mnu_zoomContentWin.setVisible(isActive);
+			if (!isWrite)
+			{
+				// WRITE ACCESS
+				mnu_cut.setDisabled(true);
+				mnu_copy.setDisabled(true);
+				mnu_paste.setDisabled(true);
+				mnu_rename.setDisabled(true);
+				mnu_download.setDisabled(true);
+				mnu_associate.setDisabled(true);
+				mnu_createLink.setDisabled(true);
+				mnu_permission.setDisabled(true);
+				mnu_uploadVersion.setDisabled(true);
+			}
 
-			mnu_undoDelete.setDisabled(isActive);
-			mnu_undoDelete.setVisible(!isActive);
+			if (!isRead)
+			{
+				mnu_versionList.setDisabled(true);
+				mnu_zoomContentWin.setDisabled(true);
+			}
 
-		}
-		else
-		{
-			mnu_undoDelete.setVisible(false);
+			if (!isDelete)
+			{
+				// DELETE ACCESS
+				mnu_delete.setDisabled(true);
+				mnu_undoDelete.setDisabled(true);
+			}
+
+			if (MRole.getDefault().get_ValueAsBoolean("IsDMSAdmin"))
+			{
+				boolean isActive = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
+				isDelete = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE);
+
+				mnu_cut.setVisible(isActive);
+				mnu_copy.setVisible(isActive);
+				mnu_paste.setVisible(isActive);
+				mnu_rename.setVisible(isActive);
+				mnu_delete.setVisible(isActive);
+				mnu_download.setVisible(isActive);
+				mnu_associate.setVisible(isActive);
+				mnu_createLink.setVisible(isActive);
+				mnu_permission.setVisible(isActive);
+				mnu_versionList.setVisible(isActive);
+				mnu_uploadVersion.setVisible(isActive);
+				mnu_zoomContentWin.setVisible(isActive);
+
+				mnu_undoDelete.setVisible(!isActive && isDelete);
+				mnu_undoDelete.setDisabled(isActive || !isDelete);
+			}
+			else
+			{
+				mnu_undoDelete.setVisible(false);
+			}
 		}
 	} // openContentContextMenu
 
@@ -1481,8 +1542,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_download.setDisabled(isDisabled);
 		mnu_associate.setDisabled(isDisabled);
 		mnu_createLink.setDisabled(isDisabled);
+		mnu_permission.setDisabled(isDisabled);
 		mnu_versionList.setDisabled(isDisabled);
 		mnu_uploadVersion.setDisabled(isDisabled);
+		mnu_zoomContentWin.setDisabled(isDisabled);
 	} // ctxMenuItemDisabled
 
 	private void openCanvasContextMenu(Event event)
@@ -1524,6 +1587,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// Restrict creating link
 		if (DMSClipboard.get() != null && !DMSClipboard.getIsCopy())
 			mnu_canvasCreateLink.setDisabled(true);
+		
+		if (currDMSContent != null && !dms.isWritePermission(currDMSContent) && !dms.isAllPermissionPermission(currDMSContent))
+		{
+			mnu_canvasCreateLink.setDisabled(true);
+			mnu_canvasPaste.setDisabled(true);
+		}
 
 		canvasContextMenu.open(this, "at_pointer");
 	} // openCanvasContextMenu

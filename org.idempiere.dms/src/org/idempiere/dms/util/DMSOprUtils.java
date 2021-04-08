@@ -753,6 +753,8 @@ public class DMSOprUtils
 		{
 			pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID);
 		}
+		
+		DMSPermissionUtils.givePermissionBaseOnParentContent(copiedContent, destContent);
 	} // pasteCopyContent
 
 	/**
@@ -904,7 +906,7 @@ public class DMSOprUtils
 			}
 
 			MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(dmsContent.getDMS_Content_ID(), true, null);
-			if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID)
+			if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID || (association.getDMS_AssociationType_ID() == 0 && MDMSContent.CONTENTBASETYPE_Content.equals(dmsContent.getContentBaseType())))
 			{
 				if (destContent != null && destContent.getDMS_Content_ID() == 0)
 					destContent = null;
@@ -921,6 +923,8 @@ public class DMSOprUtils
 			dmsContent.setParentURL(dms.getPathFromContentManager(destContent));
 			dmsContent.saveEx();
 		}
+
+		DMSPermissionUtils.givePermissionBaseOnParentContent(cutContent, destContent);
 	} // pasteCutContent
 
 	/**

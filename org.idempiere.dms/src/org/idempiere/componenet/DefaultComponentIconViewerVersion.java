@@ -103,6 +103,10 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
 		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, validator.isRead());
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, validator.isWrite());
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, validator.isDelete());
+		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, validator.isNavigation());
 
 		// Listener for component selection
 		row.addEventListener(Events.ON_CLICK, this);

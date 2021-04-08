@@ -55,6 +55,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	private static CLogger		log					= CLogger.getCLogger(WDMSVersion.class);
 
 	private Grid				gridView			= GridFactory.newGridLayout();
+	private boolean				isWrite				= true;
 	private DMS					dms;
 
 	/**
@@ -66,6 +67,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	public WDMSVersion(DMS dms, MDMSContent content)
 	{
 		this.dms = dms;
+		isWrite = dms.isWritePermission(content);
 		try
 		{
 			init();
@@ -126,7 +128,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 	public void onEvent(Event event) throws Exception
 	{
 		Component component = event.getTarget();
-		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (component instanceof Cell || component instanceof Row))
+		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (component instanceof Cell || component instanceof Row) && isWrite)
 		{
 			DMS_ZK_Util.downloadDocument(dms, (MDMSVersion) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION));
 		}

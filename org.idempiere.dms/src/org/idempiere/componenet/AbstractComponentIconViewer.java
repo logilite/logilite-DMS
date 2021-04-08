@@ -11,6 +11,7 @@ import org.adempiere.webui.theme.ThemeManager;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.factories.IDMSViewer;
+import org.idempiere.dms.factories.IPermission;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
@@ -40,6 +41,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	}
 
 	protected DMS								dms;
+	protected IPermission						validator;
 
 	protected Grid								grid;
 	protected Component							prevComponent;
@@ -82,6 +84,8 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		}
 		else
 		{
+			if (validator == null)
+				validator = dms.getPermission();
 			// handle active , create var isContentActive
 			for (Map.Entry <I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
 			{
@@ -90,6 +94,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 				isContentActive =  (version != null && association != null && version.getDMS_Content().isActive() && association.isActive());
 				if (association != null && MDMSAssociationType.isLink(association))
 					isContentActive = association.isActive();
+				validator.initContentPermission((MDMSContent) version.getDMS_Content());
 				createComponent(rows, version, association, compWidth, compHeight);
 			}
 		}

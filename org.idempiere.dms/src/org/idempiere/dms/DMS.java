@@ -32,6 +32,7 @@ import org.compiere.util.Trx;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IMountingStrategy;
+import org.idempiere.dms.factories.IPermission;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSOprUtils;
@@ -66,6 +67,7 @@ public class DMS
 	private IMountingStrategy		mountingStrategy			= null;
 	private IContentManager			contentManager				= null;
 	private IIndexSearcher			indexSearcher				= null;
+	private IPermission				permission					= null;
 
 	private boolean					isDocExplorerWindow			= false;
 
@@ -107,6 +109,8 @@ public class DMS
 
 		// When open Document Explorer
 		ssTableInfo = new DMSSubstituteTableInfo(0);
+		
+		permission = DMSFactoryUtils.getContentPermissionValidator();
 	} // Constructor
 
 	/**
@@ -748,4 +752,63 @@ public class DMS
 		return ssTableInfo;
 	}
 
+	public IPermission getPermission( )
+	{
+		return permission;
+	}
+
+	public void setPermission(IPermission permission)
+	{
+		this.permission = permission;
+	}
+	
+	public boolean isWritePermission(MDMSContent content)
+	{
+		if (permission != null)
+		{
+			permission.initContentPermission(content);
+			return permission.isWrite();
+		}
+		return true;
+	}
+	
+	public boolean isDeletePermission(MDMSContent content)
+	{
+		if (permission != null)
+		{
+			permission.initContentPermission(content);
+			return permission.isDelete();
+		}
+		return true;
+	}
+	
+	public boolean isReadPermission(MDMSContent content)
+	{
+		if (permission != null)
+		{
+			permission.initContentPermission(content);
+			return permission.isRead();
+		}
+		return true;
+	}
+	
+	public boolean isNavigationPermission(MDMSContent content)
+	{
+		if (permission != null)
+		{
+			permission.initContentPermission(content);
+			return permission.isNavigation();
+		}
+		return true;
+	}
+	
+	public boolean isAllPermissionPermission(MDMSContent content)
+	{
+		if (permission != null)
+		{
+			permission.initContentPermission(content);
+			return permission.isAllPermission();
+		}
+		return true;
+	}
 }

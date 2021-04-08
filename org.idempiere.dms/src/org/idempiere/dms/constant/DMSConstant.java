@@ -46,6 +46,11 @@ public final class DMSConstant
 	public static final String				COMP_ATTRIBUTE_VERSION					= "ATTR_VERSION";
 	public static final String				COMP_ATTRIBUTE_ASSOCIATION				= "ATTR_ASSOCIATION";
 	public static final String				COMP_ATTRIBUTE_ISACTIVE					= "ATTR_ISACTIVE";
+	public static final String				COMP_ATTRIBUTE_ISREAD					= "ATTR_ISREAD";
+	public static final String				COMP_ATTRIBUTE_ISWRITE					= "ATTR_ISWRITE";
+	public static final String				COMP_ATTRIBUTE_ISDELETE					= "ATTR_ISDELETE";
+	public static final String				COMP_ATTRIBUTE_ISNAVIGATION				= "ATTR_ISNAVIGATION";
+	public static final String				COMP_ATTRIBUTE_ISALLPERMISSION			= "ATTR_ISALLPERMISSION";
 
 	// View thumbnail toggle action
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
@@ -91,6 +96,7 @@ public final class DMSConstant
 	public static final String				MENUITEM_VERSIONlIST					= "Version List";
 	public static final String				MENUITEM_UPLOADVERSION					= "Upload Version";
 	public static final String				MENUITEM_ZOOMCONTENTWIN					= "Zoom";
+	public static final String				MENUITEM_PERMISSION						= "permission";
 
 	// DMS MimeType
 	public static final String				DEFAULT									= "Default";
@@ -150,6 +156,7 @@ public final class DMSConstant
 	public static final String				MSG_VERSION_HISTORY						= "Version History";
 	public static final String				MSG_DMS_VERSION_LIST					= "DMS Version List";
 	public static final String				MSG_CREATE_DIRECTORY					= "Create Directory";
+	public static final String				MSG_DMS_PERMISSION_LIST					= "DMS Permission List";
 	public static final String				MSG_ENTER_DIRETORY_NAME					= "Enter Directory Name";
 	public static final String				MSG_NO_VERSION_DOC_EXISTS				= "No version Document available.";
 	public static final String				MSG_ENTER_NEW_NAME_FOR_ITEM				= "Please enter a new name for the item:";

@@ -110,7 +110,8 @@ public class DMSSearchUtils
 				MDMSVersion version = new MDMSVersion(Env.getCtx(), rs.getInt("DMS_Version_ID"), null);
 				MDMSAssociation associationChild = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 
-				map.put(version, associationChild);
+				if (DMSPermissionUtils.validateContentPermission((MDMSContent) version.getDMS_Content()))
+					map.put(version, associationChild);
 			}
 		}
 		catch (SQLException e)
