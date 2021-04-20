@@ -33,7 +33,6 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.util.DMSPermissionUtils;
 
 public class MDMSContent extends X_DMS_Content
 {
@@ -99,8 +98,6 @@ public class MDMSContent extends X_DMS_Content
 		if (contentTypeID > 0)
 			content.setDMS_ContentType_ID(contentTypeID);
 		content.saveEx();
-		
-		DMSPermissionUtils.createContentPermission(content);
 
 		log.log(Level.INFO, "New DMS_Content_ID = " + content.getDMS_Content_ID() + " for " + name + " as (" + contentBaseType + ") at " + parentURL);
 
@@ -213,9 +210,9 @@ public class MDMSContent extends X_DMS_Content
 
 	/**
 	 * Get linkable Association and its Content related references
-	 * @param isActiveonly 
 	 * 
-	 * @return {@code Map<I_DMS_Association, I_DMS_Content>}
+	 * @param  isActiveonly
+	 * @return              {@code Map<I_DMS_Association, I_DMS_Content>}
 	 */
 	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(boolean isActiveonly)
 	{

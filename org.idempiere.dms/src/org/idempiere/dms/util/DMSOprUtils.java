@@ -753,8 +753,8 @@ public class DMSOprUtils
 		{
 			pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID);
 		}
-		
-		DMSPermissionUtils.givePermissionBaseOnParentContent(copiedContent, destContent);
+
+		dms.grantChildPermissionFromParentContent(copiedContent, destContent);
 	} // pasteCopyContent
 
 	/**
@@ -906,7 +906,8 @@ public class DMSOprUtils
 			}
 
 			MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(dmsContent.getDMS_Content_ID(), true, null);
-			if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID || (association.getDMS_AssociationType_ID() == 0 && MDMSContent.CONTENTBASETYPE_Content.equals(dmsContent.getContentBaseType())))
+			if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID
+				|| (association.getDMS_AssociationType_ID() == 0 && MDMSContent.CONTENTBASETYPE_Content.equals(dmsContent.getContentBaseType())))
 			{
 				if (destContent != null && destContent.getDMS_Content_ID() == 0)
 					destContent = null;
@@ -924,7 +925,7 @@ public class DMSOprUtils
 			dmsContent.saveEx();
 		}
 
-		DMSPermissionUtils.givePermissionBaseOnParentContent(cutContent, destContent);
+		dms.grantChildPermissionFromParentContent(cutContent, destContent);
 	} // pasteCutContent
 
 	/**
@@ -1134,7 +1135,8 @@ public class DMSOprUtils
 	 */
 	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID, boolean isDocExplorerWindow)
 	{
-		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, content.getAD_Client_ID(), DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
+		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(	content, content.getAD_Client_ID(),
+																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
 
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
@@ -1355,7 +1357,7 @@ public class DMSOprUtils
 			}
 		}
 	} // deleteContent
-	
+
 	/**
 	 * Undo Delete Content [ Do Active ]
 	 * 
@@ -1420,14 +1422,14 @@ public class DMSOprUtils
 				linkAssociation.save();
 			}
 		}
-		
+
 		MDMSAssociation parentAssociation = dmsAssociation;
 		while (parentAssociation != null && parentAssociation.getDMS_Content_Related_ID() > 0)
 		{
 			MDMSContent parentContent = new MDMSContent(Env.getCtx(), parentAssociation.getDMS_Content_Related_ID(), null);
 			if (parentContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Directory) && !parentContent.isActive())
 			{
-				List <MDMSAssociation> associationlist = dms.getAssociationFromContent(parentContent.getDMS_Content_ID(), 0, false, trxName);
+				List<MDMSAssociation> associationlist = dms.getAssociationFromContent(parentContent.getDMS_Content_ID(), 0, false, trxName);
 				if (!associationlist.isEmpty())
 				{
 					parentAssociation = (MDMSAssociation) associationlist.get(0);
@@ -1455,7 +1457,7 @@ public class DMSOprUtils
 			content.saveEx(trxName);
 		}
 	} // setContentAndAssociationInActive
-	
+
 	/**
 	 * Delete Content With Physical Document
 	 * 
@@ -1541,8 +1543,8 @@ public class DMSOprUtils
 	 * Get the related contents of give content like versions, Linkable docs etc
 	 * 
 	 * @param  dmsContent
-	 * @param trxName 
-	 * @param isActive 
+	 * @param  trxName
+	 * @param  isActive
 	 * @return            Map of related contents
 	 */
 	public static HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent, boolean isActive, String trxName)

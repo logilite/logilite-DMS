@@ -32,7 +32,7 @@ import org.compiere.util.Trx;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.factories.IPermission;
+import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSOprUtils;
@@ -67,7 +67,7 @@ public class DMS
 	private IMountingStrategy		mountingStrategy			= null;
 	private IContentManager			contentManager				= null;
 	private IIndexSearcher			indexSearcher				= null;
-	private IPermission				permission					= null;
+	private IPermissionManager		permissionManager			= null;
 
 	private boolean					isDocExplorerWindow			= false;
 
@@ -109,8 +109,9 @@ public class DMS
 
 		// When open Document Explorer
 		ssTableInfo = new DMSSubstituteTableInfo(0);
-		
-		permission = DMSFactoryUtils.getContentPermissionValidator();
+
+		//
+		permissionManager = DMSFactoryUtils.getPermissionFactory();
 	} // Constructor
 
 	/**
@@ -315,7 +316,8 @@ public class DMS
 		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(content, association, version, file));
 	} // createIndexContent
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(String searchText, int tableID, int recordID, MDMSContent content, String documentView)
+	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	String searchText, int tableID, int recordID, MDMSContent content,
+																				String documentView)
 	{
 		return DMSSearchUtils.getGenericSearchedContent(this, searchText, validTableID(tableID), validRecordID(recordID), content, documentView);
 	} // getGenericSearchedContent
@@ -378,7 +380,7 @@ public class DMS
 	{
 		return getParentAssociationFromContent(contentID, true);
 	} // getParentAssociationFromContent
-	
+
 	public MDMSAssociation getParentAssociationFromContent(int contentID, boolean isActiveOnly)
 	{
 		return MDMSAssociation.getParentAssociationFromContent(contentID, isActiveOnly, null);
@@ -396,7 +398,8 @@ public class DMS
 
 	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, boolean isActiveOnly)
 	{
-		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, (isActiveOnly ? DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE : DMSConstant.DOCUMENT_VIEW_ALL_VALUE));
+		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, (isActiveOnly	? DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE
+																									: DMSConstant.DOCUMENT_VIEW_ALL_VALUE));
 	} // getDMSContentsWithAssociation
 
 	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, String documentView)
@@ -408,7 +411,7 @@ public class DMS
 	{
 		return getLinkableAssociationWithContentRelated(content, true);
 	} // getLinkableAssociationWithContentRelated
-	
+
 	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(I_DMS_Content content, boolean isActiveonly)
 	{
 		return ((MDMSContent) content).getLinkableAssociationWithContentRelated(isActiveonly);
@@ -752,63 +755,47 @@ public class DMS
 		return ssTableInfo;
 	}
 
-	public IPermission getPermission( )
-	{
-		return permission;
-	}
+	/*
+	 * DMS Content access based on Permission granted
+	 */
 
-	public void setPermission(IPermission permission)
+	public IPermissionManager getPermissionManager()
 	{
-		this.permission = permission;
-	}
-	
+		return permissionManager;
+	} // getPermissionManager
+
+	public void grantChildPermissionFromParentContent(MDMSContent content, MDMSContent parentContent)
+	{
+		permissionManager.grantChildPermissionFromParentContent(content, parentContent);
+	} // grantChildPermissionFromParentContent
+
 	public boolean isWritePermission(MDMSContent content)
 	{
-		if (permission != null)
-		{
-			permission.initContentPermission(content);
-			return permission.isWrite();
-		}
-		return true;
-	}
-	
+		permissionManager.initContentPermission(content);
+		return permissionManager.isWrite();
+	} // isWritePermission
+
 	public boolean isDeletePermission(MDMSContent content)
 	{
-		if (permission != null)
-		{
-			permission.initContentPermission(content);
-			return permission.isDelete();
-		}
-		return true;
-	}
-	
+		permissionManager.initContentPermission(content);
+		return permissionManager.isDelete();
+	} // isDeletePermission
+
 	public boolean isReadPermission(MDMSContent content)
 	{
-		if (permission != null)
-		{
-			permission.initContentPermission(content);
-			return permission.isRead();
-		}
-		return true;
-	}
-	
+		permissionManager.initContentPermission(content);
+		return permissionManager.isRead();
+	} // isReadPermission
+
 	public boolean isNavigationPermission(MDMSContent content)
 	{
-		if (permission != null)
-		{
-			permission.initContentPermission(content);
-			return permission.isNavigation();
-		}
-		return true;
-	}
-	
-	public boolean isAllPermissionPermission(MDMSContent content)
+		permissionManager.initContentPermission(content);
+		return permissionManager.isNavigation();
+	} // isNavigationPermission
+
+	public boolean isAllPermissionGranted(MDMSContent content)
 	{
-		if (permission != null)
-		{
-			permission.initContentPermission(content);
-			return permission.isAllPermission();
-		}
-		return true;
-	}
+		permissionManager.initContentPermission(content);
+		return permissionManager.isAllPermission();
+	} // isAllPermissionGranted
 }

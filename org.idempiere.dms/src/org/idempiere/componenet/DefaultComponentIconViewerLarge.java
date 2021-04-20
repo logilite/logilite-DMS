@@ -61,7 +61,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		Label lblName = new Label(getContentName(version.getDMS_Content(), version.getSeqNo()));
 		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 20px; width: "
 							+ (compWidth - 10) + "px; display: inline-block;" + (isContentActive ? " " : "color: red;"));
-		
+
 		// Content Thumbnail
 		Image thumbImg = new Image();
 		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
@@ -86,10 +86,10 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
 		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
 		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, validator.isRead());
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, validator.isWrite());
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, validator.isDelete());
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, validator.isNavigation());
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, permissionManager.isRead());
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, permissionManager.isWrite());
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, permissionManager.isDelete());
+		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, permissionManager.isNavigation());
 
 		// Listener for component selection
 		cell.addEventListener(Events.ON_CLICK, this);
@@ -126,7 +126,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		Object isActive = cell.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
 		if (isActive != null && isActive instanceof Boolean)
 		{
-			cell.setStyle((Boolean)isActive ? DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED : DMSConstant.CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE);
+			cell.setStyle((Boolean) isActive ? DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED : DMSConstant.CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE);
 		}
 		else
 		{

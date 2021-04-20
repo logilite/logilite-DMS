@@ -72,7 +72,7 @@ public class DMSSearchUtils
 	 * 
 	 * @param  content
 	 * @param  AD_Client_ID
-	 * @param documentView 
+	 * @param  documentView
 	 * @return              map of DMS content and association
 	 */
 	public static HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView)
@@ -88,7 +88,7 @@ public class DMSSearchUtils
 		try
 		{
 			String sql = "";
-			
+
 			if (DMSConstant.DOCUMENT_VIEW_ALL_VALUE.equalsIgnoreCase(documentView))
 				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL;
 			else if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
@@ -110,8 +110,7 @@ public class DMSSearchUtils
 				MDMSVersion version = new MDMSVersion(Env.getCtx(), rs.getInt("DMS_Version_ID"), null);
 				MDMSAssociation associationChild = new MDMSAssociation(Env.getCtx(), rs.getInt("DMS_Association_ID"), null);
 
-				if (DMSPermissionUtils.validateContentPermission((MDMSContent) version.getDMS_Content()))
-					map.put(version, associationChild);
+				map.put(version, associationChild);
 			}
 		}
 		catch (SQLException e)
@@ -137,8 +136,8 @@ public class DMSSearchUtils
 	 * @param  tableID
 	 * @param  recordID
 	 * @param  content
-	 * @param documentView 
-	 * @return            Map of Content with Association
+	 * @param  documentView
+	 * @return              Map of Content with Association
 	 */
 	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
 																						MDMSContent content, String documentView)
@@ -258,7 +257,8 @@ public class DMSSearchUtils
 	private static void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int AD_Client_ID, int tableID, int recordID)
 	{
 		MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
-		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
+		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(	content, AD_Client_ID,
+																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSVersion version = (MDMSVersion) mapEntry.getKey();

@@ -88,7 +88,7 @@ import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentTypeAccess;
-import org.idempiere.dms.factories.IPermission;
+import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.util.DMSConvertToPDFUtils;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.model.I_DMS_Association;
@@ -170,7 +170,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Textbox					txtDocumentName			= new Textbox();
 	private Textbox					txtDescription			= new Textbox();
-	
+
 	private Combobox				cobDocumentView			= null;
 
 	private WTableDirEditor			lstboxContentType		= null;
@@ -221,6 +221,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private int						windowNo				= 0;
 	private int						tabNo					= 0;
 
+	private boolean					isDMSAdmin				= false;
 	private boolean					isSearch				= false;
 	private boolean					isGenericSearch			= false;
 	private boolean					isWindowAccess			= true;
@@ -241,6 +242,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		dms = new DMS(Env.getAD_Client_ID(Env.getCtx()));
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
+
+		isDMSAdmin = MRole.getDefault().get_ValueAsBoolean(DMSConstant.COLUMNNAME_IS_DMS_ADMIN);
 
 		initForm();
 	} // Constructor
@@ -294,10 +297,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			setButtonsContentCreationEnabled(true);
 		}
-		
-		if (currDMSContent != null && !dms.isWritePermission(currDMSContent) && !dms.isAllPermissionPermission(currDMSContent))
-			setButtonsContentCreationEnabled(false);
-		
+
+		if (currDMSContent != null && !dms.isWritePermission(currDMSContent) && !dms.isAllPermissionGranted(currDMSContent))
+		{
+			if (!currDMSContent.isMounting())
+				setButtonsContentCreationEnabled(false);
+		}
+
 	} // allowUserToCreateDir
 
 	public DMS getDMS()
@@ -413,14 +419,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox.appendChild(btnCreateDir);
 		hbox.appendChild(btnUploadContent);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 3, hbox);
-		
+
 		cobDocumentView = new Combobox();
 		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_ALL, DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
 		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_DELETED_ONLY, DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE);
 		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_NON_DELETED, DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE);
 		cobDocumentView.setSelectedIndex(2);
-		
-		if (MRole.getDefault().get_ValueAsBoolean("IsDMSAdmin"))
+
+		if (isDMSAdmin)
 		{
 			row = rowsBtn.newRow();
 			DMS_ZK_Util.createCellUnderRow(row, 1, 1, lblDocumentView);
@@ -635,7 +641,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Download", this);
 		mnu_associate = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ASSOCIATE, "Associate", this);
 		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link", this);
-		mnu_permission = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PERMISSION, "permission", this);
+		mnu_permission = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PERMISSION, "Permission", this);
 		mnu_undoDelete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UN_ARCHIVE, "UndoDelete", this);
 		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
 		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
@@ -911,8 +917,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			};
 
-			FDialog.ask(0, this, "Are you sure to un delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
-						callback);
+			FDialog.ask(0, this, "Are you sure to un delete "	+ ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName()
+									+ "?", callback);
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
@@ -922,14 +928,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(mnu_permission))
 		{
 			MDMSContent content = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
-			new WDMSPermissionPanel(content);
-			IPermission validator = dms.getPermission();
-			validator.initContentPermission(content);
-			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, validator.isRead());
-			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, validator.isWrite());
-			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, validator.isDelete());
-			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, validator.isNavigation());
-			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISALLPERMISSION, validator.isAllPermission());
+
+			// Show permission dialog
+			new WDMSPermissionPanel(dms, content);
+
+			IPermissionManager permissionManager = dms.getPermissionManager();
+			permissionManager.initContentPermission(content);
+
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, permissionManager.isRead());
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, permissionManager.isWrite());
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, permissionManager.isDelete());
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, permissionManager.isNavigation());
+			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISALLPERMISSION, permissionManager.isAllPermission());
 		}
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
@@ -954,7 +964,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderViewer();
 		}
 
-		allowUserToCreateDir();
+		if (!(Events.ON_CLICK.equals(event.getName()) && event.getTarget() == this))
+		{
+			allowUserToCreateDir();
+		}
 
 		// Event for Searching content Simple or Advance level
 		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().equals(vsearchBox.getButton()))
@@ -1059,21 +1072,26 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				lblPositionInfo.setValue(currContentValue);
 			}
 
+			String documentView = cobDocumentView.getSelectedItem().getValue();
 			if (isSearch)
 				contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
 			else if (isGenericSearch)
-				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent, cobDocumentView.getSelectedItem().getValue());
+				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent, documentView);
 			else
-				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, cobDocumentView.getSelectedItem().getValue());
+				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, documentView);
 
 			// Content Type wise access restriction
 			IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
-			HashMap<I_DMS_Version, I_DMS_Association> contentsMapFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
+			HashMap<I_DMS_Version, I_DMS_Association> contentsMapCTFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
+
+			// Permission wise access restriction
+			IPermissionManager permissionManager = DMSFactoryUtils.getPermissionFactory();
+			HashMap<I_DMS_Version, I_DMS_Association> mapPerFiltered = permissionManager.getFilteredVersionList(contentsMapCTFiltered);
 
 			// Component Viewer
 			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
-			viewerComponent.init(dms, contentsMapFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+			viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 		}
 
 		tabBox.setSelectedIndex(0);
@@ -1150,10 +1168,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				String name = selectedContent.getName();
 
-				// if (name.contains("(") && name.contains(")"))
-				// name = name.replace(name.substring(name.lastIndexOf("("), name.lastIndexOf(")") +
-				// 1), "");
-
 				try
 				{
 					documentToPreview = DMSConvertToPDFUtils.convertDocToPDF(documentToPreview, mimeType);
@@ -1168,7 +1182,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				if (DMSFactoryUtils.getContentEditor(mimeType.getMimeType()) != null)
 				{
 					boolean isContentActive = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
-					
+
 					Tab tabData = new Tab(name);
 					tabData.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
 					tabData.setClosable(true);
@@ -1467,14 +1481,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_canvasPaste.setDisabled(true);
 			}
 		}
-		
+
 		if (compCellRowViewer != null)
 		{
 			boolean isRead = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
 			boolean isWrite = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE);
 			boolean isDelete = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE);
+			boolean isNavigation = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION);
+			boolean isAllPermission = isRead && isWrite && isDelete && isNavigation;
 
-			if (!isWrite)
+			if (!isWrite || (isNavigation && !isAllPermission))
 			{
 				// WRITE ACCESS
 				mnu_cut.setDisabled(true);
@@ -1501,7 +1517,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_undoDelete.setDisabled(true);
 			}
 
-			if (MRole.getDefault().get_ValueAsBoolean("IsDMSAdmin"))
+			if (isAllPermission)
+			{
+				mnu_versionList.setDisabled(false);
+				mnu_zoomContentWin.setDisabled(false);
+				mnu_delete.setDisabled(false);
+				mnu_undoDelete.setDisabled(false);
+			}
+
+			if (isDMSAdmin)
 			{
 				boolean isActive = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
 				isDelete = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE);
@@ -1587,8 +1611,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// Restrict creating link
 		if (DMSClipboard.get() != null && !DMSClipboard.getIsCopy())
 			mnu_canvasCreateLink.setDisabled(true);
-		
-		if (currDMSContent != null && !dms.isWritePermission(currDMSContent) && !dms.isAllPermissionPermission(currDMSContent))
+
+		if (currDMSContent != null && !dms.isWritePermission(currDMSContent) && !dms.isAllPermissionGranted(currDMSContent))
 		{
 			mnu_canvasCreateLink.setDisabled(true);
 			mnu_canvasPaste.setDisabled(true);

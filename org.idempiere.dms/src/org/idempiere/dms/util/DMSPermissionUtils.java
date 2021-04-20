@@ -1,88 +1,90 @@
 package org.idempiere.dms.util;
 
-import java.util.List;
-
-import org.compiere.model.MTable;
-import org.compiere.model.PO;
-import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.idempiere.dms.DMSPermission;
-import org.idempiere.dms.factories.IPermission;
+import org.compiere.util.Util;
+import org.idempiere.dms.factories.IPermissionManager;
+import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSPermission;
 
+/**
+ * DMS Permission Utils
+ */
 public class DMSPermissionUtils
 {
-	public static MDMSPermission createPermission(DMSPermission dmsPermission, MDMSContent content, boolean isCreateForSubContent)
-	{
-		IPermission permission = DMSFactoryUtils.getContentPermissionValidator();
-		if (permission != null)
-			return permission.createPermission(dmsPermission, content, isCreateForSubContent);
-		return null;
-	}
 
-	public static MDMSPermission createContentPermission(MDMSContent content)
+	public static boolean createContentPermission(int DMS_Content_ID)
 	{
-		IPermission permission = DMSFactoryUtils.getContentPermissionValidator();
+		IPermissionManager permission = DMSFactoryUtils.getPermissionFactory();
 		if (permission != null)
-			return permission.createContentPermission(content);
-		return null;
-	}
-	
-	public static boolean validateContentPermission(MDMSContent content)
+			return permission.autoCreateContentPermission(DMS_Content_ID);
+		return false;
+	} // createContentPermission
+
+	public static boolean isContentPermissionGranted(I_DMS_Content content, int roleID, int userID)
 	{
-		IPermission permission = DMSFactoryUtils.getContentPermissionValidator();
+		IPermissionManager permission = DMSFactoryUtils.getPermissionFactory();
 		if (permission != null)
-			return permission.validateContentPermission(content);
+			return permission.isContentPermissionGranted(content, roleID, userID);
 		return true;
-	}
+	} // isContentPermissionGranted
 
-	public static void givePermissionBaseOnParentContent(MDMSContent content, MDMSContent parentContent)
-	{
-		List <MDMSPermission> destPermissionList = getContentPermissionList(parentContent);
-
-		if (destPermissionList == null)
-			return;
-		
-		for (MDMSPermission permission : destPermissionList)
-		{
-			int permissionID = getPermissionIDByUserRole(content.getDMS_Content_ID(), permission.getAD_Role_ID(), permission.getAD_User_ID());
-
-			MDMSPermission cutPermission = (MDMSPermission) MTable.get(content.getCtx(), MDMSPermission.Table_ID).getPO(permissionID, content.get_TrxName());
-			PO.copyValues(permission, cutPermission);
-			cutPermission.setDMS_Owner_ID(Env.getAD_User_ID(content.getCtx()));
-			cutPermission.setDMS_Content_ID(content.getDMS_Content_ID());
-			cutPermission.setIsAllPermission(false);
-			cutPermission.saveEx();
-		}
-	}
-
-	public static int getPermissionIDByUserRole(Integer dms_Content_ID, Integer ad_Role_ID, Integer ad_User_ID)
+	public static int getPermissionIDByUserRole(Integer DMS_Content_ID, Integer AD_Role_ID, Integer AD_User_ID, String whereclause)
 	{
 		String sql = "SELECT DMS_Permission_ID FROM DMS_Permission WHERE DMS_Content_ID = ?  ";
+
 		// role
-		if (ad_Role_ID != null && ad_Role_ID > 0)
-			sql += " AND AD_Role_ID = " + ad_Role_ID.intValue();
-		else if (ad_Role_ID == null)
+		if (AD_Role_ID != null && AD_Role_ID > 0)
+			sql += " AND AD_Role_ID = " + AD_Role_ID.intValue();
+		else if (AD_Role_ID == null)
 			sql += " AND AD_Role_ID IS NULL ";
+
 		// user
-		if (ad_User_ID != null && ad_User_ID > 0)
-			sql += " AND AD_User_ID = " + ad_User_ID.intValue();
-		else if (ad_Role_ID == null)
+		if (AD_User_ID != null && AD_User_ID > 0)
+			sql += " AND AD_User_ID = " + AD_User_ID.intValue();
+		else if (AD_Role_ID == null)
 			sql += " AND AD_User_ID IS NULL ";
 
-		int permissionID = DB.getSQLValue(null, sql, dms_Content_ID);
+		if (!Util.isEmpty(whereclause, true))
+			sql += " " + whereclause;
+
+		//
+		int permissionID = DB.getSQLValue(null, sql, DMS_Content_ID);
 
 		return permissionID < 0 ? 0 : permissionID;
-	}
+	} // getPermissionIDByUserRole
 
-	public static List <MDMSPermission> getContentPermissionList(MDMSContent destContent)
+	public static int getPermissionByContentOrItsParent(I_DMS_Content content, int roleID, int userID)
 	{
-		if (destContent == null)
-			return null;
+		int permissionID = MDMSPermission.getPermissionForGivenParams(content, roleID, userID);
 
-		return new Query(destContent.getCtx(), MTable.get(destContent.getCtx(), MDMSPermission.Table_ID), MDMSPermission.COLUMNNAME_DMS_Content_ID + " = ?", destContent.get_TrxName())
-						.setOnlyActiveRecords(true).setParameters(destContent.getDMS_Content_ID()).list();
-	}
+		if (permissionID <= 0)
+		{
+			MDMSAssociation parentAssociation = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), true, null);
+			while (parentAssociation != null && parentAssociation.getDMS_Content_Related_ID() > 0)
+			{
+				MDMSContent parentContent = new MDMSContent(Env.getCtx(), parentAssociation.getDMS_Content_Related_ID(), null);
+				if (MDMSContent.CONTENTBASETYPE_Directory.equals(parentContent.getContentBaseType()))
+				{
+					permissionID = MDMSPermission.getPermissionForGivenParams(content, roleID, userID);
+					if (permissionID <= 0)
+					{
+						parentAssociation = MDMSAssociation.getParentAssociationFromContent(parentContent.getDMS_Content_ID(), true, null);
+					}
+					else
+					{
+						break;
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+		return permissionID;
+	} // getPermissionByContentOrItsParent
+
 }

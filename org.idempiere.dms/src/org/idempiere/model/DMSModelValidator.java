@@ -11,9 +11,13 @@ import org.compiere.model.ModelValidator;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.TrxEventListener;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.dms.factories.IPermissionManager;
+import org.idempiere.dms.util.DMSFactoryUtils;
+import org.idempiere.dms.util.DMSPermissionUtils;
 import org.idempiere.dms.util.DMSSearchUtils;
 
 public class DMSModelValidator implements ModelValidator
@@ -24,7 +28,6 @@ public class DMSModelValidator implements ModelValidator
 	@Override
 	public void initialize(ModelValidationEngine engine, MClient client)
 	{
-		// client = null for global validator
 		if (client != null)
 		{
 			m_AD_Client_ID = client.getAD_Client_ID();
@@ -36,6 +39,7 @@ public class DMSModelValidator implements ModelValidator
 		engine.addModelChange(MDMSContent.Table_Name, this);
 		engine.addModelChange(MDMSAssociation.Table_Name, this);
 		engine.addModelChange(MAttributeInstance.Table_Name, this);
+		engine.addModelChange(MDMSPermission.Table_Name, this);
 	}
 
 	@Override
@@ -71,17 +75,48 @@ public class DMSModelValidator implements ModelValidator
 				}
 			}
 		}
-		else if (MDMSContent.Table_Name.equals(po.get_TableName()) && type == TYPE_AFTER_CHANGE)
+		else if (MDMSContent.Table_Name.equals(po.get_TableName()))
 		{
-			if (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_DMS_ContentType_ID)
-				|| po.is_ValueChanged(MDMSContent.COLUMNNAME_M_AttributeSetInstance_ID))
+			MDMSContent content = (MDMSContent) po;
+
+			if (type == TYPE_AFTER_CHANGE)
 			{
-				MDMSContent content = (MDMSContent) po;
-				doReIndexInAllVersions(content);
+				if (po.is_ValueChanged(MDMSContent.COLUMNNAME_Name)
+					|| po.is_ValueChanged(MDMSContent.COLUMNNAME_IsActive)
+					|| po.is_ValueChanged(MDMSContent.COLUMNNAME_ParentURL)
+					|| po.is_ValueChanged(MDMSContent.COLUMNNAME_Description)
+					|| po.is_ValueChanged(MDMSContent.COLUMNNAME_DMS_ContentType_ID)
+					|| po.is_ValueChanged(MDMSContent.COLUMNNAME_M_AttributeSetInstance_ID))
+				{
+					doReIndexInAllVersions(content);
+				}
+			}
+			else if (type == TYPE_AFTER_NEW)
+			{
+				// Create permission entry very 1st time
+				Trx trx = Trx.get(content.get_TrxName(), false);
+				if (trx != null)
+				{
+					trx.addTrxEventListener(new TrxEventListener() {
+
+						@Override
+						public void afterRollback(Trx trx, boolean success)
+						{
+
+						}
+
+						@Override
+						public void afterCommit(Trx trx, boolean success)
+						{
+						}
+
+						@Override
+						public void afterClose(Trx trx)
+						{
+							DMSPermissionUtils.createContentPermission(content.getDMS_Content_ID());
+						}
+					});
+				}
 			}
 		}
 		else if ((MDMSVersion.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE)))
@@ -153,8 +188,34 @@ public class DMSModelValidator implements ModelValidator
 				DMSSearchUtils.doIndexingInServer(linkContent, association, MDMSVersion.getLatestVersion(linkContent), deleteIndexQuery);
 			}
 		}
+		else if (MDMSPermission.Table_Name.equals(po.get_TableName()) && type == TYPE_AFTER_NEW)
+		{
+			MDMSPermission permission = (MDMSPermission) po;
+
+			/*
+			 * Create a navigation permission if User1 grant the access of leaf directory or content
+			 * to User2 then parent hierarchy should be navigable to top to bottom for User2.
+			 * -----
+			 * For example: A_Dir > B_Dir > C_Dir
+			 * --> If User1 grant the permission to User2 for C_Dir then for User2 also navigable to
+			 * C_Dir via using A_Dir & B_Dir
+			 * --> So Here we creating A_Dir & B_Dir Navigation permission
+			 */
+
+			// Avoid to create navigation permission if current user and permissible user is
+			// same. because he has already access to reach there...!!!
+			if (Env.getAD_User_ID(Env.getCtx()) != permission.getAD_User_ID())
+			{
+				IPermissionManager permissionManager = DMSFactoryUtils.getPermissionFactory();
+				if (permissionManager != null)
+				{
+					permissionManager.createNavigationPermission(permission);
+				}
+			}
+		}
 
 		return null;
+
 	} // modelChange
 
 	@Override

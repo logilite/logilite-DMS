@@ -54,7 +54,6 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.util.DMSPermissionUtils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
@@ -380,7 +379,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				if (DMSContent != null && !DMSContent.isMounting() && DMSContent.getDMS_Content_ID() != contentID)
 				{
 					MDMSContent content = (MDMSContent) MTable.get(DMSContent.getCtx(), MDMSContent.Table_ID).getPO(contentID, DMSContent.get_TrxName());
-					DMSPermissionUtils.givePermissionBaseOnParentContent(content, DMSContent);
+					dms.grantChildPermissionFromParentContent(content, DMSContent);
 				}
 			}
 		}
