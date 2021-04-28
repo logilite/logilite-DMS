@@ -91,33 +91,6 @@ public class DMSModelValidator implements ModelValidator
 					doReIndexInAllVersions(content);
 				}
 			}
-			else if (type == TYPE_AFTER_NEW)
-			{
-				// Create permission entry very 1st time
-				Trx trx = Trx.get(content.get_TrxName(), false);
-				if (trx != null)
-				{
-					trx.addTrxEventListener(new TrxEventListener() {
-
-						@Override
-						public void afterRollback(Trx trx, boolean success)
-						{
-
-						}
-
-						@Override
-						public void afterCommit(Trx trx, boolean success)
-						{
-						}
-
-						@Override
-						public void afterClose(Trx trx)
-						{
-							DMSPermissionUtils.createContentPermission(content.getDMS_Content_ID());
-						}
-					});
-				}
-			}
 		}
 		else if ((MDMSVersion.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE)))
 		{
@@ -127,15 +100,15 @@ public class DMSModelValidator implements ModelValidator
 			final MDMSVersion version = (MDMSVersion) po;
 			final MDMSContent content = (MDMSContent) version.getDMS_Content();
 
-			if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed())
+			Trx trx = Trx.get(version.get_TrxName(), false);
+			if (trx != null)
 			{
-				Trx trx = Trx.get(version.get_TrxName(), false);
-				if (trx != null)
-				{
-					trx.addTrxEventListener(new TrxEventListener() {
+				trx.addTrxEventListener(new TrxEventListener() {
 
-						@Override
-						public void afterCommit(Trx trx, boolean success)
+					@Override
+					public void afterCommit(Trx trx, boolean success)
+					{
+						if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed())
 						{
 							if (success)
 							{
@@ -160,18 +133,25 @@ public class DMSModelValidator implements ModelValidator
 								}
 							}
 						}
+					} // afterCommit
 
-						@Override
-						public void afterRollback(Trx trx, boolean success)
-						{
-						}
+					@Override
+					public void afterRollback(Trx trx, boolean success)
+					{
+					}
 
-						@Override
-						public void afterClose(Trx trx)
+					@Override
+					public void afterClose(Trx trx)
+					{
+						if (DMSPermissionUtils.isPermissionAllowed())
 						{
+							if (content.get_TrxName().equals(trx.getTrxName()))
+							{
+								DMSPermissionUtils.createContentPermission(content.getDMS_Content_ID());
+							}
 						}
-					});
-				}
+					}
+				});
 			}
 		}
 		else if (MDMSAssociation.Table_Name.equals(po.get_TableName()) && (type == TYPE_AFTER_NEW || type == TYPE_AFTER_CHANGE))

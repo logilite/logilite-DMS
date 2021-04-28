@@ -91,6 +91,7 @@ import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.util.DMSConvertToPDFUtils;
 import org.idempiere.dms.util.DMSFactoryUtils;
+import org.idempiere.dms.util.DMSPermissionUtils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
@@ -1085,8 +1086,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			HashMap<I_DMS_Version, I_DMS_Association> contentsMapCTFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
 
 			// Permission wise access restriction
-			IPermissionManager permissionManager = DMSFactoryUtils.getPermissionFactory();
-			HashMap<I_DMS_Version, I_DMS_Association> mapPerFiltered = permissionManager.getFilteredVersionList(contentsMapCTFiltered);
+			HashMap<I_DMS_Version, I_DMS_Association> mapPerFiltered;
+			if (DMSPermissionUtils.isPermissionAllowed())
+			{
+				mapPerFiltered = dms.getPermissionManager().getFilteredVersionList(contentsMapCTFiltered);
+			}
+			else
+			{
+				mapPerFiltered = contentsMapCTFiltered;
+			}
 
 			// Component Viewer
 			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
@@ -1138,11 +1146,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		MDMSContent selectedContent = (MDMSContent) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
 		MDMSAssociation selectedAssociation = (MDMSAssociation) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION);
 
-		boolean isRead = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
-		boolean isNavigation = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION);
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			boolean isRead = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
+			boolean isNavigation = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION);
 
-		if (!isRead && !isNavigation)
-			throw new AdempiereException("You do not have Read or Navigation access");
+			if (!isRead && !isNavigation)
+				throw new AdempiereException("You do not have Read or Navigation access");
+		}
 
 		selectedDMSVersionStack.push(version);
 		if (selectedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
@@ -1482,7 +1493,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 		}
 
-		if (compCellRowViewer != null)
+		if (DMSPermissionUtils.isPermissionAllowed())
 		{
 			boolean isRead = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
 			boolean isWrite = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE);
@@ -1524,33 +1535,52 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_delete.setDisabled(false);
 				mnu_undoDelete.setDisabled(false);
 			}
+		}
 
-			if (isDMSAdmin)
+		if (isDMSAdmin)
+		{
+			boolean isActive = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
+
+			mnu_cut.setVisible(isActive);
+			mnu_copy.setVisible(isActive);
+			mnu_paste.setVisible(isActive);
+			mnu_rename.setVisible(isActive);
+			mnu_delete.setVisible(isActive);
+			mnu_download.setVisible(isActive);
+			mnu_associate.setVisible(isActive);
+			mnu_createLink.setVisible(isActive);
+			mnu_permission.setVisible(isActive);
+			mnu_versionList.setVisible(isActive);
+			mnu_uploadVersion.setVisible(isActive);
+			mnu_zoomContentWin.setVisible(isActive);
+
+			if (DMSPermissionUtils.isPermissionAllowed())
 			{
-				boolean isActive = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
-				isDelete = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE);
-
-				mnu_cut.setVisible(isActive);
-				mnu_copy.setVisible(isActive);
-				mnu_paste.setVisible(isActive);
-				mnu_rename.setVisible(isActive);
-				mnu_delete.setVisible(isActive);
-				mnu_download.setVisible(isActive);
-				mnu_associate.setVisible(isActive);
-				mnu_createLink.setVisible(isActive);
-				mnu_permission.setVisible(isActive);
-				mnu_versionList.setVisible(isActive);
-				mnu_uploadVersion.setVisible(isActive);
-				mnu_zoomContentWin.setVisible(isActive);
-
+				boolean isDelete = (boolean) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE);
 				mnu_undoDelete.setVisible(!isActive && isDelete);
 				mnu_undoDelete.setDisabled(isActive || !isDelete);
 			}
 			else
 			{
-				mnu_undoDelete.setVisible(false);
+				mnu_undoDelete.setVisible(!isActive);
+				mnu_undoDelete.setDisabled(isActive);
 			}
 		}
+		else
+		{
+			mnu_undoDelete.setVisible(false);
+		}
+
+		// Permission menu item
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			mnu_permission.setVisible(true);
+		}
+		else
+		{
+			mnu_permission.setVisible(false);
+		}
+
 	} // openContentContextMenu
 
 	/**

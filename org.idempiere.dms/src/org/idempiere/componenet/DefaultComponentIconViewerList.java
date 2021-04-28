@@ -102,14 +102,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		row.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
 
 		//
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, version.getDMS_Content());
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, permissionManager.isRead());
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, permissionManager.isWrite());
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, permissionManager.isDelete());
-		row.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, permissionManager.isNavigation());
+		setAttributesInRow(row, version, association);
 
 		// Listener for component selection
 		row.addEventListener(Events.ON_CLICK, this);

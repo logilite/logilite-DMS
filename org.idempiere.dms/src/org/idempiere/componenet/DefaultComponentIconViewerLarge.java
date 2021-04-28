@@ -82,14 +82,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		row.appendChild(cell);
 
 		//
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, version.getDMS_Content());
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, permissionManager.isRead());
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, permissionManager.isWrite());
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, permissionManager.isDelete());
-		cell.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, permissionManager.isNavigation());
+		setAttributesInRow(cell, version, association);
 
 		// Listener for component selection
 		cell.addEventListener(Events.ON_CLICK, this);

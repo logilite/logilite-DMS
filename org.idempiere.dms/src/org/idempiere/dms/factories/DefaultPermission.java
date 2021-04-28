@@ -156,54 +156,71 @@ public class DefaultPermission implements IPermissionManager
 	@Override
 	public boolean autoCreateContentPermission(int DMS_Content_ID)
 	{
-		MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(DMS_Content_ID, null);
-		int permissionID = MDMSPermission.getPermissionForGivenParams(	content,
-																		Env.getAD_Role_ID(content.getCtx()),
-																		Env.getAD_User_ID(content.getCtx()));
-
 		/*
 		 * Parent content exists and non mounting content and also its permission entries exists
 		 * then clone that permission, no need to create automatically
 		 */
-		int parentContentID = DB.getSQLValue(content.get_TrxName(), DMSConstant.SQL_GET_PARENT_CONTENT_ID_FROM_CONTENT, content.getDMS_Content_ID());
-		if (parentContentID > 0)
+		if (ignoreIfParentPermissionExists(DMS_Content_ID))
 		{
-			int permissionCount = DB.getSQLValue(null, DMSConstant.SQL_COUNT_PERMISSION_ENTRIES, parentContentID);
-			if (permissionCount > 0)
-				return false;
+			MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(DMS_Content_ID, null);
+			int permissionID = MDMSPermission.getPermissionForGivenParams(	content,
+																			Env.getAD_Role_ID(content.getCtx()),
+																			Env.getAD_User_ID(content.getCtx()));
+
+			MDMSPermission permission = (MDMSPermission) MTable.get(content.getCtx(), MDMSPermission.Table_ID).getPO(permissionID, null);
+
+			if (permissionID <= 0)
+			{
+				permission.setAD_Org_ID(content.getAD_Org_ID());
+				permission.setDMS_Content_ID(content.getDMS_Content_ID());
+				if (content.isMounting())
+				{
+					permission.setDMS_Owner_ID(SystemIDs.USER_SUPERUSER);
+					permission.setIsRead(false);
+					permission.setIsWrite(false);
+					permission.setIsDelete(false);
+					permission.setIsNavigation(true);
+					permission.setIsAllPermission(false);
+				}
+				else
+				{
+					permission.setDMS_Owner_ID(content.getCreatedBy());
+					permission.setAD_User_ID(content.getCreatedBy());
+					permission.setDMS_Owner_ID(content.getCreatedBy());
+					permission.setIsRead(true);
+					permission.setIsWrite(true);
+					permission.setIsDelete(true);
+					permission.setIsNavigation(false);
+					permission.setIsAllPermission(false);
+				}
+				permission.saveEx();
+			}
 		}
-
-		MDMSPermission permission = (MDMSPermission) MTable.get(content.getCtx(), MDMSPermission.Table_ID).getPO(permissionID, null);
-
-		if (permissionID <= 0)
+		else
 		{
-			permission.setAD_Org_ID(content.getAD_Org_ID());
-			permission.setDMS_Content_ID(content.getDMS_Content_ID());
-			if (content.isMounting())
-			{
-				permission.setDMS_Owner_ID(SystemIDs.USER_SUPERUSER);
-				permission.setIsRead(false);
-				permission.setIsWrite(false);
-				permission.setIsDelete(false);
-				permission.setIsNavigation(true);
-				permission.setIsAllPermission(false);
-			}
-			else
-			{
-				permission.setDMS_Owner_ID(content.getCreatedBy());
-				permission.setAD_User_ID(content.getCreatedBy());
-				permission.setDMS_Owner_ID(content.getCreatedBy());
-				permission.setIsRead(true);
-				permission.setIsWrite(true);
-				permission.setIsDelete(true);
-				permission.setIsNavigation(false);
-				permission.setIsAllPermission(false);
-			}
-			permission.saveEx();
+			return false;
 		}
 
 		return true;
 	} // autoCreateContentPermission
+
+	public boolean ignoreIfParentPermissionExists(int content_ID)
+	{
+		int parentContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_PARENT_CONTENT_ID_FROM_CONTENT, content_ID);
+		if (parentContentID > 0)
+		{
+			// AllPermission flag exists then ignore to create any kind of permission
+			boolean isAllPermissionExists = DB.getSQLValue(null, DMSConstant.SQL_COUNT_PERMISSION_ENTRIES + " AND IsAllPermission = 'Y' ", parentContentID) > 0;
+			if (isAllPermissionExists)
+				return false;
+
+			// Check parent of parent permission if not found the permission
+			int permissionCount = DB.getSQLValue(null, DMSConstant.SQL_COUNT_PERMISSION_ENTRIES, parentContentID);
+			if (permissionCount <= 0)
+				return ignoreIfParentPermissionExists(parentContentID);
+		}
+		return true;
+	} // ignoreIfParentPermissionExists
 
 	@Override
 	public boolean isContentPermissionGranted(I_DMS_Content content, int roleID, int userID)
@@ -276,20 +293,22 @@ public class DefaultPermission implements IPermissionManager
 
 		for (MDMSPermission parentPermission : arrayParentPermission)
 		{
-			// TODO Check IsAllPermission
 			int permissionID = DMSPermissionUtils.getPermissionIDByUserRole(content.getDMS_Content_ID(),
 																			parentPermission.getAD_Role_ID(),
 																			parentPermission.getAD_User_ID(),
-																			null);
+																			" AND IsNavigation = 'N' ");
 
-			MDMSPermission newPermission = (MDMSPermission) MTable	.get(((PO) content).getCtx(), MDMSPermission.Table_ID)
-																	.getPO(permissionID, ((PO) content).get_TrxName());
-			PO.copyValues(parentPermission, newPermission);
+			if (permissionID <= 0)
+			{
+				MDMSPermission newPermission = (MDMSPermission) MTable	.get(((PO) content).getCtx(), MDMSPermission.Table_ID)
+																		.getPO(permissionID, ((PO) content).get_TrxName());
+				PO.copyValues(parentPermission, newPermission);
 
-			newPermission.setDMS_Owner_ID(Env.getAD_User_ID(((PO) content).getCtx()));
-			newPermission.setDMS_Content_ID(content.getDMS_Content_ID());
-			newPermission.setIsAllPermission(false);
-			newPermission.saveEx();
+				newPermission.setDMS_Owner_ID(Env.getAD_User_ID(((PO) content).getCtx()));
+				newPermission.setDMS_Content_ID(content.getDMS_Content_ID());
+				newPermission.setIsAllPermission(false);
+				newPermission.saveEx();
+			}
 		}
 	} // grantPermissionFromParentContent
 

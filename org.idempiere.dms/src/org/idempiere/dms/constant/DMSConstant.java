@@ -35,6 +35,7 @@ public final class DMSConstant
 
 	public static final String				DMS_MOUNTING_BASE						= "DMS_MOUNTING_BASE";
 	public static final String				DMS_MOUNTING_ARCHIVE_BASE				= "DMS_MOUNTING_ARCHIVE_BASE";
+	public static final String				DMS_ALLOW_PERMISSION_WISE_FILTER		= "DMS_ALLOW_PERMISSION_WISE_FILTER";
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH		= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 
 	// Columnname - Role table
@@ -159,7 +160,7 @@ public final class DMSConstant
 	public static final String				MSG_VERSION_HISTORY						= "Version History";
 	public static final String				MSG_DMS_VERSION_LIST					= "DMS Version List";
 	public static final String				MSG_CREATE_DIRECTORY					= "Create Directory";
-	public static final String				MSG_DMS_PERMISSION_LIST					= "Permission List";
+	public static final String				MSG_DMS_PERMISSION_FOR					= "Permission for ";
 	public static final String				MSG_ENTER_DIRETORY_NAME					= "Enter Directory Name";
 	public static final String				MSG_NO_VERSION_DOC_EXISTS				= "No version Document available.";
 	public static final String				MSG_ENTER_NEW_NAME_FOR_ITEM				= "Please enter a new name for the item:";
@@ -340,7 +341,7 @@ public final class DMSConstant
 																						+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
 																						+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) ";
 
-	// Count the permission entries per content wiseSQL_COUNT_PERMISSION_ENTRIES
+	// Count the permission entries per content wise
 	public static final String				SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ? ";
 
 	// User permission wise access

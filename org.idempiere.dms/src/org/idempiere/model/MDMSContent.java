@@ -66,7 +66,22 @@ public class MDMSContent extends X_DMS_Content
 	 */
 	public static int create(String name, String contentBaseType, String parentURL, boolean isMounting)
 	{
-		return create(name, contentBaseType, parentURL, null, null, 0, 0, isMounting, null);
+		return create(name, contentBaseType, parentURL, isMounting, null);
+	} // create
+
+	/**
+	 * Create DMS Content
+	 * 
+	 * @param  name
+	 * @param  contentBaseType
+	 * @param  parentURL
+	 * @param  isMounting
+	 * @param  trxName
+	 * @return                 DMS_Content_ID
+	 */
+	public static int create(String name, String contentBaseType, String parentURL, boolean isMounting, String trxName)
+	{
+		return create(name, contentBaseType, parentURL, null, null, 0, 0, isMounting, trxName);
 	} // create
 
 	/**

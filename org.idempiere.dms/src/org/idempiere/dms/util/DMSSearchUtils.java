@@ -377,6 +377,11 @@ public class DMSSearchUtils
 		return solrValue;
 	} // createIndexMap
 
+	/**
+	 * Check is Allowed to extract content text from the document and use for searching
+	 * 
+	 * @return
+	 */
 	public static boolean isAllowDocumentContentSearch()
 	{
 		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_DOCUMENT_CONTENT_SEARCH, false, Env.getAD_Client_ID(Env.getCtx()));

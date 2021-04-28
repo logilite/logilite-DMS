@@ -36,6 +36,7 @@ import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSOprUtils;
+import org.idempiere.dms.util.DMSPermissionUtils;
 import org.idempiere.dms.util.DMSSearchUtils;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.DMSSubstituteTableInfo;
@@ -766,36 +767,58 @@ public class DMS
 
 	public void grantChildPermissionFromParentContent(MDMSContent content, MDMSContent parentContent)
 	{
-		permissionManager.grantChildPermissionFromParentContent(content, parentContent);
+		if (DMSPermissionUtils.isPermissionAllowed())
+			permissionManager.grantChildPermissionFromParentContent(content, parentContent);
 	} // grantChildPermissionFromParentContent
 
 	public boolean isWritePermission(MDMSContent content)
 	{
-		permissionManager.initContentPermission(content);
-		return permissionManager.isWrite();
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			permissionManager.initContentPermission(content);
+			return permissionManager.isWrite();
+		}
+		return true;
 	} // isWritePermission
 
 	public boolean isDeletePermission(MDMSContent content)
 	{
-		permissionManager.initContentPermission(content);
-		return permissionManager.isDelete();
-	} // isDeletePermission
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			permissionManager.initContentPermission(content);
+			return permissionManager.isDelete();
+		}
+		return true;
+	}
+	// isDeletePermission
 
 	public boolean isReadPermission(MDMSContent content)
 	{
-		permissionManager.initContentPermission(content);
-		return permissionManager.isRead();
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			permissionManager.initContentPermission(content);
+			return permissionManager.isRead();
+		}
+		return true;
 	} // isReadPermission
 
 	public boolean isNavigationPermission(MDMSContent content)
 	{
-		permissionManager.initContentPermission(content);
-		return permissionManager.isNavigation();
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			permissionManager.initContentPermission(content);
+			return permissionManager.isNavigation();
+		}
+		return true;
 	} // isNavigationPermission
 
 	public boolean isAllPermissionGranted(MDMSContent content)
 	{
-		permissionManager.initContentPermission(content);
-		return permissionManager.isAllPermission();
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			permissionManager.initContentPermission(content);
+			return permissionManager.isAllPermission();
+		}
+		return true;
 	} // isAllPermissionGranted
 }

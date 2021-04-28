@@ -129,7 +129,7 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 		}
 		else
 		{
-			ZKUpdateUtil.setWidth(this, "680px");
+			ZKUpdateUtil.setWidth(this, "700px");
 			ZKUpdateUtil.setHeight(this, "600px");
 		}
 
@@ -155,8 +155,9 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 
 		this.setSizable(true);
 		this.setClosable(true);
+		this.setMaximizable(true);
 		this.appendChild(borderlayout);
-		this.setTitle(DMSConstant.MSG_DMS_PERMISSION_LIST + ": " + content.getName());
+		this.setTitle(DMSConstant.MSG_DMS_PERMISSION_FOR + ": " + content.getName());
 	} // init
 
 	private void createRowsOfEditors()
@@ -324,7 +325,6 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 		Properties ctx = Env.getCtx();
 		ColumnInfo[] permissionColumns = new ColumnInfo[] {
 															new ColumnInfo("", "DMS_Permission_ID", IDColumn.class),
-//																new ColumnInfo("DMS_Permission_ID", "P.DMS_Permission_ID", Integer.class),
 																new ColumnInfo(Msg.translate(ctx, "DMS_Owner_ID"), "o.Name", String.class),
 																new ColumnInfo(Msg.translate(ctx, "CreatedBy"), "c.Name", String.class),
 																new ColumnInfo(Msg.translate(ctx, "AD_User_ID"), "u.Name", String.class),

@@ -66,20 +66,20 @@ public class MDMSPermission extends X_DMS_Permission
 	{
 		super.afterSave(newRecord, success);
 
-		if (newRecord)
-		{
-			System.out.println(	"Permission Saved: "	+ get_ID()
-								+ ", cntID=" + getDMS_Content_ID()
-								+ ", Role=" + getAD_Role().getName()
-								+ ", CreatedByID=" + getCreatedBy()
-								+ ", UserID=" + getAD_User_ID()
-								+ ", User=" + getAD_User().getName()
-								+ ", Read=" + isRead()
-								+ ", Write=" + isWrite()
-								+ ", Delete=" + isDelete()
-								+ ", Navigation=" + isNavigation()
-								+ ", AllPermission=" + isAllPermission());
-		}
+		// if (newRecord)
+		// {
+		// System.out.println( "Permission Saved: " + get_ID()
+		// + ", cntID=" + getDMS_Content_ID()
+		// + ", Role=" + getAD_Role().getName()
+		// + ", CreatedByID=" + getCreatedBy()
+		// + ", UserID=" + getAD_User_ID()
+		// + ", User=" + getAD_User().getName()
+		// + ", Read=" + isRead()
+		// + ", Write=" + isWrite()
+		// + ", Delete=" + isDelete()
+		// + ", Navigation=" + isNavigation()
+		// + ", AllPermission=" + isAllPermission());
+		// }
 		return true;
 	}
 }

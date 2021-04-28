@@ -1,8 +1,10 @@
 package org.idempiere.dms.util;
 
+import org.compiere.model.MSysConfig;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.MDMSAssociation;
@@ -14,6 +16,11 @@ import org.idempiere.model.MDMSPermission;
  */
 public class DMSPermissionUtils
 {
+
+	public static boolean isPermissionAllowed()
+	{
+		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_PERMISSION_WISE_FILTER, false, Env.getAD_Client_ID(Env.getCtx()));
+	} // isPermissionAllowed
 
 	public static boolean createContentPermission(int DMS_Content_ID)
 	{
