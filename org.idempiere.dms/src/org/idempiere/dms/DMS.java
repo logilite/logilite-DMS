@@ -518,12 +518,17 @@ public class DMS
 
 	public I_DMS_Content[] selectContent(int AD_Table_ID, int Record_ID, int associationTypeID)
 	{
-		return selectContent(AD_Table_ID, Record_ID, associationTypeID, null);
+		return selectContent(AD_Table_ID, Record_ID, associationTypeID, 0);
 	}
 
-	public I_DMS_Content[] selectContent(int AD_Table_ID, int Record_ID, int associationTypeID, String filename)
+	public I_DMS_Content[] selectContent(int AD_Table_ID, int Record_ID, int associationTypeID, int contentTypeID)
 	{
-		return selectContent(getRootMountingContent(AD_Table_ID, Record_ID), associationTypeID, filename);
+		return selectContent(AD_Table_ID, Record_ID, associationTypeID, contentTypeID, null);
+	}
+
+	public I_DMS_Content[] selectContent(int AD_Table_ID, int Record_ID, int associationTypeID, int contentTypeID, String filename)
+	{
+		return selectContent(getRootMountingContent(AD_Table_ID, Record_ID), associationTypeID, contentTypeID, filename);
 	}
 
 	public I_DMS_Content[] selectContent(MDMSContent parentContent)
@@ -531,15 +536,39 @@ public class DMS
 		return selectContent(parentContent, 0);
 	}
 
-	public I_DMS_Content[] selectContent(MDMSContent parentContent, int associationTypeID)
+	public I_DMS_Content[] selectContent(MDMSContent parentContent, int contentTypeID)
 	{
-		return selectContent(parentContent, associationTypeID, null);
+		return selectContent(parentContent, 0, contentTypeID);
 	}
 
-	public I_DMS_Content[] selectContent(MDMSContent parentContent, int associationTypeID, String filename)
+	public I_DMS_Content[] selectContent(MDMSContent parentContent, int associationTypeID, int contentTypeID)
 	{
-		return DMSSearchUtils.selectContentActiveOnly(parentContent, associationTypeID, filename);
+		return selectContent(parentContent, associationTypeID, contentTypeID, null);
 	}
+
+	public I_DMS_Content[] selectContent(MDMSContent parentContent, int associationTypeID, int contentTypeID, String filename)
+	{
+		return DMSSearchUtils.selectContentActiveOnly(parentContent, associationTypeID, contentTypeID, filename);
+	}
+
+	public I_DMS_Content[] selectContent(	MDMSContent parentContent, int contentTypeID,
+											boolean isApplyContentTypeAccessFilter, boolean isApplyPermissionFilter)
+	{
+		return selectContent(parentContent, 0, contentTypeID, isApplyContentTypeAccessFilter, isApplyPermissionFilter);
+	}
+
+	public I_DMS_Content[] selectContent(	MDMSContent parentContent, int associationTypeID, int contentTypeID,
+											boolean isApplyContentTypeAccessFilter, boolean isApplyPermissionFilter)
+	{
+		return selectContent(parentContent, associationTypeID, contentTypeID, null, isApplyContentTypeAccessFilter, isApplyPermissionFilter);
+	}
+
+	public I_DMS_Content[] selectContent(	MDMSContent parentContent, int associationTypeID, int contentTypeID, String filename,
+											boolean isApplyContentTypeAccessFilter, boolean isApplyPermissionFilter)
+	{
+		I_DMS_Content[] selectedContent = selectContent(parentContent, associationTypeID, contentTypeID, filename);
+		return DMSSearchUtils.getFilteredContents(selectedContent, isApplyContentTypeAccessFilter, isApplyPermissionFilter);
+	} // selectContent
 
 	/*
 	 * Other operations on Content util methods
