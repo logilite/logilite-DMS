@@ -27,4 +27,6 @@ public interface IDMSViewer
 	public void removeSelection(Component prevComponent);
 
 	public void setSelection(Component component);
+
+	public void setAttributesInRow(Component component, I_DMS_Version version, I_DMS_Association association);
 }

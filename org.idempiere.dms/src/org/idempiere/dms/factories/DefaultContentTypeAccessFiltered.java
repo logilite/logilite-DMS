@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -21,15 +22,15 @@ public class DefaultContentTypeAccessFiltered implements IContentTypeAccess
 {
 
 	@Override
-	public HashMap<I_DMS_Version, I_DMS_Association> getFilteredContentList(HashMap<I_DMS_Version, I_DMS_Association> contentMap) throws DBException
+	public List<Integer> getAccessedContentsRoleWise(int AD_Role_ID)
 	{
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		ArrayList<Integer> contentIDList = new ArrayList<Integer>();
 		try
 		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_CONTENT_ON_CONTENTTTYPE_ACCESS, null);
-			pstmt.setInt(1, Env.getAD_Role_ID(Env.getCtx()));
+			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_CONTENT_ON_CONTENTTYPE_ACCESS, null);
+			pstmt.setInt(1, AD_Role_ID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
@@ -46,6 +47,13 @@ public class DefaultContentTypeAccessFiltered implements IContentTypeAccess
 			rs = null;
 			pstmt = null;
 		}
+		return contentIDList;
+	} // getAccessedContentsRoleWise
+
+	@Override
+	public HashMap<I_DMS_Version, I_DMS_Association> getFilteredContentList(HashMap<I_DMS_Version, I_DMS_Association> contentMap) throws DBException
+	{
+		List<Integer> contentIDList = getAccessedContentsRoleWise(Env.getAD_Role_ID(Env.getCtx()));
 
 		//
 		HashMap<I_DMS_Version, I_DMS_Association> contentsMapFiltered = new HashMap<I_DMS_Version, I_DMS_Association>();

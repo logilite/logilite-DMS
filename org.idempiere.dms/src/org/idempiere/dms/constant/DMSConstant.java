@@ -35,7 +35,11 @@ public final class DMSConstant
 
 	public static final String				DMS_MOUNTING_BASE						= "DMS_MOUNTING_BASE";
 	public static final String				DMS_MOUNTING_ARCHIVE_BASE				= "DMS_MOUNTING_ARCHIVE_BASE";
+	public static final String				DMS_ALLOW_PERMISSION_WISE_FILTER		= "DMS_ALLOW_PERMISSION_WISE_FILTER";
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH		= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
+
+	// Columnname - Role table
+	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
 
 	// Content widget size
 	public static final int					CONTENT_LARGE_ICON_WIDTH				= 135;
@@ -46,6 +50,11 @@ public final class DMSConstant
 	public static final String				COMP_ATTRIBUTE_VERSION					= "ATTR_VERSION";
 	public static final String				COMP_ATTRIBUTE_ASSOCIATION				= "ATTR_ASSOCIATION";
 	public static final String				COMP_ATTRIBUTE_ISACTIVE					= "ATTR_ISACTIVE";
+	public static final String				COMP_ATTRIBUTE_ISREAD					= "ATTR_ISREAD";
+	public static final String				COMP_ATTRIBUTE_ISWRITE					= "ATTR_ISWRITE";
+	public static final String				COMP_ATTRIBUTE_ISDELETE					= "ATTR_ISDELETE";
+	public static final String				COMP_ATTRIBUTE_ISNAVIGATION				= "ATTR_ISNAVIGATION";
+	public static final String				COMP_ATTRIBUTE_ISALLPERMISSION			= "ATTR_ISALLPERMISSION";
 
 	// View thumbnail toggle action
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
@@ -91,6 +100,7 @@ public final class DMSConstant
 	public static final String				MENUITEM_VERSIONlIST					= "Version List";
 	public static final String				MENUITEM_UPLOADVERSION					= "Upload Version";
 	public static final String				MENUITEM_ZOOMCONTENTWIN					= "Zoom";
+	public static final String				MENUITEM_PERMISSION						= "Permission";
 
 	// DMS MimeType
 	public static final String				DEFAULT									= "Default";
@@ -150,6 +160,7 @@ public final class DMSConstant
 	public static final String				MSG_VERSION_HISTORY						= "Version History";
 	public static final String				MSG_DMS_VERSION_LIST					= "DMS Version List";
 	public static final String				MSG_CREATE_DIRECTORY					= "Create Directory";
+	public static final String				MSG_DMS_PERMISSION_FOR					= "Permission for ";
 	public static final String				MSG_ENTER_DIRETORY_NAME					= "Enter Directory Name";
 	public static final String				MSG_NO_VERSION_DOC_EXISTS				= "No version Document available.";
 	public static final String				MSG_ENTER_NEW_NAME_FOR_ITEM				= "Please enter a new name for the item:";
@@ -174,12 +185,12 @@ public final class DMSConstant
 	public static final String				OPERATION_COPY							= "OpsCopy";
 
 	// Document View List
-	public static final String				DOCUMENT_VIEW_ALL								= "All";
-	public static final String				DOCUMENT_VIEW_ALL_VALUE							= "AL";
-	public static final String				DOCUMENT_VIEW_DELETED_ONLY						= "Deleted Only";
-	public static final String				DOCUMENT_VIEW_DELETED_ONLY_VALUE				= "DO";
-	public static final String				DOCUMENT_VIEW_NON_DELETED						= "Non-Deleted";
-	public static final String				DOCUMENT_VIEW_NON_DELETED_VALUE					= "ND";
+	public static final String				DOCUMENT_VIEW_ALL						= "All";
+	public static final String				DOCUMENT_VIEW_ALL_VALUE					= "AL";
+	public static final String				DOCUMENT_VIEW_DELETED_ONLY				= "Deleted Only";
+	public static final String				DOCUMENT_VIEW_DELETED_ONLY_VALUE		= "DO";
+	public static final String				DOCUMENT_VIEW_NON_DELETED				= "Non-Deleted";
+	public static final String				DOCUMENT_VIEW_NON_DELETED_VALUE			= "ND";
 
 	/*
 	 * Date Format
@@ -195,7 +206,7 @@ public final class DMSConstant
 	public static final String				CSS_DATEBOX								= "width: 100%; display:flex; flex-direction: row;";
 	public static final String				CSS_BREAD_CRUMB_LINK					= "font-weight: bold; font-size: small; padding-left: 5px; color: dimgray;";
 	public static final String				CSS_FLEX_ROW_DIRECTION					= "display: flex; flex-direction: row; flex-wrap: wrap; height: 100%;";
-	public static final String				CSS_FLEX_ROW_DIRECTION_NOWRAP			= "padding-top: 4px; display: flex; flex-direction: row; flex-wrap: nowrap; height: 100%;";																									//
+	public static final String				CSS_FLEX_ROW_DIRECTION_NOWRAP			= "padding-top: 4px; display: flex; flex-direction: row; flex-wrap: nowrap; height: 100%;";
 
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL	= "margin: 5px; background: #e2e2e2; border: 4px double #ffffff !important; border-radius: 5px;";
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED	= "margin: 5px; background: #abcdff; border: 4px double #3363ad !important; border-radius: 5px;";
@@ -207,7 +218,7 @@ public final class DMSConstant
 
 	public static final String				CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE	= "margin: 5px; background: #abcdff; border: red solid;";
 	public static final String				CSS_CONTENT_VIEWER_LIST_SEL_INACTIVE	= "border-top: 1px solid red; border-bottom: 1px double red;";
-	
+
 	/*
 	 * Queries
 	 */
@@ -237,6 +248,11 @@ public final class DMSConstant
 																						+ " JOIN DMS_Version v  ON (v.DMS_Content_ID = c.DMS_Content_ID) 												"
 																						+ " WHERE v.AD_Client_ID=? AND v.Value=? AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?))	";
 
+	public static final String				SQL_GET_PARENT_CONTENT_ID_FROM_CONTENT	= "SELECT p.DMS_Content_ID FROM DMS_Content c 																							"
+																						+ " INNER JOIN DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND COALESCE(DMS_AssociationType_ID, 0) IN (0, 1000001))"
+																						+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N')							"
+																						+ " WHERE c.DMS_Content_ID = ? 																										";
+
 	public static final String				SQL_GET_MATCHING_CONTENT_BY_NAME		= "SELECT Name  FROM DMS_Content c																											"
 																						+ " WHERE c.AD_Client_ID=? AND (c.Name  LIKE ? OR c.Name  LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?))	";
 
@@ -262,6 +278,8 @@ public final class DMSConstant
 
 	public static final String				SQL_CONTENT_FROM_ASI					= "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? 		";
 
+	public static final String				SQL_GET_FIELD_OF_TAB					= "SELECT * FROM AD_Field_VT WHERE AD_Tab_ID = ? AND IsDisplayed = 'Y' ORDER BY SeqNo";
+
 	public static final String				SQL_GET_RELATED_CONTENT					= "SELECT c.DMS_Content_ID, a.DMS_Association_ID FROM DMS_Content c											"
 																						+ " INNER JOIN DMS_Association a ON c.DMS_Content_ID = a.DMS_Content_ID AND a.IsActive = c.IsActive 	"
 																						+ " WHERE a.DMS_Content_Related_ID = ? AND c.IsActive=?  												";
@@ -269,15 +287,17 @@ public final class DMSConstant
 	public static final String				SQL_GET_ASSOCIATION_FOR_COPY_PASTE		= "SELECT DMS_Association_ID, DMS_Content_ID FROM DMS_Association 					"
 																						+ " WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ? OR DMS_Content_ID = ? AND DMS_AssociationType_ID != ?"
 																						+ " ORDER BY DMS_Association_ID													";
-	// TODO - Refactor Query
+
 	public static final String				SQL_GET_CONTENT_DIR_LEVEL_WISE			= " WITH ContentAssociation AS ( 																										"
-																						+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID, a.AD_Table_ID, a.Record_ID "
+																						+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID,		"
+																						+ " 			c.DMS_ContentType_ID, a.AD_Table_ID, a.Record_ID 																	"
 																						+ " 	FROM 	DMS_Association a 																									"
 																						+ " 	JOIN 	DMS_Content c 			ON ( c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) 										"
 																						+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.DMS_Content_Related_ID, 0) = ? 														"
 																						+ " ), 																																"
 																						+ " VersionList AS ( 																												"
-																						+ " 	SELECT 	vr.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0) AS AD_Table_ID, NVL(a.Record_ID, 0) AS Record_ID, MAX(vr.SeqNo) AS SeqNo "
+																						+ " 	SELECT 	vr.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0) AS AD_Table_ID, 		"
+																						+ "				NVL(a.Record_ID, 0) AS Record_ID, MAX(vr.SeqNo) AS SeqNo 															"
 																						+ " 	FROM 	DMS_Association a 																									"
 																						+ "		JOIN 	ContentAssociation ca 	ON ( ca.DMS_Content_ID = a.DMS_Content_Related_ID OR ca.DMS_Content_Related_ID = a.DMS_Content_Related_ID ) "
 																						+ "		JOIN 	DMS_Version vr 			ON ( vr.DMS_Content_ID = ca.DMS_Content_ID AND vr.IsActive='Y' )							"
@@ -289,20 +309,21 @@ public final class DMSConstant
 																						+ " 		NVL(a.DMS_Content_Related_ID, 	c.DMS_Content_Related_ID) 	AS DMS_Content_Related_ID,									"
 																						+ " 		NVL(a.DMS_Association_ID, 		c.DMS_Association_ID) 		AS DMS_Association_ID, 										"
 																						+ " 		NVL(a.DMS_AssociationType_ID, 	c.DMS_AssociationType_ID)	AS DMS_AssociationType_ID, 									"
-																						+ " 		vrs.DMS_Version_ID, vrs.SeqNo																							"
+																						+ " 		vrs.DMS_Version_ID, vrs.SeqNo,  c.DMS_ContentType_ID																	"
 																						+ " FROM 		ContentAssociation c 																								"
 																						+ " LEFT JOIN 	VersionList v		ON (v.DMS_Content_ID = c.DMS_Content_ID) 														"
 																						+ " LEFT JOIN 	DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID = c.DMS_Content_Related_ID "
 																						+ "										AND NVL(a.DMS_AssociationType_ID, 0) = NVL(c.DMS_AssociationType_ID, 0))					"
 																						+ " LEFT JOIN 	DMS_Version vrs 	ON (vrs.DMS_Content_ID = c.DMS_Content_ID AND vrs.SeqNo = NVL(v.SeqNo, 0))  					"
 																						+ " WHERE 		(NVL(c.DMS_Content_Related_ID,0) = ?) 																				";
-	// OR (NVL(c.DMS_Content_Related_ID,0) = ? AND c.ContentBaseType = 'DIR')";
 
 	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL		= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "");
 
-	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "AND c.IsActive='Y' AND a.IsActive='Y'");
+	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace(	"#IsActive#",
+																																"AND c.IsActive='Y' AND a.IsActive='Y'");
 
-	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "AND c.IsActive='N' AND a.IsActive='N'");
+	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace(	"#IsActive#",
+																																"AND c.IsActive='N' AND a.IsActive='N'");
 
 	// Restrict copy paste while parent directory copy paste into itself or it's child directory.
 	public static String					SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY	= " WITH RECURSIVE ContentHierarchy AS "
@@ -316,8 +337,24 @@ public final class DMSConstant
 	/*
 	 * Access & Permission
 	 */
-	public static final String				SQL_GET_CONTENT_ON_CONTENTTTYPE_ACCESS	= "SELECT c.DMS_Content_ID FROM DMS_Content c "
+
+	// Content Type wise access
+	public static final String				SQL_GET_CONTENT_ON_CONTENTTYPE_ACCESS	= "SELECT c.DMS_Content_ID FROM DMS_Content c "
 																						+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
 																						+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) ";
+
+	// Count the permission entries per content wise
+	public static final String				SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ? ";
+
+	// User permission wise access
+	public static final String				SQL_GET_PERMISSION_ID_FROM_CONTENT		= "SELECT DMS_Permission_ID FROM DMS_Permission 	WHERE DMS_Content_ID = ? 							"
+																						+ "	AND ( 	COALESCE(AD_Role_ID, 0) = ? OR COALESCE(AD_User_ID, 0) = ? OR IsAllPermission = 'Y' )	"
+																						+ "	ORDER BY IsAllPermission DESC, IsNavigation, COALESCE(AD_Role_ID, 0), COALESCE(AD_User_ID, 0)	";
+	// Parent content ID from child content and non mounting
+	public static final String				SQL_GET_PARENT_CONTENT_ID_NON_MOUNTING	= "SELECT a.DMS_Content_Related_ID 		FROM DMS_Content c																"
+																						+ " INNER JOIN DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID IS NOT NULL"
+																						+ "								 			AND COALESCE(a.DMS_AssociationType_ID, 0) IN (0, 1000001))				"
+																						+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N') 		"
+																						+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
 
 }

@@ -476,13 +476,13 @@ public class DMSOprUtils
 
 			if (contentID <= 0)
 			{
-				contentID = MDMSContent.create(dirContentName, MDMSContent.CONTENTBASETYPE_Directory, dms.getPathFromContentManager(parentVersion), false);
-
+				contentID = MDMSContent.create(	dirContentName, MDMSContent.CONTENTBASETYPE_Directory, dms.getPathFromContentManager(parentVersion), false,
+												trxName);
 				if (isCreateAssociation)
 					MDMSAssociation.create(contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0, trxName);
 
 				// Create DMS Version
-				MDMSVersion.create(contentID, dirContentName, 0, null, null);
+				MDMSVersion.create(contentID, dirContentName, 0, null, trxName);
 			}
 
 			parentContent = new MDMSContent(Env.getCtx(), contentID, trxName);
@@ -573,6 +573,9 @@ public class DMSOprUtils
 
 		int DMS_Content_ID = (new MDMSContent(Env.getCtx(), copiedContent.getDMS_Content_ID(), null)).getDMS_Content_Related_ID();
 
+		String trxName = Trx.createTrxName("copy-paste");
+		Trx trx = Trx.get(trxName, true);
+
 		try
 		{
 			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_ASSOCIATION_FOR_COPY_PASTE, null);
@@ -581,9 +584,6 @@ public class DMSOprUtils
 			pstmt.setInt(3, DMS_Content_ID);
 			pstmt.setInt(4, MDMSAssociationType.LINK_ID);
 			rs = pstmt.executeQuery();
-
-			String trxName = Trx.createTrxName("copy-paste");
-			Trx trx = Trx.get(trxName, true);
 
 			while (rs.next())
 			{
@@ -669,11 +669,13 @@ public class DMSOprUtils
 		}
 		catch (Exception e)
 		{
+			trx.rollback();
 			DMS.log.log(Level.SEVERE, "Error while paste Copy File Content", e);
 			throw new AdempiereException(e);
 		}
 		finally
 		{
+			trx.close();
 			DB.close(rs, pstmt);
 			rs = null;
 			pstmt = null;
@@ -748,11 +750,15 @@ public class DMSOprUtils
 			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + oldVersion.getValue();
 
 			pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
+
+			//
+			dms.grantChildPermissionFromParentContent(newDMSContent, destContent);
 		}
 		else
 		{
 			pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID);
 		}
+
 	} // pasteCopyContent
 
 	/**
@@ -776,24 +782,25 @@ public class DMSOprUtils
 			MDMSAssociation oldDMSAssociation = (MDMSAssociation) mapEntry.getValue();
 			if (oldDMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
+				String trxName = Trx.createTrxName("pasteCopyDir");
+				Trx trx = Trx.get(trxName, true);
+
+				//
 				MDMSContent newDMSContent = dms.createDirectory(oldDMSContent.getName(), destPasteContent, dms.getSubstituteTableInfo().getOriginTable_ID(),
-																dms.getSubstituteTableInfo().getOriginRecord_ID(), true, true, null);
+																dms.getSubstituteTableInfo().getOriginRecord_ID(), true, true, trx.getTrxName());
 				if (copiedContent.getM_AttributeSetInstance_ID() > 0)
 				{
-					MAttributeSetInstance newASI = Utils.copyASI(copiedContent.getM_AttributeSetInstance_ID(), null);
+					MAttributeSetInstance newASI = Utils.copyASI(copiedContent.getM_AttributeSetInstance_ID(), trx.getTrxName());
 					newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 				}
-
-				// // Copy Association
-				// MDMSAssociation newDMSAssociation = new MDMSAssociation(Env.getCtx(), 0, null);
-				// PO.copyValues(oldDMSAssociation, newDMSAssociation);
-				// newDMSAssociation.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
-				// newDMSAssociation.setDMS_Content_Related_ID(destPasteContent.getDMS_Content_ID());
-				// newDMSAssociation.updateTableRecordRef(tableID, recordID);
 
 				// Note: Must save association first other wise creating issue of wrong info in solr
 				// indexing entry
 				newDMSContent.saveEx();
+
+				//
+				trx.commit();
+				trx.close();
 
 				if (!Util.isEmpty(oldDMSContent.getParentURL()))
 				{
@@ -904,7 +911,8 @@ public class DMSOprUtils
 			}
 
 			MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(dmsContent.getDMS_Content_ID(), true, null);
-			if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID)
+			if (association.getDMS_AssociationType_ID() == MDMSAssociationType.PARENT_ID
+				|| (association.getDMS_AssociationType_ID() == 0 && MDMSContent.CONTENTBASETYPE_Content.equals(dmsContent.getContentBaseType())))
 			{
 				if (destContent != null && destContent.getDMS_Content_ID() == 0)
 					destContent = null;
@@ -921,6 +929,8 @@ public class DMSOprUtils
 			dmsContent.setParentURL(dms.getPathFromContentManager(destContent));
 			dmsContent.saveEx();
 		}
+
+		dms.grantChildPermissionFromParentContent(cutContent, destContent);
 	} // pasteCutContent
 
 	/**
@@ -1130,7 +1140,8 @@ public class DMSOprUtils
 	 */
 	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID, boolean isDocExplorerWindow)
 	{
-		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(content, content.getAD_Client_ID(), DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
+		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(	content, content.getAD_Client_ID(),
+																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
 
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
@@ -1351,7 +1362,7 @@ public class DMSOprUtils
 			}
 		}
 	} // deleteContent
-	
+
 	/**
 	 * Undo Delete Content [ Do Active ]
 	 * 
@@ -1416,14 +1427,14 @@ public class DMSOprUtils
 				linkAssociation.save();
 			}
 		}
-		
+
 		MDMSAssociation parentAssociation = dmsAssociation;
 		while (parentAssociation != null && parentAssociation.getDMS_Content_Related_ID() > 0)
 		{
 			MDMSContent parentContent = new MDMSContent(Env.getCtx(), parentAssociation.getDMS_Content_Related_ID(), null);
 			if (parentContent.getContentBaseType().equalsIgnoreCase(MDMSContent.CONTENTBASETYPE_Directory) && !parentContent.isActive())
 			{
-				List <MDMSAssociation> associationlist = dms.getAssociationFromContent(parentContent.getDMS_Content_ID(), 0, false, trxName);
+				List<MDMSAssociation> associationlist = dms.getAssociationFromContent(parentContent.getDMS_Content_ID(), 0, false, trxName);
 				if (!associationlist.isEmpty())
 				{
 					parentAssociation = (MDMSAssociation) associationlist.get(0);
@@ -1451,7 +1462,7 @@ public class DMSOprUtils
 			content.saveEx(trxName);
 		}
 	} // setContentAndAssociationInActive
-	
+
 	/**
 	 * Delete Content With Physical Document
 	 * 
@@ -1537,8 +1548,8 @@ public class DMSOprUtils
 	 * Get the related contents of give content like versions, Linkable docs etc
 	 * 
 	 * @param  dmsContent
-	 * @param trxName 
-	 * @param isActive 
+	 * @param  trxName
+	 * @param  isActive
 	 * @return            Map of related contents
 	 */
 	public static HashMap<I_DMS_Content, I_DMS_Association> getRelatedContents(MDMSContent dmsContent, boolean isActive, String trxName)
