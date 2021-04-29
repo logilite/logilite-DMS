@@ -293,6 +293,9 @@ public class DefaultPermission implements IPermissionManager
 
 		for (MDMSPermission parentPermission : arrayParentPermission)
 		{
+			if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && parentPermission.isNavigation())
+				continue;
+
 			int permissionID = DMSPermissionUtils.getPermissionIDByUserRole(content.getDMS_Content_ID(),
 																			parentPermission.getAD_Role_ID(),
 																			parentPermission.getAD_User_ID(),
