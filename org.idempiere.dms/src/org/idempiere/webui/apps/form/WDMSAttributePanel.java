@@ -137,6 +137,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 
 	private int					windowNo				= 0;
 	private int					tabNo					= 0;
+	
+	private boolean				isWrite				= true;
 
 	public WDMSAttributePanel(	DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure,
 								boolean isLink, int windowNo,
@@ -152,6 +154,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		this.isLink = isLink;
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
+		
+		isWrite = dms.isWritePermission(this.content);
 
 		try
 		{
@@ -289,8 +293,9 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		panelAttribute.appendChild(panelFooterButtons);
 		mainLayout.appendChild(south);
 
-		btnVersionUpload.setDisabled(!isWindowAccess || isMountingBaseStructure || content == null || !content.isActive());
-		btnEdit.setDisabled(!isWindowAccess || isMountingBaseStructure || isLink);
+		btnVersionUpload.setDisabled(!isWindowAccess || isMountingBaseStructure || content == null || !content.isActive() || !isWrite);
+		btnEdit.setDisabled(!isWindowAccess || isMountingBaseStructure || isLink || !isWrite);
+		btnDownload.setDisabled(!isWrite);
 	} // init
 
 	/**
@@ -525,7 +530,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		{
 			refreshPanel();
 		}
-		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Row.class))
+		else if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(Row.class) && isWrite)
 		{
 			versionSelected = (MDMSVersion) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION);
 			DMS_ZK_Util.downloadDocument(dms, versionSelected);

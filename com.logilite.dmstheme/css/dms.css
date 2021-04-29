@@ -46,6 +46,11 @@
 	content: "\f015";
 	font-size: large;
 }
+
+.z-icon-Permission:before {
+	content: "\f0c0";
+}
+
 .z-icon-org_idempiere_dms_toolbar_CustomToolbarFactory:before {
 	content: "\f15b";
 }

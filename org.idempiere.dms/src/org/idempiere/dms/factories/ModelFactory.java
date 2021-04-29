@@ -23,6 +23,7 @@ import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSMimeType;
+import org.idempiere.model.MDMSPermission;
 import org.idempiere.model.MDMSStatus;
 import org.idempiere.model.MDMSSubstitute;
 import org.idempiere.model.MDMSVersion;
@@ -49,6 +50,8 @@ public class ModelFactory implements IModelFactory
 			return MDMSSubstitute.class;
 		else if (tableName.equals(MDMSVersion.Table_Name))
 			return MDMSVersion.class;
+		else if (tableName.equals(MDMSPermission.Table_Name))
+			return MDMSPermission.class;
 
 		return null;
 	}
@@ -72,6 +75,8 @@ public class ModelFactory implements IModelFactory
 			return new MDMSSubstitute(Env.getCtx(), Record_ID, trxName);
 		else if (tableName.equals(MDMSVersion.Table_Name))
 			return new MDMSVersion(Env.getCtx(), Record_ID, trxName);
+		else if (tableName.equals(MDMSPermission.Table_Name))
+			return new MDMSPermission(Env.getCtx(), Record_ID, trxName);
 
 		return null;
 	}
@@ -95,6 +100,8 @@ public class ModelFactory implements IModelFactory
 			return new MDMSSubstitute(Env.getCtx(), rs, trxName);
 		else if (tableName.equals(MDMSVersion.Table_Name))
 			return new MDMSVersion(Env.getCtx(), rs, trxName);
+		else if (tableName.equals(MDMSPermission.Table_Name))
+			return new MDMSPermission(Env.getCtx(), rs, trxName);
 
 		return null;
 	}
