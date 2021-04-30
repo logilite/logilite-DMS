@@ -82,6 +82,8 @@ public final class DMSConstant
 
 	// Button
 	public static final String				TOOLBAR_BUTTON_DOCUMENT_EXPLORER		= "Document Explorer";
+	public static final String				TOOLBAR_BTN_NAME_DIR					= "DMS - Create Directory";
+	public static final String				TOOLBAR_BTN_NAME_UPLOAD					= "DMS - Upload Content";
 
 	// Event
 	public static final String				EVENT_ON_RENAME_COMPLETE				= "onRenameComplete";
@@ -342,6 +344,8 @@ public final class DMSConstant
 	public static final String				SQL_GET_CONTENT_ON_CONTENTTYPE_ACCESS	= "SELECT c.DMS_Content_ID FROM DMS_Content c "
 																						+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
 																						+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) ";
+
+	public static final String				SQL_GET_TOOLBAR_BUTTON_ID				= "SELECT AD_ToolbarButton_ID FROM AD_ToolBarButton WHERE AD_Client_ID IN (0, ?) AND Name = ?";
 
 	// Count the permission entries per content wise
 	public static final String				SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ? ";
