@@ -14,9 +14,7 @@
 package org.idempiere.model;
 
 import java.io.File;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
