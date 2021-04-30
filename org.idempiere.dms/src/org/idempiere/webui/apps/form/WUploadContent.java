@@ -13,7 +13,6 @@
 
 package org.idempiere.webui.apps.form;
 
-import com.logilite.esignature.topaz.webui.component.SignatureImgBox;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -48,6 +47,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
+import org.compiere.model.MTable;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
@@ -68,6 +68,7 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Space;
 
+import com.adaxa.signature.webui.component.SignatureImgBox;
 
 public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
 {
@@ -361,7 +362,6 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 			// Adding File
 			if (isVersion)
 			{
-				//TODO - TableID and RecordID getting fro Substitute Record need to check conversion
 				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue(), tableID, recordID);
 			}
 			else
@@ -375,8 +375,12 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 					ASI_ID = asiPanel.saveAttributes();
 				}
 
-				//TODO - TableID and RecordID getting fro Substitute Record need to check conversion
-				dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
+				int contentID = dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
+				if (DMSContent != null && !DMSContent.isMounting() && DMSContent.getDMS_Content_ID() != contentID)
+				{
+					MDMSContent content = (MDMSContent) MTable.get(DMSContent.getCtx(), MDMSContent.Table_ID).getPO(contentID, DMSContent.get_TrxName());
+					dms.grantChildPermissionFromParentContent(content, DMSContent);
+				}
 			}
 		}
 		catch (IOException e)

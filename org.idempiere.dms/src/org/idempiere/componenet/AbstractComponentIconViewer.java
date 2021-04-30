@@ -10,7 +10,10 @@ import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.theme.ThemeManager;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IDMSViewer;
+import org.idempiere.dms.factories.IPermissionManager;
+import org.idempiere.dms.util.DMSPermissionUtils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
@@ -40,13 +43,14 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	}
 
 	protected DMS								dms;
+	protected IPermissionManager				permissionManager;
 
 	protected Grid								grid;
 	protected Component							prevComponent;
 
 	protected String[]							eventsList;
 	protected EventListener<? extends Event>	listener;
-	
+
 	protected boolean							isContentActive	= true;
 
 	// Abstract method definition
@@ -82,18 +86,40 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		}
 		else
 		{
-			// handle active , create var isContentActive
-			for (Map.Entry <I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
+			permissionManager = dms.getPermissionManager();
+
+			for (Map.Entry<I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
 			{
 				I_DMS_Version version = entry.getKey();
 				I_DMS_Association association = entry.getValue();
-				isContentActive =  (version != null && association != null && version.getDMS_Content().isActive() && association.isActive());
+				isContentActive = (version != null && association != null && version.getDMS_Content().isActive() && association.isActive());
 				if (association != null && MDMSAssociationType.isLink(association))
 					isContentActive = association.isActive();
+
+				//
 				createComponent(rows, version, association, compWidth, compHeight);
 			}
 		}
 	} // init
+
+	@Override
+	public void setAttributesInRow(Component component, I_DMS_Version version, I_DMS_Association association)
+	{
+		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, version.getDMS_Content());
+		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
+		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
+		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
+
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			permissionManager.initContentPermission(version.getDMS_Content());
+
+			component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, permissionManager.isRead());
+			component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, permissionManager.isWrite());
+			component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISDELETE, permissionManager.isDelete());
+			component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, permissionManager.isNavigation());
+		}
+	} // setAttributesInRow
 
 	@Override
 	public void onEvent(Event event) throws Exception

@@ -32,6 +32,8 @@ import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.dms.factories.IDMSViewerFactory;
 import org.idempiere.dms.factories.IMountingFactory;
 import org.idempiere.dms.factories.IMountingStrategy;
+import org.idempiere.dms.factories.IPermissionManager;
+import org.idempiere.dms.factories.IPermissionFactory;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.IThumbnailGeneratorFactory;
 import org.idempiere.dms.factories.IThumbnailProvider;
@@ -226,5 +228,27 @@ public class DMSFactoryUtils
 
 		return null;
 	} // getDMSComponentViewer
+
+	/**
+	 * Factory call for DMS Permission
+	 * 
+	 * @return {@link IPermissionManager}
+	 */
+	public static IPermissionManager getPermissionFactory()
+	{
+		List<IPermissionFactory> factoryies = Service.locator().list(IPermissionFactory.class).getServices();
+		if (factoryies != null)
+		{
+			for (IPermissionFactory factory : factoryies)
+			{
+				IPermissionManager permission = factory.getPermissionManager();
+				if (permission != null)
+				{
+					return permission;
+				}
+			}
+		}
+		return null;
+	} // getPermissionFactory
 
 }
