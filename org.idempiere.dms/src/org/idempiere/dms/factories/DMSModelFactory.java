@@ -28,7 +28,7 @@ import org.idempiere.model.MDMSStatus;
 import org.idempiere.model.MDMSSubstitute;
 import org.idempiere.model.MDMSVersion;
 
-public class ModelFactory implements IModelFactory
+public class DMSModelFactory implements IModelFactory
 {
 
 	@Override
