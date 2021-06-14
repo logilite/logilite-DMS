@@ -38,8 +38,10 @@ public final class DMSConstant
 	public static final String				DMS_ALLOW_PERMISSION_WISE_FILTER		= "DMS_ALLOW_PERMISSION_WISE_FILTER";
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH		= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 
-	// Columnname - Role table
+	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
+	// Client Info table
+	public static final String				COLUMNNAME_IS_ALLOW_CREATE_DIRECTORY	= "IsAllowCreateDirectory";
 
 	// Content widget size
 	public static final int					CONTENT_LARGE_ICON_WIDTH				= 135;

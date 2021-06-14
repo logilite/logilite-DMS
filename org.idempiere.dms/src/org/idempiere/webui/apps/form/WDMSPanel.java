@@ -291,7 +291,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public void allowUserToCreateDir()
 	{
-		boolean isAllowCreateDirectory = MClientInfo.get(Env.getCtx(), dms.AD_Client_ID).get_ValueAsBoolean("IsAllowCreateDirectory");
+		boolean isAllowCreateDirectory = MClientInfo.get(Env.getCtx(), dms.AD_Client_ID).get_ValueAsBoolean(DMSConstant.COLUMNNAME_IS_ALLOW_CREATE_DIRECTORY);
 
 		if (isTabViewer() && !isAllowCreateDirectory)
 		{
