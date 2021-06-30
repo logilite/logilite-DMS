@@ -29,7 +29,7 @@ import org.compiere.model.DataStatusListener;
 import org.compiere.model.GridTab;
 import org.compiere.model.GridWindow;
 import org.compiere.util.CLogger;
-import org.idempiere.webui.apps.form.WDMSPanel;
+import org.idempiere.dms.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Button;

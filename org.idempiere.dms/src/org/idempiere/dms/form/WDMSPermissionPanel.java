@@ -1,4 +1,4 @@
-package org.idempiere.webui.apps.form;
+package org.idempiere.dms.form;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;

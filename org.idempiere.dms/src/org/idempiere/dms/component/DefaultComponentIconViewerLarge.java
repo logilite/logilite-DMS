@@ -11,122 +11,119 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package org.idempiere.componenet;
+package org.idempiere.dms.component;
 
-import org.adempiere.webui.component.Column;
-import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
-import org.compiere.model.MUser;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
+import org.idempiere.model.MDMSAssociationType;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
-import org.zkoss.zul.Hbox;
+import org.zkoss.zul.Div;
 import org.zkoss.zul.Image;
 import org.zkoss.zul.Vbox;
 
 /**
- * Default DMS Version Viewer Component
+ * Default DMS Large Icon Viewer Component
  * 
  * @author Sachin
  */
-public class DefaultComponentIconViewerVersion extends AbstractComponentIconViewer
+public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 {
-	// private Row row;
+	private Row row;
 
 	@Override
 	public void createHeaderPart()
 	{
-		Columns columns = new Columns();
-		columns.appendChild(new Column());
-		columns.appendChild(new Column());
-
-		grid.appendChild(columns);
-		grid.setWidth("100%");
-		grid.setHeight("100%");
-		grid.setZclass("none");
 	} // createHeaderPart
 
 	@Override
 	public void setNoComponentExistsMsg(Rows rows)
 	{
-		Cell cell = new Cell();
-		cell.appendChild(new Label(DMSConstant.MSG_NO_VERSION_DOC_EXISTS));
-		cell.setColspan(2);
-
-		Row row = rows.newRow();
-		row.appendChild(cell);
 	} // setNoComponentExistsMsg
 
 	@Override
 	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight)
 	{
-		I_DMS_Content content = version.getDMS_Content();
+		if (row == null)
+		{
+			row = rows.newRow();
+			row.setSclass("SB-ROW");
+			row.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION + " width: 100%; overflow: hidden; padding: 2px;");
+		}
 
-		Row row = rows.newRow();
-		row.setSclass("SB-ROW");
-		row.setWidgetAttribute("cellspacing", "15");
+		// Content Label
+		Label lblName = new Label(getContentName(version.getDMS_Content(), version.getSeqNo()));
+		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 20px; width: "
+							+ (compWidth - 10) + "px; display: inline-block;" + (isContentActive ? " " : "color: red;"));
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
 		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
-		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + compHeight + "px;");
+		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + (compHeight - 35) + "px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
 		Vbox vbox = new Vbox();
-		vbox.appendChild(new Label(DMSConstant.MSG_CREATED + ": " + content.getCreated()));
-		vbox.appendChild(new Label(DMSConstant.MSG_CREATEDBY + ": " + MUser.getNameOfUser(content.getCreatedBy())));
-		vbox.appendChild(new Label(DMSConstant.MSG_FILESIZE + ": " + version.getDMS_FileSize()));
-
-		Hbox hbox = new Hbox();
-		hbox.appendChild(thumbImg);
-		hbox.appendChild(vbox);
-		hbox.setAlign("center");
-		hbox.setStyle("width: 90%; height: 100%; max-height:" + compHeight + "px;");
+		vbox.appendChild(thumbImg);
+		vbox.appendChild(lblName);
+		vbox.setAlign("center");
+		vbox.setStyle("position: relative; width: 100%; height: 100%; max-width:" + compWidth + "px;");
 
 		Cell cell = new Cell();
-		cell.setWidth("100%");
-		cell.appendChild(hbox);
+		cell.appendChild(vbox);
+		cell.setWidth(compWidth + "px");
 		cell.setHeight(compHeight + "px");
-		// cell.setStyle("background: #f3f3f3;");
+		cell.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
 		row.appendChild(cell);
-		row.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
-		row.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
 
 		//
-		setAttributesInRow(row, version, association);
+		setAttributesInRow(cell, version, association);
 
 		// Listener for component selection
-		row.addEventListener(Events.ON_CLICK, this);
+		cell.addEventListener(Events.ON_CLICK, this);
+		cell.addEventListener(Events.ON_RIGHT_CLICK, this);
 
 		for (int i = 0; i < eventsList.length; i++)
-			row.addEventListener(eventsList[i], listener);
+			cell.addEventListener(eventsList[i], listener);
+
+		if (MDMSAssociationType.isLink(association))
+		{
+			Component icon = getLinkIconComponent(association);
+
+			Div mimeIcon = new Div();
+			mimeIcon.appendChild(icon);
+			mimeIcon.setStyle("position: absolute; bottom: 24%;");
+			vbox.appendChild(mimeIcon);
+		}
 
 		// set tooltip text
-		row.setTooltiptext(getToolTipTextMsg(version, association));
+		cell.setTooltiptext(getToolTipTextMsg(version, association));
 	} // createComponent
 
 	@Override
 	public void removeSelection(Component component)
 	{
 		if (prevComponent != null)
-			((Row) prevComponent).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
+			((Cell) prevComponent).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
 	}
 
 	@Override
 	public void setSelection(Component component)
 	{
-		Row row = (Row) component;
-		Object isActive = row.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
+		Cell cell = (Cell) component;
+		Object isActive = cell.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
 		if (isActive != null && isActive instanceof Boolean)
-			row.setStyle((Boolean) isActive ? DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED : DMSConstant.CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE);
+		{
+			cell.setStyle((Boolean) isActive ? DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED : DMSConstant.CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE);
+		}
 		else
-			row.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED);
+		{
+			cell.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED);
+		}
 	}
 }

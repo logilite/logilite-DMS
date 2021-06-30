@@ -26,7 +26,7 @@ import org.adempiere.webui.session.SessionManager;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.webui.apps.form.WDMSPanel;
+import org.idempiere.dms.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zul.Window.Mode;
