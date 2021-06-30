@@ -6,7 +6,7 @@
          name="org.idempiere.webui.apps.form.WDocumentExplorer"
          point="org.adempiere.webui.Form">
       <form
-            class="org.idempiere.webui.apps.form.WDocumentExplorer">
+            class="org.idempiere.dms.form.WDocumentExplorer">
       </form>
    </extension>
    <extension
