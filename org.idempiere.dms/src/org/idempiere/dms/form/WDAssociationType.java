@@ -11,7 +11,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package org.idempiere.webui.apps.form;
+package org.idempiere.dms.form;
 
 import java.util.logging.Level;
 

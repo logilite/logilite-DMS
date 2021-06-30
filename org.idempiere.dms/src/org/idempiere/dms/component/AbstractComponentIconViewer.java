@@ -1,4 +1,4 @@
-package org.idempiere.componenet;
+package org.idempiere.dms.component;
 
 import java.util.HashMap;
 import java.util.Map;
