@@ -68,7 +68,7 @@ import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Space;
 
-import com.adaxa.signature.webui.component.SignatureImgBox;
+import com.logilite.esignature.topaz.webui.component.SignatureImgBox;
 
 public class WUploadContent extends Window implements EventListener<Event>, ValueChangeListener
 {

@@ -14,8 +14,10 @@
 package org.idempiere.dms.form;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -39,6 +41,7 @@ import org.compiere.model.MAttributeValue;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
@@ -146,6 +149,10 @@ public class WDLoadASIPanel extends Panel
 		{
 			editor = WebEditorFactory.getEditor(getNumberGridField(attribute), true);
 		}
+		else if (MAttribute.ATTRIBUTEVALUETYPE_Date.equals(attribute.getAttributeValueType()))
+		{
+			editor = WebEditorFactory.getEditor(getDateGridField(attribute), true);
+		}
 		else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attribute.getAttributeValueType()))
 		{
 			editor = WebEditorFactory.getEditor(getReferenceGridField(attribute), true);
@@ -202,6 +209,11 @@ public class WDLoadASIPanel extends Panel
 		return getGridField(attribute, attribute.getName(), DisplayType.Number, 0);
 	} // getNumberGridField
 
+	private GridField getDateGridField(MAttribute attribute)
+	{
+		return getGridField(attribute, attribute.getName(), DisplayType.Date, 0);
+	} // getDateGridField
+
 	private GridField getListTypeGridField(MAttribute attribute)
 	{
 		GridField gridField = getGridField(attribute, "M_AttributeValue_ID", DisplayType.TableDir, 0);
@@ -217,10 +229,10 @@ public class WDLoadASIPanel extends Panel
 	{
 		GridFieldVO vo = GridFieldVO.createParameter(	Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
 														Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID,
-														Reference_Value_ID, false, false);
+														Reference_Value_ID, false, false, null);
+
 		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
-
 		return new GridField(vo);
 	} // getGridField
 
@@ -231,8 +243,7 @@ public class WDLoadASIPanel extends Panel
 		{
 			if (MAttribute.ATTRIBUTEVALUETYPE_List.equals(attribute.getAttributeValueType()))
 			{
-				if (instance.getM_AttributeValue_ID() > 0)
-					editor.setValue(instance.getM_AttributeValue_ID());
+				editor.setValue(instance.getM_AttributeValue_ID());
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Number.equals(attribute.getAttributeValueType()))
 			{
@@ -242,16 +253,26 @@ public class WDLoadASIPanel extends Panel
 			{
 				editor.setValue(instance.getValue());
 			}
+			else if (MAttribute.ATTRIBUTEVALUETYPE_Date.equals(attribute.getAttributeValueType()))
+			{
+				editor.setValue(instance.getValueDate());
+			}
 			else
 			{
 				int dt = editor.getGridField().getDisplayType();
 				if (dt == DisplayType.Date || dt == DisplayType.DateTime || dt == DisplayType.Time)
 				{
-					if (instance.getValueTimeStamp() != null)
-						editor.setValue(instance.getValueTimeStamp());
+					if (instance.getValueDate() != null)
+						editor.setValue(instance.getValueDate());
 				}
-				else if (dt == DisplayType.Image	|| dt == DisplayType.Assignment || dt == DisplayType.Locator || dt == DisplayType.Payment
-							|| dt == DisplayType.TableDir || dt == DisplayType.Table || dt == DisplayType.Search || dt == DisplayType.Account)
+				else if (dt == DisplayType.Image
+							|| dt == DisplayType.Assignment
+							|| dt == DisplayType.Locator
+							|| dt == DisplayType.Payment
+							|| dt == DisplayType.TableDir
+							|| dt == DisplayType.Table
+							|| dt == DisplayType.Search
+							|| dt == DisplayType.Account)
 				{
 					if (instance.getValueInt() > 0)
 						editor.setValue(instance.getValueInt());
@@ -317,9 +338,24 @@ public class WDLoadASIPanel extends Panel
 					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 				} // setMAttributeInstance doesn't work without decimal point
 				if (value != null && value.scale() == 0)
-					value = value.setScale(1, BigDecimal.ROUND_HALF_UP);
+					value = value.setScale(1, RoundingMode.HALF_UP);
 
 				attributes[i].setMAttributeInstance(asiID, value);
+			}
+			else if (MAttribute.ATTRIBUTEVALUETYPE_Date.equals(attributes[i].getAttributeValueType()))
+			{
+				WEditor editor = (WEditor) m_editors.get(i);
+				Date value = (Date) editor.getValue();
+				Timestamp valueTimeStamp = value != null ? new Timestamp(value.getTime()) : null;
+				if (log.isLoggable(Level.FINE))
+					log.fine(attributes[i].getName() + "=" + valueTimeStamp);
+				if (attributes[i].isMandatory() && valueTimeStamp == null)
+				{
+					Clients.scrollIntoView(editor.getComponent());
+					throw new WrongValueException(editor.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
+				}
+
+				attributes[i].setMAttributeInstance(asiID, valueTimeStamp);
 			}
 			else if (MAttribute.ATTRIBUTEVALUETYPE_Reference.equals(attributes[i].getAttributeValueType()))
 			{
@@ -387,13 +423,17 @@ public class WDLoadASIPanel extends Panel
 			}
 
 			if (displayType == DisplayType.Integer)
-				attributes.setMAttributeInstance(asiID, value == null ? 0 : ((Number) value).intValue(), null);
+				attributes.setMAttributeInstance(asiID, value == null ? 0 : ((Number) value).intValue());
 			else
 				attributes.setMAttributeInstance(asiID, (BigDecimal) value);
 		}
-		else if (displayType == DisplayType.Image	|| displayType == DisplayType.Assignment || displayType == DisplayType.Locator
-					|| displayType == DisplayType.Payment || displayType == DisplayType.TableDir || displayType == DisplayType.Table
-					|| displayType == DisplayType.Search || displayType == DisplayType.Account)
+		else if (displayType == DisplayType.Image
+					|| displayType == DisplayType.Assignment
+					|| displayType == DisplayType.Locator
+					|| displayType == DisplayType.TableDir
+					|| displayType == DisplayType.Table
+					|| displayType == DisplayType.Search
+					|| displayType == DisplayType.Account)
 		{
 			Integer value = (Integer) editor.getValue();
 			if (attributes.isMandatory() && value == null)
@@ -403,13 +443,15 @@ public class WDLoadASIPanel extends Panel
 			}
 
 			String valueLabel = null;
-			if (displayType == DisplayType.TableDir || displayType == DisplayType.Table || displayType == DisplayType.Search
+			if (displayType == DisplayType.TableDir
+				|| displayType == DisplayType.Table
+				|| displayType == DisplayType.Search
 				|| displayType == DisplayType.Account)
 			{
 				valueLabel = editor.getDisplay();
 			}
 
-			attributes.setMAttributeInstance(asiID, value == null ? 0 : value.intValue(), valueLabel);
+			attributes.setMAttributeInstance(asiID, new KeyNamePair(value == null ? 0 : value.intValue(), valueLabel));
 		}
 		else
 		{
