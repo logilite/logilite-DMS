@@ -78,7 +78,6 @@ import org.compiere.model.MTable;
 import org.compiere.model.MToolBarButtonRestrict;
 import org.compiere.model.MUser;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
@@ -123,10 +122,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private static CLogger			log						= CLogger.getCLogger(WDMSPanel.class);
 
 	private static final String		ATTRIBUTE_TOGGLE		= "Toggle";
-
-	private static int				TOOLBAR_BTN_ID_DIR		= 0;
-	private static int				TOOLBAR_BTN_ID_UPLOAD	= 0;
-
+	private static final String		TOOLBAR_BTN_DMS_DIR		= "DMS - Create Directory";
+	private static final String		TOOLBAR_BTN_DMS_UPLOAD	= "DMS - Upload Content";
 	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
 
 	private Tabbox					tabBox					= new Tabbox();
@@ -262,14 +259,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		this.isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
 
 		// Toolbar button restriction
-		if (TOOLBAR_BTN_ID_DIR <= 0)
-			TOOLBAR_BTN_ID_DIR = DB.getSQLValue(null, DMSConstant.SQL_GET_TOOLBAR_BUTTON_ID, dms.AD_Client_ID, DMSConstant.TOOLBAR_BTN_NAME_DIR);
-
-		if (TOOLBAR_BTN_ID_UPLOAD <= 0)
-			TOOLBAR_BTN_ID_UPLOAD = DB.getSQLValue(null, DMSConstant.SQL_GET_TOOLBAR_BUTTON_ID, dms.AD_Client_ID, DMSConstant.TOOLBAR_BTN_NAME_UPLOAD);
-
-		btnCreateDir.setVisible(!MToolBarButtonRestrict.isToolbarButtonRestricted(windowID, tabID, TOOLBAR_BTN_ID_DIR));
-		btnUploadContent.setVisible(!MToolBarButtonRestrict.isToolbarButtonRestricted(windowID, tabID, TOOLBAR_BTN_ID_UPLOAD));
+		btnCreateDir.setVisible(!MToolBarButtonRestrict.isToolbarButtonRestricted(windowID, tabID, TOOLBAR_BTN_DMS_DIR));
+		btnUploadContent.setVisible(!MToolBarButtonRestrict.isToolbarButtonRestricted(windowID, tabID, TOOLBAR_BTN_DMS_UPLOAD));
 
 		setTable_ID(Table_ID);
 		setRecord_ID(Record_ID);

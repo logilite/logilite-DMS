@@ -229,8 +229,7 @@ public class WDLoadASIPanel extends Panel
 	{
 		GridFieldVO vo = GridFieldVO.createParameter(	Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
 														Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID,
-														Reference_Value_ID, false, false, null);
-
+														Reference_Value_ID, false, false);
 		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 		return new GridField(vo);
@@ -262,8 +261,8 @@ public class WDLoadASIPanel extends Panel
 				int dt = editor.getGridField().getDisplayType();
 				if (dt == DisplayType.Date || dt == DisplayType.DateTime || dt == DisplayType.Time)
 				{
-					if (instance.getValueDate() != null)
-						editor.setValue(instance.getValueDate());
+					if (instance.getValueTimeStamp() != null)
+						editor.setValue(instance.getValueTimeStamp());
 				}
 				else if (dt == DisplayType.Image
 							|| dt == DisplayType.Assignment
@@ -423,7 +422,7 @@ public class WDLoadASIPanel extends Panel
 			}
 
 			if (displayType == DisplayType.Integer)
-				attributes.setMAttributeInstance(asiID, value == null ? 0 : ((Number) value).intValue());
+				attributes.setMAttributeInstance(asiID, value == null ? 0 : ((Number) value).intValue(), null);
 			else
 				attributes.setMAttributeInstance(asiID, (BigDecimal) value);
 		}
@@ -451,7 +450,7 @@ public class WDLoadASIPanel extends Panel
 				valueLabel = editor.getDisplay();
 			}
 
-			attributes.setMAttributeInstance(asiID, new KeyNamePair(value == null ? 0 : value.intValue(), valueLabel));
+			attributes.setMAttributeInstance(asiID, value == null ? 0 : value.intValue(), valueLabel);
 		}
 		else
 		{
