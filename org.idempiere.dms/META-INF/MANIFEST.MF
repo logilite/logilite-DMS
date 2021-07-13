@@ -29,7 +29,7 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="5.1.0",
 Bundle-Vendor: Logilite
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
- lib/pdf-renderer-1.0.5.jar,
+ lib/PDFrenderer.jar,
  lib/imgscalr-lib-4.2.jar,
  lib/poi-ooxml-4.1.0.jar,
  lib/poi-ooxml-schemas-4.1.0.jar,
