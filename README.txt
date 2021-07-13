@@ -14,3 +14,6 @@
 		- Execute 		Script/05_202101061400_DMS_Create_Version_Records_From_Existing_Data.sql 
 	3) Test all the thing in DMS is working properly then go for execute below script
 		- Execute 		Script/06_202101061400_DMS_Delete_Content_Association_And_Drop_Columns.sql [ May need to restart the server ]
+
+-- Removed pdf-renderer-1.0.5.jar and added new PDFrenderer.jar to support thumbnails generate of the latest PDF version. [ PDF thumbnail creation failure: com.sun.pdfview.PDFParseException: Expected 'xref' at start of table ]
+Reference link - https://github.com/katjas/PDFrenderer
