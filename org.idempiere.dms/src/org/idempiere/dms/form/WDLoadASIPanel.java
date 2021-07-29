@@ -75,7 +75,10 @@ public class WDLoadASIPanel extends Panel
 	private MDMSContentType		contentType;
 
 	/** List of Editors */
-	public ArrayList<WEditor>	m_editors			= new ArrayList<WEditor>();
+	public ArrayList<WEditor> 	m_editors         = new ArrayList<WEditor>();
+
+	private int              	windowNo          = 0;
+	private int               	tabNo             = 0;
 
 	/**
 	 * Constructor
@@ -83,12 +86,15 @@ public class WDLoadASIPanel extends Panel
 	 * @param DMS_ContentType_ID
 	 * @param M_AttributeSetInstance_ID
 	 */
-	public WDLoadASIPanel(int DMS_ContentType_ID, int M_AttributeSetInstance_ID)
+	public WDLoadASIPanel(int DMS_ContentType_ID, int M_AttributeSetInstance_ID, int windowNo, int tabNo)
 	{
 		m_WindowNo = SessionManager.getAppDesktop().registerWindow(this);
 		asiID = M_AttributeSetInstance_ID;
 
 		contentType = new MDMSContentType(Env.getCtx(), DMS_ContentType_ID, null);
+
+		this.windowNo = windowNo;
+		this.tabNo = tabNo;
 
 		initPanel();
 	}
@@ -190,6 +196,13 @@ public class WDLoadASIPanel extends Panel
 			Component fieldEditor = editor.getComponent();
 			row.appendCellChild(fieldEditor, 2);
 
+			// Set attribute default value from the context
+			String valueAttribute = Env.getContext(Env.getCtx(), windowNo, tabNo, attribute.getName(), true);
+			if (!Util.isEmpty(valueAttribute, true))
+			{
+				editor.setValue(valueAttribute);
+			}
+
 			m_editors.add(editor);
 		}
 	} // addAttributeLine
@@ -227,12 +240,13 @@ public class WDLoadASIPanel extends Panel
 
 	private GridField getGridField(MAttribute attribute, String columnName, int Reference_ID, int Reference_Value_ID)
 	{
-		GridFieldVO vo = GridFieldVO.createParameter(	Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
-														Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID,
-														Reference_Value_ID, false, false, null);
-
+		String attribName = Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name));
+		GridFieldVO vo = GridFieldVO
+						.createParameter(Env.getCtx(), m_WindowNo, AEnv
+										.getADWindowID(m_WindowNo), 0, 0, columnName, attribName, Reference_ID, Reference_Value_ID, false, false, null);
 		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
+
 		return new GridField(vo);
 	} // getGridField
 

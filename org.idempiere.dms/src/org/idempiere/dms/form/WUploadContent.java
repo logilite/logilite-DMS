@@ -430,7 +430,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			if (editorContentType.getValue() != null)
 			{
-				asiPanel = new WDLoadASIPanel((int) editorContentType.getValue(), 0);
+				asiPanel = new WDLoadASIPanel((int) editorContentType.getValue(), 0, windowNo, tabNo);
 				tabPanelAttribute.appendChild(asiPanel);
 				tabBoxAttribute.setVisible(true);
 			}

@@ -387,7 +387,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 
 		tabpanelAttribute.appendChild(commGrid);
 
-		ASIPanel = new WDLoadASIPanel(contentTypeID, content.getM_AttributeSetInstance_ID());
+		ASIPanel = new WDLoadASIPanel(contentTypeID, content.getM_AttributeSetInstance_ID(), windowNo, tabNo);
 		ASIPanel.setEditableAttribute(isEdit);
 		ASIPanel.appendChild(btnEdit);
 		ASIPanel.appendChild(btnSave);
