@@ -1883,7 +1883,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (lstboxContentType.getValue() != null)
 			{
 				ASI_Value.clear();
-				asiPanel = new WDLoadASIPanel((int) lstboxContentType.getValue(), 0);
+				asiPanel = new WDLoadASIPanel((int) lstboxContentType.getValue(), 0, windowNo, tabNo);
 				m_editors = asiPanel.m_editors;
 
 				for (WEditor editor : m_editors)
