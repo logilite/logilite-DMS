@@ -53,26 +53,29 @@ public class WDLoadASIPanel extends Panel
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID	= -9141937878893779910L;
+	private static final long serialVersionUID  = -9141937878893779910L;
 
-	private static CLogger		log					= CLogger.getCLogger(WDLoadASIPanel.class);
+	private static CLogger    log               = CLogger.getCLogger(WDLoadASIPanel.class);
 
-	private int					asiID				= 0;
-	private int					m_WindowNo			= 0;
-	private int					M_AttributeSet_ID	= 0;
+	private int               asiID             = 0;
+	private int               m_WindowNo        = 0;
+	private int               M_AttributeSet_ID = 0;
 
-	private Grid				attributeGrid		= new Grid();
-	private Rows				rows				= new Rows();
-	private Label				lblAttribute		= new Label();
+	private Grid              attributeGrid     = new Grid();
+	private Rows              rows              = new Rows();
+	private Label             lblAttribute      = new Label();
 
-	private MAttributeSet		mAttributeSet		= null;
+	private MAttributeSet     mAttributeSet     = null;
 
-	private boolean				m_changed			= false;
+	private boolean           m_changed         = false;
 
-	private MDMSContentType		contentType;
+	private MDMSContentType   contentType;
 
 	/** List of Editors */
-	public ArrayList<WEditor>	m_editors			= new ArrayList<WEditor>();
+	public ArrayList<WEditor> m_editors         = new ArrayList<WEditor>();
+
+	private int               windowNo          = 0;
+	private int               tabNo             = 0;
 
 	/**
 	 * Constructor
@@ -80,12 +83,15 @@ public class WDLoadASIPanel extends Panel
 	 * @param DMS_ContentType_ID
 	 * @param M_AttributeSetInstance_ID
 	 */
-	public WDLoadASIPanel(int DMS_ContentType_ID, int M_AttributeSetInstance_ID)
+	public WDLoadASIPanel(int DMS_ContentType_ID, int M_AttributeSetInstance_ID, int windowNo, int tabNo)
 	{
 		m_WindowNo = SessionManager.getAppDesktop().registerWindow(this);
 		asiID = M_AttributeSetInstance_ID;
 
 		contentType = new MDMSContentType(Env.getCtx(), DMS_ContentType_ID, null);
+
+		this.windowNo = windowNo;
+		this.tabNo = tabNo;
 
 		initPanel();
 	}
@@ -183,6 +189,13 @@ public class WDLoadASIPanel extends Panel
 			Component fieldEditor = editor.getComponent();
 			row.appendCellChild(fieldEditor, 2);
 
+			// Set attribute default value from the context
+			String valueAttribute = Env.getContext(Env.getCtx(), windowNo, tabNo, attribute.getName(), true);
+			if (!Util.isEmpty(valueAttribute, true))
+			{
+				editor.setValue(valueAttribute);
+			}
+
 			m_editors.add(editor);
 		}
 	} // addAttributeLine
@@ -215,9 +228,10 @@ public class WDLoadASIPanel extends Panel
 
 	private GridField getGridField(MAttribute attribute, String columnName, int Reference_ID, int Reference_Value_ID)
 	{
-		GridFieldVO vo = GridFieldVO.createParameter(	Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0, columnName,
-														Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name)), Reference_ID,
-														Reference_Value_ID, false, false);
+		String attribName = Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name));
+		GridFieldVO vo = GridFieldVO
+						.createParameter(Env.getCtx(), m_WindowNo, AEnv
+										.getADWindowID(m_WindowNo), 0, 0, columnName, attribName, Reference_ID, Reference_Value_ID, false, false);
 		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 
@@ -250,8 +264,14 @@ public class WDLoadASIPanel extends Panel
 					if (instance.getValueTimeStamp() != null)
 						editor.setValue(instance.getValueTimeStamp());
 				}
-				else if (dt == DisplayType.Image	|| dt == DisplayType.Assignment || dt == DisplayType.Locator || dt == DisplayType.Payment
-							|| dt == DisplayType.TableDir || dt == DisplayType.Table || dt == DisplayType.Search || dt == DisplayType.Account)
+				else if (dt == DisplayType.Image
+							|| dt == DisplayType.Assignment
+								|| dt == DisplayType.Locator
+								|| dt == DisplayType.Payment
+								|| dt == DisplayType.TableDir
+								|| dt == DisplayType.Table
+								|| dt == DisplayType.Search
+								|| dt == DisplayType.Account)
 				{
 					if (instance.getValueInt() > 0)
 						editor.setValue(instance.getValueInt());
@@ -292,9 +312,9 @@ public class WDLoadASIPanel extends Panel
 			{
 				WEditor editor = (WEditor) m_editors.get(i);
 				Object item = editor.getValue();
-				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(	Env.getCtx(),
-																															Integer.valueOf(String.valueOf(item)),
-																															null) : null;
+				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(Env.getCtx(),
+								Integer.valueOf(String.valueOf(item)),
+								null) : null;
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
@@ -391,9 +411,14 @@ public class WDLoadASIPanel extends Panel
 			else
 				attributes.setMAttributeInstance(asiID, (BigDecimal) value);
 		}
-		else if (displayType == DisplayType.Image	|| displayType == DisplayType.Assignment || displayType == DisplayType.Locator
-					|| displayType == DisplayType.Payment || displayType == DisplayType.TableDir || displayType == DisplayType.Table
-					|| displayType == DisplayType.Search || displayType == DisplayType.Account)
+		else if (displayType == DisplayType.Image
+					|| displayType == DisplayType.Assignment
+						|| displayType == DisplayType.Locator
+						|| displayType == DisplayType.Payment
+						|| displayType == DisplayType.TableDir
+						|| displayType == DisplayType.Table
+						|| displayType == DisplayType.Search
+						|| displayType == DisplayType.Account)
 		{
 			Integer value = (Integer) editor.getValue();
 			if (attributes.isMandatory() && value == null)
@@ -403,8 +428,10 @@ public class WDLoadASIPanel extends Panel
 			}
 
 			String valueLabel = null;
-			if (displayType == DisplayType.TableDir || displayType == DisplayType.Table || displayType == DisplayType.Search
-				|| displayType == DisplayType.Account)
+			if (displayType == DisplayType.TableDir
+				|| displayType == DisplayType.Table
+					|| displayType == DisplayType.Search
+					|| displayType == DisplayType.Account)
 			{
 				valueLabel = editor.getDisplay();
 			}
