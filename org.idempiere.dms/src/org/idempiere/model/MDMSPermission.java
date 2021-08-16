@@ -4,9 +4,11 @@ import java.sql.ResultSet;
 import java.util.List;
 import java.util.Properties;
 
+import org.compiere.model.MTable;
 import org.compiere.model.Query;
 import org.compiere.util.CCache;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 import org.idempiere.dms.constant.DMSConstant;
 
 public class MDMSPermission extends X_DMS_Permission
@@ -47,19 +49,46 @@ public class MDMSPermission extends X_DMS_Permission
 	 * @param  userID
 	 * @return         DMS_Permission_ID
 	 */
-	public static int getPermissionForGivenParams(I_DMS_Content content, int roleID, int userID)
+	public static I_DMS_Permission getPermissionForGivenParams(I_DMS_Content content, int roleID, int userID)
 	{
+		return getPermissionForGivenParams(DMSConstant.SQL_GET_PERMISSION_ID_FROM_CONTENT,content, roleID, userID);
+	}
+	
+	/**
+	 * Get Permission record for the content with role/user
+	 * 
+	 * @param sqlPermission
+	 * @param content
+	 * @param roleID
+	 * @param userID
+	 * @return DMS_Permission_ID
+	 */
+	public static I_DMS_Permission getPermissionForGivenParams(String sqlPermission, I_DMS_Content content, int roleID, int userID)
+	{
+		MDMSPermission permission = null;
 		String key = content.getDMS_Content_ID() + "_" + roleID + "_" + userID;
 		if (cache_permission.containsKey(key))
-			return cache_permission.get(key);
+		{
+			permission = (MDMSPermission) MTable.get(Env.getCtx(), MDMSPermission.Table_ID).getPO(cache_permission.get(key), null);
+			if (permission != null)
+				return permission;
 
-		int permissionID = DB.getSQLValue(null, DMSConstant.SQL_GET_PERMISSION_ID_FROM_CONTENT, content.getDMS_Content_ID(), roleID, userID);
+			cache_permission.remove(key);
+		}
+
+		int permissionID = DB.getSQLValue(null, sqlPermission, content.getDMS_Content_ID(), roleID, userID);
 
 		permissionID = permissionID < 0 ? 0 : permissionID;
 		if (permissionID > 0)
+		{
 			cache_permission.put(key, permissionID);
-		return permissionID;
-	} // getPermissionForGivenParams
+			permission = (MDMSPermission) MTable.get(Env.getCtx(), MDMSPermission.Table_ID).getPO(permissionID, null);
+			if (permission != null)
+				return permission;
+		}
+
+		return permission;
+	}
 
 	@Override
 	protected boolean afterSave(boolean newRecord, boolean success)

@@ -346,10 +346,10 @@ public final class DMSConstant
 																						+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) ";
 
 	// Count the permission entries per content wise
-	public static final String				SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ? ";
+	public static final String				SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ?  AND IsActive = 'Y'";
 
 	// User permission wise access
-	public static final String				SQL_GET_PERMISSION_ID_FROM_CONTENT		= "SELECT DMS_Permission_ID FROM DMS_Permission 	WHERE DMS_Content_ID = ? 							"
+	public static final String				SQL_GET_PERMISSION_ID_FROM_CONTENT		= "SELECT DMS_Permission_ID FROM DMS_Permission 	WHERE DMS_Content_ID = ? AND IsActive = 'Y'			"
 																						+ "	AND ( 	COALESCE(AD_Role_ID, 0) = ? OR COALESCE(AD_User_ID, 0) = ? OR IsAllPermission = 'Y' )	"
 																						+ "	ORDER BY IsAllPermission DESC, IsNavigation, COALESCE(AD_Role_ID, 0), COALESCE(AD_User_ID, 0)	";
 	// Parent content ID from child content and non mounting
