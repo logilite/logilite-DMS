@@ -53,8 +53,10 @@ Export-Package: com.lowagie.text,
  com.lowagie.text.pdf,
  com.lowagie.text.pdf.codec,
  org.idempiere.dms,
+ org.idempiere.dms.component,
  org.idempiere.dms.constant,
  org.idempiere.dms.factories,
+ org.idempiere.dms.form,
  org.idempiere.dms.util,
  org.idempiere.model
 Automatic-Module-Name: org.idempiere.dms

@@ -19,6 +19,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -39,6 +40,7 @@ import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
+import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.model.FileStorageUtil;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
@@ -544,13 +546,15 @@ public class DMSSearchUtils
 	 * @param  fileName          - FileName [ optional ]
 	 * @return                   Array of Contents
 	 */
-	public static I_DMS_Content[] selectContentActiveOnly(I_DMS_Content parentContent, int associationTypeID, String fileName)
+	public static I_DMS_Content[] selectContentActiveOnly(I_DMS_Content parentContent, int associationTypeID, int contentTypeID, String fileName)
 	{
 		int contentID = 0;
 		if (parentContent != null)
 			contentID = parentContent.getDMS_Content_ID();
 
 		StringBuffer sql = new StringBuffer(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE);
+		if (contentTypeID > 0)
+			sql.append(" AND c.DMS_ContentType_ID = ").append(contentTypeID);
 		if (associationTypeID > 0)
 			sql.append(" AND c.DMS_AssociationType_ID = ").append(associationTypeID);
 
@@ -600,5 +604,51 @@ public class DMSSearchUtils
 
 		return (I_DMS_Content[]) arrContents.toArray(new I_DMS_Content[0]);
 	} // selectContentActiveOnly
+
+	/**
+	 * Get Filtered contents based on parameters
+	 * 
+	 * @param  contents                       - Array of Content
+	 * @param  isApplyContentTypeAccessFilter - Apply ContentTypeAccess filter
+	 * @param  isApplyPermissionFilter        - Apply Permission Filter
+	 * @return                                - Return filtered content array
+	 */
+	public static I_DMS_Content[] getFilteredContents(I_DMS_Content[] contents, boolean isApplyContentTypeAccessFilter, boolean isApplyPermissionFilter)
+	{
+		ArrayList<I_DMS_Content> contentTypeAccessFiltered = new ArrayList<I_DMS_Content>();
+
+		// Content Type Access
+		if (isApplyContentTypeAccessFilter)
+		{
+			// Content Type wise access restriction
+			IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
+			List<Integer> accessibleContentList = contentTypeAccess.getAccessedContentsRoleWise(Env.getAD_Role_ID(Env.getCtx()));
+
+			for (I_DMS_Content content : contents)
+			{
+				if (accessibleContentList.contains(content.getDMS_Content_ID()) || content.getDMS_ContentType_ID() == 0)
+				{
+					contentTypeAccessFiltered.add(content);
+				}
+			}
+		}
+		else
+		{
+			contentTypeAccessFiltered.addAll(Arrays.asList(contents));
+		}
+
+		// Permission Access
+		ArrayList<I_DMS_Content> permissionAccessFiltered = new ArrayList<I_DMS_Content>(contentTypeAccessFiltered);
+		if (isApplyPermissionFilter)
+		{
+			// Permission wise access restriction
+			if (DMSPermissionUtils.isPermissionAllowed())
+			{
+				permissionAccessFiltered = DMSFactoryUtils.getPermissionFactory().getFilteredContentList(new HashSet<I_DMS_Content>(contentTypeAccessFiltered));
+			}
+		}
+
+		return (I_DMS_Content[]) permissionAccessFiltered.toArray(new I_DMS_Content[permissionAccessFiltered.size()]);
+	} // getFilteredContents
 
 }

@@ -11,7 +11,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package org.idempiere.webui.apps.form;
+package org.idempiere.dms.form;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -430,7 +430,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 			if (editorContentType.getValue() != null)
 			{
-				asiPanel = new WDLoadASIPanel((int) editorContentType.getValue(), 0);
+				asiPanel = new WDLoadASIPanel((int) editorContentType.getValue(), 0, windowNo, tabNo);
 				tabPanelAttribute.appendChild(asiPanel);
 				tabBoxAttribute.setVisible(true);
 			}

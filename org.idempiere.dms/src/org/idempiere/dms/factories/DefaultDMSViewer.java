@@ -1,8 +1,8 @@
 package org.idempiere.dms.factories;
 
-import org.idempiere.componenet.DefaultComponentIconViewerLarge;
-import org.idempiere.componenet.DefaultComponentIconViewerList;
-import org.idempiere.componenet.DefaultComponentIconViewerVersion;
+import org.idempiere.dms.component.DefaultComponentIconViewerLarge;
+import org.idempiere.dms.component.DefaultComponentIconViewerList;
+import org.idempiere.dms.component.DefaultComponentIconViewerVersion;
 import org.idempiere.dms.constant.DMSConstant;
 
 /**

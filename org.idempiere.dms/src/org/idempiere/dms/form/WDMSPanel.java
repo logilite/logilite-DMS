@@ -11,7 +11,7 @@
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
 
-package org.idempiere.webui.apps.form;
+package org.idempiere.dms.form;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -82,9 +82,9 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
-import org.idempiere.componenet.AbstractComponentIconViewer;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
+import org.idempiere.dms.component.AbstractComponentIconViewer;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentTypeAccess;
@@ -282,7 +282,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public void allowUserToCreateDir()
 	{
-		boolean isAllowCreateDirectory = MClientInfo.get(Env.getCtx(), dms.AD_Client_ID).get_ValueAsBoolean("IsAllowCreateDirectory");
+		boolean isAllowCreateDirectory = MClientInfo.get(Env.getCtx(), dms.AD_Client_ID).get_ValueAsBoolean(DMSConstant.COLUMNNAME_IS_ALLOW_CREATE_DIRECTORY);
 
 		if (isTabViewer() && !isAllowCreateDirectory)
 		{
@@ -1883,7 +1883,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (lstboxContentType.getValue() != null)
 			{
 				ASI_Value.clear();
-				asiPanel = new WDLoadASIPanel((int) lstboxContentType.getValue(), 0);
+				asiPanel = new WDLoadASIPanel((int) lstboxContentType.getValue(), 0, windowNo, tabNo);
 				m_editors = asiPanel.m_editors;
 
 				for (WEditor editor : m_editors)
