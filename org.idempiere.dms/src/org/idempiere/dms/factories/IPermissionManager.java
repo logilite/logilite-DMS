@@ -92,10 +92,9 @@ public interface IPermissionManager
 	/**
 	 * Validate permission
 	 * 
-	 * @param mapColumnValue
-	 *            - Map of ColumnName and Value to create permission entry
+	 * @param mapColumnValue - Map of ColumnName and Value to create permission entry
 	 */
-	public void validatepermissionDataFromMap(HashMap <String, Object> mapColumnValue);
+	public void validatePermissionDataFromMap(HashMap<String, Object> mapColumnValue);
 
 	/*
 	 * Use for checking content permission related access

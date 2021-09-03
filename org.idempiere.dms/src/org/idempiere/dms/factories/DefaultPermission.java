@@ -29,11 +29,11 @@ import org.idempiere.model.MDMSPermission;
  */
 public class DefaultPermission implements IPermissionManager
 {
-	protected boolean	isRead			= true;
-	protected boolean	isWrite			= true;
-	protected boolean	isDelete		= true;
-	protected boolean	isNavigation	= true;
-	protected boolean	isAllPermission	= true;
+	protected boolean isRead          = true;
+	protected boolean isWrite         = true;
+	protected boolean isDelete        = true;
+	protected boolean isNavigation    = true;
+	protected boolean isAllPermission = true;
 
 	@Override
 	public boolean createPermission(MDMSContent content, HashMap<String, Object> map, boolean isCreateForChildContent)
@@ -163,7 +163,7 @@ public class DefaultPermission implements IPermissionManager
 		{
 			MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(DMS_Content_ID, null);
 			MDMSPermission permission = (MDMSPermission) MDMSPermission.getPermissionForGivenParams(content, Env.getAD_Role_ID(content.getCtx()), Env.getAD_User_ID(content.getCtx()));
-			
+
 			if (permission == null)
 			{
 				permission = (MDMSPermission) MTable.get(content.getCtx(), MDMSPermission.Table_ID).getPO(0, null);
@@ -255,7 +255,7 @@ public class DefaultPermission implements IPermissionManager
 					if (parentNavPermissionID <= 0)
 					{
 						HashMap<String, Object> map = new HashMap<String, Object>();
-						
+
 						fillMapFromDMSPermission(permission, map);
 
 						//
@@ -289,7 +289,6 @@ public class DefaultPermission implements IPermissionManager
 																		.getPO(permissionID, ((PO) content).get_TrxName());
 				PO.copyValues(parentPermission, newPermission);
 
-				newPermission.setIsNavigation(parentPermission.isNavigation() && MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()));
 				newPermission.setDMS_Owner_ID(Env.getAD_User_ID(((PO) content).getCtx()));
 				newPermission.setDMS_Content_ID(content.getDMS_Content_ID());
 				newPermission.setIsAllPermission(false);
@@ -339,9 +338,9 @@ public class DefaultPermission implements IPermissionManager
 		}
 		return list;
 	} // getFilteredContentList
-	
+
 	@Override
-	public void validatepermissionDataFromMap(HashMap <String, Object> mapColumnValue)
+	public void validatePermissionDataFromMap(HashMap<String, Object> mapColumnValue)
 	{
 		boolean isDMSAdmin = MRole.getDefault().get_ValueAsBoolean(DMSConstant.COLUMNNAME_IS_DMS_ADMIN);
 		if (((Integer) mapColumnValue.get(MDMSPermission.COLUMNNAME_AD_Role_ID) == 0
@@ -353,23 +352,23 @@ public class DefaultPermission implements IPermissionManager
 				throw new AdempiereException("Please select Role / User");
 		}
 	}
-	
+
 	/**
-	 * @param permission
+	 * @param  permission
 	 * @return
 	 */
 	private boolean isOnlyNavigationPermission(MDMSPermission permission)
 	{
 		return permission.isNavigation() && !permission.isRead() && !permission.isWrite() && !permission.isDelete();
 	}// isOnlyNavigationPermission
-	
+
 	/**
 	 * fill the map value from DMS Permission
 	 * 
 	 * @param permission
 	 * @param map
 	 */
-	protected void fillMapFromDMSPermission(I_DMS_Permission permission, HashMap <String, Object> map)
+	protected void fillMapFromDMSPermission(I_DMS_Permission permission, HashMap<String, Object> map)
 	{
 		map.put(MDMSPermission.COLUMNNAME_AD_Org_ID, permission.getAD_Org_ID());
 		map.put(MDMSPermission.COLUMNNAME_DMS_Owner_ID, permission.getDMS_Owner_ID());
@@ -384,12 +383,12 @@ public class DefaultPermission implements IPermissionManager
 	}// fillMapFromDMSPermission
 
 	/**
-	 * @param content
-	 * @param map
-	 * @param whereclause
+	 * @param  content
+	 * @param  map
+	 * @param  whereclause
 	 * @return
 	 */
-	protected int getPermissionIDByUserRoleFromPermissionMap(I_DMS_Content content, HashMap <String, Object> map, String whereclause)
+	protected int getPermissionIDByUserRoleFromPermissionMap(I_DMS_Content content, HashMap<String, Object> map, String whereclause)
 	{
 		int roleID = (int) map.get(MDMSPermission.COLUMNNAME_AD_Role_ID);
 		int userID = (int) map.get(MDMSPermission.COLUMNNAME_AD_User_ID);
@@ -398,16 +397,15 @@ public class DefaultPermission implements IPermissionManager
 	}// getPermissionIDByUserRoleFromPermissionMap
 
 	/**
-	 * @param permission
-	 * @param contentID
-	 * @param whereclause
+	 * @param  permission
+	 * @param  contentID
+	 * @param  whereclause
 	 * @return
 	 */
 	protected int getPermissionIDByUserRoleFromDMSPermission(I_DMS_Permission permission, Integer contentID, String whereclause)
 	{
 		return DMSPermissionUtils.getPermissionIDByUserRole(contentID, permission.getAD_Role_ID(), permission.getAD_User_ID(), whereclause);
 	}// getPermissionIDByUserRoleFromDMSPermission
-
 
 	@Override
 	public void initContentPermission(I_DMS_Content content)

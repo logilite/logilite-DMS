@@ -16,10 +16,10 @@ public class MDMSPermission extends X_DMS_Permission
 	/**
 	 * 
 	 */
-	private static final long				serialVersionUID	= 8104520178505137205L;
+	private static final long              serialVersionUID = 8104520178505137205L;
 
 	/** Cache for permission based on ContentID, RoleID, UserID */
-	private static CCache<String, Integer>	cache_permission	= new CCache<String, Integer>("cache_permission", 100, 30);
+	private static CCache<String, Integer> cache_permission = new CCache<String, Integer>("cache_permission", 100, 30);
 
 	public MDMSPermission(Properties ctx, int DMS_Permission_ID, String trxName)
 	{
@@ -51,17 +51,17 @@ public class MDMSPermission extends X_DMS_Permission
 	 */
 	public static I_DMS_Permission getPermissionForGivenParams(I_DMS_Content content, int roleID, int userID)
 	{
-		return getPermissionForGivenParams(DMSConstant.SQL_GET_PERMISSION_ID_FROM_CONTENT,content, roleID, userID);
-	}
-	
+		return getPermissionForGivenParams(DMSConstant.SQL_GET_PERMISSION_ID_FROM_CONTENT, content, roleID, userID);
+	} // getPermissionForGivenParams
+
 	/**
 	 * Get Permission record for the content with role/user
 	 * 
-	 * @param sqlPermission
-	 * @param content
-	 * @param roleID
-	 * @param userID
-	 * @return DMS_Permission_ID
+	 * @param  sqlPermission
+	 * @param  content
+	 * @param  roleID
+	 * @param  userID
+	 * @return               DMS_Permission_ID
 	 */
 	public static I_DMS_Permission getPermissionForGivenParams(String sqlPermission, I_DMS_Content content, int roleID, int userID)
 	{
@@ -73,6 +73,7 @@ public class MDMSPermission extends X_DMS_Permission
 			if (permission != null)
 				return permission;
 
+			// if permission is null then remove the key from cache
 			cache_permission.remove(key);
 		}
 
@@ -88,7 +89,7 @@ public class MDMSPermission extends X_DMS_Permission
 		}
 
 		return permission;
-	}
+	} // getPermissionForGivenParams
 
 	@Override
 	protected boolean afterSave(boolean newRecord, boolean success)
