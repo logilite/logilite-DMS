@@ -33,7 +33,7 @@ import org.idempiere.model.MDMSVersion;
 public class DefaultMountingStrategy implements IMountingStrategy
 {
 
-	private static CCache<String, MDMSContent> mountingParentCache = new CCache<String, MDMSContent>(null, "MountingParentCache", 50, false);
+	protected static CCache<String, MDMSContent> mountingParentCache = new CCache<String, MDMSContent>(null, "MountingParentCache", 50, false);
 
 	@Override
 	public String getMountingPath(PO po)
