@@ -1,9 +1,15 @@
 package org.idempiere.dms.component;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.adempiere.webui.LayoutUtils;
+import org.adempiere.webui.component.Checkbox;
+import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -17,6 +23,7 @@ import org.idempiere.dms.util.DMSPermissionUtils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
+import org.idempiere.model.ItemDetail;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
@@ -26,6 +33,7 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.A;
 import org.zkoss.zul.Cell;
+import org.zkoss.zul.FieldComparator;
 import org.zkoss.zul.Image;
 
 /**
@@ -52,6 +60,16 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	protected EventListener<? extends Event>	listener;
 
 	protected boolean							isContentActive	= true;
+	
+	protected List<ItemDetail>					items = new ArrayList<ItemDetail>();
+	
+	protected int 								compWidth;
+	protected int								compHeight;
+	
+	protected boolean 							sorted;
+	protected String							sorted_column;
+	protected boolean							sorted_asc;
+	
 
 	// Abstract method definition
 	public abstract void createHeaderPart();
@@ -68,6 +86,8 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		this.grid = gridLayout;
 		this.listener = listener;
 		this.eventsList = eventsList;
+		this.compWidth = compWidth;
+		this.compHeight = compHeight;
 		// Clearing Grid layout children's
 		if (grid.getChildren() != null && grid.getChildren().size() > 0)
 			Components.removeAllChildren(grid);
@@ -91,6 +111,8 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 			{
 				I_DMS_Version version = entry.getKey();
 				I_DMS_Association association = entry.getValue();
+				ItemDetail item = new ItemDetail(version, association);
+				items.add(item);
 				isContentActive = (version != null && association != null && version.getDMS_Content().isActive() && association.isActive());
 				if (association != null && MDMSAssociationType.isLink(association))
 					isContentActive = association.isActive();
@@ -133,6 +155,29 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		else if (event.getName().equals(Events.ON_CHECK) && event.getTarget() instanceof org.zkoss.zul.Checkbox)
 		{
 			Events.sendEvent(new Event(DMSConstant.EVENT_ON_SELECTION_CHANGE, (Component) listener, event.getTarget()));
+		}
+		else if (event.getName().equals(Events.ON_CLICK) && event.getTarget() instanceof Column)
+		{
+			Column column = (Column) event.getTarget();
+			String sorting_column = String.valueOf(column.getAttribute("name"));
+			boolean sortType = true;
+			if(sorted)
+			{
+				if(sorted_column.equalsIgnoreCase(sorting_column))
+					sortType = !sorted_asc;
+			}
+			
+			sorted_column = sorting_column;
+			sorted_asc = sortType;
+			sorted = true;
+			sort(sorting_column, sortType);
+			
+			//remove download list
+			Checkbox allCheckBox = new Checkbox();
+			allCheckBox.setChecked(false);
+			allCheckBox.setId(DMSConstant.All_SELECT);
+			Events.sendEvent(new Event(DMSConstant.EVENT_ON_SELECTION_CHANGE, (Component) listener, allCheckBox));
+			
 		}
 		
 	} // onEvent
@@ -194,5 +239,47 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		sb.append("\nVersion ID:" + version.getDMS_Version_ID());
 		sb.append("\nContent ID:" + version.getDMS_Content_ID());
 		return sb.toString();
+	}
+	
+	public void sort(String column, boolean ascending)
+	{
+		Comparator cmpr = new FieldComparator(column, ascending);
+		Collections.sort(items, cmpr);
+		renderItems();
+	}
+
+	private void renderItems()
+	{
+		if (grid.getChildren() != null && grid.getChildren().size() > 0)
+			Components.removeAllChildren(grid);
+
+		Rows rows = grid.newRows();
+		rows.setSclass("SB-ROWS");
+
+		// Grid Header Part creation
+		createHeaderPart();
+
+		//
+		if (items == null || items.isEmpty())
+		{
+			setNoComponentExistsMsg(rows);
+		}
+		else
+		{
+			permissionManager = dms.getPermissionManager();
+
+			for (ItemDetail entry : items)
+			{
+				I_DMS_Version version = entry.getVersion();
+				I_DMS_Association association = entry.getAssociation();
+				isContentActive = (version != null && association != null && version.getDMS_Content().isActive() && association.isActive());
+				if (association != null && MDMSAssociationType.isLink(association))
+					isContentActive = association.isActive();
+
+				//
+				createComponent(rows, version, association, compWidth, compHeight);
+			}
+		}
+
 	}
 }

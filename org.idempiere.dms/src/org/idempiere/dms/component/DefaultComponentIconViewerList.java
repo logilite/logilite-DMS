@@ -49,13 +49,13 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		Columns columns = new Columns();
 		columns.setSizable(true);
 		columns.appendChild(createColumnAllSelectCheckBox("3%"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, "35%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, "12%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, "10%", "Left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, "15%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "10%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, "10%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_LINK, "5%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, "name", "35%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, "contentType","12%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, "size","10%", "Left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, "updated","15%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "fileType","10%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, "modifiedBy","10%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_LINK, "link","5%", "center"));
 
 		grid.appendChild(columns);
 	} // createHeaderPart
@@ -142,12 +142,22 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 			selectedRow.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_SELECTED);
 	}
 
-	private Column createColumn(String labelName, String size, String align)
+	private Column createColumn(String labelName, String attributeName, String size, String align)
 	{
 		Column column = new Column();
+		column.setAttribute("name", attributeName);
+		if(sorted && attributeName.equalsIgnoreCase(sorted_column))
+		{
+			if(sorted_asc)
+				labelName = labelName + "  >";
+			else
+				labelName = labelName + "  <";
+		}
 		column.setLabel(labelName);
 		column.setWidth(size);
 		column.setAlign(align);
+		if(!DMSConstant.MSG_LINK.equalsIgnoreCase(labelName))
+			column.addEventListener(Events.ON_CLICK, this);
 		return column;
 	} // createColumn
 
