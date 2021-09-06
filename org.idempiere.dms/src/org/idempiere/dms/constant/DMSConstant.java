@@ -88,6 +88,10 @@ public final class DMSConstant
 	// Event
 	public static final String				EVENT_ON_RENAME_COMPLETE				= "onRenameComplete";
 	public static final String				EVENT_ON_UPLOAD_COMPLETE				= "onUploadComplete";
+	public static final String 				EVENT_ON_SELECTION_CHANGE 				= "onSelectionChange";
+	
+	// all selection
+	public static final String				All_SELECT								= "AllSelect";
 
 	// Context Menu Item
 	public static final String				MENUITEM_CUT							= "Cut";
@@ -358,5 +362,6 @@ public final class DMSConstant
 																						+ "								 			AND COALESCE(a.DMS_AssociationType_ID, 0) IN (0, 1000001))				"
 																						+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N') 		"
 																						+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
+	
 
 }

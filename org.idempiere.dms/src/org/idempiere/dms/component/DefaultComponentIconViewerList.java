@@ -15,6 +15,7 @@ package org.idempiere.dms.component;
 
 import java.util.Date;
 
+import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Column;
 import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Label;
@@ -47,8 +48,9 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	{
 		Columns columns = new Columns();
 		columns.setSizable(true);
+		columns.appendChild(createColumnAllSelectCheckBox("3%"));
 		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, "35%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, "15%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, "12%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, "10%", "Left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, "15%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "10%", "left"));
@@ -70,6 +72,11 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 
 		row = rows.newRow();
 		row.setSclass("SB-ROW");
+		
+		Checkbox checkBox = new Checkbox();
+		checkBox.addActionListener(this);
+		checkBox.setId(content.getDMS_Content_UU());
+		checkBox.setAttribute("DMS_VERSION_REF", version);
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
@@ -92,6 +99,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		hbox.appendChild(thumbImg);
 		hbox.appendChild(lblName);
 
+		row.appendCellChild(checkBox);
 		row.appendCellChild(hbox);
 		row.appendCellChild(lblCType);
 		row.appendCellChild(lblSize);
@@ -140,8 +148,18 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		column.setLabel(labelName);
 		column.setWidth(size);
 		column.setAlign(align);
-
 		return column;
 	} // createColumn
 
+	private Column createColumnAllSelectCheckBox(String size)
+	{
+		Column column = new Column();
+		Checkbox allCheckBox = new Checkbox();
+		allCheckBox.setWidth(size);
+		allCheckBox.setChecked(false);
+		allCheckBox.setId(DMSConstant.All_SELECT);
+		allCheckBox.addActionListener(this);
+		column.appendChild(allCheckBox);
+		return column;
+	}
 }

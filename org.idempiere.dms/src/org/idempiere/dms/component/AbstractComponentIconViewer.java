@@ -68,7 +68,6 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		this.grid = gridLayout;
 		this.listener = listener;
 		this.eventsList = eventsList;
-
 		// Clearing Grid layout children's
 		if (grid.getChildren() != null && grid.getChildren().size() > 0)
 			Components.removeAllChildren(grid);
@@ -131,6 +130,11 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 			setSelection(event.getTarget());
 			prevComponent = event.getTarget();
 		}
+		else if (event.getName().equals(Events.ON_CHECK) && event.getTarget() instanceof org.zkoss.zul.Checkbox)
+		{
+			Events.sendEvent(new Event(DMSConstant.EVENT_ON_SELECTION_CHANGE, (Component) listener, event.getTarget()));
+		}
+		
 	} // onEvent
 
 	@Override

@@ -21,10 +21,12 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -37,6 +39,7 @@ import org.adempiere.webui.adwindow.BreadCrumbLink;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
@@ -151,6 +154,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Label					lblUpdatedBy			= new Label(DMSConstant.MSG_UPDATEDBY);
 	private Label					lblDocumentView			= new Label(DMSConstant.MSG_DOCUMENT_VIEW);
 	private Label					lblPositionInfo			= new Label();
+	private Label					lblCountAndSelected		= new Label();
 	private Label					lblShowBreadCrumb		= null;
 
 	private Datebox					dbCreatedTo				= new Datebox();
@@ -234,6 +238,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
 
 	private AbstractADWindowContent	winContent;
+	
+	protected Set<I_DMS_Version>	downloadSet 			= new HashSet<I_DMS_Version>();
 
 	/**
 	 * Constructor initialize
@@ -385,6 +391,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		this.appendChild(tabBox);
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
+		this.addEventListener(DMSConstant.EVENT_ON_SELECTION_CHANGE, this);
 
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
@@ -400,7 +407,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnBack.setEnabled(false);
 
 		lblPositionInfo.setHflex("1");
-		ZkCssHelper.appendStyle(lblPositionInfo, "float: right; font-weight: bold; text-align: center;");
+		ZkCssHelper.appendStyle(lblPositionInfo, "float: right; font-weight: bold; text-align: center; font-size: 12px; padding-right: 2px;");
+		
+		lblCountAndSelected.setHflex("1");
+		ZkCssHelper.appendStyle(lblCountAndSelected, "font-size: 12px; border-left: 1px solid black; padding-left: 2px;");
 
 		btnNext.setEnabled(false);
 		btnNext.setStyle("float:right;");
@@ -409,6 +419,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		Row row = rowsBtn.newRow();
 		row.appendChild(btnBack);
 		row.appendChild(lblPositionInfo);
+		row.appendCellChild(lblCountAndSelected);
 		row.appendChild(btnNext);
 
 		// Row Operation - Create Directory, Upload Content
@@ -809,7 +820,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_download))
 		{
-			DMS_ZK_Util.downloadDocument(dms, MDMSVersion.getLatestVersion(dirContent));
+			if(downloadSet != null && !downloadSet.isEmpty())
+			{
+				for(I_DMS_Version version : downloadSet)
+				{
+					DMS_ZK_Util.downloadDocument(dms, version);
+					Thread.sleep(10000);
+				}
+			}
+			else
+			{
+				DMS_ZK_Util.downloadDocument(dms, MDMSVersion.getLatestVersion(dirContent));
+			}
 		}
 		else if (event.getTarget().equals(mnu_rename))
 		{
@@ -956,6 +978,38 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderViewer();
 			tabBox.setSelectedTab(tab);
 		}
+		else if (event.getName().equals(DMSConstant.EVENT_ON_SELECTION_CHANGE))
+		{
+			
+			org.zkoss.zul.Checkbox targetCh = (org.zkoss.zul.Checkbox) event.getData();
+			if(DMSConstant.All_SELECT.equalsIgnoreCase(targetCh.getId()))
+			{
+				if(targetCh.isChecked())
+				{
+					allContentSelection(true);
+				}
+				else
+				{
+					allContentSelection(false);
+				}
+			}
+			else
+			{
+				if(targetCh.isChecked())
+				{
+					//add in download set
+					downloadSet.add((I_DMS_Version) targetCh.getAttribute("DMS_VERSION_REF"));
+					
+				}
+				else
+				{
+					//remove from download set
+					downloadSet.remove(targetCh.getAttribute("DMS_VERSION_REF"));
+				}
+			}
+			
+			updateContentSelectedCount();
+		}
 		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(BreadCrumbLink.class))
 		{
 			renderBreadCrumb(event);
@@ -1062,6 +1116,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public void renderViewer()
 	{
+		//clear download set
+		downloadSet.clear();
+		
 		if (recordID > 0 || isDocExplorerWindow)
 		{
 			HashMap<I_DMS_Version, I_DMS_Association> contentsMap = null;
@@ -1097,9 +1154,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 
 			// Component Viewer
-			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
+			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK, DMSConstant.EVENT_ON_SELECTION_CHANGE };
 			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
 			viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+			
+			lblCountAndSelected.setText(String.valueOf(mapPerFiltered.size()) + " items");
 		}
 
 		tabBox.setSelectedIndex(0);
@@ -1132,6 +1191,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		Components.removeAllChildren(panelAttribute);
 		Components.removeAllChildren(grid);
+		
+		downloadSet.clear();
 	} // clearComponents
 
 	/**
@@ -2046,5 +2107,45 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		btnCreateDir.setEnabled(isEnabled);
 		btnUploadContent.setEnabled(isEnabled);
+	}
+	
+	private void allContentSelection(boolean isChecked)
+	{
+		if (grid.getChildren() != null && grid.getChildren().size() > 0)
+		{
+			Component rows = grid.getChildren().get(0);
+			Iterator<Component> rowsIt = rows.getChildren().iterator();
+			while (rowsIt.hasNext())
+			{
+				Component row = rowsIt.next();
+				Checkbox checkBox = (Checkbox) row.getChildren().get(0).getChildren().get(0);
+				checkBox.setChecked(isChecked);
+				if (isChecked)
+					downloadSet.add((I_DMS_Version) checkBox.getAttribute("DMS_VERSION_REF"));
+				else
+					downloadSet.remove(checkBox.getAttribute("DMS_VERSION_REF"));
+			}
+		}
+	}
+	
+	private void updateContentSelectedCount()
+	{
+		String value = lblCountAndSelected.getValue();
+		if (!Util.isEmpty(value, true))
+		{
+			String updatedValue = "";
+			if (value.contains("/"))
+			{
+				String[] splited = value.split("/");
+				updatedValue = String.valueOf(downloadSet.size()) + "/" + splited[1];
+			}
+			else
+			{
+				updatedValue = String.valueOf(downloadSet.size()) + "/" + value;
+			}
+
+			lblCountAndSelected.setText(updatedValue);
+		}
+
 	}
 }
