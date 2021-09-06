@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
 import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
@@ -211,7 +210,7 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 			|| mField.getColumnName().equals(MDMSPermission.COLUMNNAME_IsActive)
 			|| (!isDMSAdmin && mField.getColumnName().equals(MDMSPermission.COLUMNNAME_IsAllPermission))
 			|| (!isDMSAdmin && mField.getColumnName().equals(MDMSPermission.COLUMNNAME_IsNavigation)
-				&& MDMSContent.CONTENTBASETYPE_Directory.equals(content.getContentBaseType())))
+				&& MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType())))
 			return;
 
 		Row row = new Row();
@@ -387,14 +386,7 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 				buildMapOfEditorValue(mapColumnValue, editor);
 			}
 
-			if (((Integer) mapColumnValue.get(MDMSPermission.COLUMNNAME_AD_Role_ID) == 0
-					&& (Integer) mapColumnValue.get(MDMSPermission.COLUMNNAME_AD_User_ID) == 0))
-			{
-				if (isDMSAdmin && !(Boolean) mapColumnValue.get(MDMSPermission.COLUMNNAME_IsAllPermission))
-					throw new AdempiereException("Please select any one option from Role / User / All Permission");
-				else if (!isDMSAdmin)
-					throw new AdempiereException("Please select Role / User");
-			}
+			dms.getPermissionManager().validatePermissionDataFromMap(mapColumnValue);
 
 			if (permissionTbl.getSelectedRowKey() == null)
 				permissionID = 0;
