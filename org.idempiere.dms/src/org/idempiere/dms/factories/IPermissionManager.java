@@ -89,6 +89,13 @@ public interface IPermissionManager
 	 */
 	public void createNavigationPermission(I_DMS_Permission permission);
 
+	/**
+	 * Validate permission
+	 * 
+	 * @param mapColumnValue - Map of ColumnName and Value to create permission entry
+	 */
+	public void validatePermissionDataFromMap(HashMap<String, Object> mapColumnValue);
+
 	/*
 	 * Use for checking content permission related access
 	 */

@@ -7,6 +7,7 @@ import org.compiere.util.Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.I_DMS_Permission;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSPermission;
@@ -51,7 +52,7 @@ public class DMSPermissionUtils
 		// user
 		if (AD_User_ID != null && AD_User_ID > 0)
 			sql += " AND AD_User_ID = " + AD_User_ID.intValue();
-		else if (AD_Role_ID == null)
+		else if (AD_User_ID == null)
 			sql += " AND AD_User_ID IS NULL ";
 
 		if (!Util.isEmpty(whereclause, true))
@@ -65,9 +66,9 @@ public class DMSPermissionUtils
 
 	public static int getPermissionByContentOrItsParent(I_DMS_Content content, int roleID, int userID)
 	{
-		int permissionID = MDMSPermission.getPermissionForGivenParams(content, roleID, userID);
+		I_DMS_Permission permission = MDMSPermission.getPermissionForGivenParams(content, roleID, userID);
 
-		if (permissionID <= 0)
+		if (permission == null)
 		{
 			MDMSAssociation parentAssociation = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), true, null);
 			while (parentAssociation != null && parentAssociation.getDMS_Content_Related_ID() > 0)
@@ -75,8 +76,8 @@ public class DMSPermissionUtils
 				MDMSContent parentContent = new MDMSContent(Env.getCtx(), parentAssociation.getDMS_Content_Related_ID(), null);
 				if (MDMSContent.CONTENTBASETYPE_Directory.equals(parentContent.getContentBaseType()))
 				{
-					permissionID = MDMSPermission.getPermissionForGivenParams(content, roleID, userID);
-					if (permissionID <= 0)
+					permission = MDMSPermission.getPermissionForGivenParams(content, roleID, userID);
+					if (permission == null)
 					{
 						parentAssociation = MDMSAssociation.getParentAssociationFromContent(parentContent.getDMS_Content_ID(), true, null);
 					}
@@ -91,7 +92,7 @@ public class DMSPermissionUtils
 				}
 			}
 		}
-		return permissionID;
+		return permission == null ? 0 : permission.getDMS_Permission_ID();
 	} // getPermissionByContentOrItsParent
 
 }
