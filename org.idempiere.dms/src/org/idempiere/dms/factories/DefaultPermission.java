@@ -289,6 +289,7 @@ public class DefaultPermission implements IPermissionManager
 																		.getPO(permissionID, ((PO) content).get_TrxName());
 				PO.copyValues(parentPermission, newPermission);
 
+				newPermission.setIsNavigation(parentPermission.isNavigation() && MDMSContent.CONTENTBASETYPE_Directory.equals(content.getContentBaseType()));
 				newPermission.setDMS_Owner_ID(Env.getAD_User_ID(((PO) content).getCtx()));
 				newPermission.setDMS_Content_ID(content.getDMS_Content_ID());
 				newPermission.setIsAllPermission(false);
