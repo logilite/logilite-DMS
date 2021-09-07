@@ -19,6 +19,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.adwindow.ADTreePanel;
+import org.adempiere.webui.adwindow.ADWindowToolbar;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.adwindow.DetailPane;
 import org.adempiere.webui.adwindow.GridView;
@@ -33,6 +34,7 @@ import org.idempiere.dms.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Button;
+import org.zkoss.zul.Toolbar;
 
 public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListener
 {
@@ -66,12 +68,12 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	}
 
 	@Override
-	public void init(AbstractADWindowContent winPanel, int windowNo, GridTab gridTab, GridWindow gridWindow)
+	public void init(AbstractADWindowContent winPanel, GridTab gridTab)
 	{
 		this.adWindowContent = winPanel;
-		this.windowNumber = windowNo;
+		this.windowNumber = winPanel.getWindowNo();
 		this.gridTab = gridTab;
-		this.gridWindow = gridWindow;
+		this.gridWindow = gridTab.getGridWindow();
 
 		if (gridTab.getParentTab() == null)
 			throw new AdempiereException("Parent Tab not found");
@@ -362,5 +364,17 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	public boolean isEnableQuickFormButton()
 	{
 		return false;
+	}
+
+	@Override
+	public void updateToolbar(ADWindowToolbar toolbar)
+	{
+		
+	}
+
+	@Override
+	public void updateDetailToolbar(Toolbar toolbar)
+	{
+		
 	}
 }
