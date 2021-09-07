@@ -209,7 +209,8 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 			|| mField.getColumnName().equals(MDMSPermission.COLUMNNAME_DMS_Content_ID)
 			|| mField.getColumnName().equals(MDMSPermission.COLUMNNAME_IsActive)
 			|| (!isDMSAdmin && mField.getColumnName().equals(MDMSPermission.COLUMNNAME_IsAllPermission))
-			|| (!isDMSAdmin && mField.getColumnName().equals(MDMSPermission.COLUMNNAME_IsNavigation)
+			|| (!isDMSAdmin && mField.getColumnName().equals(MDMSPermission.COLUMNNAME_IsNavigation))
+			|| (mField.getColumnName().equals(MDMSPermission.COLUMNNAME_IsNavigation)
 				&& MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType())))
 			return;
 
