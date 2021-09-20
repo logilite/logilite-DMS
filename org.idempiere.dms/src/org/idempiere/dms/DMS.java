@@ -76,43 +76,49 @@ public class DMS
 
 	private DMSSubstituteTableInfo	ssTableInfo					= null;
 
+	// Used for thread safety
+	private static Object			o							= new Object();
+
 	/**
 	 * Constructor for initialize provider
 	 */
 	public DMS(int AD_Client_ID)
 	{
-		this.AD_Client_ID = AD_Client_ID;
+		synchronized (o)
+		{
+			this.AD_Client_ID = AD_Client_ID;
 
-		fileStorageProvider = FileStorageUtil.get(AD_Client_ID, false);
+			fileStorageProvider = FileStorageUtil.get(AD_Client_ID, false);
 
-		if (fileStorageProvider == null)
-			throw new AdempiereException("Storage provider is not found.");
+			if (fileStorageProvider == null)
+				throw new AdempiereException("Storage provider is not found.");
 
-		thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
+			thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
 
-		if (thumbnailStorageProvider == null)
-			throw new AdempiereException("Thumbnail Storage provider is not found.");
+			if (thumbnailStorageProvider == null)
+				throw new AdempiereException("Thumbnail Storage provider is not found.");
 
-		thumbnailProvider = DMSFactoryUtils.getThumbnailProvider(AD_Client_ID);
+			thumbnailProvider = DMSFactoryUtils.getThumbnailProvider(AD_Client_ID);
 
-		if (thumbnailProvider == null)
-			throw new AdempiereException("Thumbnail provider is not found.");
+			if (thumbnailProvider == null)
+				throw new AdempiereException("Thumbnail provider is not found.");
 
-		contentManager = DMSFactoryUtils.getContentManager(AD_Client_ID);
+			contentManager = DMSFactoryUtils.getContentManager(AD_Client_ID);
 
-		if (contentManager == null)
-			throw new AdempiereException("Content manager is not found.");
+			if (contentManager == null)
+				throw new AdempiereException("Content manager is not found.");
 
-		indexSearcher = DMSSearchUtils.getIndexSearcher(AD_Client_ID);
+			indexSearcher = DMSSearchUtils.getIndexSearcher(AD_Client_ID);
 
-		if (indexSearcher == null)
-			throw new AdempiereException("Index server is not found.");
+			if (indexSearcher == null)
+				throw new AdempiereException("Index server is not found.");
 
-		// When open Document Explorer
-		ssTableInfo = new DMSSubstituteTableInfo(0);
+			// When open Document Explorer
+			ssTableInfo = new DMSSubstituteTableInfo(0);
 
-		//
-		permissionManager = DMSFactoryUtils.getPermissionFactory();
+			//
+			permissionManager = DMSFactoryUtils.getPermissionFactory();
+		}
 	} // Constructor
 
 	/**
@@ -127,8 +133,11 @@ public class DMS
 	public void initMountingStrategy(String Table_Name)
 	{
 		// Initiate the Substitute table info
-		ssTableInfo = new DMSSubstituteTableInfo(MTable.getTable_ID(Table_Name));
-		mountingStrategy = DMSFactoryUtils.getMountingStrategy(validTableName(Table_Name));
+		synchronized (o)
+		{
+			ssTableInfo = new DMSSubstituteTableInfo(MTable.getTable_ID(Table_Name));
+			mountingStrategy = DMSFactoryUtils.getMountingStrategy(validTableName(Table_Name));
+		}
 	}
 
 	public IFileStorageProvider getThumbnailStorageProvider()
@@ -339,8 +348,11 @@ public class DMS
 
 	public void initiateMountingContent(String mountingBaseName, String tableName, int recordID, int tableID)
 	{
-		this.ssTableInfo.updateRecord(recordID);
-		getMountingStrategy().initiateMountingContent(mountingBaseName, validTableName(tableName), validRecordID(recordID), validTableID(tableID));
+		synchronized (o)
+		{
+			this.ssTableInfo.updateRecord(recordID);
+			getMountingStrategy().initiateMountingContent(mountingBaseName, validTableName(tableName), validRecordID(recordID), validTableID(tableID));
+		}
 	} // initiateMountingContent
 
 	/*
