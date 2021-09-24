@@ -26,7 +26,8 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="5.1.0",
  zul;bundle-version="8.0.2",
  zk;bundle-version="8.0.2",
  com.logilite.search.solr,
- zcommon
+ zcommon,
+ org.apache.ant
 Bundle-Vendor: Logilite
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
