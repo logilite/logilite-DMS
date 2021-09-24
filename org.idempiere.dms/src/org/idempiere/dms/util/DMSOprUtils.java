@@ -1534,7 +1534,7 @@ public class DMSOprUtils
 
 			if (content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
-				HashMap<I_DMS_Version, I_DMS_Association> childContents = dms.getDMSContentsWithAssociation((MDMSContent) content, dms.AD_Client_ID, true);
+				HashMap<I_DMS_Version, I_DMS_Association> childContents = dms.getDMSContentsWithAssociation(content, dms.AD_Client_ID, true);
 				for (Entry<I_DMS_Version, I_DMS_Association> children : childContents.entrySet())
 				{
 					name += hasLinkableDocs(dms, (MDMSContent) ((MDMSVersion) children.getKey()).getDMS_Content(), children.getValue());

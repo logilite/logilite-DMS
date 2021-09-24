@@ -397,13 +397,13 @@ public class DMS
 		return MDMSAssociation.getLinkableAssociationFromContent(contentID, isActiveOnly);
 	} // getLinkableAssociationFromContent
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, boolean isActiveOnly)
+	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, boolean isActiveOnly)
 	{
 		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, (isActiveOnly	? DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE
 																									: DMSConstant.DOCUMENT_VIEW_ALL_VALUE));
 	} // getDMSContentsWithAssociation
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(MDMSContent content, int AD_Client_ID, String documentView)
+	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView)
 	{
 		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, documentView);
 	} // getDMSContentsWithAssociation
@@ -569,6 +569,31 @@ public class DMS
 		I_DMS_Content[] selectedContent = selectContent(parentContent, associationTypeID, contentTypeID, filename);
 		return DMSSearchUtils.getFilteredContents(selectedContent, isApplyContentTypeAccessFilter, isApplyPermissionFilter);
 	} // selectContent
+
+	/**
+	 * Get list of child content based on ParentContent
+	 * 
+	 * @implSpec               filter applied for access on ContentType and Permission if applicable
+	 * @param    parentContent - Directory type content
+	 * @return                 List of child content versions
+	 */
+	public I_DMS_Version[] selectChildContentFiltered(I_DMS_Content parentContent)
+	{
+		return selectChildContentFiltered(parentContent, true, true);
+	} // selectChildContentFiltered
+
+	/**
+	 * Get list of child content based on ParentContent
+	 * 
+	 * @param  parentContent                  - Directory type content
+	 * @param  isApplyContentTypeAccessFilter
+	 * @param  isApplyPermissionFilter
+	 * @return                                List of child content versions
+	 */
+	public I_DMS_Version[] selectChildContentFiltered(I_DMS_Content parentContent, boolean isApplyContentTypeAccessFilter, boolean isApplyPermissionFilter)
+	{
+		return DMSSearchUtils.getChildContentFiltered(this, parentContent, isApplyContentTypeAccessFilter, isApplyPermissionFilter);
+	} // selectChildContentFiltered
 
 	/*
 	 * Other operations on Content util methods
@@ -850,4 +875,5 @@ public class DMS
 		}
 		return true;
 	} // isAllPermissionGranted
+
 }

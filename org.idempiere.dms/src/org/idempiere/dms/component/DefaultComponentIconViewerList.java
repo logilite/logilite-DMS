@@ -50,12 +50,12 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		columns.setSizable(true);
 		columns.appendChild(createColumnAllSelectCheckBox("3%"));
 		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, "name", "35%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, "contentType","12%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, "size","10%", "Left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, "updated","15%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "fileType","10%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, "modifiedBy","10%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_LINK, "link","5%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, "contentType", "12%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, "size", "10%", "Left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, "updated", "15%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "fileType", "10%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, "modifiedBy", "10%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_LINK, "link", "5%", "center"));
 
 		grid.appendChild(columns);
 	} // createHeaderPart
@@ -72,11 +72,11 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 
 		row = rows.newRow();
 		row.setSclass("SB-ROW");
-		
+
 		Checkbox checkBox = new Checkbox();
 		checkBox.addActionListener(this);
 		checkBox.setId(content.getDMS_Content_UU());
-		checkBox.setAttribute("DMS_VERSION_REF", version);
+		checkBox.setAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF, version);
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
@@ -146,9 +146,9 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	{
 		Column column = new Column();
 		column.setAttribute("name", attributeName);
-		if(sorted && attributeName.equalsIgnoreCase(sorted_column))
+		if (sorted && attributeName.equalsIgnoreCase(sorted_column))
 		{
-			if(sorted_asc)
+			if (sorted_asc)
 				labelName = labelName + "  >";
 			else
 				labelName = labelName + "  <";
@@ -156,7 +156,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		column.setLabel(labelName);
 		column.setWidth(size);
 		column.setAlign(align);
-		if(!DMSConstant.MSG_LINK.equalsIgnoreCase(labelName))
+		if (!DMSConstant.MSG_LINK.equalsIgnoreCase(labelName))
 			column.addEventListener(Events.ON_CLICK, this);
 		return column;
 	} // createColumn

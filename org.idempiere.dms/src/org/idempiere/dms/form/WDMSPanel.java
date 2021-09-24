@@ -92,6 +92,7 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.dms.factories.IPermissionManager;
+import org.idempiere.dms.service.CreateZipArchive;
 import org.idempiere.dms.util.DMSConvertToPDFUtils;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSPermissionUtils;
@@ -238,8 +239,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
 
 	private AbstractADWindowContent	winContent;
-	
-	protected Set<I_DMS_Version>	downloadSet 			= new HashSet<I_DMS_Version>();
+
+	protected Set<I_DMS_Version>	downloadSet				= new HashSet<I_DMS_Version>();
 
 	/**
 	 * Constructor initialize
@@ -408,7 +409,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		lblPositionInfo.setHflex("1");
 		ZkCssHelper.appendStyle(lblPositionInfo, "float: right; font-weight: bold; text-align: center; font-size: 12px; padding-right: 2px;");
-		
+
 		lblCountAndSelected.setHflex("1");
 		ZkCssHelper.appendStyle(lblCountAndSelected, "font-size: 12px; border-left: 1px solid black; padding-left: 2px;");
 
@@ -820,17 +821,24 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_download))
 		{
-			if(downloadSet != null && !downloadSet.isEmpty())
+			if (downloadSet == null || downloadSet.isEmpty())
 			{
-				for(I_DMS_Version version : downloadSet)
+				I_DMS_Version version = MDMSVersion.getLatestVersion(dirContent);
+				if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
+				{
+					downloadSet.add(version);
+				}
+				else
 				{
 					DMS_ZK_Util.downloadDocument(dms, version);
-					Thread.sleep(10000);
+					return;
 				}
 			}
-			else
+
+			if (downloadSet != null && !downloadSet.isEmpty())
 			{
-				DMS_ZK_Util.downloadDocument(dms, MDMSVersion.getLatestVersion(dirContent));
+				CreateZipArchive createZip = new CreateZipArchive(dms, currDMSContent, downloadSet, cobDocumentView.getSelectedItem().getValue());
+				createZip.downloadZip();
 			}
 		}
 		else if (event.getTarget().equals(mnu_rename))
@@ -980,11 +988,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getName().equals(DMSConstant.EVENT_ON_SELECTION_CHANGE))
 		{
-			
 			org.zkoss.zul.Checkbox targetCh = (org.zkoss.zul.Checkbox) event.getData();
-			if(DMSConstant.All_SELECT.equalsIgnoreCase(targetCh.getId()))
+			if (DMSConstant.All_SELECT.equalsIgnoreCase(targetCh.getId()))
 			{
-				if(targetCh.isChecked())
+				if (targetCh.isChecked())
 				{
 					allContentSelection(true);
 				}
@@ -995,19 +1002,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			else
 			{
-				if(targetCh.isChecked())
+				if (targetCh.isChecked())
 				{
-					//add in download set
-					downloadSet.add((I_DMS_Version) targetCh.getAttribute("DMS_VERSION_REF"));
-					
+					// add in download set
+					downloadSet.add((I_DMS_Version) targetCh.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF));
+
 				}
 				else
 				{
-					//remove from download set
-					downloadSet.remove(targetCh.getAttribute("DMS_VERSION_REF"));
+					// remove from download set
+					downloadSet.remove(targetCh.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF));
 				}
 			}
-			
+
 			updateContentSelectedCount();
 		}
 		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(BreadCrumbLink.class))
@@ -1116,9 +1123,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public void renderViewer()
 	{
-		//clear download set
+		// clear download set
 		downloadSet.clear();
-		
+
 		if (recordID > 0 || isDocExplorerWindow)
 		{
 			HashMap<I_DMS_Version, I_DMS_Association> contentsMap = null;
@@ -1157,7 +1164,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK, DMSConstant.EVENT_ON_SELECTION_CHANGE };
 			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
 			viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
-			
+
 			lblCountAndSelected.setText(String.valueOf(mapPerFiltered.size()) + " items");
 		}
 
@@ -1191,7 +1198,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		Components.removeAllChildren(panelAttribute);
 		Components.removeAllChildren(grid);
-		
+
 		downloadSet.clear();
 	} // clearComponents
 
@@ -1521,7 +1528,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_paste.setDisabled(false);
 				mnu_canvasPaste.setDisabled(false);
 			}
-			mnu_download.setDisabled(true);
+			mnu_download.setDisabled(false);
 		}
 
 		mnu_copy.setDisabled(false);
@@ -1550,6 +1557,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				ctxMenuItemDisabled(true);
 
+				mnu_download.setDisabled(false);
 				mnu_canvasPaste.setDisabled(true);
 			}
 		}
@@ -2108,7 +2116,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnCreateDir.setEnabled(isEnabled);
 		btnUploadContent.setEnabled(isEnabled);
 	}
-	
+
 	private void allContentSelection(boolean isChecked)
 	{
 		if (grid.getChildren() != null && grid.getChildren().size() > 0)
@@ -2121,13 +2129,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				Checkbox checkBox = (Checkbox) row.getChildren().get(0).getChildren().get(0);
 				checkBox.setChecked(isChecked);
 				if (isChecked)
-					downloadSet.add((I_DMS_Version) checkBox.getAttribute("DMS_VERSION_REF"));
+					downloadSet.add((I_DMS_Version) checkBox.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF));
 				else
-					downloadSet.remove(checkBox.getAttribute("DMS_VERSION_REF"));
+					downloadSet.remove(checkBox.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF));
 			}
 		}
-	}
-	
+	} // allContentSelection
+
+	/**
+	 * Update the label for no of content selected
+	 */
 	private void updateContentSelectedCount()
 	{
 		String value = lblCountAndSelected.getValue();
@@ -2146,6 +2157,5 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			lblCountAndSelected.setText(updatedValue);
 		}
-
-	}
+	} // updateContentSelectedCount
 }
