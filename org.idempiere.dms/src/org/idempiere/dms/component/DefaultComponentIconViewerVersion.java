@@ -21,9 +21,8 @@ import org.adempiere.webui.component.Rows;
 import org.compiere.model.MUser;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.model.I_DMS_Association;
+import org.idempiere.model.ContentDetail;
 import org.idempiere.model.I_DMS_Content;
-import org.idempiere.model.I_DMS_Version;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
@@ -65,9 +64,9 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight)
+	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight)
 	{
-		I_DMS_Content content = version.getDMS_Content();
+		I_DMS_Content content = contentDetail.getContent();
 
 		Row row = rows.newRow();
 		row.setSclass("SB-ROW");
@@ -75,14 +74,14 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
-		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
+		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, contentDetail.getVersion(), "150"));
 		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + compHeight + "px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
 		Vbox vbox = new Vbox();
 		vbox.appendChild(new Label(DMSConstant.MSG_CREATED + ": " + content.getCreated()));
 		vbox.appendChild(new Label(DMSConstant.MSG_CREATEDBY + ": " + MUser.getNameOfUser(content.getCreatedBy())));
-		vbox.appendChild(new Label(DMSConstant.MSG_FILESIZE + ": " + version.getDMS_FileSize()));
+		vbox.appendChild(new Label(DMSConstant.MSG_FILESIZE + ": " + contentDetail.getSize()));
 
 		Hbox hbox = new Hbox();
 		hbox.appendChild(thumbImg);
@@ -100,7 +99,7 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 		row.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
 
 		//
-		setAttributesInRow(row, version, association);
+		setAttributesInRow(row, contentDetail);
 
 		// Listener for component selection
 		row.addEventListener(Events.ON_CLICK, this);
@@ -109,7 +108,7 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 			row.addEventListener(eventsList[i], listener);
 
 		// set tooltip text
-		row.setTooltiptext(getToolTipTextMsg(version, association));
+		row.setTooltiptext(contentDetail.getTooltipText());
 	} // createComponent
 
 	@Override

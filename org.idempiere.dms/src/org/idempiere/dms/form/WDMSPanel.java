@@ -21,10 +21,12 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
@@ -37,6 +39,7 @@ import org.adempiere.webui.adwindow.BreadCrumbLink;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
+import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Datebox;
@@ -90,6 +93,7 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.dms.factories.IPermissionManager;
+import org.idempiere.dms.service.CreateZipArchive;
 import org.idempiere.dms.util.DMSConvertToPDFUtils;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSPermissionUtils;
@@ -154,6 +158,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Label					lblUpdatedBy			= new Label(DMSConstant.MSG_UPDATEDBY);
 	private Label					lblDocumentView			= new Label(DMSConstant.MSG_DOCUMENT_VIEW);
 	private Label					lblPositionInfo			= new Label();
+	private Label					lblCountAndSelected		= new Label();
 	private Label					lblShowBreadCrumb		= null;
 
 	private Datebox					dbCreatedTo				= new Datebox();
@@ -237,6 +242,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
 
 	private AbstractADWindowContent	winContent;
+
+	protected Set<I_DMS_Version>	downloadSet				= new HashSet<I_DMS_Version>();
 
 	/**
 	 * Constructor initialize
@@ -394,6 +401,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		this.appendChild(tabBox);
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
+		this.addEventListener(DMSConstant.EVENT_ON_SELECTION_CHANGE, this);
 
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
@@ -409,7 +417,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnBack.setEnabled(false);
 
 		lblPositionInfo.setHflex("1");
-		ZkCssHelper.appendStyle(lblPositionInfo, "float: right; font-weight: bold; text-align: center;");
+		ZkCssHelper.appendStyle(lblPositionInfo, "float: right; font-weight: bold; text-align: center; font-size: 12px; padding-right: 2px;");
+
+		lblCountAndSelected.setHflex("1");
+		ZkCssHelper.appendStyle(lblCountAndSelected, "font-size: 12px; border-left: 1px solid black; padding-left: 2px;");
 
 		btnNext.setEnabled(false);
 		btnNext.setStyle("float:right;");
@@ -418,6 +429,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		Row row = rowsBtn.newRow();
 		row.appendChild(btnBack);
 		row.appendChild(lblPositionInfo);
+		row.appendCellChild(lblCountAndSelected);
 		row.appendChild(btnNext);
 
 		// Row Operation - Create Directory, Upload Content
@@ -818,7 +830,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_download))
 		{
-			DMS_ZK_Util.downloadDocument(dms, MDMSVersion.getLatestVersion(dirContent));
+			if (downloadSet == null || downloadSet.isEmpty())
+			{
+				I_DMS_Version version = MDMSVersion.getLatestVersion(dirContent);
+				if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
+				{
+					downloadSet.add(version);
+				}
+				else
+				{
+					DMS_ZK_Util.downloadDocument(dms, version);
+					return;
+				}
+			}
+
+			if (downloadSet != null && !downloadSet.isEmpty())
+			{
+				CreateZipArchive createZip = new CreateZipArchive(dms, currDMSContent, downloadSet, cobDocumentView.getSelectedItem().getValue());
+				createZip.downloadZip();
+			}
 		}
 		else if (event.getTarget().equals(mnu_rename))
 		{
@@ -965,6 +995,32 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			renderViewer();
 			tabBox.setSelectedTab(tab);
 		}
+		else if (event.getName().equals(DMSConstant.EVENT_ON_SELECTION_CHANGE))
+		{
+			if (event.getData() instanceof Checkbox)
+			{
+				Checkbox targetChkbox = (Checkbox) event.getData();
+				if (DMSConstant.All_SELECT.equals(targetChkbox.getId()))
+				{
+					allContentSelection(targetChkbox.isChecked());
+				}
+				else
+				{
+					I_DMS_Version version = (I_DMS_Version) targetChkbox.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF);
+					if (targetChkbox.isChecked())
+						downloadSet.add(version);
+					else
+						downloadSet.remove(version);
+				}
+			}
+			else if (event.getData() instanceof Boolean)
+			{
+				allContentSelection((Boolean) event.getData());
+			}
+
+			// Update counting of the selected content
+			updateContentSelectedCount();
+		}
 		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(BreadCrumbLink.class))
 		{
 			renderBreadCrumb(event);
@@ -1071,6 +1127,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	public void renderViewer()
 	{
+		// clear download set
+		downloadSet.clear();
+
 		if (recordID > 0 || isDocExplorerWindow)
 		{
 			HashMap<I_DMS_Version, I_DMS_Association> contentsMap = null;
@@ -1109,6 +1168,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
 			viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+
+			lblCountAndSelected.setText(String.valueOf(mapPerFiltered.size()) + " items");
 		}
 
 		tabBox.setSelectedIndex(0);
@@ -1141,6 +1202,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		Components.removeAllChildren(panelAttribute);
 		Components.removeAllChildren(grid);
+
+		downloadSet.clear();
 	} // clearComponents
 
 	/**
@@ -1469,7 +1532,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_paste.setDisabled(false);
 				mnu_canvasPaste.setDisabled(false);
 			}
-			mnu_download.setDisabled(true);
+			mnu_download.setDisabled(false);
 		}
 
 		mnu_copy.setDisabled(false);
@@ -1498,6 +1561,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			{
 				ctxMenuItemDisabled(true);
 
+				mnu_download.setDisabled(false);
 				mnu_canvasPaste.setDisabled(true);
 			}
 		}
@@ -2056,4 +2120,48 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnCreateDir.setEnabled(isEnabled);
 		btnUploadContent.setEnabled(isEnabled);
 	}
+
+	private void allContentSelection(boolean isChecked)
+	{
+		if (grid.getChildren() != null && grid.getChildren().size() > 0)
+		{
+			Component rows = grid.getChildren().get(0);
+			Iterator<Component> rowsIt = rows.getChildren().iterator();
+			while (rowsIt.hasNext())
+			{
+				Component row = rowsIt.next();
+				Checkbox checkBox = (Checkbox) row.getChildren().get(0).getChildren().get(0);
+				checkBox.setChecked(isChecked);
+				//
+				I_DMS_Version version = (I_DMS_Version) checkBox.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF);
+				if (isChecked)
+					downloadSet.add(version);
+				else
+					downloadSet.remove(version);
+			}
+		}
+	} // allContentSelection
+
+	/**
+	 * Update the label for no of content selected
+	 */
+	private void updateContentSelectedCount()
+	{
+		String value = lblCountAndSelected.getValue();
+		if (!Util.isEmpty(value, true))
+		{
+			String updatedValue = "";
+			if (value.contains("/"))
+			{
+				String[] splited = value.split("/");
+				updatedValue = String.valueOf(downloadSet.size()) + "/" + splited[1];
+			}
+			else
+			{
+				updatedValue = String.valueOf(downloadSet.size()) + "/" + value;
+			}
+
+			lblCountAndSelected.setText(updatedValue);
+		}
+	} // updateContentSelectedCount
 }

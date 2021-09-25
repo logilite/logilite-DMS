@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 
@@ -648,5 +649,40 @@ public class DMSSearchUtils
 
 		return (I_DMS_Content[]) permissionAccessFiltered.toArray(new I_DMS_Content[permissionAccessFiltered.size()]);
 	} // getFilteredContents
+
+	/**
+	 * Get list of child content based on ParentContent
+	 * 
+	 * @param  dms
+	 * @param  parentContent                  - Directory type content
+	 * @param  isApplyContentTypeAccessFilter
+	 * @param  isApplyPermissionFilter
+	 * @return                                List of child content versions
+	 */
+	public static I_DMS_Version[] getChildContentFiltered(	DMS dms, I_DMS_Content parentContent, boolean isApplyContentTypeAccessFilter,
+															boolean isApplyPermissionFilter)
+	{
+		HashMap<I_DMS_Version, I_DMS_Association> contentsMap = dms.getDMSContentsWithAssociation(parentContent, dms.AD_Client_ID, null);
+
+		// Content Type Access
+		if (isApplyContentTypeAccessFilter)
+		{
+			// Content Type wise access restriction
+			IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
+			contentsMap = contentTypeAccess.getFilteredContentList(contentsMap);
+		}
+
+		// Permission wise access
+		if (isApplyPermissionFilter)
+		{
+			if (DMSPermissionUtils.isPermissionAllowed())
+			{
+				contentsMap = dms.getPermissionManager().getFilteredVersionList(contentsMap);
+			}
+		}
+
+		Set<I_DMS_Version> childContents = contentsMap.keySet();
+		return childContents.toArray(new I_DMS_Version[childContents.size()]);
+	} // getChildContentFiltered
 
 }
