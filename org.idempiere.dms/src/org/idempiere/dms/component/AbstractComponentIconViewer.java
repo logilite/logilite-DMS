@@ -1,7 +1,6 @@
 package org.idempiere.dms.component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -20,12 +19,9 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.util.DMSPermissionUtils;
+import org.idempiere.model.ContentDetail;
 import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
-import org.idempiere.model.ItemDetail;
-import org.idempiere.model.MDMSAssociationType;
-import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
@@ -33,7 +29,6 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.A;
 import org.zkoss.zul.Cell;
-import org.zkoss.zul.FieldComparator;
 import org.zkoss.zul.Image;
 
 /**
@@ -60,23 +55,22 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	protected EventListener<? extends Event>	listener;
 
 	protected boolean							isContentActive	= true;
-	
-	protected List<ItemDetail>					items = new ArrayList<ItemDetail>();
-	
-	protected int 								compWidth;
+
+	protected List<ContentDetail>				contentItems	= new ArrayList<ContentDetail>();
+
+	protected int								compWidth;
 	protected int								compHeight;
-	
-	protected boolean 							sorted;
-	protected String							sorted_column;
-	protected boolean							sorted_asc;
-	
+
+	protected boolean							isSorted;
+	protected boolean							isSortedAsc;
+	protected String							sortedColumn;
 
 	// Abstract method definition
 	public abstract void createHeaderPart();
 
 	public abstract void setNoComponentExistsMsg(Rows rows);
 
-	public abstract void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight);
+	public abstract void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight);
 
 	@Override
 	public void init(	DMS dms, HashMap<I_DMS_Version, I_DMS_Association> contentsMap, Grid gridLayout, int compWidth, int compHeight,
@@ -88,6 +82,20 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		this.eventsList = eventsList;
 		this.compWidth = compWidth;
 		this.compHeight = compHeight;
+
+		permissionManager = dms.getPermissionManager();
+
+		for (Map.Entry<I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
+		{
+			contentItems.add(new ContentDetail(entry.getKey(), entry.getValue()));
+		}
+
+		//
+		renderZK();
+	} // init
+
+	private void renderZK()
+	{
 		// Clearing Grid layout children's
 		if (grid.getChildren() != null && grid.getChildren().size() > 0)
 			Components.removeAllChildren(grid);
@@ -99,41 +107,37 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		createHeaderPart();
 
 		//
-		if (contentsMap == null || contentsMap.isEmpty())
+		if (contentItems == null || contentItems.isEmpty())
 		{
 			setNoComponentExistsMsg(rows);
 		}
 		else
 		{
-			permissionManager = dms.getPermissionManager();
-
-			for (Map.Entry<I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
+			for (ContentDetail contentDetail : contentItems)
 			{
-				I_DMS_Version version = entry.getKey();
-				I_DMS_Association association = entry.getValue();
-				ItemDetail item = new ItemDetail(version, association);
-				items.add(item);
-				isContentActive = (version != null && association != null && version.getDMS_Content().isActive() && association.isActive());
-				if (association != null && MDMSAssociationType.isLink(association))
+				I_DMS_Version version = contentDetail.getVersion();
+				I_DMS_Association association = contentDetail.getAssociation();
+				isContentActive = (version != null && association != null && contentDetail.getContent().isActive() && association.isActive());
+				if (association != null && contentDetail.isLink())
 					isContentActive = association.isActive();
 
 				//
-				createComponent(rows, version, association, compWidth, compHeight);
+				createComponent(rows, contentDetail, compWidth, compHeight);
 			}
 		}
-	} // init
+	} // renderZK
 
 	@Override
-	public void setAttributesInRow(Component component, I_DMS_Version version, I_DMS_Association association)
+	public void setAttributesInRow(Component component, ContentDetail contentDetail)
 	{
-		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, version.getDMS_Content());
-		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, version);
-		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, association);
+		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT, contentDetail.getContent());
+		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, contentDetail.getVersion());
+		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION, contentDetail.getAssociation());
 		component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE, Boolean.valueOf(isContentActive));
 
 		if (DMSPermissionUtils.isPermissionAllowed())
 		{
-			permissionManager.initContentPermission(version.getDMS_Content());
+			permissionManager.initContentPermission(contentDetail.getContent());
 
 			component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD, permissionManager.isRead());
 			component.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISWRITE, permissionManager.isWrite());
@@ -152,54 +156,27 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 			setSelection(event.getTarget());
 			prevComponent = event.getTarget();
 		}
-		else if (event.getName().equals(Events.ON_CHECK) && event.getTarget() instanceof org.zkoss.zul.Checkbox)
+		else if (event.getName().equals(Events.ON_CHECK) && event.getTarget() instanceof Checkbox)
 		{
+			// Checkbox select all - event from icon viewer list
 			Events.sendEvent(new Event(DMSConstant.EVENT_ON_SELECTION_CHANGE, (Component) listener, event.getTarget()));
 		}
 		else if (event.getName().equals(Events.ON_CLICK) && event.getTarget() instanceof Column)
 		{
-			Column column = (Column) event.getTarget();
-			String sorting_column = String.valueOf(column.getAttribute("name"));
-			boolean sortType = true;
-			if(sorted)
-			{
-				if(sorted_column.equalsIgnoreCase(sorting_column))
-					sortType = !sorted_asc;
-			}
-			
-			sorted_column = sorting_column;
-			sorted_asc = sortType;
-			sorted = true;
-			sort(sorting_column, sortType);
-			
-			//remove download list
-			Checkbox allCheckBox = new Checkbox();
-			allCheckBox.setChecked(false);
-			allCheckBox.setId(DMSConstant.All_SELECT);
-			Events.sendEvent(new Event(DMSConstant.EVENT_ON_SELECTION_CHANGE, (Component) listener, allCheckBox));
-			
+			doSortGridColumn((Column) event.getTarget());
+
+			// Remove downloaded set in sorting event
+			Events.sendEvent(new Event(DMSConstant.EVENT_ON_SELECTION_CHANGE, (Component) listener, Boolean.FALSE));
 		}
-		
 	} // onEvent
-
-	@Override
-	public String getContentName(I_DMS_Content content, int version)
-	{
-		String name = content.getName();
-
-		if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && version > 0)
-			name = name + " - V" + version;
-
-		return name;
-	} // getContentName
 
 	/**
 	 * @param  association
 	 * @return             {@link Component} Icon component
 	 */
-	public Component getLinkIconComponent(I_DMS_Association association)
+	public Component getLinkIconComponent(ContentDetail contentDetail)
 	{
-		if (MDMSAssociationType.isLink(association))
+		if (contentDetail.isLink())
 		{
 			if (ThemeManager.isUseFontIconForImage())
 			{
@@ -226,60 +203,59 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		}
 	} // getLinkIconComponent
 
-	public String getToolTipTextMsg(I_DMS_Version version, I_DMS_Association association)
+	public void doSortGridColumn(Column column)
 	{
-		StringBuffer sb = new StringBuffer(((MDMSContent) version.getDMS_Content()).getToolTipTextMsg());
+		boolean sortType = true;
+		String sortingColumn = String.valueOf(column.getAttribute(DMSConstant.ATTRIB_NAME));
+		if (isSorted)
+		{
+			if (sortedColumn.equals(sortingColumn))
+				sortType = !isSortedAsc;
+		}
 
-		if (MDMSContent.CONTENTBASETYPE_Content.equals(version.getDMS_Content().getContentBaseType()) && version.getDMS_FileSize() != null)
-			sb.append("\nFileSize:" + version.getDMS_FileSize());
+		sortedColumn = sortingColumn;
+		isSortedAsc = sortType;
+		isSorted = true;
 
-		if (association.getDMS_AssociationType_ID() > 0)
-			sb.append("\nAssociation as " + association.getDMS_AssociationType().getName());
+		// Implement comparator for sorting based on column and ascending/descending
+		Comparator<ContentDetail> comparator = null;
+		switch (sortedColumn)
+		{
+			case DMSConstant.ATTRIB_NAME:
+				comparator = Comparator.comparing(ContentDetail::getName);
+				break;
+			case DMSConstant.ATTRIB_CONTENT_TYPE:
+				comparator = Comparator.comparing(ContentDetail::getContentTypeName);
+				break;
+			case DMSConstant.ATTRIB_SIZE:
+				comparator = Comparator.comparing(ContentDetail::getSize);
+				break;
+			case DMSConstant.ATTRIB_UPDATED:
+				comparator = Comparator.comparing(ContentDetail::getUpdated);
+				break;
+			case DMSConstant.ATTRIB_FIELDTYPE:
+				comparator = Comparator.comparing(ContentDetail::getFileType);
+				break;
+			case DMSConstant.ATTRIB_MODIFIEDBY:
+				comparator = Comparator.comparing(ContentDetail::getModifiedByName);
+				break;
+			case DMSConstant.ATTRIB_LINK:
+				comparator = Comparator.comparing(ContentDetail::isLink);
+				break;
+			default:
+				break;
+		}
 
-		sb.append("\nVersion ID:" + version.getDMS_Version_ID());
-		sb.append("\nContent ID:" + version.getDMS_Content_ID());
-		return sb.toString();
-	}
-	
-	public void sort(String column, boolean ascending)
-	{
-		Comparator cmpr = new FieldComparator(column, ascending);
-		Collections.sort(items, cmpr);
-		renderItems();
-	}
-
-	private void renderItems()
-	{
-		if (grid.getChildren() != null && grid.getChildren().size() > 0)
-			Components.removeAllChildren(grid);
-
-		Rows rows = grid.newRows();
-		rows.setSclass("SB-ROWS");
-
-		// Grid Header Part creation
-		createHeaderPart();
+		if (comparator != null)
+		{
+			if (isSortedAsc)
+				contentItems.sort(comparator);
+			else
+				contentItems.sort(comparator.reversed());
+		}
 
 		//
-		if (items == null || items.isEmpty())
-		{
-			setNoComponentExistsMsg(rows);
-		}
-		else
-		{
-			permissionManager = dms.getPermissionManager();
+		renderZK();
+	} // doSortGridColumn
 
-			for (ItemDetail entry : items)
-			{
-				I_DMS_Version version = entry.getVersion();
-				I_DMS_Association association = entry.getAssociation();
-				isContentActive = (version != null && association != null && version.getDMS_Content().isActive() && association.isActive());
-				if (association != null && MDMSAssociationType.isLink(association))
-					isContentActive = association.isActive();
-
-				//
-				createComponent(rows, version, association, compWidth, compHeight);
-			}
-		}
-
-	}
 }

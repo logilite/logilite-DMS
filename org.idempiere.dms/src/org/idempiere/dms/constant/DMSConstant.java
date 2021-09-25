@@ -57,7 +57,16 @@ public final class DMSConstant
 	public static final String				COMP_ATTRIBUTE_ISDELETE					= "ATTR_ISDELETE";
 	public static final String				COMP_ATTRIBUTE_ISNAVIGATION				= "ATTR_ISNAVIGATION";
 	public static final String				COMP_ATTRIBUTE_ISALLPERMISSION			= "ATTR_ISALLPERMISSION";
-	public static final String				COMP_ATTRIBUTE_DMS_VERSION_REF			= "DMS_VERSION_REF";
+	public static final String				COMP_ATTRIBUTE_DMS_VERSION_REF			= "ATTR_DMS_VERSION_REF";
+
+	//
+	public static final String				ATTRIB_NAME								= "ATTR_NAME";
+	public static final String				ATTRIB_SIZE								= "ATTR_SIZE";
+	public static final String				ATTRIB_LINK								= "ATTR_LINK";
+	public static final String				ATTRIB_UPDATED							= "ATTR_UPDATED";
+	public static final String				ATTRIB_FIELDTYPE						= "ATTR_FIELDTYPE";
+	public static final String				ATTRIB_MODIFIEDBY						= "ATTR_MODIFIEDBY";
+	public static final String				ATTRIB_CONTENT_TYPE						= "ATTR_CONTENT_TYPE";
 
 	// View thumbnail toggle action
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";

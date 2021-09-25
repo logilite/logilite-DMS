@@ -988,33 +988,28 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getName().equals(DMSConstant.EVENT_ON_SELECTION_CHANGE))
 		{
-			org.zkoss.zul.Checkbox targetCh = (org.zkoss.zul.Checkbox) event.getData();
-			if (DMSConstant.All_SELECT.equalsIgnoreCase(targetCh.getId()))
+			if (event.getData() instanceof Checkbox)
 			{
-				if (targetCh.isChecked())
+				Checkbox targetChkbox = (Checkbox) event.getData();
+				if (DMSConstant.All_SELECT.equals(targetChkbox.getId()))
 				{
-					allContentSelection(true);
+					allContentSelection(targetChkbox.isChecked());
 				}
 				else
 				{
-					allContentSelection(false);
+					I_DMS_Version version = (I_DMS_Version) targetChkbox.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF);
+					if (targetChkbox.isChecked())
+						downloadSet.add(version);
+					else
+						downloadSet.remove(version);
 				}
 			}
-			else
+			else if (event.getData() instanceof Boolean)
 			{
-				if (targetCh.isChecked())
-				{
-					// add in download set
-					downloadSet.add((I_DMS_Version) targetCh.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF));
-
-				}
-				else
-				{
-					// remove from download set
-					downloadSet.remove(targetCh.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF));
-				}
+				allContentSelection((Boolean) event.getData());
 			}
 
+			// Update counting of the selected content
 			updateContentSelectedCount();
 		}
 		else if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().getClass().equals(BreadCrumbLink.class))
@@ -1161,7 +1156,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 
 			// Component Viewer
-			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK, DMSConstant.EVENT_ON_SELECTION_CHANGE };
+			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
 			viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
 
@@ -2128,10 +2123,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				Component row = rowsIt.next();
 				Checkbox checkBox = (Checkbox) row.getChildren().get(0).getChildren().get(0);
 				checkBox.setChecked(isChecked);
+				//
+				I_DMS_Version version = (I_DMS_Version) checkBox.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF);
 				if (isChecked)
-					downloadSet.add((I_DMS_Version) checkBox.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF));
+					downloadSet.add(version);
 				else
-					downloadSet.remove(checkBox.getAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF));
+					downloadSet.remove(version);
 			}
 		}
 	} // allContentSelection

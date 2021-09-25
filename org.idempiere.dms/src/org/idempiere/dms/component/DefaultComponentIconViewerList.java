@@ -21,14 +21,10 @@ import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
-import org.compiere.model.MUser;
-import org.compiere.util.Env;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Content;
+import org.idempiere.model.ContentDetail;
 import org.idempiere.model.I_DMS_Version;
-import org.idempiere.model.MDMSContent;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Hbox;
@@ -48,14 +44,14 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	{
 		Columns columns = new Columns();
 		columns.setSizable(true);
-		columns.appendChild(createColumnAllSelectCheckBox("3%"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, "name", "35%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, "contentType", "12%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, "size", "10%", "Left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, "updated", "15%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, "fileType", "10%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, "modifiedBy", "10%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_LINK, "link", "5%", "center"));
+		columns.appendChild(createColumnCheckBoxAllSelect("3%"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, DMSConstant.ATTRIB_NAME, "35%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, DMSConstant.ATTRIB_CONTENT_TYPE, "12%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, DMSConstant.ATTRIB_SIZE, "10%", "Left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, DMSConstant.ATTRIB_UPDATED, "15%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, DMSConstant.ATTRIB_FIELDTYPE, "10%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, DMSConstant.ATTRIB_MODIFIEDBY, "10%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_LINK, DMSConstant.ATTRIB_LINK, "5%", "center"));
 
 		grid.appendChild(columns);
 	} // createHeaderPart
@@ -66,16 +62,15 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight)
+	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight)
 	{
-		I_DMS_Content content = version.getDMS_Content();
+		I_DMS_Version version = contentDetail.getVersion();
 
 		row = rows.newRow();
 		row.setSclass("SB-ROW");
 
 		Checkbox checkBox = new Checkbox();
 		checkBox.addActionListener(this);
-		checkBox.setId(content.getDMS_Content_UU());
 		checkBox.setAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF, version);
 
 		// Content Thumbnail
@@ -84,16 +79,13 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		thumbImg.setStyle("width: 100%; max-width: 30px; max-height: 30px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
-		Label lblName = new Label(getContentName(content, version.getSeqNo()));
-		Label lblCType = new Label("");
-		if (content.getDMS_ContentType_ID() > 0)
-			lblCType.setText(content.getDMS_ContentType().getName());
-		Label lblSize = new Label(version.getDMS_FileSize());
-		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(version.getUpdated().getTime())));
-		Label lblFileType = new Label(content.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory)	? DMSConstant.MSG_FILE_FOLDER
-																													: content.getDMS_MimeType().getName());
-		Label lblModifiedBy = new Label(MUser.get(Env.getCtx(), version.getUpdatedBy()).getName());
-		Component linkIcon = getLinkIconComponent(association);
+		Label lblName = new Label(contentDetail.getName());
+		Label lblCType = new Label(contentDetail.getContentTypeName());
+		Label lblSize = new Label(contentDetail.getSize());
+		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(contentDetail.getUpdated().getTime())));
+		Label lblFileType = new Label(contentDetail.getFileType());
+		Label lblModifiedBy = new Label(contentDetail.getModifiedByName());
+		Component linkIcon = getLinkIconComponent(contentDetail);
 
 		Hbox hbox = new Hbox();
 		hbox.appendChild(thumbImg);
@@ -110,7 +102,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		row.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
 
 		//
-		setAttributesInRow(row, version, association);
+		setAttributesInRow(row, contentDetail);
 
 		// Listener for component selection
 		row.addEventListener(Events.ON_CLICK, this);
@@ -120,8 +112,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 			row.addEventListener(eventsList[i], listener);
 
 		// set tooltip text
-		row.setTooltiptext(getToolTipTextMsg(version, association));
-
+		row.setTooltiptext(contentDetail.getTooltipText());
 	} // createComponent
 
 	@Override
@@ -129,7 +120,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	{
 		if (prevComponent != null)
 			((Row) component).setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_NORMAL);
-	}
+	} // removeSelection
 
 	@Override
 	public void setSelection(Component component)
@@ -140,36 +131,37 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 			selectedRow.setStyle((Boolean) isActive ? DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_SELECTED : DMSConstant.CSS_CONTENT_VIEWER_LIST_SEL_INACTIVE);
 		else
 			selectedRow.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LIST_SELECTED);
-	}
+	} // setSelection
 
 	private Column createColumn(String labelName, String attributeName, String size, String align)
 	{
 		Column column = new Column();
-		column.setAttribute("name", attributeName);
-		if (sorted && attributeName.equalsIgnoreCase(sorted_column))
+		column.setAttribute(DMSConstant.ATTRIB_NAME, attributeName);
+		if (isSorted && attributeName.equalsIgnoreCase(sortedColumn))
 		{
-			if (sorted_asc)
-				labelName = labelName + "  >";
+			if (isSortedAsc)
+				labelName = labelName + "  ↓"; // ALT + 25
 			else
-				labelName = labelName + "  <";
+				labelName = labelName + "  ↑"; // ALT + 24
 		}
 		column.setLabel(labelName);
 		column.setWidth(size);
 		column.setAlign(align);
-		if (!DMSConstant.MSG_LINK.equalsIgnoreCase(labelName))
-			column.addEventListener(Events.ON_CLICK, this);
+		column.addEventListener(Events.ON_CLICK, this);
 		return column;
 	} // createColumn
 
-	private Column createColumnAllSelectCheckBox(String size)
+	private Column createColumnCheckBoxAllSelect(String size)
 	{
+		Checkbox checkBoxAll = new Checkbox();
+		checkBoxAll.setWidth(size);
+		checkBoxAll.setChecked(false);
+		checkBoxAll.setId(DMSConstant.All_SELECT);
+		checkBoxAll.addActionListener(this);
+
+		//
 		Column column = new Column();
-		Checkbox allCheckBox = new Checkbox();
-		allCheckBox.setWidth(size);
-		allCheckBox.setChecked(false);
-		allCheckBox.setId(DMSConstant.All_SELECT);
-		allCheckBox.addActionListener(this);
-		column.appendChild(allCheckBox);
+		column.appendChild(checkBoxAll);
 		return column;
-	}
+	} // createColumnCheckBoxAllSelect
 }
