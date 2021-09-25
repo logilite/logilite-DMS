@@ -18,9 +18,7 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.model.I_DMS_Association;
-import org.idempiere.model.I_DMS_Version;
-import org.idempiere.model.MDMSAssociationType;
+import org.idempiere.model.ContentDetail;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
@@ -48,7 +46,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight)
+	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight)
 	{
 		if (row == null)
 		{
@@ -58,13 +56,13 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		}
 
 		// Content Label
-		Label lblName = new Label(getContentName(version.getDMS_Content(), version.getSeqNo()));
+		Label lblName = new Label(contentDetail.getName());
 		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 20px; width: "
 							+ (compWidth - 10) + "px; display: inline-block;" + (isContentActive ? " " : "color: red;"));
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
-		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
+		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, contentDetail.getVersion(), "150"));
 		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + (compHeight - 35) + "px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
@@ -82,7 +80,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		row.appendChild(cell);
 
 		//
-		setAttributesInRow(cell, version, association);
+		setAttributesInRow(cell, contentDetail);
 
 		// Listener for component selection
 		cell.addEventListener(Events.ON_CLICK, this);
@@ -91,9 +89,9 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		for (int i = 0; i < eventsList.length; i++)
 			cell.addEventListener(eventsList[i], listener);
 
-		if (MDMSAssociationType.isLink(association))
+		if (contentDetail.isLink())
 		{
-			Component icon = getLinkIconComponent(association);
+			Component icon = getLinkIconComponent(contentDetail);
 
 			Div mimeIcon = new Div();
 			mimeIcon.appendChild(icon);
@@ -102,7 +100,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		}
 
 		// set tooltip text
-		cell.setTooltiptext(getToolTipTextMsg(version, association));
+		cell.setTooltiptext(contentDetail.getTooltipText());
 	} // createComponent
 
 	@Override
