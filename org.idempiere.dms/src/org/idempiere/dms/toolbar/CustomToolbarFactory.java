@@ -20,6 +20,7 @@ import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.action.IAction;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
+import org.adempiere.webui.adwindow.IADTabpanel;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.session.SessionManager;
@@ -29,6 +30,7 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.form.WDMSPanel;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
+import org.zkoss.zul.Toolbarbutton;
 import org.zkoss.zul.Window.Mode;
 
 public class CustomToolbarFactory implements IAction
@@ -103,4 +105,10 @@ public class CustomToolbarFactory implements IAction
 
 		SessionManager.getAppDesktop().showWindow(dmsWindow);
 	} // execute
+
+	@Override
+	public void updateToolbarCustomBtn(Toolbarbutton toolbarButton, IADTabpanel tabPanel, boolean changed, boolean readOnly)
+	{
+
+	}
 }
