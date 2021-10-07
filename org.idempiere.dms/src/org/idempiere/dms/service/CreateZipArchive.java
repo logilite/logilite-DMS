@@ -101,14 +101,14 @@ public class CreateZipArchive
 			/**
 			 * Create zip file
 			 */
-			File srcFolder = new File(rootDir);
+			File srcFolder = new File(packageDirectory);
 			File destZipFile = new File(rootDir + ".zip");
 
-			// delete the old packages if exists
+			// delete the old packages if exists having same name, before build the zip
 			destZipFile.delete();
 
 			// create the compressed file
-			String includesdir = File.separator + "**";
+			String includesdir = headDirName + File.separator + "**";
 			zipFolder(srcFolder, destZipFile, includesdir);
 
 			// Delete root directory, No needed after zip created
@@ -119,6 +119,11 @@ public class CreateZipArchive
 			 */
 			AMedia media = new AMedia(headDirName + ".zip", "", "multipart/x-mixed-replace;boundary=END", new FileInputStream(destZipFile.getAbsolutePath()));
 			Filedownload.save(media);
+
+			/**
+			 * Delete the zip file after the download
+			 */
+			destZipFile.delete();
 		}
 		else
 		{
