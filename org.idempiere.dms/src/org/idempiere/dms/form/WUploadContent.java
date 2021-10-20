@@ -53,6 +53,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
+import org.idempiere.dms.DMS_Context_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
@@ -111,6 +112,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 	private int					tableID				= 0;
 	private int					recordID			= 0;
+	private int					contentID			= 0;
 
 	private boolean				isVersion			= false;
 	private boolean				isCancel			= false;
@@ -193,6 +195,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		MLookup lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
 		lookup.refresh();
 		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
+		// Load value from context if available for Content Type field
+		DMS_Context_Util.setEditorDefaultValueFromCtx(Env.getCtx(), windowNo, tabNo, lookup.getDisplayType(), editorContentType);
 
 		lblFile.setValue(DMSConstant.MSG_SELECT_FILE + "* ");
 		lblContentType.setValue(DMSConstant.MSG_DMS_CONTENT_TYPE);
@@ -265,6 +269,9 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		cell.appendChild(btnClose);
 		cell.setStyle("position: relative;");
 		row.appendChild(cell);
+
+		// Load ASI Panel if ContentType value pre-filled from the context
+		loadASIPanel();
 
 		btnFileUpload.setUpload(AdempiereWebUI.getUploadSetting());
 		btnFileUpload.addEventListener(Events.ON_UPLOAD, this);
@@ -375,7 +382,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 					ASI_ID = asiPanel.saveAttributes();
 				}
 
-				int contentID = dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
+				contentID = dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
 				if (DMSContent != null && !DMSContent.isMounting() && DMSContent.getDMS_Content_ID() != contentID)
 				{
 					MDMSContent content = (MDMSContent) MTable.get(DMSContent.getCtx(), MDMSContent.Table_ID).getPO(contentID, DMSContent.get_TrxName());
@@ -427,15 +434,20 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		{
 			Components.removeAllChildren(tabPanelAttribute);
 			tabBoxAttribute.setVisible(false);
-
-			if (editorContentType.getValue() != null)
-			{
-				asiPanel = new WDLoadASIPanel((int) editorContentType.getValue(), 0, windowNo, tabNo);
-				tabPanelAttribute.appendChild(asiPanel);
-				tabBoxAttribute.setVisible(true);
-			}
+			//
+			loadASIPanel();
 		}
 	}
+
+	public void loadASIPanel()
+	{
+		if (editorContentType.getValue() != null)
+		{
+			asiPanel = new WDLoadASIPanel((int) editorContentType.getValue(), 0, windowNo, tabNo);
+			tabPanelAttribute.appendChild(asiPanel);
+			tabBoxAttribute.setVisible(true);
+		}
+	} // loadASIPanel
 
 	/**
 	 * @return true if dialog cancel by user
@@ -445,4 +457,11 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		return isCancel;
 	}
 
+	/**
+	 * @return content ID of the uploaded document
+	 */
+	public int getUploadedDocContentID()
+	{
+		return contentID;
+	}
 }

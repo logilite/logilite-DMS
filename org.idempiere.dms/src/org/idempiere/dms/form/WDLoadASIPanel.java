@@ -41,6 +41,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.idempiere.dms.DMS_Context_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.MDMSContentType;
 import org.zkoss.zk.ui.Component;
@@ -53,29 +54,29 @@ public class WDLoadASIPanel extends Panel
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID  = -9141937878893779910L;
+	private static final long	serialVersionUID	= -9141937878893779910L;
 
-	private static CLogger    log               = CLogger.getCLogger(WDLoadASIPanel.class);
+	private static CLogger		log					= CLogger.getCLogger(WDLoadASIPanel.class);
 
-	private int               asiID             = 0;
-	private int               m_WindowNo        = 0;
-	private int               M_AttributeSet_ID = 0;
+	private int					asiID				= 0;
+	private int					m_WindowNo			= 0;
+	private int					M_AttributeSet_ID	= 0;
 
-	private Grid              attributeGrid     = new Grid();
-	private Rows              rows              = new Rows();
-	private Label             lblAttribute      = new Label();
+	private Grid				attributeGrid		= new Grid();
+	private Rows				rows				= new Rows();
+	private Label				lblAttribute		= new Label();
 
-	private MAttributeSet     mAttributeSet     = null;
+	private MAttributeSet		mAttributeSet		= null;
 
-	private boolean           m_changed         = false;
+	private boolean				m_changed			= false;
 
-	private MDMSContentType   contentType;
+	private MDMSContentType		contentType;
 
 	/** List of Editors */
-	public ArrayList<WEditor> m_editors         = new ArrayList<WEditor>();
+	public ArrayList<WEditor>	m_editors			= new ArrayList<WEditor>();
 
-	private int               windowNo          = 0;
-	private int               tabNo             = 0;
+	private int					windowNo			= 0;
+	private int					tabNo				= 0;
 
 	/**
 	 * Constructor
@@ -190,11 +191,7 @@ public class WDLoadASIPanel extends Panel
 			row.appendCellChild(fieldEditor, 2);
 
 			// Set attribute default value from the context
-			String valueAttribute = Env.getContext(Env.getCtx(), windowNo, tabNo, attribute.getName(), true);
-			if (!Util.isEmpty(valueAttribute, true))
-			{
-				editor.setValue(valueAttribute);
-			}
+			DMS_Context_Util.setEditorDefaultValueFromCtx(Env.getCtx(), windowNo, tabNo, editor.getGridField().getDisplayType(), editor);
 
 			m_editors.add(editor);
 		}
@@ -229,9 +226,8 @@ public class WDLoadASIPanel extends Panel
 	private GridField getGridField(MAttribute attribute, String columnName, int Reference_ID, int Reference_Value_ID)
 	{
 		String attribName = Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name));
-		GridFieldVO vo = GridFieldVO
-						.createParameter(Env.getCtx(), m_WindowNo, AEnv
-										.getADWindowID(m_WindowNo), 0, 0, columnName, attribName, Reference_ID, Reference_Value_ID, false, false);
+		GridFieldVO vo = GridFieldVO.createParameter(	Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0,
+														columnName, attribName, Reference_ID, Reference_Value_ID, false, false);
 		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 
@@ -266,12 +262,12 @@ public class WDLoadASIPanel extends Panel
 				}
 				else if (dt == DisplayType.Image
 							|| dt == DisplayType.Assignment
-								|| dt == DisplayType.Locator
-								|| dt == DisplayType.Payment
-								|| dt == DisplayType.TableDir
-								|| dt == DisplayType.Table
-								|| dt == DisplayType.Search
-								|| dt == DisplayType.Account)
+							|| dt == DisplayType.Locator
+							|| dt == DisplayType.Payment
+							|| dt == DisplayType.TableDir
+							|| dt == DisplayType.Table
+							|| dt == DisplayType.Search
+							|| dt == DisplayType.Account)
 				{
 					if (instance.getValueInt() > 0)
 						editor.setValue(instance.getValueInt());
@@ -413,12 +409,12 @@ public class WDLoadASIPanel extends Panel
 		}
 		else if (displayType == DisplayType.Image
 					|| displayType == DisplayType.Assignment
-						|| displayType == DisplayType.Locator
-						|| displayType == DisplayType.Payment
-						|| displayType == DisplayType.TableDir
-						|| displayType == DisplayType.Table
-						|| displayType == DisplayType.Search
-						|| displayType == DisplayType.Account)
+					|| displayType == DisplayType.Locator
+					|| displayType == DisplayType.Payment
+					|| displayType == DisplayType.TableDir
+					|| displayType == DisplayType.Table
+					|| displayType == DisplayType.Search
+					|| displayType == DisplayType.Account)
 		{
 			Integer value = (Integer) editor.getValue();
 			if (attributes.isMandatory() && value == null)
@@ -430,8 +426,8 @@ public class WDLoadASIPanel extends Panel
 			String valueLabel = null;
 			if (displayType == DisplayType.TableDir
 				|| displayType == DisplayType.Table
-					|| displayType == DisplayType.Search
-					|| displayType == DisplayType.Account)
+				|| displayType == DisplayType.Search
+				|| displayType == DisplayType.Account)
 			{
 				valueLabel = editor.getDisplay();
 			}
