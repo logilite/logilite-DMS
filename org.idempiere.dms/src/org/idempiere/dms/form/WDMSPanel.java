@@ -259,6 +259,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		initForm();
 	} // Constructor
 
+	public WDMSPanel(int Table_ID, int Record_ID, int windowNo, int tabNo)
+	{
+		this(windowNo, tabNo);
+
+		initZK(Table_ID, Record_ID);
+
+		setCurrDMSContent(dms.getRootMountingContent(tableID, recordID));
+
+		renderViewer();
+	} // Constructor
+
 	public WDMSPanel(int Table_ID, int Record_ID, AbstractADWindowContent winContent)
 	{
 		this(winContent.getWindowNo(), winContent.getActiveGridTab().getTabNo());
@@ -268,6 +279,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		this.tabID = winContent.getActiveGridTab().getAD_Tab_ID();
 		this.isWindowAccess = MRole.getDefault().getWindowAccess(windowID);
 
+		initZK(Table_ID, Record_ID);
+	} // Constructor
+
+	private void initZK(int Table_ID, int Record_ID)
+	{
 		// Toolbar button restriction
 		if (TOOLBAR_BTN_ID_DIR <= 0)
 			TOOLBAR_BTN_ID_DIR = DB.getSQLValue(null, DMSConstant.SQL_GET_TOOLBAR_BUTTON_ID, dms.AD_Client_ID, DMSConstant.TOOLBAR_BTN_NAME_DIR);
@@ -290,7 +306,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnUploadContent.setEnabled(isWindowAccess);
 
 		allowUserToCreateDir();
-	} // Constructor
+	} // initZK
 
 	/*
 	 * Navigation and createDir buttons are disabled based on

@@ -44,6 +44,7 @@ import org.compiere.util.Env;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.idempiere.dms.DMS_Context_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.MDMSContentType;
 import org.zkoss.zk.ui.Component;
@@ -197,11 +198,7 @@ public class WDLoadASIPanel extends Panel
 			row.appendCellChild(fieldEditor, 2);
 
 			// Set attribute default value from the context
-			String valueAttribute = Env.getContext(Env.getCtx(), windowNo, tabNo, attribute.getName(), true);
-			if (!Util.isEmpty(valueAttribute, true))
-			{
-				editor.setValue(valueAttribute);
-			}
+			DMS_Context_Util.setEditorDefaultValueFromCtx(Env.getCtx(), windowNo, tabNo, editor.getGridField().getDisplayType(), editor);
 
 			m_editors.add(editor);
 		}
@@ -241,9 +238,8 @@ public class WDLoadASIPanel extends Panel
 	private GridField getGridField(MAttribute attribute, String columnName, int Reference_ID, int Reference_Value_ID)
 	{
 		String attribName = Msg.translate(Env.getCtx(), attribute.get_Translation(MAttribute.COLUMNNAME_Name));
-		GridFieldVO vo = GridFieldVO
-						.createParameter(Env.getCtx(), m_WindowNo, AEnv
-										.getADWindowID(m_WindowNo), 0, 0, columnName, attribName, Reference_ID, Reference_Value_ID, false, false, null);
+		GridFieldVO vo = GridFieldVO.createParameter(	Env.getCtx(), m_WindowNo, AEnv.getADWindowID(m_WindowNo), 0, 0,
+														columnName, attribName, Reference_ID, Reference_Value_ID, false, false, null);
 		String desc = attribute.get_Translation(MAttribute.COLUMNNAME_Description);
 		vo.Description = desc != null ? desc : "";
 
@@ -327,9 +323,9 @@ public class WDLoadASIPanel extends Panel
 			{
 				WEditor editor = (WEditor) m_editors.get(i);
 				Object item = editor.getValue();
-				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(	Env.getCtx(),
-																															Integer.valueOf(String.valueOf(item)),
-																															null) : null;
+				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(Env.getCtx(),
+								Integer.valueOf(String.valueOf(item)),
+								null) : null;
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
