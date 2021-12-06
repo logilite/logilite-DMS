@@ -45,7 +45,7 @@ public class MDMSContentType extends X_DMS_ContentType
 		Integer contentTypeID = cache_contentType.get(AD_Client_ID + "_" + contentType);
 		if (contentTypeID == null || contentTypeID <= 0)
 		{
-			contentTypeID = DB.getSQLValue(	null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND AD_Client_ID = ?",
+			contentTypeID = DB.getSQLValue(	null, "SELECT DMS_ContentType_ID FROM DMS_ContentType WHERE IsActive = 'Y' AND Value = ? AND AD_Client_ID IN (0, ?)",
 											contentType, AD_Client_ID);
 			if (contentTypeID > 0)
 				cache_contentType.put(AD_Client_ID + "_" + contentType, contentTypeID);
