@@ -193,12 +193,15 @@ public class WDLoadASIPanel extends Panel
 			{
 				setEditorAttribute(attribute, editor);
 			}
+			else
+			{
+				// Set attribute default value from the context
+				DMS_Context_Util.setEditorDefaultValueFromCtx(Env.getCtx(), windowNo, tabNo, editor.getGridField().getDisplayType(), editor);
+			}
 
 			Component fieldEditor = editor.getComponent();
 			row.appendCellChild(fieldEditor, 2);
 
-			// Set attribute default value from the context
-			DMS_Context_Util.setEditorDefaultValueFromCtx(Env.getCtx(), windowNo, tabNo, editor.getGridField().getDisplayType(), editor);
 
 			m_editors.add(editor);
 		}
