@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.adempiere.webui.AdempiereWebUI;
 import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.apps.AEnv;
@@ -54,6 +53,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_Context_Util;
+import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
@@ -273,7 +273,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		// Load ASI Panel if ContentType value pre-filled from the context
 		loadASIPanel();
 
-		btnFileUpload.setUpload(AdempiereWebUI.getUploadSetting());
+		btnFileUpload.setUpload(DMS_ZK_Util.getUploadSetting());
 		btnFileUpload.addEventListener(Events.ON_UPLOAD, this);
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);

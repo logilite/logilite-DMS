@@ -23,9 +23,11 @@ import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.compiere.model.MImage;
+import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSContent;
@@ -48,6 +50,20 @@ public class DMS_ZK_Util
 {
 
 	static CLogger log = CLogger.getCLogger(DMS_ZK_Util.class);
+
+	/**
+	 * @return string for setupload
+	 */
+	public static String getUploadSetting()
+	{
+		StringBuilder uploadSetting = new StringBuilder("true,native");
+		int size = MSysConfig.getIntValue(DMSConstant.DMS_ZK_MAX_UPLOAD_SIZE, 0);
+		if (size > 0)
+		{
+			uploadSetting.append(",maxsize=").append(size);
+		}
+		return uploadSetting.toString();
+	} // getUploadSetting
 
 	public static void downloadDocument(DMS dms, I_DMS_Version version) throws FileNotFoundException, IOException
 	{
