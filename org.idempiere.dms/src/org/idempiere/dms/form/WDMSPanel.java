@@ -96,6 +96,7 @@ import org.idempiere.dms.service.CreateZipArchive;
 import org.idempiere.dms.util.DMSConvertToPDFUtils;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSPermissionUtils;
+import org.idempiere.dms.util.DMSSearchUtils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSAssociation;
@@ -1150,7 +1151,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			String documentView = cobDocumentView.getSelectedItem().getValue();
 			if (isSearch)
-				contentsMap = dms.renderSearchedContent(getQueryParamas(), currDMSContent, tableID, recordID);
+				contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID);
 			else if (isGenericSearch)
 				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent, documentView);
 			else
@@ -1752,15 +1753,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 	} // linkCopyDocument
 
-	private HashMap<String, List<Object>> getQueryParamas()
+	private HashMap<String, List<Object>> getQueryParams()
 	{
 		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
 
 		if (!Util.isEmpty(txtDocumentName.getValue(), true))
-			setSearchParams(DMSConstant.NAME, txtDocumentName.getValue().toLowerCase(), null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.NAME, txtDocumentName.getValue().toLowerCase(), null, params);
 
 		if (!Util.isEmpty(txtDescription.getValue(), true))
-			setSearchParams(DMSConstant.DESCRIPTION, "*" + txtDescription.getValue().toLowerCase().trim() + "*", null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.DESCRIPTION, "*" + txtDescription.getValue().toLowerCase().trim() + "*", null, params);
 
 		//
 		if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() != null)
@@ -1768,12 +1769,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (dbCreatedFrom.getValue().after(dbCreatedTo.getValue()))
 				throw new WrongValueException(dbCreatedFrom, "Invalid Date Range");
 			else
-				setSearchParams(DMSConstant.CREATED, dbCreatedFrom.getValue(), dbCreatedTo.getValue(), params);
+				DMSSearchUtils.setSearchParams(DMSConstant.CREATED, dbCreatedFrom.getValue(), dbCreatedTo.getValue(), params);
 		}
 		else if (dbCreatedFrom.getValue() != null && dbCreatedTo.getValue() == null)
-			setSearchParams(DMSConstant.CREATED, dbCreatedFrom.getValue(), "*", params);
+			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, dbCreatedFrom.getValue(), "*", params);
 		else if (dbCreatedTo.getValue() != null && dbCreatedFrom.getValue() == null)
-			setSearchParams(DMSConstant.CREATED, "*", dbCreatedTo.getValue(), params);
+			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, "*", dbCreatedTo.getValue(), params);
 
 		//
 		if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() != null)
@@ -1781,29 +1782,29 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (dbUpdatedFrom.getValue().after(dbUpdatedTo.getValue()))
 				throw new WrongValueException(dbUpdatedFrom, "Invalid Date Range");
 			else
-				setSearchParams(DMSConstant.UPDATED, dbUpdatedFrom.getValue(), dbUpdatedTo.getValue(), params);
+				DMSSearchUtils.setSearchParams(DMSConstant.UPDATED, dbUpdatedFrom.getValue(), dbUpdatedTo.getValue(), params);
 		}
 		else if (dbUpdatedFrom.getValue() != null && dbUpdatedTo.getValue() == null)
-			setSearchParams(DMSConstant.UPDATED, dbUpdatedFrom.getValue(), "*", params);
+			DMSSearchUtils.setSearchParams(DMSConstant.UPDATED, dbUpdatedFrom.getValue(), "*", params);
 		else if (dbUpdatedTo.getValue() != null && dbUpdatedFrom.getValue() == null)
-			setSearchParams(DMSConstant.UPDATED, "*", dbUpdatedTo.getValue(), params);
+			DMSSearchUtils.setSearchParams(DMSConstant.UPDATED, "*", dbUpdatedTo.getValue(), params);
 
 		if (lstboxCreatedBy.getValue() != null)
-			setSearchParams(DMSConstant.CREATEDBY, lstboxCreatedBy.getValue(), null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.CREATEDBY, lstboxCreatedBy.getValue(), null, params);
 
 		if (lstboxUpdatedBy.getValue() != null)
-			setSearchParams(DMSConstant.UPDATEDBY, lstboxUpdatedBy.getValue(), null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.UPDATEDBY, lstboxUpdatedBy.getValue(), null, params);
 
 		String documentView = cobDocumentView.getSelectedItem().getValue();
 		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-			setSearchParams(DMSConstant.SHOW_INACTIVE, true, null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.SHOW_INACTIVE, true, null, params);
 		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
-			setSearchParams(DMSConstant.SHOW_INACTIVE, false, null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.SHOW_INACTIVE, false, null, params);
 
 		//
 		if (lstboxContentType.getValue() != null)
 		{
-			setSearchParams(DMSConstant.CONTENTTYPE, lstboxContentType.getValue(), null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.CONTENTTYPE, lstboxContentType.getValue(), null, params);
 
 			for (WEditor editor : m_editors)
 			{
@@ -1916,35 +1917,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				//
 				if (from != null || to != null)
-					setSearchParams(compName, from, to, params);
+					DMSSearchUtils.setSearchParams(compName, from, to, params);
 			}
 		}
 
 		if (tableID > 0)
-			setSearchParams(DMSConstant.AD_TABLE_ID, dms.validTableID(tableID), null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.AD_TABLE_ID, dms.validTableID(tableID), null, params);
 
 		if (recordID > 0)
-			setSearchParams(DMSConstant.RECORD_ID, dms.validRecordID(recordID), null, params);
+			DMSSearchUtils.setSearchParams(DMSConstant.RECORD_ID, dms.validRecordID(recordID), null, params);
 
 		return params;
 	} // getQueryParamas
-
-	private void setSearchParams(String searchAttributeName, Object data, Object data2, HashMap<String, List<Object>> params)
-	{
-		ArrayList<Object> value = new ArrayList<Object>();
-
-		if (data instanceof Date || data instanceof Timestamp)
-			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data));
-		else if (data != null)
-			value.add(data);
-
-		if (data2 instanceof Date || data2 instanceof Timestamp)
-			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data2));
-		else if (data2 != null)
-			value.add(data2);
-
-		params.put(searchAttributeName, value);
-	} // setSearchParams
 
 	@Override
 	public void valueChange(ValueChangeEvent event)
