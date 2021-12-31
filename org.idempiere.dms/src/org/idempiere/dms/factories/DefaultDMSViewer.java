@@ -1,5 +1,6 @@
 package org.idempiere.dms.factories;
 
+import org.idempiere.dms.component.DefaultComponentIconViewerGallery;
 import org.idempiere.dms.component.DefaultComponentIconViewerLarge;
 import org.idempiere.dms.component.DefaultComponentIconViewerList;
 import org.idempiere.dms.component.DefaultComponentIconViewerVersion;
@@ -22,6 +23,8 @@ public class DefaultDMSViewer implements IDMSViewerFactory
 			return new DefaultComponentIconViewerList();
 		else if (iconView.equals(DMSConstant.ICON_VIEW_VERSION))
 			return new DefaultComponentIconViewerVersion();
+		else if (iconView.equals(DMSConstant.ICON_VIEW_GALLERY))
+			return new DefaultComponentIconViewerGallery();
 
 		return null;
 	}

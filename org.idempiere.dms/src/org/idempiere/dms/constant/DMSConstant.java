@@ -47,6 +47,8 @@ public final class DMSConstant
 	// Content widget size
 	public static final int					CONTENT_LARGE_ICON_WIDTH				= 135;
 	public static final int					CONTENT_LARGE_ICON_HEIGHT				= 135;
+	public static final int					CONTENT_GALLERY_ICON_WIDTH				= 50;
+	public static final int					CONTENT_GALLERY_ICON_HEIGHT				= 50;
 
 	// Cell attributes
 	public static final String				COMP_ATTRIBUTE_CONTENT					= "ATTR_CONTENT";
@@ -73,6 +75,7 @@ public final class DMSConstant
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
 	public static final String				ICON_VIEW_LARGE							= "ICON_VIEW_LARGE";
 	public static final String				ICON_VIEW_VERSION						= "ICON_VIEW_VERSION";
+	public static final String				ICON_VIEW_GALLERY						= "ICON_VIEW_EDITOR";
 
 	// Regular Expression
 	public static final String				REG_SPACE								= "\\S+";
@@ -231,6 +234,9 @@ public final class DMSConstant
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL	= "margin: 5px; background: #e2e2e2; border: 4px double #ffffff !important; border-radius: 5px;";
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED	= "margin: 5px; background: #abcdff; border: 4px double #3363ad !important; border-radius: 5px;";
 
+	public static final String				CSS_CONTENT_COMP_VIEWER_GALLERY_NORMAL	= "margin: 2px; background: #e2e2e2; border: 2px double #ffffff !important; border-radius: 5px;";
+	public static final String				CSS_CONTENT_COMP_VIEWER_GALLRY_SELECTED	= "margin: 2px; background: #abcdff; border: 2px double #3363ad !important; border-radius: 5px;";
+
 	public static final String				CSS_CONTENT_COMP_VIEWER_LIST_NORMAL		= "border-top: 1px solid #ffffff; border-bottom: 0px double #ffffff;";
 	public static final String				CSS_CONTENT_COMP_VIEWER_LIST_SELECTED	= "border-top: 1px solid #3363ad; border-bottom: 1px double #3363ad;";
 
@@ -238,6 +244,7 @@ public final class DMSConstant
 
 	public static final String				CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE	= "margin: 5px; background: #abcdff; border: red solid;";
 	public static final String				CSS_CONTENT_VIEWER_LIST_SEL_INACTIVE	= "border-top: 1px solid red; border-bottom: 1px double red;";
+	public static final String				CSS_CONTENT_VIEWER_GALLERY_SEL_INACTIVE	= "margin: 2px; background: #abcdff; border: red solid;";
 
 	/*
 	 * Queries
