@@ -18,8 +18,10 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -686,5 +688,22 @@ public class DMSSearchUtils
 		Set<I_DMS_Version> childContents = contentsMap.keySet();
 		return childContents.toArray(new I_DMS_Version[childContents.size()]);
 	} // getChildContentFiltered
+
+	public static void setSearchParams(String searchAttributeName, Object data, Object data2, HashMap<String, List<Object>> params)
+	{
+		ArrayList<Object> value = new ArrayList<Object>();
+
+		if (data instanceof Date || data instanceof Timestamp)
+			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data));
+		else if (data != null)
+			value.add(data);
+
+		if (data2 instanceof Date || data2 instanceof Timestamp)
+			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data2));
+		else if (data2 != null)
+			value.add(data2);
+
+		params.put(searchAttributeName, value);
+	} // setSearchParams
 
 }
