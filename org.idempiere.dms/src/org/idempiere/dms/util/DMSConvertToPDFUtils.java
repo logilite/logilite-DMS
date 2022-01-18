@@ -22,13 +22,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerException;
-
 import org.adempiere.exceptions.AdempiereException;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.idempiere.dms.pdfpreview.ConvertXlsToPdf;
 import org.idempiere.dms.pdfpreview.ConvertXlsxToPdf;
@@ -190,7 +186,7 @@ public class DMSConvertToPDFUtils
 
 			return newXhtmlToPdf;
 		}
-		catch (InvalidFormatException | ParserConfigurationException | TransformerException e)
+		catch (Exception e)
 		{
 			throw new AdempiereException(e);
 		}

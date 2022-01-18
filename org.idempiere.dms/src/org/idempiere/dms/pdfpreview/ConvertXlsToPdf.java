@@ -6,11 +6,11 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFClientAnchor;
@@ -335,7 +335,7 @@ public class ConvertXlsToPdf
 					out.append(";base64,");
 					try
 					{
-						out.append(new String(Base64.encodeBase64(pic.getData()), "US-ASCII"));
+						out.append(new String(Base64.getEncoder().encode(pic.getData()), "US-ASCII"));
 					}
 					catch (final UnsupportedEncodingException e)
 					{

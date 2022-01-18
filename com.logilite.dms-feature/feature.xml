@@ -2,7 +2,7 @@
 <feature
       id="com.logilite.dms.feature"
       label="dms-feature"
-      version="7.1.0.qualifier"
+      version="9.0.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
@@ -18,21 +18,27 @@
    </license>
 
    <requires>
-      <import plugin="org.adempiere.plugin.utils" version="3.1.0" match="greaterOrEqual"/>
-      <import plugin="org.adempiere.base" version="3.1.0" match="greaterOrEqual"/>
-      <import plugin="org.adempiere.ui.zk" version="7.1.0" match="greaterOrEqual"/>
-      <import plugin="org.adempiere.ui" version="3.1.0" match="greaterOrEqual"/>
-      <import plugin="org.apache.commons.net"/>
-      <import plugin="org.apache.commons.codec" version="1.6.0" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.osgi" version="3.10.2" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.osgi.services" version="3.4.0" match="greaterOrEqual"/>
-      <import plugin="com.logilite.search" version="1.0.2" match="greaterOrEqual"/>
-      <import plugin="zhtml" version="8.0.1" match="greaterOrEqual"/>
-      <import plugin="zel" version="8.0.1" match="greaterOrEqual"/>
-      <import plugin="zk" version="8.0.1" match="greaterOrEqual"/>
-      <import plugin="zul" version="8.0.1" match="greaterOrEqual"/>
-      <import plugin="org.apache.commons.io"/>
-      <import plugin="zcommon"/>
+      <import plugin="org.adempiere.plugin.utils" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.base" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.ui.zk" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.ui" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="org.apache.commons.commons-io"/>
+      <import plugin="org.apache.commons.commons-codec"/>
+      <import plugin="org.eclipse.osgi" version="3.16.300" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.osgi.services" version="3.10.100" match="greaterOrEqual"/>
+      <import plugin="com.logilite.search" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="zhtml" version="9.6.0" match="greaterOrEqual"/>
+      <import plugin="zel" version="9.6.0" match="greaterOrEqual"/>
+      <import plugin="zk" version="9.6.0" match="greaterOrEqual"/>
+      <import plugin="zul" version="9.6.0" match="greaterOrEqual"/>
+      <import plugin="zcommon" version="9.6.0" match="greaterOrEqual"/>
+      <import plugin="org.apache.httpcomponents.httpclient"/>
+      <import plugin="org.apache.httpcomponents.httpcore"/>
+      <import plugin="org.idempiere.dms" version="7.1.0" match="greaterOrEqual"/>
+      <import plugin="zkbind" version="9.6.0" match="greaterOrEqual"/>
+      <import plugin="zkplus" version="9.6.0" match="greaterOrEqual"/>
+      <import plugin="zweb" version="9.6.0" match="greaterOrEqual"/>
+
    </requires>
 
    <plugin
