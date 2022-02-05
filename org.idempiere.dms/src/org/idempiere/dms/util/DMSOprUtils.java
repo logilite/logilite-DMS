@@ -127,6 +127,11 @@ public class DMSOprUtils
 		{
 			throw new AdempiereException("Error while committing transaction:" + e.getLocalizedMessage(), e);
 		}
+		finally
+		{
+			if (trx != null)
+				trx.close();
+		}
 		//
 		return addFile(dms, dirContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion);
 
