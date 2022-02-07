@@ -159,7 +159,6 @@ public class ArchiveDMS implements IArchiveStore
 	{
 		try
 		{
-			Trx trx = null;
 			int cTypeID = MDMSContentType.getContentTypeIDFromName(DMS_ARCHIVE_CONTENT_TYPE, 0);
 
 			Integer tableID = archive.getAD_Table_ID();
@@ -186,11 +185,12 @@ public class ArchiveDMS implements IArchiveStore
 			// Generate File
 			File file = generateFile(archive, inflatedData);
 
+			// trx creation
+			String trxName = Trx.createTrxName("DMSArchive_");
+			Trx trx = Trx.get(trxName, true);
+
 			try
 			{
-				String trxName = Trx.createTrxName("UploadFiles");
-				trx = Trx.get(trxName, true);
-
 				// Create DMS Content
 				int contentID = dms.createDMSContent(	file.getName(), MDMSContent.CONTENTBASETYPE_Content, dms.getPathFromContentManager(mountingParent), null,
 														file, cTypeID, 0, true, trxName);
@@ -224,7 +224,7 @@ public class ArchiveDMS implements IArchiveStore
 			}
 			finally
 			{
-				// Close transaction - "UploadFiles"
+				// Close transaction - "DMSArchive_"
 				if (trx != null)
 					trx.close();
 			}
