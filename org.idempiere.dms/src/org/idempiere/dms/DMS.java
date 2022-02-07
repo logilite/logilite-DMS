@@ -711,7 +711,7 @@ public class DMS
 	 */
 	public void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isDeleteLinkableRefs)
 	{
-		String trxName = Trx.createTrxName("DeleteContent");
+		String trxName = Trx.createTrxName("DMSDelete_");
 		Trx trx = Trx.get(trxName, true);
 
 		DMSOprUtils.deleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
@@ -722,7 +722,13 @@ public class DMS
 		}
 		catch (SQLException e)
 		{
+			trx.rollback();
 			throw new AdempiereException("Error while committing transaction for delete content:" + e.getLocalizedMessage(), e);
+		}
+		finally
+		{
+			if (trx != null)
+				trx.close();
 		}
 	} // deleteContent
 
@@ -735,7 +741,7 @@ public class DMS
 	 */
 	public void undoDeleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isDeleteLinkableRefs)
 	{
-		String trxName = Trx.createTrxName("DMSUndoDelete");
+		String trxName = Trx.createTrxName("DMSUndoDel_");
 		Trx trx = Trx.get(trxName, true);
 
 		DMSOprUtils.undoDeleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
@@ -746,7 +752,13 @@ public class DMS
 		}
 		catch (SQLException e)
 		{
+			trx.rollback();
 			throw new AdempiereException("Error while committing transaction for undo delete content:" + e.getLocalizedMessage(), e);
+		}
+		finally
+		{
+			if (trx != null)
+				trx.close();
 		}
 	} // undoDeleteContent
 
