@@ -100,32 +100,38 @@ public class DMSOprUtils
 
 		fileName = Utils.validateFileName(dirContent, file, fileName, isVersion);
 
-		String trxName = Trx.createTrxName("AddFiles");
+		String trxName = Trx.createTrxName("DMSAdd_");
 		Trx trx = Trx.get(trxName, true);
-
-		// Create Directory folder hierarchy OR get leaf DMS-Content
-		if (!Util.isEmpty(dirPath, true) && !dirPath.equals(DMSConstant.FILE_SEPARATOR))
-		{
-			dirContent = dms.createDirHierarchy(dirPath, dirContent, dms.getSubstituteTableInfo().getOriginTable_ID(),
-												dms.getSubstituteTableInfo().getOriginRecord_ID(), trx.getTrxName());
-		}
-
-		if (!isVersion && contentType != null)
-		{
-			contentTypeID = MDMSContentType.getContentTypeIDFromName(contentType, dms.AD_Client_ID);
-
-			MDMSContentType cType = new MDMSContentType(Env.getCtx(), contentTypeID, trx.getTrxName());
-			if (attributeMap != null && !attributeMap.isEmpty())
-				asiID = Utils.createOrUpdateASI(attributeMap, 0, cType.getM_AttributeSet_ID(), trx.getTrxName());
-		}
 
 		try
 		{
+			// Create Directory folder hierarchy OR get leaf DMS-Content
+			if (!Util.isEmpty(dirPath, true) && !dirPath.equals(DMSConstant.FILE_SEPARATOR))
+			{
+				dirContent = dms.createDirHierarchy(dirPath, dirContent, dms.getSubstituteTableInfo().getOriginTable_ID(),
+													dms.getSubstituteTableInfo().getOriginRecord_ID(), trx.getTrxName());
+			}
+
+			if (!isVersion && contentType != null)
+			{
+				contentTypeID = MDMSContentType.getContentTypeIDFromName(contentType, dms.AD_Client_ID);
+
+				MDMSContentType cType = new MDMSContentType(Env.getCtx(), contentTypeID, trx.getTrxName());
+				if (attributeMap != null && !attributeMap.isEmpty())
+					asiID = Utils.createOrUpdateASI(attributeMap, 0, cType.getM_AttributeSet_ID(), trx.getTrxName());
+			}
+
 			trx.commit(true);
 		}
 		catch (SQLException e)
 		{
+			trx.rollback();
 			throw new AdempiereException("Error while committing transaction:" + e.getLocalizedMessage(), e);
+		}
+		finally
+		{
+			if (trx != null)
+				trx.close();
 		}
 		//
 		return addFile(dms, dirContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion);
@@ -150,37 +156,28 @@ public class DMSOprUtils
 	public static int addFile(	DMS dms, MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID, int AD_Table_ID,
 								int Record_ID, boolean isVersion)
 	{
-		boolean isError = false;
 		fileName = Utils.validateFileName(parentContent, file, fileName, isVersion);
 
-		String trxName = Trx.createTrxName("UploadFile");
+		String trxName = Trx.createTrxName("DMSUpload_");
 		Trx trx = Trx.get(trxName, true);
 
 		// Create Content, Association, Store File & Thumbnail generate
 		try
 		{
-			return createContentAssociationFileStoreAndThumnail(dms, parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID,
-																isVersion, trx.getTrxName());
+			int contentID = createContentAssociationFileStoreAndThumnail(	dms, parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID,
+																			isVersion, trx.getTrxName());
+			trx.commit();
+			return contentID;
 		}
 		catch (Exception e)
 		{
-			isError = true;
+			trx.rollback();
 			throw new AdempiereException("Upload Content Failure:\n" + e.getLocalizedMessage());
 		}
 		finally
 		{
 			if (trx != null)
-			{
-				if (isError)
-				{
-					trx.rollback();
-				}
-				else
-				{
-					trx.commit();
-				}
 				trx.close();
-			}
 		}
 	} // addFile
 
@@ -293,7 +290,7 @@ public class DMSOprUtils
 
 	public static void updateContentTypeAndAttribute(DMS dms, int contentID, String contentType, Map<String, String> attributeMap)
 	{
-		String trxName = Trx.createTrxName("UpdateAttrs");
+		String trxName = Trx.createTrxName("DMSUpdateAttrs_");
 		Trx trx = Trx.get(trxName, true);
 
 		try
@@ -314,10 +311,16 @@ public class DMSOprUtils
 			content.setM_AttributeSetInstance_ID(asiID);
 			content.saveEx();
 		}
+		catch (Exception e)
+		{
+			trx.rollback();
+			throw new AdempiereException("Error while updating attributes : " + e.getLocalizedMessage(), e);
+		}
 		finally
 		{
 			if (trx != null)
 			{
+				trx.commit();
 				trx.close();
 			}
 		}
@@ -573,7 +576,7 @@ public class DMSOprUtils
 
 		int DMS_Content_ID = (new MDMSContent(Env.getCtx(), copiedContent.getDMS_Content_ID(), null)).getDMS_Content_Related_ID();
 
-		String trxName = Trx.createTrxName("copy-paste");
+		String trxName = Trx.createTrxName("DMSCopyPaste_");
 		Trx trx = Trx.get(trxName, true);
 
 		try
@@ -675,7 +678,8 @@ public class DMSOprUtils
 		}
 		finally
 		{
-			trx.close();
+			if (trx != null)
+				trx.close();
 			DB.close(rs, pstmt);
 			rs = null;
 			pstmt = null;
@@ -782,7 +786,7 @@ public class DMSOprUtils
 			MDMSAssociation oldDMSAssociation = (MDMSAssociation) mapEntry.getValue();
 			if (oldDMSContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 			{
-				String trxName = Trx.createTrxName("pasteCopyDir");
+				String trxName = Trx.createTrxName("DMSPasteCopyDir_");
 				Trx trx = Trx.get(trxName, true);
 
 				//
