@@ -203,7 +203,10 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 					@Override
 					public void onEvent(Event event) throws Exception
 					{
-						contentID = uploadContent.getUploadedDocContentID();
+						Integer[] contentIDs = uploadContent.getUploadedDocContentIDs();
+						if (contentIDs.length > 0)
+							contentID = contentIDs[0];
+
 						if (form != null && contentID > 0)
 							Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, form));
 					}
