@@ -484,4 +484,14 @@ public class WDLoadASIPanel extends Panel
 		}
 	} // setEditorValue
 
+	/**
+	 * Note: Make sure to save multiple ASI for multiple attachment has separate asi copy
+	 * 
+	 * @param asiID - set asi id
+	 */
+	public void setASIID(int asiID)
+	{
+		this.asiID = asiID;
+	}
+
 }
