@@ -17,7 +17,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -41,6 +44,7 @@ import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.factory.ButtonFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
@@ -55,6 +59,7 @@ import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_Context_Util;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.dms.util.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
@@ -77,53 +82,66 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	/**
 	 * 
 	 */
-	private static final long	serialVersionUID	= -6554158380274124479L;
+	private static final long						serialVersionUID			= -6554158380274124479L;
 
-	private static CLogger		log					= CLogger.getCLogger(WUploadContent.class);
+	private static CLogger							log							= CLogger.getCLogger(WUploadContent.class);
 
-	private DMS					dms;
-	private MDMSContent			DMSContent			= null;
+	public static final String						BTN_ID_UPLOAD_CANCEL_PREFIX	= "UploadCancel_";
 
-	private Label				lblFile				= new Label();
-	private Label				lblContentType		= new Label();
-	private Label				lblDesc				= new Label();
-	private Label				lblName				= new Label();
-	private Label				lblSignature		= new Label();
+	public static final String						ATTRIB_ROW_REF				= "ATTRIB_ROW_REF";
+	public static final String						ATTRIB_ROW_NO				= "ATTRIB_ROW_NO";
 
-	private Textbox				txtDesc				= new Textbox();
-	private Textbox				txtName				= new Textbox();
+	private DMS										dms;
+	private MDMSContent								DMSContent					= null;
 
-	private Grid				gridView			= GridFactory.newGridLayout();
-	private Row					contentTypeRow		= new Row();
-	private Row					nameRow				= new Row();
+	private Label									lblContentType				= new Label();
+	private Label									lblSignature				= new Label();
 
-	private Button				btnFileUpload		= new Button();
-	private Button				btnClose			= null;
-	private Button				btnOk				= null;
-	private ConfirmPanel		confirmPanel		= null;
+	private Textbox									txtSign;
+	private Textbox									txtSignDesc;
 
-	private Tabbox				tabBoxAttribute		= new Tabbox();
-	private Tabs				tabsAttribute		= new Tabs();
-	private Tab					tabAttribute		= new Tab();
-	private Tabpanels			tabPanelsAttribute	= new Tabpanels();
-	private Tabpanel			tabPanelAttribute	= new Tabpanel();
+	private Grid									gridView					= GridFactory.newGridLayout();
+	private Row										contentTypeRow				= new Row();
+	private Row										nameRow						= new Row();
 
-	private SignatureImgBox		signatureBox		= new SignatureImgBox(false);
+	private Button									btnFileUpload				= new Button();
+	private Button									btnClose					= null;
+	private Button									btnOk						= null;
+	private ConfirmPanel							confirmPanel				= null;
 
-	private int					tableID				= 0;
-	private int					recordID			= 0;
-	private int					contentID			= 0;
+	private Tabbox									tabBoxAttribute				= new Tabbox();
+	private Tabs									tabsAttribute				= new Tabs();
+	private Tab										tabAttribute				= new Tab();
+	private Tabpanels								tabPanelsAttribute			= new Tabpanels();
+	private Tabpanel								tabPanelAttribute			= new Tabpanel();
 
-	private boolean				isVersion			= false;
-	private boolean				isCancel			= false;
-	boolean						isDMSSignSupport	= false;
+	private SignatureImgBox							signatureBox				= new SignatureImgBox(false);
 
-	private AMedia				uploadedMedia		= null;
-	private WTableDirEditor		editorContentType;
-	private WDLoadASIPanel		asiPanel			= null;
+	private int										tableID						= 0;
+	private int										recordID					= 0;
+	private ArrayList<Integer>						contentIDs					= new ArrayList<Integer>();
 
-	private int					windowNo			= 0;
-	private int					tabNo				= 0;
+	private boolean									isVersion					= false;
+	private boolean									isCancel					= false;
+	boolean											isDMSSignSupport			= false;
+
+	private WTableDirEditor							editorContentType;
+	private WDLoadASIPanel							asiPanel					= null;
+
+	private int										windowNo					= 0;
+	private int										tabNo						= 0;
+	private int										rowCount					= 0;
+
+	private Rows									rows;
+
+	/*
+	 * Map used for adding/uploading multiple content as same time to track the required data.
+	 * Concurrent map - for one by one content is added to DMS then remove that content from map. If
+	 * in case its failed from DMS side in between then no need to go already uploaded content again
+	 * Map data like: < RowNo, [ row, media, txtName, txtDesc, byte[] ] >
+	 * Here Byte array used for signature data
+	 */
+	private ConcurrentHashMap<Integer, Object[]>	mapUploadInfo				= new ConcurrentHashMap<Integer, Object[]>();
 
 	/**
 	 * Constructor initialize
@@ -160,10 +178,10 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		{
 			this.setStyle("min-height:30%; max-height:100%; overflow-y:auto;");
 			if (isDMSSignSupport)
-				this.setHeight("50%");
+				this.setHeight("60%");
 			else
-				this.setHeight("35%");
-			this.setWidth("50%");
+				this.setHeight("40%");
+			this.setWidth("60%");
 		}
 		else
 		{
@@ -181,6 +199,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 		this.setTitle(DMSConstant.MSG_UPLOAD_CONTENT);
 		this.setClosable(true);
+		this.setMaximizable(true);
 		this.appendChild(gridView);
 		this.addEventListener(Events.ON_OK, this);
 
@@ -198,50 +217,44 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		// Load value from context if available for Content Type field
 		DMS_Context_Util.setEditorDefaultValueFromCtx(Env.getCtx(), windowNo, tabNo, lookup.getDisplayType(), editorContentType);
 
-		lblFile.setValue(DMSConstant.MSG_SELECT_FILE + "* ");
+		//
 		lblContentType.setValue(DMSConstant.MSG_DMS_CONTENT_TYPE);
-		btnFileUpload.setLabel("-");
+		btnFileUpload.setLabel(DMSConstant.MSG_UPLOAD_CONTENT);
 		btnFileUpload.setWidth("100%");
-		lblDesc.setValue(DMSConstant.MSG_DESCRIPTION);
-		txtDesc.setMultiline(true);
-		txtDesc.setRows(2);
-		txtDesc.setWidth("100%");
-		txtName.setWidth("100%");
-		txtName.addEventListener(Events.ON_CHANGE, this);
+		btnFileUpload.setHeight("60px");
 		LayoutUtils.addSclass("txt-btn", btnFileUpload);
 
-		Rows rows = gridView.newRows();
-
+		//
+		rows = gridView.newRows();
 		Row row = rows.newRow();
-		row.appendCellChild(lblFile);
-		row.appendCellChild(btnFileUpload, 2);
+		row.appendCellChild(btnFileUpload, 5);
 
-		lblName.setValue(DMSConstant.MSG_NAME);
-		nameRow.appendCellChild(lblName);
-		nameRow.appendCellChild(txtName, 2);
+		txtSign = createTextbox("", "Content Name", false);
+		txtSignDesc = createTextbox("", DMSConstant.MSG_DESCRIPTION, true);
+		txtSign.setVisible(false);
+		txtSignDesc.setVisible(false);
+		nameRow.appendCellChild(txtSign, 2);
+		nameRow.appendCellChild(txtSignDesc, 2);
 		rows.appendChild(nameRow);
-
-		contentTypeRow.appendCellChild(lblContentType);
-		contentTypeRow.appendCellChild(editorContentType.getComponent(), 2);
-		editorContentType.addValueChangeListener(this);
-		rows.appendChild(contentTypeRow);
-
-		row = rows.newRow();
-		row.appendCellChild(lblDesc);
-		row.appendCellChild(txtDesc, 2);
 
 		if (isDMSSignSupport)
 		{
 			row = rows.newRow();
 			lblSignature.setValue(DMSConstant.MSG_SIGNATURE);
-			row.appendCellChild(lblSignature);
-			row.appendCellChild(signatureBox, 2);
+			row.appendCellChild(lblSignature, 2);
+			row.appendCellChild(signatureBox, 3);
 			signatureBox.addEventListener(Events.ON_CHANGE, this);
 		}
 
+		contentTypeRow.appendCellChild(lblContentType, 2);
+		contentTypeRow.appendCellChild(editorContentType.getComponent(), 3);
+		editorContentType.addValueChangeListener(this);
+		rows.appendChild(contentTypeRow);
+
+		//
 		row = rows.newRow();
 		Cell cell = new Cell();
-		cell.setColspan(3);
+		cell.setColspan(5);
 
 		tabBoxAttribute.appendChild(tabsAttribute);
 		tabBoxAttribute.appendChild(tabPanelsAttribute);
@@ -256,6 +269,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		cell.appendChild(tabBoxAttribute);
 		row.appendChild(cell);
 
+		//
 		row = rows.newRow();
 		confirmPanel = new ConfirmPanel();
 		btnOk = confirmPanel.createButton(ConfirmPanel.A_OK);
@@ -263,7 +277,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 
 		cell = new Cell();
 		cell.setAlign("right");
-		cell.setColspan(3);
+		cell.setColspan(4);
 		cell.appendChild(btnOk);
 		cell.appendChild(new Space());
 		cell.appendChild(btnClose);
@@ -273,7 +287,7 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		// Load ASI Panel if ContentType value pre-filled from the context
 		loadASIPanel();
 
-		btnFileUpload.setUpload(DMS_ZK_Util.getUploadSetting());
+		btnFileUpload.setUpload("multiple=true," + DMS_ZK_Util.getUploadSetting());
 		btnFileUpload.addEventListener(Events.ON_UPLOAD, this);
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
@@ -293,18 +307,51 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		if (e instanceof UploadEvent)
 		{
 			UploadEvent ue = (UploadEvent) e;
-			processUploadMedia(ue.getMedia());
+			processUploadMedia(ue.getMedias());
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(e.getName()))
 		{
+			if (isVersion && mapUploadInfo.size() > 1)
+			{
+				throw new WrongValueException(btnFileUpload, "Please upload only single content for versioning");
+			}
+
 			saveUploadedDocument();
+		}
+		else if (e.getTarget().getId().startsWith(BTN_ID_UPLOAD_CANCEL_PREFIX))
+		{
+			Button btnCancelRow = (Button) e.getTarget();
+			int rowNo = (int) btnCancelRow.getAttribute(ATTRIB_ROW_NO);
+			Row rowRef = (Row) btnCancelRow.getAttribute(ATTRIB_ROW_REF);
+
+			//
+			rows.removeChild(rowRef);
+			mapUploadInfo.remove(rowNo);
+			//
+			if (mapUploadInfo.size() <= 0)
+			{
+				txtSign.setValue(null);
+				txtSign.setVisible(false);
+
+				txtSignDesc.setVisible(false);
+				txtSignDesc.setValue(null);
+
+				signatureBox.setReadWrite(true);
+
+				btnFileUpload.setEnabled(true);
+				setBtnLabelFileUpload();
+			}
+			else
+			{
+				setBtnLabelFileUpload();
+			}
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
 			isCancel = true;
 			this.detach();
 		}
-		else if (e.getTarget().equals(signatureBox))
+		else if (e.getTarget().equals(signatureBox) || e.getTarget().equals(signatureBox.getImage()))
 		{
 			signatureBox.setContent(signatureBox.getAImage());
 			if (signatureBox.getAImage() != null)
@@ -313,111 +360,184 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 				if (isVersion)
 				{
 					MDMSContent parentContent = new MDMSContent(Env.getCtx(), DMSContent.getDMS_Content_Related_ID(), null);
-					txtName.setValue(parentContent.getName().substring(0, parentContent.getName().lastIndexOf(".")));
+					txtSign.setValue(parentContent.getName().substring(0, parentContent.getName().lastIndexOf(".")));
 				}
 				else
 				{
-					txtName.setValue("Signature_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()));
+					txtSign.setValue("Signature_" + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()));
 				}
+
+				// row, media, txtName, txtDesc, byte[]
+				mapUploadInfo.put(0, new Object[] { null, null, txtSign, txtSignDesc, signatureBox.getAImage().getByteData() });
+
+				txtSign.setVisible(true);
+				txtSignDesc.setVisible(true);
 			}
 			else
 			{
 				btnFileUpload.setEnabled(true);
-				txtName.setValue(null);
+
+				txtSign.setValue(null);
+				txtSign.setVisible(false);
+
+				txtSignDesc.setVisible(false);
+				txtSignDesc.setValue(null);
 			}
 		}
-	}
+	} // onEvent
 
 	/**
 	 * save uploaded document in current directory
 	 */
 	private void saveUploadedDocument()
 	{
-		if (btnFileUpload.getLabel().equalsIgnoreCase("-") && signatureBox.getAImage() == null)
-			throw new WrongValueException(btnFileUpload, DMSConstant.MSG_FILL_MANDATORY);
+		if (mapUploadInfo.size() <= 0 && signatureBox.getAImage() == null)
+			throw new WrongValueException(btnFileUpload, DMSConstant.MSG_UPLOAD_CONTENT);
 
-		if (Util.isEmpty(txtName.getValue(), true))
-			throw new WrongValueException(txtName, "File name is mandatory");
-
-		File tmpFile = null;
-		byte[] fileData = null;
-		try
+		for (Entry<Integer, Object[]> map : mapUploadInfo.entrySet())
 		{
-			if (signatureBox.getAImage() != null)
-			{
-				tmpFile = File.createTempFile(txtName.getValue(), ".png");
-				fileData = signatureBox.getAImage().getByteData();
-			}
-			else
-			{
-				tmpFile = File.createTempFile(uploadedMedia.getName(), "." + uploadedMedia.getFormat());
-				fileData = uploadedMedia.getByteData();
-			}
+			Textbox txtBox = (Textbox) map.getValue()[2];
+			if (Util.isEmpty(txtBox.getValue(), true))
+				throw new WrongValueException(txtBox, DMSConstant.MSG_FILL_MANDATORY);
 
-			FileOutputStream os = new FileOutputStream(tmpFile);
-			os.write(fileData);
-			os.flush();
-			os.close();
+			String errorMsg = Utils.isValidFileName(txtBox.getValue(), false);
+			if (!Util.isEmpty(errorMsg))
+				throw new WrongValueException(txtBox, errorMsg);
+		}
 
-			if (DMSContent != null && DMSContent.getDMS_Content_ID() > 0)
+		// Add content in DMS one by one
+		for (Entry<Integer, Object[]> map : mapUploadInfo.entrySet())
+		{
+			File tmpFile = null;
+			byte[] fileData = null;
+			Textbox txtName = null;
+			Textbox txtDesc = null;
+			try
 			{
-				MDMSAssociation destAssociation = dms.getParentAssociationFromContent(DMSContent.getDMS_Content_ID());
-				tableID = destAssociation.getAD_Table_ID();
-				recordID = destAssociation.getRecord_ID();
-			}
+				txtName = (Textbox) map.getValue()[2];
+				txtDesc = (Textbox) map.getValue()[3];
 
-			// Adding File
-			if (isVersion)
-			{
-				dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue(), tableID, recordID);
-			}
-			else
-			{
-				int ASI_ID = 0;
-				int cTypeID = 0;
-
-				if (editorContentType.getValue() != null)
+				// Prepare temporary file
+				if (map.getValue()[0] == null && map.getValue()[4] != null)
 				{
-					cTypeID = (int) editorContentType.getValue();
-					ASI_ID = asiPanel.saveAttributes();
+					tmpFile = File.createTempFile(txtName.getValue(), ".png");
+					fileData = (byte[]) map.getValue()[4];
+				}
+				else
+				{
+					AMedia media = (AMedia) map.getValue()[1];
+					tmpFile = File.createTempFile(media.getName(), "." + media.getFormat());
+					fileData = media.getByteData();
 				}
 
-				contentID = dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
-				if (DMSContent != null && !DMSContent.isMounting() && DMSContent.getDMS_Content_ID() != contentID)
+				FileOutputStream os = new FileOutputStream(tmpFile);
+				os.write(fileData);
+				os.flush();
+				os.close();
+
+				if (DMSContent != null && DMSContent.getDMS_Content_ID() > 0)
 				{
-					MDMSContent content = (MDMSContent) MTable.get(DMSContent.getCtx(), MDMSContent.Table_ID).getPO(contentID, DMSContent.get_TrxName());
-					dms.grantChildPermissionFromParentContent(content, DMSContent);
+					MDMSAssociation destAssociation = dms.getParentAssociationFromContent(DMSContent.getDMS_Content_ID());
+					tableID = destAssociation.getAD_Table_ID();
+					recordID = destAssociation.getRecord_ID();
+				}
+
+				// Adding File to DMS
+				if (isVersion)
+				{
+					dms.addFileVersion(DMSContent, tmpFile, txtDesc.getValue(), tableID, recordID);
+				}
+				else
+				{
+					int ASI_ID = 0;
+					int cTypeID = 0;
+
+					if (editorContentType.getValue() != null)
+					{
+						cTypeID = (int) editorContentType.getValue();
+						ASI_ID = asiPanel.saveAttributes();
+						asiPanel.setASIID(0);
+					}
+
+					int contentID = dms.addFile(DMSContent, tmpFile, txtName.getValue(), txtDesc.getValue(), cTypeID, ASI_ID, tableID, recordID);
+					if (DMSContent != null && !DMSContent.isMounting() && DMSContent.getDMS_Content_ID() != contentID)
+					{
+						MDMSContent content = (MDMSContent) MTable.get(DMSContent.getCtx(), MDMSContent.Table_ID).getPO(contentID, DMSContent.get_TrxName());
+						dms.grantChildPermissionFromParentContent(content, DMSContent);
+					}
+					// Add id in list for returning
+					contentIDs.add(contentID);
+
+					// Remove from map as content added in DMS
+					Object[] data = mapUploadInfo.remove(map.getKey());
+
+					if (data[0] != null)
+					{
+						// Remove name and description field row
+						rows.removeChild((Row) data[0]);
+					}
+					setBtnLabelFileUpload();
 				}
 			}
-		}
-		catch (IOException e)
-		{
-			log.log(Level.SEVERE, "Fail to convert Media to File.", e);
-			throw new AdempiereException("Fail to convert Media to File.", e);
-		}
-		finally
-		{
-			if (tmpFile != null)
-				tmpFile.delete();
+			catch (IOException e)
+			{
+				log.log(Level.SEVERE, "Fail to convert Media to File for " + txtName.getValue(), e);
+				throw new WrongValueException(txtName, "Fail to convert Media to File: " + e.getLocalizedMessage(), e);
+			}
+			catch (Exception e)
+			{
+				throw new WrongValueException(txtName, e.getLocalizedMessage(), e);
+			}
+			finally
+			{
+				if (tmpFile != null)
+					tmpFile.delete();
+			}
 		}
 
 		this.detach();
 	} // saveUploadedDocument
 
 	/**
-	 * check media is uploaded
+	 * check medias is uploaded
 	 * 
-	 * @param media
+	 * @param medias
 	 */
-	private void processUploadMedia(Media media)
+	private void processUploadMedia(Media[] medias)
 	{
-		if (media == null)
+		if (medias == null)
 			return;
+
 		try
 		{
-			uploadedMedia = new AMedia(media.getName(), null, null, media.getByteData());
-			btnFileUpload.setLabel(media.getName());
-			txtName.setValue(FilenameUtils.getBaseName(media.getName()));
+			for (Media media : medias)
+			{
+				String name = FilenameUtils.getBaseName(media.getName());
+
+				//
+				Textbox txtName = createTextbox(name, "Content Name", false);
+				Textbox txtDesc = createTextbox("", DMSConstant.MSG_DESCRIPTION, true);
+				Button btnCancel = ButtonFactory.createNamedButton("Cancel", false, true);
+				btnCancel.setId(BTN_ID_UPLOAD_CANCEL_PREFIX + rowCount);
+				txtName.setWidth("98%");
+
+				Row row = new Row();
+				row.appendCellChild(txtName, 2);
+				row.appendCellChild(txtDesc, 2);
+				row.appendCellChild(btnCancel, 1);
+				btnCancel.setAttribute(ATTRIB_ROW_REF, row);
+				btnCancel.setAttribute(ATTRIB_ROW_NO, rowCount);
+				btnCancel.addEventListener(Events.ON_CLICK, this);
+
+				rows.insertBefore(row, nameRow);
+				row.getLastCell().setWidth("10px");
+
+				Object[] value = new Object[] { row, new AMedia(media.getName(), null, null, media.getByteData()), txtName, txtDesc };
+				mapUploadInfo.put(rowCount, value);
+				rowCount++;
+			}
+
+			setBtnLabelFileUpload();
 			signatureBox.setReadWrite(false);
 		}
 		catch (Exception e)
@@ -449,6 +569,28 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 		}
 	} // loadASIPanel
 
+	private Textbox createTextbox(String name, String placeholder, boolean isForDesc)
+	{
+		Textbox txtbox = new Textbox();
+		txtbox.setPlaceholder(placeholder);
+		txtbox.setWidth("100%");
+		txtbox.setValue(name);
+		if (isForDesc)
+		{
+			txtbox.setMultiline(true);
+			txtbox.setRows(2);
+		}
+		return txtbox;
+	} // createTextbox
+
+	public void setBtnLabelFileUpload()
+	{
+		if (mapUploadInfo.size() <= 0)
+			btnFileUpload.setLabel(DMSConstant.MSG_UPLOAD_CONTENT);
+		else
+			btnFileUpload.setLabel(DMSConstant.MSG_UPLOAD_CONTENT + " [ " + mapUploadInfo.size() + " content(s) ] ");
+	} // setBtnLabelFileUpload
+
 	/**
 	 * @return true if dialog cancel by user
 	 */
@@ -460,8 +602,8 @@ public class WUploadContent extends Window implements EventListener<Event>, Valu
 	/**
 	 * @return content ID of the uploaded document
 	 */
-	public int getUploadedDocContentID()
+	public Integer[] getUploadedDocContentIDs()
 	{
-		return contentID;
+		return contentIDs.toArray(new Integer[contentIDs.size()]);
 	}
 }
