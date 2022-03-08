@@ -90,6 +90,12 @@ public class DMS_ZK_Util
 		Filedownload.save(media);
 	} // downloadDocument
 
+	public static void downloadFile(String filename, String format, String ctype, File destZipFile) throws FileNotFoundException
+	{
+		AMedia media = new AMedia(filename, format, ctype, new FileInputStream(destZipFile.getAbsolutePath()));
+		Filedownload.save(media);
+	} // downloadFile
+
 	/**
 	 * Get AImage for the Content
 	 * 
