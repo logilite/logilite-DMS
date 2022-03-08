@@ -109,7 +109,7 @@ public class CreateZipArchive
 			/**
 			 * Download zip
 			 */
-			DMS_ZK_Util.downloaFile(headDirName + ".zip", "", "multipart/x-mixed-replace;boundary=END", destZipFile);
+			DMS_ZK_Util.downloadFile(headDirName + ".zip", "", "multipart/x-mixed-replace;boundary=END", destZipFile);
 
 			/**
 			 * Delete the zip file after the download
