@@ -1,7 +1,6 @@
 package org.idempiere.dms.service;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Set;
@@ -14,8 +13,6 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSContent;
-import org.zkoss.util.media.AMedia;
-import org.zkoss.zhtml.Filedownload;
 
 /**
  * Create Zip file to download multiple contents
@@ -112,8 +109,7 @@ public class CreateZipArchive
 			/**
 			 * Download zip
 			 */
-			AMedia media = new AMedia(headDirName + ".zip", "", "multipart/x-mixed-replace;boundary=END", new FileInputStream(destZipFile.getAbsolutePath()));
-			Filedownload.save(media);
+			DMS_ZK_Util.downloaFile(headDirName + ".zip", "", "multipart/x-mixed-replace;boundary=END", destZipFile);
 
 			/**
 			 * Delete the zip file after the download
