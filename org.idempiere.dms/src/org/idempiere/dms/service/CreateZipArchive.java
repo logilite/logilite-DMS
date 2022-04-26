@@ -1,16 +1,11 @@
 package org.idempiere.dms.service;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Set;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Target;
-import org.apache.tools.ant.taskdefs.Zip;
 import org.compiere.tools.FileUtil;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
@@ -18,9 +13,6 @@ import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSContent;
-import org.zkoss.io.Files;
-import org.zkoss.util.media.AMedia;
-import org.zkoss.zhtml.Filedownload;
 
 /**
  * Create Zip file to download multiple contents
@@ -109,7 +101,7 @@ public class CreateZipArchive
 
 			// create the compressed file
 			String includesdir = headDirName + File.separator + "**";
-			zipFolder(srcFolder, destZipFile, includesdir);
+			DMS_ZK_Util.zipFolder(srcFolder, destZipFile, includesdir);
 
 			// Delete root directory, No needed after zip created
 			FileUtil.deleteFolderRecursive(new File(rootDir));
@@ -117,8 +109,7 @@ public class CreateZipArchive
 			/**
 			 * Download zip
 			 */
-			AMedia media = new AMedia(headDirName + ".zip", "", "multipart/x-mixed-replace;boundary=END", new FileInputStream(destZipFile.getAbsolutePath()));
-			Filedownload.save(media);
+			DMS_ZK_Util.downloadFile(headDirName + ".zip", "", "multipart/x-mixed-replace;boundary=END", destZipFile);
 
 			/**
 			 * Delete the zip file after the download
@@ -163,102 +154,8 @@ public class CreateZipArchive
 		else
 		{
 			File fileToZip = dms.getFileFromStorage(version);
-
-			byte[] data = null;
-			FileInputStream fis = null;
-			try
-			{
-				fis = new FileInputStream(fileToZip);
-				data = Files.readAll(fis);
-			}
-			catch (IOException e)
-			{
-				throw new AdempiereException("Error while reading file for the version: " + version.getDMS_Version_ID() + "_" + version.getValue(), e);
-			}
-			finally
-			{
-				if (fis != null)
-					fis.close();
-			}
-
 			//
-			writeBLOB(packageDirectory, data);
+			DMS_ZK_Util.readFileFromAndWriteToDir(packageDirectory, fileToZip);
 		}
 	} // buildPackStructure
-
-	/**
-	 * Write data to given path
-	 * 
-	 * @param  directoryPath - Path to write byte data
-	 * @param  data          - Data of the file
-	 * @return               True if successfully write else throws error
-	 */
-	public boolean writeBLOB(String directoryPath, byte[] data)
-	{
-		FileOutputStream fos = null;
-		try
-		{
-			File file = new File(directoryPath);
-
-			String absolutePath = file.getAbsolutePath();
-			String folderpath = absolutePath.substring(0, absolutePath.lastIndexOf(DMSConstant.FILE_SEPARATOR));
-
-			new File(folderpath).mkdirs();
-
-			if (file.exists())
-			{
-				file = new File(absolutePath);
-			}
-
-			fos = new FileOutputStream(file, true);
-			fos.write(data);
-
-			return true;
-		}
-		catch (Exception e)
-		{
-			throw new AdempiereException("Blob writing failure for directory path: " + directoryPath + ", Error: " + e.getLocalizedMessage());
-		}
-		finally
-		{
-			if (fos != null)
-				try
-				{
-					fos.close();
-				}
-				catch (IOException e)
-				{
-					e.printStackTrace();
-				}
-		}
-	} // writeBLOB
-
-	/**
-	 * Zip the srcFolder into the destFileZipFile. All the folder subtree of the src folder is added
-	 * to the destZipFile archive.
-	 *
-	 * @param srcFolder   File, the path of the srcFolder
-	 * @param destZipFile File, the path of the destination zipFile. This file will be created or
-	 *                    erased.
-	 * @param includesdir
-	 */
-	public static void zipFolder(File srcFolder, File destZipFile, String includesdir)
-	{
-		Zip zipper = new Zip();
-		zipper.setDestFile(destZipFile);
-		zipper.setBasedir(srcFolder);
-		zipper.setIncludes(includesdir.replace(" ", "*"));
-		zipper.setUpdate(true);
-		zipper.setCompress(true);
-		zipper.setCaseSensitive(false);
-		zipper.setFilesonly(false);
-		zipper.setTaskName("zip");
-		zipper.setTaskType("zip");
-		zipper.setProject(new Project());
-		zipper.setOwningTarget(new Target());
-		zipper.execute();
-
-		System.out.println(destZipFile);
-	} // zipFolder
-
 }

@@ -3,6 +3,7 @@ package org.idempiere.dms;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -22,6 +23,9 @@ import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Target;
+import org.apache.tools.ant.taskdefs.Zip;
 import org.compiere.model.MImage;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
@@ -32,6 +36,7 @@ import org.idempiere.model.I_DMS_Content;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSContent;
 import org.zkoss.image.AImage;
+import org.zkoss.io.Files;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zhtml.Filedownload;
 import org.zkoss.zk.ui.Component;
@@ -84,6 +89,12 @@ public class DMS_ZK_Util
 		AMedia media = new AMedia(content.getName(), content.getDMS_MimeType().getMimeType(), "application/octet-stream", bytesArray);
 		Filedownload.save(media);
 	} // downloadDocument
+
+	public static void downloadFile(String filename, String format, String ctype, File destZipFile) throws FileNotFoundException
+	{
+		AMedia media = new AMedia(filename, format, ctype, new FileInputStream(destZipFile.getAbsolutePath()));
+		Filedownload.save(media);
+	} // downloadFile
 
 	/**
 	 * Get AImage for the Content
@@ -300,5 +311,120 @@ public class DMS_ZK_Util
 			throw new AdempiereException("Issue while creating Media file.", e);
 		}
 	} // getMediaFromFile
+
+	/**
+	 * Zip the srcFolder into the destFileZipFile. All the folder subtree of the src folder is added
+	 * to the destZipFile archive.
+	 *
+	 * @param srcFolder   File, the path of the srcFolder
+	 * @param destZipFile File, the path of the destination zipFile. This file will be created or
+	 *                    erased.
+	 * @param includesdir
+	 */
+	public static void zipFolder(File srcFolder, File destZipFile, String includesdir)
+	{
+		Zip zipper = new Zip();
+		zipper.setDestFile(destZipFile);
+		zipper.setBasedir(srcFolder);
+		zipper.setIncludes(includesdir.replace(" ", "*"));
+		zipper.setUpdate(true);
+		zipper.setCompress(true);
+		zipper.setCaseSensitive(false);
+		zipper.setFilesonly(false);
+		zipper.setTaskName("zip");
+		zipper.setTaskType("zip");
+		zipper.setProject(new Project());
+		zipper.setOwningTarget(new Target());
+		zipper.execute();
+	} // zipFolder
+
+	/**
+	 * Read storage file and write it to specified directory path
+	 * 
+	 * @param outputDirectory - To directory path
+	 * @param inputFile       - Storage / Input file
+	 */
+	public static void readFileFromAndWriteToDir(String outputDirectory, File inputFile)
+	{
+		byte[] data = null;
+		FileInputStream fis = null;
+		try
+		{
+			fis = new FileInputStream(inputFile);
+			data = Files.readAll(fis);
+		}
+		catch (IOException e)
+		{
+			throw new AdempiereException("Error while reading file : " + inputFile.getName(), e);
+		}
+		finally
+		{
+			if (fis != null)
+			{
+				try
+				{
+					fis.close();
+				}
+				catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+		//
+		DMS_ZK_Util.writeBLOB(outputDirectory, data);
+	} // readFileFromAndWriteToDir
+
+	/**
+	 * Write data to given path
+	 * 
+	 * @param  directoryPath - Path to write byte data
+	 * @param  data          - Data of the file
+	 * @return               True if successfully write else throws error
+	 */
+	public static boolean writeBLOB(String directoryPath, byte[] data)
+	{
+		FileOutputStream fos = null;
+		try
+		{
+			File file = new File(directoryPath);
+
+			String absolutePath = file.getAbsolutePath();
+			String folderpath = absolutePath.substring(0, absolutePath.lastIndexOf(DMSConstant.FILE_SEPARATOR));
+
+			new File(folderpath).mkdirs();
+
+			if (file.exists())
+			{
+				file = new File(absolutePath);
+			}
+
+			fos = new FileOutputStream(file, true);
+			fos.write(data);
+
+			return true;
+		}
+		catch (Exception e)
+		{
+			throw new AdempiereException("Blob writing failure for directory path: " + directoryPath + ", Error: " + e.getLocalizedMessage());
+		}
+		finally
+		{
+			try
+			{
+				if (fos != null)
+					fos.close();
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+		}
+	} // writeBLOB
+
+	public static String doValidDirName(String directoryName)
+	{
+		return directoryName.replaceAll("[^a-zA-Z 0-9_()-]", "_");
+	} // doValidDirName
 
 }
