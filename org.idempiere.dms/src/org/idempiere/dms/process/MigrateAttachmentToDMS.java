@@ -44,8 +44,18 @@ public class MigrateAttachmentToDMS extends SvrProcess
 		int cntMigrated = 0;
 		int cntDeleted = 0;
 
+		/*
+		 * 284 = AD_Process
+		 * 285 = AD_Process_Para
+		 * 376 = AD_Form
+		 * 454 = AD_PrintForm
+		 * 489 = AD_PrintFormatItem
+		 * 523 = AD_PrintTableFormat
+		 * 50008=AD_Package_Imp_Proc
+		 */
 		List<MAttachment> attachments = new Query(	getCtx(), MAttachment.Table_Name,
-													" AD_Table_ID NOT IN(50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y'", get_TrxName()).list();
+													" AD_Table_ID NOT IN(284, 285, 376, 454, 489, 523, 50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y'",
+													get_TrxName()).list();
 
 		for (MAttachment attachment : attachments)
 		{
@@ -53,13 +63,13 @@ public class MigrateAttachmentToDMS extends SvrProcess
 
 			dms.initMountingStrategy(table.getTableName());
 			dms.initiateMountingContent(table.getTableName(), attachment.getRecord_ID(), attachment.getAD_Table_ID());
-			MDMSContent mountingParent = dms.getRootMountingContent(table.get_Table_ID(), attachment.getRecord_ID());
+			MDMSContent mountingParent = dms.getRootMountingContent(table.getAD_Table_ID(), attachment.getRecord_ID());
 
 			MAttachmentEntry[] attachmentEntries = attachment.getEntries();
 
 			for (MAttachmentEntry entry : attachmentEntries)
 			{
-				statusUpdate("Backuping Attachment :" + entry.getName());
+				statusUpdate(" Backup attachment of " + table.getTableName() + " for Record ID #" + attachment.getRecord_ID() + ": " + entry.getName());
 
 				int contentID = dms.addFile(mountingParent, entry.getFile(), attachment.getAD_Table_ID(), attachment.getRecord_ID());
 				if (contentID > 0)
@@ -83,7 +93,7 @@ public class MigrateAttachmentToDMS extends SvrProcess
 
 		if (m_isDelete || attachments.size() == 0)
 		{
-			processUI.ask("Do you want to delete previous Migrated Attachments?", new Callback<Boolean>() {
+			processUI.ask("Do you want to delete previously migrated attachments?", new Callback<Boolean>() {
 
 				@Override
 				public void onCallback(Boolean result)
@@ -91,7 +101,7 @@ public class MigrateAttachmentToDMS extends SvrProcess
 					if (result)
 					{
 						int cntMigAtt = DB.executeUpdate("DELETE FROM AD_Attachment WHERE isMigratedToDMS = 'Y'", get_TrxName());
-						FDialog.info(0, null, cntMigAtt + " Attachment(s) Deleted Previously Migrated from DB.");
+						FDialog.info(0, null, cntMigAtt + " record(s) attachments were deleted as previously migrated from DB.");
 					}
 				}
 			});
