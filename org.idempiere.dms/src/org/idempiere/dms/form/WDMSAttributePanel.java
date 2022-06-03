@@ -56,6 +56,7 @@ import org.idempiere.dms.DMS;
 import org.idempiere.dms.DMS_ZK_Util;
 import org.idempiere.dms.component.AbstractComponentIconViewer;
 import org.idempiere.dms.constant.DMSConstant;
+import org.idempiere.dms.factories.IDMSUploadContent;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.I_DMS_Association;
@@ -65,6 +66,7 @@ import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSVersion;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -137,8 +139,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 
 	private int					windowNo				= 0;
 	private int					tabNo					= 0;
-	
-	private boolean				isWrite				= true;
+
+	private boolean				isWrite					= true;
 
 	public WDMSAttributePanel(	DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure,
 								boolean isLink, int windowNo,
@@ -154,7 +156,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		this.isLink = isLink;
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
-		
+
 		isWrite = dms.isWritePermission(this.content);
 
 		try
@@ -514,8 +516,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 			final Tab tab = (Tab) tabBox.getSelectedTab();
 			final WDMSAttributePanel panel = this;
 
-			WUploadContent uploadContent = new WUploadContent(dms, content, true, tableId, recordId, windowNo, tabNo);
-			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, content, true, tableId, recordId, windowNo, tabNo);
+			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event arg0) throws Exception
@@ -524,7 +526,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 					tabBox.setSelectedTab(tab);
 				}
 			});
-			uploadContent.addEventListener(Events.ON_CLOSE, this);
+			((Component) uploadContent).addEventListener(Events.ON_CLOSE, this);
 		}
 		else if (event.getTarget().getId().equals(ConfirmPanel.A_REFRESH))
 		{
