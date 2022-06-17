@@ -31,14 +31,15 @@ import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentTypeAccess;
+import org.idempiere.dms.factories.IDMSUploadContent;
 import org.idempiere.dms.form.WDMSPanel;
-import org.idempiere.dms.form.WUploadContent;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSPermissionUtils;
 import org.idempiere.dms.util.DMSSearchUtils;
 import org.idempiere.model.I_DMS_Association;
 import org.idempiere.model.I_DMS_Version;
 import org.idempiere.model.MDMSContent;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -197,8 +198,9 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 				dms.initiateMountingContent(MTable.getTableName(Env.getCtx(), tableID), recordID, tableID);
 				MDMSContent currDMSContent = dms.getRootMountingContent(tableID, recordID);
 
-				WUploadContent uploadContent = new WUploadContent(dms, currDMSContent, false, tableID, recordID, windowNo, 0);
-				uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+				//
+				IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, currDMSContent, false, tableID, recordID, windowNo, 0);
+				((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 					@Override
 					public void onEvent(Event event) throws Exception

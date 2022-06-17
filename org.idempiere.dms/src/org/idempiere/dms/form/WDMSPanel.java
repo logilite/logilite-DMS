@@ -91,6 +91,7 @@ import org.idempiere.dms.component.AbstractComponentIconViewer;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.DMSClipboard;
 import org.idempiere.dms.factories.IContentTypeAccess;
+import org.idempiere.dms.factories.IDMSUploadContent;
 import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.service.CreateZipArchive;
 import org.idempiere.dms.util.DMSConvertToPDFUtils;
@@ -194,7 +195,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	//
 	private Component				compCellRowViewer		= null;
-	private WUploadContent			uploadContent			= null;
+	private IDMSUploadContent		uploadContent			= null;
 	private WCreateDirectoryForm	createDirectoryForm		= null;
 	private WDLoadASIPanel			asiPanel				= null;
 
@@ -781,8 +782,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
-			final WUploadContent uploadContent = new WUploadContent(dms, dirContent, true, this.getTable_ID(), this.getRecord_ID(), windowNo, tabNo);
-			uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+
+			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(	dms, dirContent, true, this.getTable_ID(), this.getRecord_ID(), windowNo,
+																						tabNo);
+			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event e) throws Exception
@@ -1445,9 +1448,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void uploadContent()
 	{
-		uploadContent = new WUploadContent(dms, currDMSContent, false, tableID, recordID, windowNo, tabNo);
+		uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, currDMSContent, false, tableID, recordID, windowNo, tabNo);
 
-		uploadContent.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
+		((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 			@Override
 			public void onEvent(Event event) throws Exception
@@ -1455,7 +1458,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				renderViewer();
 			}
 		});
-		uploadContent.addEventListener(Events.ON_CLOSE, this);
+		((Component) uploadContent).addEventListener(Events.ON_CLOSE, this);
 	} // uploadContent
 
 	/**

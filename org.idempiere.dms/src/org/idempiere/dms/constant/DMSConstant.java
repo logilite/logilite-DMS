@@ -162,7 +162,6 @@ public final class DMSConstant
 	public static final String				MSG_ADVANCE_SEARCH						= Msg.translate(Env.getCtx(), "Advance Search");
 	public static final String				MSG_DIRECTORY_NAME						= Msg.translate(Env.getCtx(), "Directory Name");
 	public static final String				MSG_DMS_CONTENT_TYPE					= Msg.translate(Env.getCtx(), "DMS_ContentType_ID");
-	public static final String				MSG_SIGNATURE							= Msg.translate(Env.getCtx(), "Signature");
 
 	// Msg
 	public static final String				MSG_RENAME								= Msg.getMsg(Env.getCtx(), "Rename");
