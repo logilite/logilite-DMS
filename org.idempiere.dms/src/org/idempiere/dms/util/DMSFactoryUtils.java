@@ -28,6 +28,8 @@ import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IContentManagerProvider;
 import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.dms.factories.IContentTypeAccessFactory;
+import org.idempiere.dms.factories.IDMSUploadContent;
+import org.idempiere.dms.factories.IDMSUploadContentFactory;
 import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.dms.factories.IDMSViewerFactory;
 import org.idempiere.dms.factories.IMountingFactory;
@@ -38,6 +40,7 @@ import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.IThumbnailGeneratorFactory;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.IThumbnailProviderFactory;
+import org.idempiere.model.MDMSContent;
 
 /**
  * Utils for Factory get
@@ -250,5 +253,35 @@ public class DMSFactoryUtils
 		}
 		return null;
 	} // getPermissionFactory
+
+	/**
+	 * Factory call for DMS Upload content form
+	 * 
+	 * @param  dms
+	 * @param  content
+	 * @param  isVersion
+	 * @param  tableID
+	 * @param  recordID
+	 * @param  windowNo
+	 * @param  tabNo
+	 * @return           {@link IDMSUploadContent}
+	 */
+	public static IDMSUploadContent getUploadContenFactory(DMS dms, MDMSContent content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo)
+	{
+		List<IDMSUploadContentFactory> factoryies = Service.locator().list(IDMSUploadContentFactory.class).getServices();
+		if (factoryies != null)
+		{
+			for (IDMSUploadContentFactory factory : factoryies)
+			{
+				IDMSUploadContent uploadContent = factory.getUploadForm(dms, content, isVersion, tableID, recordID, windowNo, tabNo);
+
+				if (uploadContent != null)
+				{
+					return uploadContent;
+				}
+			}
+		}
+		return null;
+	} // getUploadContenFactory
 
 }
