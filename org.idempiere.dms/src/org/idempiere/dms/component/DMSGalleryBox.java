@@ -23,7 +23,6 @@ import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.event.DialogEvents;
-import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.theme.ThemeManager;
 import org.compiere.model.MTable;
 import org.compiere.util.Env;
@@ -61,7 +60,7 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 	private Grid				gridGalleryViewer	= GridFactory.newGridLayout();
 	private Button				btnUpload			= new Button();
 
-	private ADForm				form;
+	private Component			parentComponent;
 	private MDMSContent			content;
 
 	private DMS					dms;
@@ -91,11 +90,11 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 		btnUpload.setHeight("50px");
 	} // DMSGalleryBox
 
-	public DMSGalleryBox(ADForm form, int contentTypeID, String title)
+	public DMSGalleryBox(Component form, int contentTypeID, String title)
 	{
 		this();
 		//
-		this.form = form;
+		this.parentComponent = form;
 		this.contentTypeID = contentTypeID;
 		if (!Util.isEmpty(title, true))
 		{
@@ -209,8 +208,8 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 						if (contentIDs.length > 0)
 							contentID = contentIDs[0];
 
-						if (form != null && contentID > 0)
-							Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, form));
+						if (parentComponent != null && contentID > 0)
+							Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, parentComponent));
 					}
 				});
 			}
@@ -239,8 +238,8 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 						if (contents.isEmpty())
 						{
 							contentID = 0;
-							if (form != null)
-								Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, form));
+							if (parentComponent != null)
+								Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, parentComponent));
 						}
 						else
 						{
