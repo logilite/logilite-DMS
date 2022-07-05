@@ -190,13 +190,12 @@ public class DMSSearchUtils
 		if (!Util.isEmpty(query.toString()))
 			query.append(" AND ");
 
-		query	.append(DMSConstant.AD_CLIENT_ID).append(":(").append(Env.getAD_Client_ID(Env.getCtx())).append(")")
-				.append(" AND ");
+		query.append(DMSConstant.AD_CLIENT_ID).append(":(").append(Env.getAD_Client_ID(Env.getCtx())).append(")");
 
 		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-			query.append(DMSConstant.SHOW_INACTIVE).append(" :true");
+			query.append(" AND ").append(DMSConstant.SHOW_INACTIVE).append(" :true");
 		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
-			query.append(DMSConstant.SHOW_INACTIVE).append(" :false");
+			query.append(" AND ").append(DMSConstant.SHOW_INACTIVE).append(" :false");
 
 		if (recordID > 0)
 			query.append(" AND ").append(DMSConstant.RECORD_ID).append(":").append(recordID);
