@@ -15,20 +15,18 @@ package org.idempiere.dms;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MClientInfo;
 import org.compiere.model.MImage;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.compiere.util.Trx;
 import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IMountingStrategy;
@@ -130,13 +128,19 @@ public class DMS
 		initMountingStrategy(Table_Name);
 	} // Constructor
 
+	public String getContentManagerType()
+	{
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID);
+		return clientInfo.get_ValueAsString("DMS_ContentManagerType");
+	} // getContentManagerType
+
 	public void initMountingStrategy(String Table_Name)
 	{
 		// Initiate the Substitute table info
 		synchronized (o)
 		{
 			ssTableInfo = new DMSSubstituteTableInfo(MTable.getTable_ID(Table_Name));
-			mountingStrategy = DMSFactoryUtils.getMountingStrategy(validTableName(Table_Name));
+			mountingStrategy = DMSFactoryUtils.getMountingStrategy(getContentManagerType(), validTableName(Table_Name));
 		}
 	}
 
@@ -211,8 +215,8 @@ public class DMS
 	public MDMSContent createDirectory(	String dirName, MDMSContent parentContent, int tableID, int recordID, boolean errorIfDirExists,
 										boolean isCreateAssociation, String trxName)
 	{
-		return DMSOprUtils.createDirectory(	this, dirName, parentContent, validTableID(tableID), validRecordID(recordID), errorIfDirExists, isCreateAssociation,
-											trxName);
+		return contentManager.createDirectory(	this, dirName, parentContent, validTableID(tableID), validRecordID(recordID), errorIfDirExists,
+												isCreateAssociation, trxName);
 	} // createDirectory
 
 	/**
@@ -222,7 +226,7 @@ public class DMS
 	 */
 	public MDMSContent createDirHierarchy(String dirPath, MDMSContent dirContent, int AD_Table_ID, int Record_ID, String trxName)
 	{
-		dirContent = DMSOprUtils.createDirHierarchy(this, dirPath, dirContent, validTableID(AD_Table_ID), validRecordID(Record_ID), trxName);
+		dirContent = contentManager.createDirHierarchy(this, dirPath, dirContent, validTableID(AD_Table_ID), validRecordID(Record_ID), trxName);
 		return dirContent;
 	} // createDirHierarchy
 
@@ -293,12 +297,12 @@ public class DMS
 
 	public int checkContentSoftNameExists(MDMSContent parentContent, String fileName)
 	{
-		return Utils.checkContentExists(getPathFromContentManager(parentContent), fileName, false, true);
+		return contentManager.checkContentExists(getPathFromContentManager(parentContent), fileName, false, true);
 	} // checkContentSoftNameExists
 
 	public int checkContentPhysicalNameExists(MDMSContent parentContent, String fileName)
 	{
-		return Utils.checkContentExists(getPathFromContentManager(parentContent), fileName, false, false);
+		return contentManager.checkContentExists(getPathFromContentManager(parentContent), fileName, false, false);
 	} // checkContentPhysicalNameExists
 
 	/*
@@ -358,26 +362,26 @@ public class DMS
 	/*
 	 * Object creation util methods
 	 */
-
 	public int createDMSContent(String name, String contentBaseType, String parentURL, String desc, File file, int contentTypeID, int asiID,
 								boolean isMounting, String trxName)
 	{
-		return MDMSContent.create(name, contentBaseType, parentURL, desc, file, contentTypeID, asiID, isMounting, trxName);
+		return contentManager.createContent(name, contentBaseType, parentURL, desc, file, contentTypeID, asiID, isMounting, trxName);
 	} // createDMSContent
 
 	public int createAssociation(int dms_Content_ID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, String trxName)
 	{
-		return MDMSAssociation.create(dms_Content_ID, contentRelatedID, validRecordID(Record_ID), validTableID(AD_Table_ID), associationTypeID, trxName);
+		return contentManager.createAssociation(dms_Content_ID, contentRelatedID, validRecordID(Record_ID), validTableID(AD_Table_ID), associationTypeID,
+												trxName);
 	} // createAssociation
 
 	public MDMSVersion createVersion(String value, int contentID, int seqNo, File file, String trxName)
 	{
-		return MDMSVersion.create(contentID, value, seqNo, file, trxName);
+		return contentManager.createVersion(contentID, value, seqNo, file, trxName);
 	} // createVersion
 
 	public String createLink(MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
 	{
-		return DMSOprUtils.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
+		return contentManager.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
 	} // createLink
 
 	/*
@@ -467,8 +471,8 @@ public class DMS
 	public int addFile(	String dirPath, File file, String fileName, String description, String contentType, Map<String, String> attributeMap, int AD_Table_ID,
 						int Record_ID)
 	{
-		return DMSOprUtils.addFile(	this, dirPath, file, fileName, description, contentType, attributeMap, validTableID(AD_Table_ID), validRecordID(Record_ID),
-									false);
+		return contentManager.addFile(	this, dirPath, file, fileName, description, contentType, attributeMap, validTableID(AD_Table_ID),
+										validRecordID(Record_ID), false);
 	} // addFile
 
 	public int addFile(MDMSContent parentContent, File file, int AD_Table_ID, int Record_ID)
@@ -478,7 +482,7 @@ public class DMS
 
 	public int addFile(MDMSContent parentContent, File file, String name, String desc, int contentTypeID, int asiID, int AD_Table_ID, int Record_ID)
 	{
-		return DMSOprUtils.addFile(this, parentContent, file, name, desc, contentTypeID, asiID, validTableID(AD_Table_ID), validRecordID(Record_ID), false);
+		return contentManager.addFile(this, parentContent, file, name, desc, contentTypeID, asiID, validTableID(AD_Table_ID), validRecordID(Record_ID), false);
 	} // addFile
 
 	/*
@@ -502,7 +506,7 @@ public class DMS
 
 	public int addFileVersion(MDMSContent parentContent, File file, String desc, int AD_Table_ID, int Record_ID)
 	{
-		return DMSOprUtils.addFile(this, parentContent, file, null, desc, 0, 0, validTableID(AD_Table_ID), validRecordID(Record_ID), true);
+		return contentManager.addFile(this, parentContent, file, null, desc, 0, 0, validTableID(AD_Table_ID), validRecordID(Record_ID), true);
 	} // addFileVersion
 
 	/*
@@ -621,7 +625,7 @@ public class DMS
 	 */
 	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID)
 	{
-		DMSOprUtils.pasteCopyContent(this, copiedContent, destContent, validTableID(tableID), validRecordID(recordID));
+		contentManager.pasteCopyContent(this, copiedContent, destContent, validTableID(tableID), validRecordID(recordID));
 	} // pasteCopyContent
 
 	/**
@@ -634,7 +638,7 @@ public class DMS
 	 */
 	public void pasteCutContent(MDMSContent cutContent, MDMSContent destContent, int tableID, int recordID)
 	{
-		DMSOprUtils.pasteCutContent(this, cutContent, destContent, validTableID(tableID), validRecordID(recordID), isDocExplorerWindow);
+		contentManager.pasteCutContent(this, cutContent, destContent, validTableID(tableID), validRecordID(recordID), isDocExplorerWindow);
 	} // pasteCutContent
 
 	/**
@@ -646,24 +650,7 @@ public class DMS
 	 */
 	public void renameContent(String fileName, MDMSContent content) throws AdempiereException
 	{
-		DMSOprUtils.renameContent(this, fileName, content);
-	} // renameContent
-
-	/**
-	 * Rename Content File/Directory
-	 * 
-	 * @param      fileName
-	 * @param      content
-	 * @param      parent_Content
-	 * @param      tableID
-	 * @param      recordID
-	 * @deprecated                After version table implementation no required to utilize
-	 *                            this method, Just need to re-index its all versioning content
-	 *                            if it is a content document.
-	 */
-	public void renameContent(String fileName, MDMSContent content, MDMSContent parent_Content, int tableID, int recordID)
-	{
-		DMSOprUtils.renameContent(this, fileName, content, parent_Content, validTableID(tableID), validRecordID(recordID), isDocExplorerWindow);
+		contentManager.renameContent(this, fileName, content);
 	} // renameContent
 
 	/**
@@ -675,7 +662,7 @@ public class DMS
 	 */
 	public void renameContentOnly(MDMSContent content, String fileName, String description)
 	{
-		DMSOprUtils.renameContentOnly(this, content, fileName, description, isDocExplorerWindow);
+		contentManager.renameContentOnly(this, content, fileName, description, isDocExplorerWindow);
 	} // renameContentOnly
 
 	/**
@@ -688,7 +675,7 @@ public class DMS
 	 */
 	public void renameFile(MDMSContent content, MDMSAssociation association, String fileName, boolean isAddFileExtention)
 	{
-		DMSOprUtils.renameFile(this, content, fileName, isAddFileExtention);
+		contentManager.renameFile(this, content, fileName, isAddFileExtention);
 	} // renameFile
 
 	/**
@@ -711,25 +698,8 @@ public class DMS
 	 */
 	public void deleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isDeleteLinkableRefs)
 	{
-		String trxName = Trx.createTrxName("DMSDelete_");
-		Trx trx = Trx.get(trxName, true);
+		contentManager.deleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs);
 
-		DMSOprUtils.deleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
-
-		try
-		{
-			trx.commit(true);
-		}
-		catch (SQLException e)
-		{
-			trx.rollback();
-			throw new AdempiereException("Error while committing transaction for delete content:" + e.getLocalizedMessage(), e);
-		}
-		finally
-		{
-			if (trx != null)
-				trx.close();
-		}
 	} // deleteContent
 
 	/**
@@ -741,25 +711,7 @@ public class DMS
 	 */
 	public void undoDeleteContent(MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isDeleteLinkableRefs)
 	{
-		String trxName = Trx.createTrxName("DMSUndoDel_");
-		Trx trx = Trx.get(trxName, true);
-
-		DMSOprUtils.undoDeleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
-
-		try
-		{
-			trx.commit(true);
-		}
-		catch (SQLException e)
-		{
-			trx.rollback();
-			throw new AdempiereException("Error while committing transaction for undo delete content:" + e.getLocalizedMessage(), e);
-		}
-		finally
-		{
-			if (trx != null)
-				trx.close();
-		}
+		contentManager.undoDeleteContent(this, dmsContent, dmsAssociation, isDeleteLinkableRefs);
 	} // undoDeleteContent
 
 	/**
@@ -771,7 +723,7 @@ public class DMS
 	 */
 	public String hasLinkableDocs(I_DMS_Content content, I_DMS_Association association)
 	{
-		return DMSOprUtils.hasLinkableDocs(this, content, association);
+		return contentManager.hasLinkableDocs(this, content, association);
 	} // hasLinkableDocs
 
 	/**
@@ -783,9 +735,7 @@ public class DMS
 	 */
 	public boolean isHierarchyContentExists(int destContentID, int sourceContentID)
 	{
-		int contentID = DB.getSQLValue(	null, DMSConstant.SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY, Env.getAD_Client_ID(Env.getCtx()), destContentID,
-										sourceContentID);
-		return contentID > 0;
+		return contentManager.isHierarchyContentExists(destContentID, sourceContentID);
 	} // isHierarchyContentExists
 
 	/**

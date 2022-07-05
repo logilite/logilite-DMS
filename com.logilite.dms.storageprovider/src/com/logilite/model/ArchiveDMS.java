@@ -36,7 +36,6 @@ import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.util.DMSOprUtils;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
@@ -209,7 +208,7 @@ public class ArchiveDMS implements IArchiveStore
 				MDMSVersion version = dms.createVersion(file.getName(), contentID, 0, file, trxName);
 
 				// File write on Storage provider and Generate Thumbnail Image
-				DMSOprUtils.writeFileOnStorageAndThumnail(dms, file, version);
+				dms.getContentManager().writeFileOnStorageAndThumnail(dms, file, version);
 
 				archive.setByteData(generateEntry(content, new MDMSAssociation(Env.getCtx(), associationID, trxName)));
 
@@ -436,6 +435,6 @@ public class ArchiveDMS implements IArchiveStore
 	public void flush(MArchive archive, MStorageProvider prov)
 	{
 		// TODO Auto-generated method stub
-		
+
 	}
 }

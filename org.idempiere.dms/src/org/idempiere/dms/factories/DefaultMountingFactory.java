@@ -14,14 +14,17 @@
 package org.idempiere.dms.factories;
 
 import org.idempiere.dms.factories.IMountingStrategy;
+import org.idempiere.dms.storage.RelationalContentManager;
 import org.idempiere.dms.factories.IMountingFactory;
 
 public class DefaultMountingFactory implements IMountingFactory
 {
 
 	@Override
-	public IMountingStrategy getMountingStrategy(String Table_Name)
+	public IMountingStrategy getMountingStrategy(String contentManagerType, String Table_Name)
 	{
-		return new DefaultMountingStrategy();
+		if (RelationalContentManager.KEY.equals(contentManagerType))
+			return new DefaultMountingStrategy();
+		return null;
 	}
 }

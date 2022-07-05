@@ -34,8 +34,8 @@ import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.dms.factories.IDMSViewerFactory;
 import org.idempiere.dms.factories.IMountingFactory;
 import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.factories.IPermissionFactory;
+import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.IThumbnailGeneratorFactory;
 import org.idempiere.dms.factories.IThumbnailProvider;
@@ -113,27 +113,31 @@ public class DMSFactoryUtils
 	 * Factory - Content Manager
 	 * 
 	 * @param  AD_Client_ID
-	 * @return              {@link IContentManager}
+	 * @param  contentManagerType
+	 * @return                    {@link IContentManager}
 	 */
 	public static IContentManager getContentManager(int AD_Client_ID)
 	{
-		IContentManager contentManager = cache_contentManager.get(AD_Client_ID);
-
-		if (contentManager != null)
-			return contentManager;
-
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID);
+		String contentManagerType = clientInfo.get_ValueAsString("DMS_ContentManagerType");
 
-		String key = clientInfo.get_ValueAsString("DMS_ContentManagerType");
-
-		if (Util.isEmpty(key))
+		if (Util.isEmpty(contentManagerType))
 			throw new AdempiereException("Content Manager is not defined");
 
-		List<IContentManagerProvider> factories = Service.locator().list(IContentManagerProvider.class).getServices();
+		IContentManager contentManager = cache_contentManager.get(AD_Client_ID);
+		if (contentManager != null)
+		{
+			if (contentManagerType.equals(contentManager.getKey()))
+				return contentManager;
+			else
+				cache_contentManager.remove(AD_Client_ID);
+		}
 
+		//
+		List<IContentManagerProvider> factories = Service.locator().list(IContentManagerProvider.class).getServices();
 		for (IContentManagerProvider factory : factories)
 		{
-			contentManager = factory.get(key);
+			contentManager = factory.get(contentManagerType);
 			if (contentManager != null)
 			{
 				cache_contentManager.put(AD_Client_ID, contentManager);
@@ -178,17 +182,18 @@ public class DMSFactoryUtils
 	/**
 	 * Factory - Mounting Strategy
 	 * 
+	 * @param  contentManagerType
 	 * @param  Table_Name
-	 * @return            {@link IMountingStrategy}
+	 * @return                    {@link IMountingStrategy}
 	 */
-	public static IMountingStrategy getMountingStrategy(String Table_Name)
+	public static IMountingStrategy getMountingStrategy(String contentManagerType, String Table_Name)
 	{
 		IMountingStrategy mounting = null;
 		List<IMountingFactory> factories = Service.locator().list(IMountingFactory.class).getServices();
 
 		for (IMountingFactory factory : factories)
 		{
-			mounting = factory.getMountingStrategy(Table_Name);
+			mounting = factory.getMountingStrategy(contentManagerType, Table_Name);
 
 			if (mounting != null)
 			{
