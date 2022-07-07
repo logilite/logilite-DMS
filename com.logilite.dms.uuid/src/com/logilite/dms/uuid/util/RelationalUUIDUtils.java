@@ -412,15 +412,6 @@ public class RelationalUUIDUtils
 			{
 				dirName = dms.getContentManager().getContentName(	dms.getFileStorageProvider(), DMSConstant.CONTENT_DIR, parentContent, dirContentName, "", "",
 																	DMSConstant.OPERATION_CREATE);
-				File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirName);
-				// File newFile = new File(dirName);
-				if (!newFile.exists())
-				{
-					if (!newFile.mkdir())
-						throw new AdempiereException(	"Something went wrong!\nDirectory is not created:\n'"
-														+ dms.getPathFromContentManager(parentVersion)
-														+ DMSConstant.FILE_SEPARATOR + newFile.getName() + "'");
-				}
 			}
 
 			// Get directory content ID
@@ -453,7 +444,17 @@ public class RelationalUUIDUtils
 											trxName);
 
 				// Create DMS Version
-				MDMSVersion.create(contentID, dirContentName, 0, null, trxName);
+				MDMSVersion version = UtilsUUID.createUU(contentID, dirContentName, 0, null, trxName);
+				File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU());
+				// File newFile = new File(dirName);
+				if (!newFile.exists())
+				{
+					if (!newFile.mkdir())
+						throw new AdempiereException(	"Something went wrong!\nDirectory is not created:\n'"
+														+ dms.getPathFromContentManager(parentVersion)
+														+ DMSConstant.FILE_SEPARATOR + newFile.getName() + "'"); // TODO
+				}
+	
 			}
 
 			parentContent = new MDMSContent(Env.getCtx(), contentID, trxName);

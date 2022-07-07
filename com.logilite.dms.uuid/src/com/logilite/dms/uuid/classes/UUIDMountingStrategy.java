@@ -38,7 +38,7 @@ public class UUIDMountingStrategy implements IMountingStrategy
 	public String getMountingPath(String Table_Name, int Record_ID)
 	{
 		return DMSConstant.FILE_SEPARATOR	+ Utils.getDMSMountingBase(Env.getAD_Client_ID(Env.getCtx())) + DMSConstant.FILE_SEPARATOR + Table_Name
-				+ DMSConstant.FILE_SEPARATOR + Record_ID;
+				+ DMSConstant.FILE_SEPARATOR + Record_ID; // TODO
 	}
 
 	@Override
@@ -89,6 +89,8 @@ public class UUIDMountingStrategy implements IMountingStrategy
 	 */
 	public void initiateMountingContent(String mountingBaseName, String table_Name, int Record_ID, int AD_Table_ID)
 	{
+		String AD_Table_UU = null;
+		String Record_UU;
 		int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
 
 		/**
@@ -120,9 +122,14 @@ public class UUIDMountingStrategy implements IMountingStrategy
 		int tableNameContentID = 0;
 		if (!Util.isEmpty(table_Name))
 		{
-			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name);
+			PO po = MTable.get(Env.getCtx(), AD_Table_ID, null);
+			String uuid1 = PO.getUUIDColumnName("AD_Table");
+			po.get_ValueAsString(uuid1);
+			AD_Table_UU = po.get_ValueAsString(uuid1);
+			System.out.println("table uu " + AD_Table_UU);
+			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + AD_Table_UU);
 
-			tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID, AD_Table_ID, table_Name);
+			tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID, AD_Table_ID, AD_Table_UU);
 			if (!file.exists())
 			{
 				file.mkdirs();
@@ -142,8 +149,13 @@ public class UUIDMountingStrategy implements IMountingStrategy
 		 */
 		if (tableNameContentID > 0 && Record_ID > 0)
 		{
-			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
-							+ Record_ID);
+			String uuidColumn = PO.getUUIDColumnName(table_Name);
+			System.out.println("uuid column name : " + uuidColumn);
+			PO po = MTable.get(Env.getCtx(), table_Name).getPO(Record_ID, null);
+			Record_UU = po.get_ValueAsString(uuidColumn);
+			System.out.println(Record_UU);
+			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + AD_Table_UU + DMSConstant.FILE_SEPARATOR
+							+ Record_UU);
 			if (!file.exists())
 			{
 				file.mkdirs();
@@ -154,10 +166,10 @@ public class UUIDMountingStrategy implements IMountingStrategy
 													AD_Table_ID, String.valueOf(Record_ID), Record_ID);
 			if (recordContentID <= 0)
 			{
-				String parentURL = DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name;
+				String parentURL = DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + AD_Table_UU;
 				recordContentID = MDMSContent.create(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, parentURL, true);
 				MDMSAssociation.create(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
-				MDMSVersion.create(recordContentID, String.valueOf(Record_ID), 0, file, null);
+				MDMSVersion.create(recordContentID, Record_UU, 0, file, null);
 			}
 		}
 	} // initiateMountingContent
