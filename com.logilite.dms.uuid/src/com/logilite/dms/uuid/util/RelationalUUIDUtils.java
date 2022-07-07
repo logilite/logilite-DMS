@@ -444,7 +444,7 @@ public class RelationalUUIDUtils
 											trxName);
 
 				// Create DMS Version
-				MDMSVersion version = UtilsUUID.createUU(contentID, dirContentName, 0, null, trxName);
+				MDMSVersion version = UtilsUUID.createVersionUU(contentID, 0, null, trxName);
 				File newFile = new File(rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU());
 				// File newFile = new File(dirName);
 				if (!newFile.exists())

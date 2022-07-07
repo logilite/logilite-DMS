@@ -18,29 +18,39 @@ public class UtilsUUID
 {
 
 	/**
-	 * Create DMS VersionUU
+	 * Create DMS Version with UUID
 	 * 
 	 * @param  contentID
-	 * @param  value
 	 * @param  seqNo
 	 * @param  file
-	 * @return           DMS_VERSION_ID
+	 * @return           {@link MDMSVersion}
 	 */
-
-	public static MDMSVersion createUU(int contentID, String value, int seqNo, File file, String trxName)
+	public static MDMSVersion createVersionUU(int contentID, int seqNo, File file, String trxName)
 	{
-		String uu = UUID.randomUUID().toString();
+		String uuid = UUID.randomUUID().toString();
+
+		return createVersionUU(uuid, contentID, seqNo, file, trxName);
+	} // createVersionUU
+
+	/**
+	 * Create DMS Version with UUID
+	 * 
+	 * @param  versionUUID
+	 * @param  contentID
+	 * @param  seqNo
+	 * @param  file
+	 * @return             {@link MDMSVersion}
+	 */
+	public static MDMSVersion createVersionUU(String versionUUID, int contentID, int seqNo, File file, String trxName)
+	{
 		MDMSVersion version = (MDMSVersion) MTable.get(Env.getCtx(), MDMSVersion.Table_ID).getPO(0, trxName);
-		version.setDMS_Version_UU(uu);
+		version.setDMS_Version_UU(versionUUID);
 		version.setDMS_Content_ID(contentID);
-		version.setValue(uu);
+		version.setValue(versionUUID);
 		version.setSeqNo(seqNo);
 		if (file != null)
 			version.setDMS_FileSize(Utils.readableFileSize(FileUtils.sizeOf(file)));
 		version.saveEx();
-		System.out.println("old uu " + uu + " Vuu " + version.getDMS_Version_UU());
-		// log.log(Level.INFO, "created new DMS_Version with UU :" + version.getDMS_Version_ID() + "
-		// for " + value);
 		return version;
-	}
+	} // createVersionUU
 }
