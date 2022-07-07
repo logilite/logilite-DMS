@@ -10,3 +10,4 @@ Service-Component: OSGI-INF/*.xml
 Require-Bundle: org.adempiere.base;bundle-version="7.1.0",
  org.idempiere.dms;bundle-version="7.1.0"
 Bundle-ActivationPolicy: lazy
+Import-Package: org.apache.commons.io
