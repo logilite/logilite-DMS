@@ -456,8 +456,8 @@ public class RelationUtils
 				contentID = MDMSContent.create(	dirContentName, MDMSContent.CONTENTBASETYPE_Directory, dms.getPathFromContentManager(parentVersion), false,
 												trxName);
 				if (isCreateAssociation)
-					MDMSAssociation.create(	contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0,
-														trxName);
+					MDMSAssociation.create(	contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID,
+											MDMSAssociationType.PARENT_ID, trxName);
 
 				// Create DMS Version
 				MDMSVersion.create(contentID, dirContentName, 0, null, trxName);

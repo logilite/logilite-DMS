@@ -32,7 +32,6 @@ import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSOprUtils;
 import org.idempiere.dms.util.DMSSearchUtils;
-import org.idempiere.dms.util.RelationUtils;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
@@ -158,9 +157,8 @@ public class RelationalUUIDUtils
 																													+ DMSConstant.FILE_SEPARATOR + actualName);
 						if (newFile != null)
 						{
-							actualName = RelationUtils.getActualContentName(ruuCM, storageProvider, contentType, content,
-																			actualName.substring(0, actualName.lastIndexOf(".")) + "_1", extention, type,
-																			operationType);
+							actualName = getActualContentName(	ruuCM, storageProvider, contentType, content,
+																actualName.substring(0, actualName.lastIndexOf(".")) + "_1", extention, type, operationType);
 						}
 						break;
 					}
@@ -375,8 +373,8 @@ public class RelationalUUIDUtils
 				contentID = MDMSContent.create(	dirContentName, MDMSContent.CONTENTBASETYPE_Directory, dms.getPathFromContentManager(parentVersion), false,
 												trxName);
 				if (isCreateAssociation)
-					MDMSAssociation.create(	contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID, 0,
-											trxName);
+					MDMSAssociation.create(	contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID,
+											MDMSAssociationType.PARENT_ID, trxName);
 
 				// Create DMS Version
 				MDMSVersion version = UtilsUUID.createVersionUU(contentID, 0, null, trxName);
