@@ -8,6 +8,8 @@ Automatic-Module-Name: com.logilite.dms.uuid
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Service-Component: OSGI-INF/*.xml
 Require-Bundle: org.adempiere.base;bundle-version="7.1.0",
- org.idempiere.dms;bundle-version="7.1.0"
+ org.idempiere.dms;bundle-version="7.1.0",
+ org.adempiere.plugin.utils;bundle-version="7.1.0"
 Bundle-ActivationPolicy: lazy
 Import-Package: org.apache.commons.io
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator

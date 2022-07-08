@@ -25,7 +25,6 @@ import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.util.DMSFactoryUtils;
 import org.idempiere.dms.util.DMSOprUtils;
-import org.idempiere.dms.util.RelationUtils;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.IFileStorageProvider;
 import org.idempiere.model.I_DMS_Association;
@@ -36,6 +35,8 @@ import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
 import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSVersion;
+
+import com.logilite.dms.uuid.util.RelationalUUIDUtils;
 
 /**
  * UUID content manager
@@ -68,9 +69,9 @@ public class UUIDContentManager implements IContentManager
 		if (version != null && version.getDMS_Content_ID() > 0)
 		{
 			if (!Util.isEmpty(version.getDMS_Content().getParentURL(), true))
-				path = version.getDMS_Content().getParentURL() + DMSConstant.FILE_SEPARATOR + version.getValue();
+				path = version.getDMS_Content().getParentURL() + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
 			else if (!Util.isEmpty(version.getDMS_Content().getName(), true))
-				path = DMSConstant.FILE_SEPARATOR + version.getValue();
+				path = DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
 		}
 		return path;
 	} // getPathByValue
@@ -94,7 +95,7 @@ public class UUIDContentManager implements IContentManager
 	public String getContentName(	IFileStorageProvider storageProvider, String contentType, I_DMS_Content content, String fileName, String extention,
 									String type, String operationType)
 	{
-		String contentName = RelationUtils.getActualContentName(this, storageProvider, contentType, content, fileName, extention, type, operationType);
+		String contentName = RelationalUUIDUtils.getActualContentName(this, storageProvider, contentType, content, fileName, extention, type, operationType);
 		return contentName;
 	} // getContentName
 
@@ -135,7 +136,7 @@ public class UUIDContentManager implements IContentManager
 	public MDMSContent createDirectory(	DMS dms, String dirContentName, MDMSContent parentContent, int AD_Table_ID, int Record_ID,
 										boolean errorIfDirExists, boolean isCreateAssociation, String trxName)
 	{
-		return RelationUtils.createDirectory(dms, dirContentName, parentContent, AD_Table_ID, Record_ID, errorIfDirExists, isCreateAssociation, trxName);
+		return RelationalUUIDUtils.createDirectory(dms, dirContentName, parentContent, AD_Table_ID, Record_ID, errorIfDirExists, isCreateAssociation, trxName);
 	} // createDirectory
 
 	/**
@@ -406,7 +407,7 @@ public class UUIDContentManager implements IContentManager
 		}
 		catch (IOException e)
 		{
-			throw new AdempiereException("Error while reading file:" + version.getValue(), e);
+			throw new AdempiereException("Error while reading file:" + version.toString(), e);
 		}
 
 		IFileStorageProvider fsProvider = dms.getFileStorageProvider();
@@ -443,7 +444,8 @@ public class UUIDContentManager implements IContentManager
 		if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			// check name exists
-			String newName = RelationUtils.getCopyDirContentName(destContent, copiedContent.getName(), dms.getContentManager().getPathByName(destContent));
+			String newName = RelationalUUIDUtils.getCopyDirContentName(	destContent, copiedContent.getName(),
+																		dms.getContentManager().getPathByName(destContent));
 			String newActualName = dms.getActualFileOrDirName(	DMSConstant.CONTENT_DIR, destContent, copiedContent.getName(), "", "",
 																DMSConstant.OPERATION_COPY);
 
@@ -475,7 +477,7 @@ public class UUIDContentManager implements IContentManager
 			newDMSContent.saveEx();
 
 			// Create Folder
-			String contentname = RelationUtils.pastePhysicalCopiedFolder(dms, copiedContent, destContent, newActualName);
+			String contentname = RelationalUUIDUtils.pastePhysicalCopiedFolder(dms, copiedContent, destContent, newActualName);
 
 			// Copy Version
 			MDMSVersion oldVersion = (MDMSVersion) MDMSVersion.getLatestVersion(copiedContent);
@@ -489,14 +491,14 @@ public class UUIDContentManager implements IContentManager
 			String baseURL = dms.getPathFromContentManager(copiedContent);
 			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + oldVersion.getValue();
 
-			RelationUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
+			RelationalUUIDUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 
 			//
 			dms.grantChildPermissionFromParentContent(newDMSContent, destContent);
 		}
 		else
 		{
-			RelationUtils.pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID);
+			RelationalUUIDUtils.pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID);
 		}
 
 	} // pasteCopyContent
@@ -549,7 +551,7 @@ public class UUIDContentManager implements IContentManager
 
 			renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + cutContent.getName();
 
-			RelationUtils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
+			RelationalUUIDUtils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
 			dirPath.renameTo(newFile);
 
 			MDMSAssociation association = dms.getParentAssociationFromContent(cutContent.getDMS_Content_ID());
@@ -583,7 +585,7 @@ public class UUIDContentManager implements IContentManager
 				List<MDMSVersion> versionList = MDMSVersion.getVersionHistory(dmsContent);
 				for (MDMSVersion version : versionList)
 				{
-					RelationUtils.moveFile(dms, version, destContent);
+					RelationalUUIDUtils.moveFile(dms, version, destContent);
 				}
 			}
 
@@ -754,7 +756,7 @@ public class UUIDContentManager implements IContentManager
 		String trxName = Trx.createTrxName("DMSDelete_");
 		Trx trx = Trx.get(trxName, true);
 
-		RelationUtils.deleteContent(dms, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
+		RelationalUUIDUtils.deleteContent(dms, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
 
 		try
 		{
@@ -785,7 +787,7 @@ public class UUIDContentManager implements IContentManager
 		String trxName = Trx.createTrxName("DMSUndoDel_");
 		Trx trx = Trx.get(trxName, true);
 
-		RelationUtils.undoDeleteContent(dms, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
+		RelationalUUIDUtils.undoDeleteContent(dms, dmsContent, dmsAssociation, isDeleteLinkableRefs, trx.getTrxName());
 
 		try
 		{
@@ -934,7 +936,7 @@ public class UUIDContentManager implements IContentManager
 
 	public static int checkExistsDir(String ParentURL, String dirName)
 	{
-		return RelationUtils.checkDMSContentExists(ParentURL, dirName, false, false);
+		return RelationalUUIDUtils.checkDMSContentExists(ParentURL, dirName, false, false);
 	}
 
 	public static int checkExistsFileDir(String parentURL, String contentName)
@@ -944,13 +946,13 @@ public class UUIDContentManager implements IContentManager
 
 	public static int checkExistsFileDir(String parentURL, String contentName, boolean isActiveOnly)
 	{
-		return RelationUtils.checkDMSContentExists(parentURL, contentName, isActiveOnly, true);
+		return RelationalUUIDUtils.checkDMSContentExists(parentURL, contentName, isActiveOnly, true);
 	}
 
 	@Override
 	public int checkContentExists(String parentURL, String contentName, boolean isActiveOnly, boolean isCheckByContentName)
 	{
-		return RelationUtils.checkDMSContentExists(parentURL, contentName, isActiveOnly, isCheckByContentName);
+		return RelationalUUIDUtils.checkDMSContentExists(parentURL, contentName, isActiveOnly, isCheckByContentName);
 	}
 
 }
