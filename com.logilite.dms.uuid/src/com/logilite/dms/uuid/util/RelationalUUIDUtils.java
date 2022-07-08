@@ -168,6 +168,7 @@ public class RelationalUUIDUtils
 			}
 			else if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_COPY))
 			{
+				actualName = fileName;
 				// No need to handle
 			}
 			else if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_RENAME))
@@ -257,43 +258,8 @@ public class RelationalUUIDUtils
 
 			else if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_COPY))
 			{
-				int DMS_Conent_ID = UUIDContentManager.checkExistsDir(ruuCM.getPathByName(content), fileName);
 				actualName = fileName;
-				if (DMS_Conent_ID > 0)
-				{
-					List<String> dirActualNames = Utils.getActualDirNameForCopiedDir(ruuCM.getPathByName(content), fileName + " - copy");
-					if (dirActualNames.size() == 0)
-					{
-						actualName = fileName + " - copy";
-					}
-					else
-					{
-						boolean match = false;
-						int count = 0;
-						while (!match)
-						{
-							match = true;
-							if (count == 0)
-							{
-								actualName = actualName + " - copy";
-								count++;
-							}
-							else
-							{
-								actualName = fileName + " - copy (" + count + ")";
-								count++;
-							}
-							for (Object matchingFileName : dirActualNames)
-							{
-								if (((String) matchingFileName).equalsIgnoreCase(actualName))
-								{
-									match = false;
-									break;
-								}
-							}
-						}
-					}
-				}
+				// No need to handle
 			}
 			if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_RENAME))
 			{
@@ -523,21 +489,22 @@ public class RelationalUUIDUtils
 	 * @param  dms
 	 * @param  copiedContent    - Copied Content
 	 * @param  destPasteContent - Paste Content Destination
+	 * @param  actualNameUU     - actual dir name UUID
 	 * @return                  FileName
 	 */
-	public static String pastePhysicalCopiedFolder(DMS dms, MDMSContent copiedContent, MDMSContent destPasteContent, String actualName) // TODO
+	public static String pastePhysicalCopiedFolder(DMS dms, MDMSContent copiedContent, MDMSContent destPasteContent, String actualNameUU)
 	{
 		String newFileName = dms.getBaseDirPath(destPasteContent);
 
-		File newFile = new File(newFileName + DMSConstant.FILE_SEPARATOR + actualName);
+		File newFile = new File(newFileName + DMSConstant.FILE_SEPARATOR + actualNameUU);
 
 		if (newFile.exists())
-			return actualName;
+			return actualNameUU;
 		if (!newFile.mkdir())
 			throw new AdempiereException(	"Something went wrong!\nDirectory is not created:\n'"	+ dms.getPathFromContentManager(destPasteContent)
-											+ DMSConstant.FILE_SEPARATOR + actualName + "'");
+											+ DMSConstant.FILE_SEPARATOR + actualNameUU + "'");
 
-		return actualName;
+		return actualNameUU;
 	} // pastePhysicalCopiedFolder
 
 	/**

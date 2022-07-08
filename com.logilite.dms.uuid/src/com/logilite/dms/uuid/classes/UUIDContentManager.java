@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FilenameUtils;
@@ -446,8 +447,6 @@ public class UUIDContentManager implements IContentManager
 			// check name exists
 			String newName = RelationalUUIDUtils.getCopyDirContentName(	destContent, copiedContent.getName(),
 																		dms.getContentManager().getPathByName(destContent));
-			String newActualName = dms.getActualFileOrDirName(	DMSConstant.CONTENT_DIR, destContent, copiedContent.getName(), "", "",
-																DMSConstant.OPERATION_COPY);
 
 			// Copy Content
 			MDMSContent newDMSContent = new MDMSContent(Env.getCtx(), 0, null);
@@ -477,14 +476,16 @@ public class UUIDContentManager implements IContentManager
 			newDMSContent.saveEx();
 
 			// Create Folder
-			String contentname = RelationalUUIDUtils.pastePhysicalCopiedFolder(dms, copiedContent, destContent, newActualName);
+			String uuid = UUID.randomUUID().toString();
+			RelationalUUIDUtils.pastePhysicalCopiedFolder(dms, copiedContent, destContent, uuid);
 
 			// Copy Version
 			MDMSVersion oldVersion = (MDMSVersion) MDMSVersion.getLatestVersion(copiedContent);
 			MDMSVersion newVersion = new MDMSVersion(Env.getCtx(), 0, null);
 			PO.copyValues(oldVersion, newVersion);
 			newVersion.setDMS_Content_ID(newDMSContent.getDMS_Content_ID());
-			newVersion.setValue(contentname);
+			newVersion.setDMS_Version_UU(uuid);
+			newVersion.setValue(uuid);
 			newVersion.saveEx();
 
 			//
