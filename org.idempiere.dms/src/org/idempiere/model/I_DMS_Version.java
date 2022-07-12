@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for DMS_Version
  *  @author iDempiere (generated) 
- *  @version Release 5.1
+ *  @version Release 7.1
  */
 @SuppressWarnings("all")
 public interface I_DMS_Version 
@@ -32,7 +32,7 @@ public interface I_DMS_Version
     /** TableName=DMS_Version */
     public static final String Table_Name = "DMS_Version";
 
-    /** AD_Table_ID=1000011 */
+    /** AD_Table_ID=1000041 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -112,10 +112,10 @@ public interface I_DMS_Version
     /** Column name DMS_Version_UU */
     public static final String COLUMNNAME_DMS_Version_UU = "DMS_Version_UU";
 
-	/** Set DMS_Version_UU	  */
+	/** Set Version UU	  */
 	public void setDMS_Version_UU (String DMS_Version_UU);
 
-	/** Get DMS_Version_UU	  */
+	/** Get Version UU	  */
 	public String getDMS_Version_UU();
 
     /** Column name IsActive */

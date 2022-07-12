@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for DMS_Content
  *  @author iDempiere (generated) 
- *  @version Release 5.1
+ *  @version Release 7.1
  */
 @SuppressWarnings("all")
 public interface I_DMS_Content 
@@ -32,7 +32,7 @@ public interface I_DMS_Content
     /** TableName=DMS_Content */
     public static final String Table_Name = "DMS_Content";
 
-    /** AD_Table_ID=1000000 */
+    /** AD_Table_ID=1000031 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -177,19 +177,6 @@ public interface I_DMS_Content
 	  * The record is active in the system
 	  */
 	public boolean isActive();
-
-    /** Column name IsIndexed */
-    public static final String COLUMNNAME_IsIndexed = "IsIndexed";
-
-	/** Set Indexed.
-	  * Index the document for the internal search engine
-	  */
-	public void setIsIndexed (boolean IsIndexed);
-
-	/** Get Indexed.
-	  * Index the document for the internal search engine
-	  */
-	public boolean isIndexed();
 
     /** Column name IsMounting */
     public static final String COLUMNNAME_IsMounting = "IsMounting";
