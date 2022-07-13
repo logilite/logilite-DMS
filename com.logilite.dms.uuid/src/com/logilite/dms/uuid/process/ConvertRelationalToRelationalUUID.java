@@ -8,15 +8,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
+import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MClient;
+import org.compiere.model.MTable;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
 
@@ -85,11 +88,12 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			DMS dms = new DMS(getAD_Client_ID());
 			String baseDir = (p_ExportWithBaseDirPath ? dms.getFileStorageProvider().getBaseDirectory(null) : "");
 
-			ArrayList<String> cmdList = new ArrayList<String>();
+			HashMap<String, ArrayList<String>> mapCMDList = new HashMap<String, ArrayList<String>>(100000);
 			PreparedStatement pstmt = null;
 			ResultSet rs = null;
 			try
 			{
+				String key = "";
 				int count = 0;
 				int noOfRecords = DB.getSQLValue(get_TrxName(), DMSContantUUID.SQL_COUNT_VERSION, getAD_Client_ID());
 
@@ -99,10 +103,23 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				rs = pstmt.executeQuery();
 				while (rs.next())
 				{
+					int tableID = rs.getInt("AD_Table_ID");
+					int recordID = rs.getInt("Record_ID");
+
 					String cmd = rs.getString("Command")
 									+ " \"" + baseDir + rs.getString("OldURL") + "\""
 									+ " \"" + baseDir + rs.getString("NewURL") + "\" ";
-					cmdList.add(cmd);
+					key = tableID + "_" + recordID;
+					if (mapCMDList.containsKey(key))
+					{
+						mapCMDList.get(key).add(cmd);
+					}
+					else
+					{
+						ArrayList<String> value = new ArrayList<String>();
+						value.add(cmd);
+						mapCMDList.put(key, value);
+					}
 
 					count++;
 
@@ -123,7 +140,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			}
 
 			//
-			writeToFile(cmdList);
+			writeToFile(mapCMDList);
 		}
 
 		/**
@@ -141,45 +158,72 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 		return "";
 	} // doIt
 
-	void writeToFile(List<String> cmdList)
+	void writeToFile(HashMap<String, ArrayList<String>> mapCMDList)
 	{
 		int seqNo = 10;
 		int count = 0;
-		ArrayList<String> list = new ArrayList<String>();
+		int resetTableID = -1;
+		String filePrefix = "DMSUUID_" + DMSConstant.SDF_NO_SPACE.format(new Date());
 
-		for (String item : cmdList)
+		ArrayList<String> masterListPerFile = new ArrayList<String>();
+		boolean requireToSplitFile = false;
+		Object[] keys = mapCMDList.keySet().toArray();
+		Arrays.sort(keys);
+		for (Object objKey : keys)
 		{
-			count++;
-			list.add(item);
-			if (count % p_NoOfRecordsExportPerFile == 0)
+			String key = (String) objKey;
+			int tableID = Integer.parseInt(key.split("_")[0]);
+			// int recordID = Integer.parseInt(key.split("_")[1]);
+			if (resetTableID != -1 && resetTableID != tableID || requireToSplitFile)
 			{
-				createFile(seqNo, list);
-				list = new ArrayList<String>();
+				createFile(resetTableID, masterListPerFile, seqNo, count, filePrefix);
+				//
+				masterListPerFile = new ArrayList<String>();
+				resetTableID = tableID;
+				count = 0;
+				requireToSplitFile = false;
 				seqNo += 10;
+			}
+			else if (resetTableID == -1)
+			{
+				resetTableID = tableID;
+			}
+
+			ArrayList<String> cmdList = mapCMDList.get(key);
+			masterListPerFile.addAll(cmdList);
+			count += cmdList.size();
+			System.out.println(key + "  " + cmdList.size());
+
+			if (count / p_NoOfRecordsExportPerFile >= 1)
+			{
+				requireToSplitFile = true;
 			}
 		}
 
-		if (count % p_NoOfRecordsExportPerFile != 0)
+		if (count > 0)
 		{
-			createFile(seqNo, list);
+			createFile(resetTableID, masterListPerFile, seqNo, count, filePrefix);
 		}
 	} // writeToFile
 
-	private void createFile(int seqNo, List<String> content)
+	private void createFile(int tableID, ArrayList<String> masterListPerFile, int seqNo, int count, String filePrefix)
 	{
-		String fileName = "CNV_DMS_UUID_STR_" + DMSConstant.SDF_NO_SPACE.format(new Date()) + "_" + seqNo + ".txt";
+		String tablename = "Root";
+		if (tableID > 0)
+			tablename = MTable.get(getCtx(), tableID).getTableName();
+
+		String fileName = filePrefix + "_" + seqNo + "_" + tablename + (Env.isWindows() ? ".txt" : ".sh");
 		File fileDownload = null;
 		try
 		{
 			fileDownload = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
-
 			if (!fileDownload.createNewFile())
 			{
 				addLog("Failed to create temporary file with name:" + fileName);
 			}
 
 			// append a list of lines, add new lines automatically
-			Files.write(fileDownload.toPath(), content, StandardOpenOption.APPEND);
+			Files.write(fileDownload.toPath(), masterListPerFile, StandardOpenOption.APPEND);
 		}
 		catch (IOException e)
 		{
@@ -188,7 +232,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 									+ e.getLocalizedMessage());
 		}
 
-		addLog("File created: " + fileName + ", with " + content.size() + " command lines");
+		addLog("File created: " + fileName + ", with " + masterListPerFile.size() + " command lines");
 
 		//
 		processUI.download(fileDownload);
