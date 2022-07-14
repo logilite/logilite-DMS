@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.compiere.Adempiere;
 import org.compiere.model.MClient;
 import org.compiere.model.MTable;
 import org.compiere.process.ProcessInfoParameter;
@@ -54,6 +55,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 	private boolean	p_ClientInfoSetContentTypeToUUID	= false;
 	private boolean	p_ExportCmdFileForChangeToUUID		= false;
 	private boolean	p_ExportWithBaseDirPath				= false;
+	private boolean	p_IsModifyContentParentURL			= false;
 
 	private int		p_NoOfRecordsExportPerFile			= 100000;
 
@@ -66,21 +68,28 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
-			else if ("ClientInfoSetContentTypeToUUID".equals(name))
-				p_ClientInfoSetContentTypeToUUID = para[i].getParameterAsBoolean();
+
 			else if ("ExportCmdFileForChangeToUUID".equals(name))
 				p_ExportCmdFileForChangeToUUID = para[i].getParameterAsBoolean();
 			else if ("ExportWithBaseDirPath".equals(name))
 				p_ExportWithBaseDirPath = para[i].getParameterAsBoolean();
 			else if ("NoOfRecordsExportPerFile".equals(name))
 				p_NoOfRecordsExportPerFile = para[i].getParameterAsInt();
+			else if ("IsModifyContentParentURL".equals(name))
+				p_IsModifyContentParentURL = para[i].getParameterAsBoolean();
+			else if ("ClientInfoSetContentTypeToUUID".equals(name))
+				p_ClientInfoSetContentTypeToUUID = para[i].getParameterAsBoolean();
 		}
 	}
 
+	/**
+	 *
+	 */
 	@Override
 	protected String doIt() throws Exception
 	{
 		/**
+		 * Step 1
 		 * Export command file to change the name to UUID based structure
 		 */
 		if (p_ExportCmdFileForChangeToUUID)
@@ -98,16 +107,20 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				int noOfRecords = DB.getSQLValue(get_TrxName(), DMSContantUUID.SQL_COUNT_VERSION, getAD_Client_ID());
 
 				pstmt = DB.prepareStatement(DMSContantUUID.SQL_OLD_NEW_PATH, get_TrxName());
+
 				pstmt.setInt(1, getAD_Client_ID());
-				pstmt.setInt(2, getAD_Client_ID());
+				pstmt.setString(2, DMSConstant.FILE_SEPARATOR);
+				pstmt.setInt(3, getAD_Client_ID());
+				pstmt.setString(4, DMSConstant.FILE_SEPARATOR);
+				pstmt.setString(5, DMSConstant.FILE_SEPARATOR);
 				rs = pstmt.executeQuery();
 				while (rs.next())
 				{
 					int tableID = rs.getInt("AD_Table_ID");
 					int recordID = rs.getInt("Record_ID");
 
-					String cmd = rs.getString("Command")
-									+ " \"" + baseDir + rs.getString("OldURL") + "\""
+					String cmd = (Adempiere.getOSInfo().startsWith("Windows") ? "move " : "mv -v ")
+									+ " \"" + baseDir + rs.getString("OldURL") + "\" "
 									+ " \"" + baseDir + rs.getString("NewURL") + "\" ";
 					key = tableID + "_" + recordID;
 					if (mapCMDList.containsKey(key))
@@ -144,6 +157,25 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 		}
 
 		/**
+		 * Step 2
+		 * Modify content parent URL
+		 */
+		if (p_IsModifyContentParentURL)
+		{
+
+			int no = DB.executeUpdateEx(DMSContantUUID.SQL_MODIFY_CONTENT_PARENTURL, new Object[] {
+																									getAD_Client_ID(),
+																										DMSConstant.FILE_SEPARATOR,
+																										getAD_Client_ID(),
+																										DMSConstant.FILE_SEPARATOR,
+																										DMSConstant.FILE_SEPARATOR }, get_TrxName());
+
+			addLog("#" + no + " content parent URL updated.");
+			log.log(Level.INFO, "#" + no + " content parent URL updated.");
+		}
+
+		/**
+		 * Step 3
 		 * Change Content manager type in Client info window
 		 */
 		if (p_ClientInfoSetContentTypeToUUID)
@@ -163,7 +195,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 		int seqNo = 10;
 		int count = 0;
 		int resetTableID = -1;
-		String filePrefix = "DMSUUID_" + DMSConstant.SDF_NO_SPACE.format(new Date());
+		String filePrefix = "DMS_UUID_" + DMSConstant.SDF_NO_SPACE.format(new Date());
 
 		ArrayList<String> masterListPerFile = new ArrayList<String>();
 		boolean requireToSplitFile = false;
