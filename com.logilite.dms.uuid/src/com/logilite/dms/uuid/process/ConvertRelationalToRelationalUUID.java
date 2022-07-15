@@ -68,7 +68,6 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			String name = para[i].getParameterName();
 			if (para[i].getParameter() == null)
 				;
-
 			else if ("ExportCmdFileForChangeToUUID".equals(name))
 				p_ExportCmdFileForChangeToUUID = para[i].getParameterAsBoolean();
 			else if ("ExportWithBaseDirPath".equals(name))
@@ -107,7 +106,6 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				int noOfRecords = DB.getSQLValue(get_TrxName(), DMSContantUUID.SQL_COUNT_VERSION, getAD_Client_ID());
 
 				pstmt = DB.prepareStatement(DMSContantUUID.SQL_OLD_NEW_PATH, get_TrxName());
-
 				pstmt.setInt(1, getAD_Client_ID());
 				pstmt.setString(2, DMSConstant.FILE_SEPARATOR);
 				pstmt.setInt(3, getAD_Client_ID());
