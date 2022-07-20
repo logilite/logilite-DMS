@@ -263,9 +263,13 @@ public final class DMSConstant
 																						+ " WHERE Name = ? AND AD_Client_ID = ? AND ContentBaseType = 'DIR' AND IsActive = 'Y' AND IsMounting = 'Y' AND ParentUrl IS NULL ORDER BY Created";
 
 	// Correct
-	public static final String				SQL_GET_MOUNTING_CONTENT_FOR_TABLE		= "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
-																						+ " INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-																						+ " WHERE dc.Name = ? AND dc.IsMounting = 'Y' AND da.AD_Table_ID = ? AND da.Record_ID = ?";
+	public static final String				SQL_GET_MOUNTING_CONTENT_FOR_TABLE		= "SELECT c3.DMS_Content_ID "
+																						+ " FROM DMS_Content c1 "
+																						+ " INNER JOIN DMS_Association a1   ON (a1.DMS_Content_ID = c1.DMS_Content_ID AND c1.Name = ? AND c1.IsMounting = 'Y' AND c1.IsActive = 'Y' AND c1.ContentBaseType = 'DIR')"
+																						+ " INNER JOIN DMS_Association a2   ON (a2.DMS_Content_Related_ID = a1.DMS_Content_ID)"
+																						+ " INNER JOIN DMS_Content c2       ON (c2.DMS_Content_ID = a2.DMS_Content_ID AND c2.IsMounting = 'Y' AND c2.IsActive = 'Y' AND c2.ContentBaseType = 'DIR' )"
+																						+ " INNER JOIN DMS_Association a3   ON (a3.DMS_Content_Related_ID = a2.DMS_Content_ID AND a3.AD_Table_ID = ? AND a3.Record_ID = ?)"
+																						+ " INNER JOIN DMS_Content c3       ON (c3.DMS_Content_ID = a3.DMS_Content_ID AND c3.IsMounting = 'Y' AND c3.IsActive = 'Y' AND c3.ContentBaseType = 'DIR')";
 
 	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_NAME		= "SELECT c.DMS_Content_ID FROM DMS_Content c 																		"
 																						+ " WHERE c.AD_Client_ID=? AND c.Name =? AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?))	";
