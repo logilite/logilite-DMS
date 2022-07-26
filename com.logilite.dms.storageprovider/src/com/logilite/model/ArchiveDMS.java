@@ -36,7 +36,6 @@ import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.idempiere.dms.DMS;
 import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.util.Utils;
 import org.idempiere.model.MDMSAssociation;
 import org.idempiere.model.MDMSAssociationType;
 import org.idempiere.model.MDMSContent;
@@ -162,25 +161,13 @@ public class ArchiveDMS implements IArchiveStore
 
 			Integer tableID = archive.getAD_Table_ID();
 			String tableName = MTable.getTableName(Env.getCtx(), tableID);
+			int processID = archive.getAD_Process_ID();
 			int recordID = archive.getRecord_ID();
 
-			MDMSContent mountingParent = null;
-			if (Util.isEmpty(tableName) || recordID <= 0)
-			{
-				if (tableName == null)
-					tableName = "";
-				// Generate Mounting Parent
-				dms.initMountingStrategy(tableName);
-				dms.initiateMountingContent(Utils.getDMSMountingArchiveBase(dms.AD_Client_ID), tableName, recordID, tableID);
-				mountingParent = dms.getMountingStrategy().getMountingParentForArchive();
-			}
-			else
-			{
-				// Generate Mounting Parent
-				dms.initMountingStrategy(tableName);
-				dms.initiateMountingContent(tableName, recordID, tableID);
-				mountingParent = dms.getRootMountingContent(tableID, recordID);
-			}
+			// Generate Mounting Parent
+			dms.initMountingStrategy(tableName);
+			MDMSContent mountingParent = dms.getMountingContentForArchive(tableID, recordID, processID);
+
 			// Generate File
 			File file = generateFile(archive, inflatedData);
 

@@ -744,7 +744,8 @@ public class RelationalUUIDUtils
 	public static void moveFile(DMS dms, MDMSVersion version, MDMSContent destContent)
 	{
 		String newPath = dms.getBaseDirPath(destContent);
-		newPath = newPath + DMSConstant.FILE_SEPARATOR + version.getValue();
+
+		newPath = newPath + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
 
 		File oldFile = new File(dms.getFileFromStorage(version).getAbsolutePath());
 		File newFile = new File(newPath);

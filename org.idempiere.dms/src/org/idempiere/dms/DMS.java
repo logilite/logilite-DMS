@@ -187,14 +187,22 @@ public class DMS
 	/**
 	 * Utils Methods
 	 */
+
+	// For Archive
+	public MDMSContent getMountingParentForArchive()
+	{
+		return getMountingStrategy().getMountingParentForArchive();
+	}
+
+	public MDMSContent getMountingContentForArchive(int AD_Table_ID, int Record_ID, int Process_ID)
+	{
+		return getMountingStrategy().getMountingParentForArchive(AD_Table_ID, Record_ID, Process_ID);
+	}
+
+	// For Explorer
 	public MDMSContent getRootMountingContent(int AD_Table_ID, int Record_ID)
 	{
 		return getDMSMountingParent(AD_Table_ID, Record_ID);
-	}
-
-	public MDMSContent getMountingPathForArchive(int AD_Table_ID, int Record_ID, int Process_ID)
-	{
-		return getMountingStrategy().getMountingParentForArchive(AD_Table_ID, Record_ID, Process_ID);
 	}
 
 	public MDMSContent getDMSMountingParent(int AD_Table_ID, int Record_ID)

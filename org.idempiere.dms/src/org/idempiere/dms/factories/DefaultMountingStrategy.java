@@ -107,7 +107,8 @@ public class DefaultMountingStrategy implements IMountingStrategy
 			MProcess process = MProcess.get(Env.getCtx(), Process_ID);
 			String pValue = process.getValue();
 
-			int processContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID, AD_Table_ID, pValue);
+			int processContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CNT_PROCESS, AD_Client_ID, mountingContentID, pValue);
+			
 			if (processContentID <= 0)
 			{
 				processContentID = MDMSContent.create(pValue, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + archiveBase, true);

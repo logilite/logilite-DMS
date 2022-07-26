@@ -38,6 +38,7 @@ import org.idempiere.model.MDMSContentType;
 import org.idempiere.model.MDMSVersion;
 
 import com.logilite.dms.uuid.util.RelationalUUIDUtils;
+import com.logilite.dms.uuid.util.UtilsUUID;
 
 /**
  * UUID content manager
@@ -65,16 +66,29 @@ public class UUIDContentManager implements IContentManager
 	@Override
 	public String getPathByValue(I_DMS_Version version)
 	{
-		String path = "";
-
 		if (version != null && version.getDMS_Content_ID() > 0)
 		{
 			if (!Util.isEmpty(version.getDMS_Content().getParentURL(), true))
-				path = version.getDMS_Content().getParentURL() + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
-			else if (!Util.isEmpty(version.getDMS_Content().getName(), true))
-				path = DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
+			{
+				int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
+				if (version.getDMS_Content().getParentURL().equals(DMSConstant.FILE_SEPARATOR + Utils.getDMSMountingArchiveBase(AD_Client_ID)))
+				{
+					// Fetching association for process if exist
+					MDMSAssociation association = MDMSAssociation.getAssociationFromContentParentType(version.getDMS_Content_ID(), MDMSAssociationType.PARENT_ID,
+																									0, 0, true, null);
+					if (association != null)
+					{
+						// Use process value for path building
+						return version.getDMS_Content().getParentURL() + DMSConstant.FILE_SEPARATOR + version.getValue();
+					}
+				}
+				return version.getDMS_Content().getParentURL() + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
+			}
 		}
-		return path;
+		else if (!Util.isEmpty(version.getDMS_Content().getName(), true))
+			return DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
+		
+		return "";
 	} // getPathByValue
 
 	@Override
@@ -366,7 +380,7 @@ public class UUIDContentManager implements IContentManager
 			if (isVersion)
 			{
 				// Create DMS Version record
-				MDMSVersion version = MDMSVersion.create(parentContent.getDMS_Content_ID(), actualFileName, seqNo, file, trxName);
+				MDMSVersion version = UtilsUUID.createVersionUU(parentContent.getDMS_Content_ID(), seqNo, file, trxName);
 
 				// File write on Storage provider and create thumbnail
 				writeFileOnStorageAndThumnail(dms, file, version);
@@ -379,7 +393,7 @@ public class UUIDContentManager implements IContentManager
 				// Create Association
 				dms.createAssociation(contentID, DMS_Content_Related_ID, Record_ID, AD_Table_ID, DMS_AssociationType_ID, trxName);
 				// Create DMS Version record
-				MDMSVersion version = MDMSVersion.create(contentID, actualFileName, seqNo, file, trxName);
+				MDMSVersion version = UtilsUUID.createVersionUU(contentID, seqNo, file, trxName);
 
 				// File write on Storage provider and create thumbnail
 				writeFileOnStorageAndThumnail(dms, file, version);
@@ -541,16 +555,17 @@ public class UUIDContentManager implements IContentManager
 				baseURL = DMSConstant.FILE_SEPARATOR + cutContent.getName();
 
 			File dirPath = new File(dms.getBaseDirPath(cutContent));
+			MDMSVersion version = (MDMSVersion) MDMSVersion.getLatestVersion(cutContent);
 			String newFileName = dms.getBaseDirPath(destContent);
 
 			if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
-				newFileName = newFileName + cutContent.getName();
+				newFileName = newFileName + version.getDMS_Version_UU();
+
 			else
-				newFileName = newFileName + DMSConstant.FILE_SEPARATOR + cutContent.getName();
+				newFileName = newFileName + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
 
 			File newFile = new File(newFileName);
-
-			renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + cutContent.getName();
+			renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
 
 			RelationalUUIDUtils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
 			dirPath.renameTo(newFile);

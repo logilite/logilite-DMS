@@ -1,8 +1,9 @@
 package com.logilite.dms.uuid.classes;
 
 import java.io.File;
+import java.util.UUID;
 
-import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MProcess;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CCache;
@@ -62,7 +63,8 @@ public class UUIDMountingStrategy implements IMountingStrategy
 		if (mountingParentCache.containsKey(key))
 			return mountingParentCache.get(key);
 
-		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_CONTENT_FOR_TABLE, String.valueOf(Record_ID), AD_Table_ID, Record_ID);
+		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_CONTENT_FOR_TABLE,
+											Utils.getDMSMountingBase(AD_Table_ID), AD_Table_ID, Record_ID);
 
 		if (DMS_Content_ID > 0)
 		{
@@ -83,6 +85,76 @@ public class UUIDMountingStrategy implements IMountingStrategy
 			return new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 
 		return null;
+	} // getMountingParentForArchive
+
+	@Override
+	public MDMSContent getMountingParentForArchive(int AD_Table_ID, int Record_ID, int Process_ID)
+	{
+		int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
+		String archiveBase = Utils.getDMSMountingArchiveBase(AD_Client_ID);
+
+		int mountingContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_ROOT_MOUNTING_BASE_CONTENT, archiveBase, AD_Client_ID);
+		if (mountingContentID <= 0)
+		{
+			mountingContentID = MDMSContent.create(archiveBase, MDMSContent.CONTENTBASETYPE_Directory, null, true);
+			MDMSAssociation.create(mountingContentID, 0, 0, 0, 0, null);
+			MDMSVersion.create(mountingContentID, archiveBase, 0, null, null);
+		}
+
+		if (Process_ID > 0)
+		{
+			MProcess process = MProcess.get(Env.getCtx(), Process_ID);
+			String pValue = process.getValue();
+
+			int processContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CNT_PROCESS, AD_Client_ID, mountingContentID, pValue);
+
+			if (processContentID <= 0)
+			{
+				processContentID = MDMSContent.create(pValue, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + archiveBase, true);
+				MDMSAssociation.create(processContentID, mountingContentID, 0, 0, MDMSAssociationType.PARENT_ID, null);
+				MDMSVersion.create(processContentID, pValue, 0, null, null);// TODO
+			}
+
+			MDMSContent content = new MDMSContent(Env.getCtx(), processContentID, null);
+			return content;
+		}
+		else
+		{
+			String tableName = MTable.getTableName(Env.getCtx(), AD_Table_ID);
+
+			int tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID, AD_Table_ID,
+													tableName);
+
+			if (tableNameContentID <= 0)
+			{
+				tableNameContentID = MDMSContent.create(tableName, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + archiveBase, true);
+				MDMSAssociation.create(tableNameContentID, mountingContentID, 0, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
+				MDMSVersion.create(tableNameContentID, tableName, 0, null, null);
+			}
+
+			int recordContentID = DB.getSQLValue(	null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT + " AND a.Record_ID = ?", AD_Client_ID, tableNameContentID,
+													AD_Table_ID, String.valueOf(Record_ID), Record_ID);
+
+			if (recordContentID <= 0)
+			{
+				String uuid = UUID.randomUUID().toString();
+
+				String parentURL = DMSConstant.FILE_SEPARATOR + archiveBase + DMSConstant.FILE_SEPARATOR + tableName;
+				recordContentID = MDMSContent.create(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, parentURL, true);
+				MDMSAssociation.create(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
+				UtilsUUID.createVersionUU(uuid, recordContentID, 0, null, null);
+			}
+
+			// if record related content is not found then return it's parent table content
+			if (recordContentID <= 0)
+			{
+				MDMSContent content = new MDMSContent(Env.getCtx(), tableNameContentID, null);
+				return content;
+			}
+
+			MDMSContent content = new MDMSContent(Env.getCtx(), recordContentID, null);
+			return content;
+		}
 	} // getMountingParentForArchive
 
 	/**
@@ -148,34 +220,24 @@ public class UUIDMountingStrategy implements IMountingStrategy
 		 */
 		if (tableNameContentID > 0 && Record_ID > 0)
 		{
-			String uuidColumn = PO.getUUIDColumnName(table_Name);
-			PO po = MTable.get(Env.getCtx(), table_Name).getPO(Record_ID, null);
-
-			if (po.get_ColumnIndex(uuidColumn) < 0)
-				throw new AdempiereException(	"Didn't found column:"	+ uuidColumn + " from table: " + table_Name
-												+ " for Record UUID utilization, Please contact to administrator.");
-
-			String Record_UU = po.get_ValueAsString(uuidColumn);
-
-			if (Util.isEmpty(Record_UU))
-				throw new AdempiereException("Record UUID didn't found, Please verify");
-
-			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
-							+ Record_UU);
-			if (!file.exists())
-			{
-				file.mkdirs();
-			}
-
 			// Check if already DMS content created for Record
 			int recordContentID = DB.getSQLValue(	null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT + " AND a.Record_ID = ?", AD_Client_ID, tableNameContentID,
 													AD_Table_ID, String.valueOf(Record_ID), Record_ID);
 			if (recordContentID <= 0)
 			{
+				String uuid = UUID.randomUUID().toString();
+
+				file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
+								+ uuid);
+
+				if (!file.exists())
+				{
+					file.mkdirs();
+				}
 				String parentURL = DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name;
 				recordContentID = MDMSContent.create(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, parentURL, true);
 				MDMSAssociation.create(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
-				UtilsUUID.createVersionUU(Record_UU, recordContentID, 0, file, null);
+				UtilsUUID.createVersionUU(uuid, recordContentID, 0, file, null);
 			}
 		}
 	} // initiateMountingContent

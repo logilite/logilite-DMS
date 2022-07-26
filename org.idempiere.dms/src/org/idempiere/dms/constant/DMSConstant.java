@@ -259,6 +259,11 @@ public final class DMSConstant
 																						+ " WHERE c.ContentBaseType = 'DIR' AND c.IsActive = 'Y' AND c.IsMounting = 'Y' AND c.ParentURL IS NOT NULL "
 																						+ "			AND c.AD_Client_ID = ? AND a.DMS_Content_Related_ID = ? AND a.AD_Table_ID = ? AND c.Name = ? ";
 
+	public static final String				SQL_GET_SUB_MOUNTING_BASE_CNT_PROCESS	= " SELECT c.DMS_Content_ID 	FROM DMS_Content c "
+																						+ " INNER JOIN DMS_Association a	ON (a.DMS_Content_ID = c.DMS_Content_ID) "
+																						+ " WHERE c.ContentBaseType = 'DIR' AND c.IsActive = 'Y' AND c.IsMounting = 'Y' AND c.ParentURL IS NOT NULL "
+																						+ "			AND c.AD_Client_ID = ? AND a.DMS_Content_Related_ID = ?  AND c.Name = ? ";
+
 	public static final String				SQL_GET_ROOT_MOUNTING_BASE_CONTENT		= "SELECT DMS_Content_ID FROM DMS_Content "
 																						+ " WHERE Name = ? AND AD_Client_ID = ? AND ContentBaseType = 'DIR' AND IsActive = 'Y' AND IsMounting = 'Y' AND ParentUrl IS NULL ORDER BY Created";
 
