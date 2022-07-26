@@ -38,6 +38,7 @@ public final class DMSConstant
 	public static final String				DMS_ALLOW_PERMISSION_WISE_FILTER		= "DMS_ALLOW_PERMISSION_WISE_FILTER";
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH		= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 	public static final String				DMS_ZK_MAX_UPLOAD_SIZE					= "DMS_ZK_MAX_UPLOAD_SIZE";
+	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
 
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";

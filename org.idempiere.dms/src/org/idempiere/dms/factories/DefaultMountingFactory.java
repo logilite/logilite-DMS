@@ -13,9 +13,7 @@
 
 package org.idempiere.dms.factories;
 
-import org.idempiere.dms.factories.IMountingStrategy;
 import org.idempiere.dms.storage.RelationalContentManager;
-import org.idempiere.dms.factories.IMountingFactory;
 
 public class DefaultMountingFactory implements IMountingFactory
 {
