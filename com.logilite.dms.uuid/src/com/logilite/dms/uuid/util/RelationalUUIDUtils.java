@@ -637,7 +637,7 @@ public class RelationalUUIDUtils
 					if (!Util.isEmpty(copiedContent.getParentURL()))
 						baseURL = dms.getPathFromContentManager(oldVersion);
 					else
-						baseURL = DMSConstant.FILE_SEPARATOR + oldVersion.getValue();
+						baseURL = DMSConstant.FILE_SEPARATOR + oldVersion.getDMS_Version_UU();
 
 					baseURL = baseURL.substring(0, baseURL.lastIndexOf(DMSConstant.FILE_SEPARATOR));
 

@@ -30,6 +30,7 @@ import javax.imageio.ImageIO;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.idempiere.dms.DMS;
+import org.idempiere.dms.constant.DMSConstant;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.util.Utils;
 import org.idempiere.model.I_DMS_Version;
@@ -58,7 +59,7 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 	@Override
 	public void init()
 	{
-		String thumbnailSizes = MSysConfig.getValue(ThumbnailProvider.DMS_THUMBNAILS_SIZES, "150,300,500");
+		String thumbnailSizes = MSysConfig.getValue(DMSConstant.DMS_THUMBNAILS_SIZES, "150,300,500");
 		thumbSizesList = new ArrayList<String>(Arrays.asList(thumbnailSizes.split(",")));
 	}
 
