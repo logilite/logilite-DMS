@@ -385,10 +385,12 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 		public void run()
 		{
 			StringBuilder output = new StringBuilder();
+			Date startTime = new Date();
+			output.append("\nStartTime: ").append(DMSConstant.SDF_WITH_TIME.format(startTime));
+			output.append("\nFile: ").append(file.getAbsolutePath()).append("\n\n");
+
 			try
 			{
-				output.append("File: ").append(file.getAbsolutePath()).append("\n\n");
-
 				ProcessBuilder processBuilder = new ProcessBuilder();
 
 				// -- Linux --
@@ -441,6 +443,10 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			{
 				crtruProcess.latch.countDown();
 			}
+
+			Date endTime = new Date();
+			output.append("\n\nEndTime: ").append(DMSConstant.SDF_WITH_TIME.format(endTime));
+			output.append("\nDifference in Millis: " + (endTime.getTime() - startTime.getTime()));
 
 			// Output file create
 			try
