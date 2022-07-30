@@ -174,7 +174,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				pstmt = null;
 			}
 
-			File file = new File(System.getProperty("java.io.tmpdir") + filePrefix);
+			File file = new File(System.getProperty("java.io.tmpdir") + File.separator + filePrefix);
 			if (!file.exists())
 			{
 				file.mkdir();
@@ -190,7 +190,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			if (p_IsExecuteShellCommandDirectly)
 			{
 				String fileOutPrefix = filePrefix + "_Out";
-				File fileOutputDir = new File(System.getProperty("java.io.tmpdir") + fileOutPrefix);
+				File fileOutputDir = new File(System.getProperty("java.io.tmpdir") + File.separator + fileOutPrefix);
 				if (!fileOutputDir.exists())
 				{
 					fileOutputDir.mkdir();
