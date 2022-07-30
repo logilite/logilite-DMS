@@ -74,8 +74,9 @@ public class UUIDContentManager implements IContentManager
 				if (version.getDMS_Content().getParentURL().equals(DMSConstant.FILE_SEPARATOR + Utils.getDMSMountingArchiveBase(AD_Client_ID)))
 				{
 					// Fetching association for process if exist
-					MDMSAssociation association = MDMSAssociation.getAssociationFromContentParentType(version.getDMS_Content_ID(), MDMSAssociationType.PARENT_ID,
-																									0, 0, true, null);
+					MDMSAssociation association = MDMSAssociation.getAssociationFromContentParentType(	version.getDMS_Content_ID(),
+																										MDMSAssociationType.PARENT_ID,
+																										0, 0, true, null);
 					if (association != null)
 					{
 						// Use process value for path building
@@ -84,10 +85,11 @@ public class UUIDContentManager implements IContentManager
 				}
 				return version.getDMS_Content().getParentURL() + DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
 			}
+
+			else if (!Util.isEmpty(version.getDMS_Content().getName(), true))
+				return DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
+
 		}
-		else if (!Util.isEmpty(version.getDMS_Content().getName(), true))
-			return DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
-		
 		return "";
 	} // getPathByValue
 
@@ -504,7 +506,7 @@ public class UUIDContentManager implements IContentManager
 
 			//
 			String baseURL = dms.getPathFromContentManager(copiedContent);
-			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + oldVersion.getValue();
+			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + oldVersion.getDMS_Version_UU();
 
 			RelationalUUIDUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
 
@@ -548,14 +550,14 @@ public class UUIDContentManager implements IContentManager
 		{
 			String baseURL = null;
 			String renamedURL = null;
+			MDMSVersion version = (MDMSVersion) MDMSVersion.getLatestVersion(cutContent);
 
 			if (!Util.isEmpty(cutContent.getParentURL()))
 				baseURL = dms.getPathFromContentManager(cutContent);
 			else
-				baseURL = DMSConstant.FILE_SEPARATOR + cutContent.getName();
+				baseURL = DMSConstant.FILE_SEPARATOR + version.getDMS_Version_UU();
 
 			File dirPath = new File(dms.getBaseDirPath(cutContent));
-			MDMSVersion version = (MDMSVersion) MDMSVersion.getLatestVersion(cutContent);
 			String newFileName = dms.getBaseDirPath(destContent);
 
 			if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
