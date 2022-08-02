@@ -38,8 +38,9 @@ public class DMSContantUUID
 																	+ " INNER JOIN DMS_content c 			ON (c.DMS_content_ID = s.DMS_content_ID) 											"
 																	+ " INNER JOIN DMS_Version v 			ON (v.DMS_content_ID = c.DMS_content_ID) 											"
 																	+ " WHERE (c.IsMounting = 'Y' AND Level > 2) OR (c.IsMounting = 'N')														"
-																	+ " ORDER BY s.AD_Client_ID, s.AD_Table_ID, s.Record_ID, s.Level DESC, s.ParentURL, s.Path, s.DMS_Content_ID,				"
-																	+ "			 s.DMS_Content_Related_ID																						";
+																	+ " ORDER BY	s.AD_Client_ID, COALESCE( s.AD_Table_ID, 0), COALESCE( s.Record_ID, 0), s.Level DESC,						"
+																	+ "		 		s.ParentURL, s.Path, s.DMS_Content_ID,	s.DMS_Content_Related_ID											";									
+																																	
 
 	public static final String	SQL_COUNT_VERSION				= " 	SELECT COUNT(1) FROM DMS_Version v 									"
 																	+ " INNER JOIN DMS_content c ON (c.DMS_content_ID = v.DMS_content_ID)	"
