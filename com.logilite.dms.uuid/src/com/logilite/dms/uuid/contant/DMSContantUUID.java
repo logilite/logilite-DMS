@@ -7,6 +7,8 @@ package com.logilite.dms.uuid.contant;
  */
 public class DMSContantUUID
 {
+	public static final String	ARCHIVE_STORAGE_METHOD_DMS		= "DMS";
+	public static final String	ARCHIVE_STORAGE_METHOD_DMSUU	= "DMSUU";
 
 	public static final String	SQL_OLD_NEW_PATH				= " 	WITH RECURSIVE SupplyTree(AD_Client_ID, DMS_Content_ID, DMS_Content_Related_ID, DMS_Association_ID) AS 					"
 																	+ " ( 																														"
@@ -55,4 +57,6 @@ public class DMSContantUUID
 																	+ " INNER JOIN DMS_Content c ON (c.DMS_Content_ID = data.DMS_Content_ID)"
 																	+ " WHERE DMS_Content.DMS_Content_ID = c.DMS_Content_ID					";
 
+	public static final String	SQL_GET_ARCHIVE_STORAGE_METHOD	= "     SELECT Method FROM AD_StorageProvider sp																"
+																	+ " INNER JOIN AD_ClientInfo c ON (c.StorageArchive_ID = sp.AD_StorageProvider_ID AND c.AD_Client_ID = ?)	";
 }

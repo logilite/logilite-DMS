@@ -51,6 +51,7 @@ import com.logilite.dms.uuid.util.UtilsUUID;
  *  - Verify exported script and apply manually script in terminal where DMS storage used
  *  - Once script applied then it's converted from normal directory & content to UUID based name
  *  - Again execute this process and 'Client Info configure Content Type as Relational UUID' mark this flag as TRUE
+ *  - Click on this process:'Configure Archive Store's Method to DMSUU' and mark this flag as TRUE to store Archive documents as UUID based structure.
  *  - Do cache reset and check to upload new content and its version value is UUID based created
  * </pre>
  * 
@@ -64,6 +65,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 	private boolean			p_ExportWithBaseDirPath				= true;
 	private boolean			p_IsModifyContentParentURL			= false;
 	private boolean			p_IsExecuteShellCommandDirectly		= false;
+	private boolean			p_ArchiveStoreSetMethodToDMSUU		= false;
 
 	private int				p_NoOfRecordsExportPerFile			= 100000;
 	private int				p_NoOfThreadInPool					= 1;
@@ -95,6 +97,8 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				p_IsModifyContentParentURL = para[i].getParameterAsBoolean();
 			else if ("ClientInfoSetContentTypeToUUID".equals(name))
 				p_ClientInfoSetContentTypeToUUID = para[i].getParameterAsBoolean();
+			else if ("ArchiveStoreSetMethodToDMSUU".equals(name))
+				p_ArchiveStoreSetMethodToDMSUU = para[i].getParameterAsBoolean();
 		}
 	}
 
@@ -245,7 +249,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 
 		/**
 		 * Step 3
-		 * Change Content manager type in Client info window
+		 * Change Content manager type in Client info window and Archive Store Method to DMSUU
 		 */
 		if (p_ClientInfoSetContentTypeToUUID)
 		{
@@ -256,6 +260,20 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 					MClient.Table_ID, getAD_Client_ID());
 		}
 
+		if (p_ArchiveStoreSetMethodToDMSUU)
+		{
+			String methodName = DB.getSQLValueString(null, DMSContantUUID.SQL_GET_ARCHIVE_STORAGE_METHOD, getAD_Client_ID());
+
+			if (DMSContantUUID.ARCHIVE_STORAGE_METHOD_DMS.equals(methodName))
+			{
+				int no = DB.executeUpdateEx("UPDATE AD_StorageProvider SET Method = ? FROM AD_ClientInfo c					   			 						"
+											+ " INNER JOIN AD_StorageProvider sp ON ( sp.AD_StorageProvider_ID = c.StorageArchive_ID AND sp.AD_Client_ID = ? )	"
+											+ " WHERE  AD_StorageProvider.AD_StorageProvider_ID = c.StorageArchive_ID  											",
+											new Object[] { DMSContantUUID.ARCHIVE_STORAGE_METHOD_DMSUU, getAD_Client_ID() }, get_TrxName());
+
+				addLog(0, null, null, "Updated Archive Storage Provider to configure Method to DMSUU , " + no);
+			}
+		}
 		return "";
 	} // doIt
 
