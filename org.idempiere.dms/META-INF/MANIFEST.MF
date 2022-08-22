@@ -55,6 +55,7 @@ Export-Package: com.lowagie.text,
  org.idempiere.dms.constant,
  org.idempiere.dms.factories,
  org.idempiere.dms.form,
+ org.idempiere.dms.storage,
  org.idempiere.dms.util,
  org.idempiere.model
 Automatic-Module-Name: org.idempiere.dms

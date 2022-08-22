@@ -23,14 +23,14 @@ import org.compiere.model.*;
 
 /** Generated Model for DMS_Association
  *  @author iDempiere (generated) 
- *  @version Release 5.1 - $Id$ */
+ *  @version Release 7.1 - $Id$ */
 public class X_DMS_Association extends PO implements I_DMS_Association, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20210105L;
+	private static final long serialVersionUID = 20220712L;
 
     /** Standard Constructor */
     public X_DMS_Association (Properties ctx, int DMS_Association_ID, String trxName)
@@ -49,7 +49,7 @@ public class X_DMS_Association extends PO implements I_DMS_Association, I_Persis
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 6 - System - Client 
       */
     protected int get_AccessLevel()
     {

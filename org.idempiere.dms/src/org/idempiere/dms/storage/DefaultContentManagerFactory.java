@@ -26,6 +26,7 @@ public class DefaultContentManagerFactory implements IContentManagerProvider
 		{
 			return new RelationalContentManager();
 		}
+
 		return null;
 	}
 

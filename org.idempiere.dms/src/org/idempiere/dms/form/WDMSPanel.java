@@ -417,10 +417,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		ZKUpdateUtil.setWidth(this, "100%");
 		this.appendChild(tabBox);
 		this.addEventListener(Events.ON_CLICK, this);
-		this.addEventListener(Events.ON_DOUBLE_CLICK, this);
 		this.addEventListener(DMSConstant.EVENT_ON_SELECTION_CHANGE, this);
 
 		grid.setSclass("SB-Grid");
+		grid.addEventListener(Events.ON_DOUBLE_CLICK, this);
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
 		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");//
 
@@ -1920,6 +1920,29 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 						from = editor.getDisplay();
 					to = null;
 				}
+				else if (dt == DisplayType.ChosenMultipleSelectionSearch
+							|| dt == DisplayType.ChosenMultipleSelectionTable
+							|| dt == DisplayType.ChosenMultipleSelectionList)
+				{
+					if (editor.getValue() != null)
+					{
+						String orClause = "";
+						String editorValue = (String) editor.getValue();
+						String[] values = editorValue.split(",");
+						for (String value : values)
+						{
+							if (Util.isEmpty(orClause, true))
+								orClause += "(";
+							else
+								orClause += " OR ";
+							orClause += "*" + value + "*";
+						}
+						if (!Util.isEmpty(orClause, true))
+							orClause += ")";
+						from = orClause;
+						to = Boolean.TRUE; // as Chosen multiple passing true as second argument
+					}
+				}
 				else if (!Util.isEmpty(editor.getDisplay()))
 				{
 					from = editor.getValue();
@@ -2166,4 +2189,24 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			lblCountAndSelected.setText(updatedValue);
 		}
 	} // updateContentSelectedCount
+
+	public WTableDirEditor getContentTypeComp()
+	{
+		return lstboxContentType;
+	}
+
+	public ArrayList<WEditor> getAttributeEditors()
+	{
+		return m_editors;
+	}
+
+	public void setButtonHomeEnabled(boolean isEnabled)
+	{
+		btnCloseTab.setEnabled(isEnabled);
+	}
+
+	public void setButtonCleanEnabled(boolean isEnabled)
+	{
+		btnClear.setEnabled(isEnabled);
+	}
 }

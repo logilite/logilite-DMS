@@ -38,6 +38,7 @@ public final class DMSConstant
 	public static final String				DMS_ALLOW_PERMISSION_WISE_FILTER		= "DMS_ALLOW_PERMISSION_WISE_FILTER";
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH		= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 	public static final String				DMS_ZK_MAX_UPLOAD_SIZE					= "DMS_ZK_MAX_UPLOAD_SIZE";
+	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
 
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
@@ -259,13 +260,22 @@ public final class DMSConstant
 																						+ " WHERE c.ContentBaseType = 'DIR' AND c.IsActive = 'Y' AND c.IsMounting = 'Y' AND c.ParentURL IS NOT NULL "
 																						+ "			AND c.AD_Client_ID = ? AND a.DMS_Content_Related_ID = ? AND a.AD_Table_ID = ? AND c.Name = ? ";
 
+	public static final String				SQL_GET_SUB_MOUNTING_BASE_CNT_PROCESS	= " SELECT c.DMS_Content_ID 	FROM DMS_Content c "
+																						+ " INNER JOIN DMS_Association a	ON (a.DMS_Content_ID = c.DMS_Content_ID) "
+																						+ " WHERE c.ContentBaseType = 'DIR' AND c.IsActive = 'Y' AND c.IsMounting = 'Y' AND c.ParentURL IS NOT NULL "
+																						+ "			AND c.AD_Client_ID = ? AND a.DMS_Content_Related_ID = ?  AND c.Name = ? ";
+
 	public static final String				SQL_GET_ROOT_MOUNTING_BASE_CONTENT		= "SELECT DMS_Content_ID FROM DMS_Content "
 																						+ " WHERE Name = ? AND AD_Client_ID = ? AND ContentBaseType = 'DIR' AND IsActive = 'Y' AND IsMounting = 'Y' AND ParentUrl IS NULL ORDER BY Created";
 
 	// Correct
-	public static final String				SQL_GET_MOUNTING_CONTENT_FOR_TABLE		= "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
-																						+ " INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-																						+ " WHERE dc.Name = ? AND dc.IsMounting = 'Y' AND da.AD_Table_ID = ? AND da.Record_ID = ?";
+	public static final String				SQL_GET_MOUNTING_CONTENT_FOR_TABLE		= "SELECT c3.DMS_Content_ID "
+																						+ " FROM DMS_Content c1 "
+																						+ " INNER JOIN DMS_Association a1   ON (a1.DMS_Content_ID = c1.DMS_Content_ID AND c1.Name = ? AND c1.IsMounting = 'Y' AND c1.IsActive = 'Y' AND c1.ContentBaseType = 'DIR')"
+																						+ " INNER JOIN DMS_Association a2   ON (a2.DMS_Content_Related_ID = a1.DMS_Content_ID)"
+																						+ " INNER JOIN DMS_Content c2       ON (c2.DMS_Content_ID = a2.DMS_Content_ID AND c2.IsMounting = 'Y' AND c2.IsActive = 'Y' AND c2.ContentBaseType = 'DIR' )"
+																						+ " INNER JOIN DMS_Association a3   ON (a3.DMS_Content_Related_ID = a2.DMS_Content_ID AND a3.AD_Table_ID = ? AND a3.Record_ID = ?)"
+																						+ " INNER JOIN DMS_Content c3       ON (c3.DMS_Content_ID = a3.DMS_Content_ID AND c3.IsMounting = 'Y' AND c3.IsActive = 'Y' AND c3.ContentBaseType = 'DIR')";
 
 	public static final String				SQL_GET_CONTENT_ID_BY_CONTENT_NAME		= "SELECT c.DMS_Content_ID FROM DMS_Content c 																		"
 																						+ " WHERE c.AD_Client_ID=? AND c.Name =? AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?))	";

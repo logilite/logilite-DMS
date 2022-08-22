@@ -24,14 +24,14 @@ import org.compiere.model.*;
 
 /** Generated Model for DMS_Content
  *  @author iDempiere (generated) 
- *  @version Release 5.1 - $Id$ */
+ *  @version Release 7.1 - $Id$ */
 public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20210105L;
+	private static final long serialVersionUID = 20220712L;
 
     /** Standard Constructor */
     public X_DMS_Content (Properties ctx, int DMS_Content_ID, String trxName)
@@ -225,30 +225,6 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
-	}
-
-	/** Set Indexed.
-		@param IsIndexed 
-		Index the document for the internal search engine
-	  */
-	public void setIsIndexed (boolean IsIndexed)
-	{
-		set_Value (COLUMNNAME_IsIndexed, Boolean.valueOf(IsIndexed));
-	}
-
-	/** Get Indexed.
-		@return Index the document for the internal search engine
-	  */
-	public boolean isIndexed () 
-	{
-		Object oo = get_Value(COLUMNNAME_IsIndexed);
-		if (oo != null) 
-		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
-			return "Y".equals(oo);
-		}
-		return false;
 	}
 
 	/** Set IsMounting.
