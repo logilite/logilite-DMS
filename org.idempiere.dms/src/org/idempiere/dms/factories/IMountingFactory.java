@@ -15,5 +15,5 @@ package org.idempiere.dms.factories;
 
 public interface IMountingFactory
 {
-	public IMountingStrategy getMountingStrategy(String Table_Name);
+	public IMountingStrategy getMountingStrategy(String contentManagerType, String Table_Name);
 }

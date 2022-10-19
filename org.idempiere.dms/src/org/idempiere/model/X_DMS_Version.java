@@ -23,14 +23,14 @@ import org.compiere.model.*;
 
 /** Generated Model for DMS_Version
  *  @author iDempiere (generated) 
- *  @version Release 5.1 - $Id$ */
+ *  @version Release 7.1 - $Id$ */
 public class X_DMS_Version extends PO implements I_DMS_Version, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20210105L;
+	private static final long serialVersionUID = 20220712L;
 
     /** Standard Constructor */
     public X_DMS_Version (Properties ctx, int DMS_Version_ID, String trxName)
@@ -130,15 +130,15 @@ public class X_DMS_Version extends PO implements I_DMS_Version, I_Persistent
 		return ii.intValue();
 	}
 
-	/** Set DMS_Version_UU.
-		@param DMS_Version_UU DMS_Version_UU	  */
+	/** Set Version UU.
+		@param DMS_Version_UU Version UU	  */
 	public void setDMS_Version_UU (String DMS_Version_UU)
 	{
-		set_Value (COLUMNNAME_DMS_Version_UU, DMS_Version_UU);
+		set_ValueNoCheck (COLUMNNAME_DMS_Version_UU, DMS_Version_UU);
 	}
 
-	/** Get DMS_Version_UU.
-		@return DMS_Version_UU	  */
+	/** Get Version UU.
+		@return Version UU	  */
 	public String getDMS_Version_UU () 
 	{
 		return (String)get_Value(COLUMNNAME_DMS_Version_UU);

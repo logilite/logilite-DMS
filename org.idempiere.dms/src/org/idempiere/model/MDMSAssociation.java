@@ -136,4 +136,28 @@ public class MDMSAssociation extends X_DMS_Association
 		return associationList;
 	} // getAssociationFromContent
 
+	/**
+	 * Get association from content ID to referring parent type association
+	 * 
+	 * @param  contentID
+	 * @param  associationTypeID
+	 * @param  recordID
+	 * @param  tableID
+	 * @param  isActiveOnly
+	 * @param  trxName
+	 * @return
+	 */
+	public static MDMSAssociation getAssociationFromContentParentType(	int contentID, int associationTypeID, int recordID, int tableID, boolean isActiveOnly,
+																		String trxName)
+	{
+		String whereClause = " DMS_Content_ID=? AND NVL(DMS_AssociationType_ID, 0) "
+								+ (associationTypeID == MDMSAssociationType.PARENT_ID ? " IN (0, ?)" : " = ? ")
+								+ " AND NVL(Record_ID, 0) = ? "
+								+ " AND NVL(AD_Table_ID, 0) = ? ";
+		Query query = new Query(Env.getCtx(), MDMSAssociation.Table_Name, whereClause, trxName);
+		query.setClient_ID();
+		query.setParameters(contentID, associationTypeID, recordID, tableID);
+		query.setOnlyActiveRecords(isActiveOnly);
+		return query.first();
+	} // getAssociationFromContentParentType
 }

@@ -28,16 +28,19 @@ import org.idempiere.dms.factories.IContentManager;
 import org.idempiere.dms.factories.IContentManagerProvider;
 import org.idempiere.dms.factories.IContentTypeAccess;
 import org.idempiere.dms.factories.IContentTypeAccessFactory;
+import org.idempiere.dms.factories.IDMSUploadContent;
+import org.idempiere.dms.factories.IDMSUploadContentFactory;
 import org.idempiere.dms.factories.IDMSViewer;
 import org.idempiere.dms.factories.IDMSViewerFactory;
 import org.idempiere.dms.factories.IMountingFactory;
 import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.factories.IPermissionFactory;
+import org.idempiere.dms.factories.IPermissionManager;
 import org.idempiere.dms.factories.IThumbnailGenerator;
 import org.idempiere.dms.factories.IThumbnailGeneratorFactory;
 import org.idempiere.dms.factories.IThumbnailProvider;
 import org.idempiere.dms.factories.IThumbnailProviderFactory;
+import org.idempiere.model.MDMSContent;
 
 /**
  * Utils for Factory get
@@ -110,27 +113,31 @@ public class DMSFactoryUtils
 	 * Factory - Content Manager
 	 * 
 	 * @param  AD_Client_ID
-	 * @return              {@link IContentManager}
+	 * @param  contentManagerType
+	 * @return                    {@link IContentManager}
 	 */
 	public static IContentManager getContentManager(int AD_Client_ID)
 	{
-		IContentManager contentManager = cache_contentManager.get(AD_Client_ID);
-
-		if (contentManager != null)
-			return contentManager;
-
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID);
+		String contentManagerType = clientInfo.get_ValueAsString("DMS_ContentManagerType");
 
-		String key = clientInfo.get_ValueAsString("DMS_ContentManagerType");
-
-		if (Util.isEmpty(key))
+		if (Util.isEmpty(contentManagerType))
 			throw new AdempiereException("Content Manager is not defined");
 
-		List<IContentManagerProvider> factories = Service.locator().list(IContentManagerProvider.class).getServices();
+		IContentManager contentManager = cache_contentManager.get(AD_Client_ID);
+		if (contentManager != null)
+		{
+			if (contentManagerType.equals(contentManager.getKey()))
+				return contentManager;
+			else
+				cache_contentManager.remove(AD_Client_ID);
+		}
 
+		//
+		List<IContentManagerProvider> factories = Service.locator().list(IContentManagerProvider.class).getServices();
 		for (IContentManagerProvider factory : factories)
 		{
-			contentManager = factory.get(key);
+			contentManager = factory.get(contentManagerType);
 			if (contentManager != null)
 			{
 				cache_contentManager.put(AD_Client_ID, contentManager);
@@ -175,17 +182,18 @@ public class DMSFactoryUtils
 	/**
 	 * Factory - Mounting Strategy
 	 * 
+	 * @param  contentManagerType
 	 * @param  Table_Name
-	 * @return            {@link IMountingStrategy}
+	 * @return                    {@link IMountingStrategy}
 	 */
-	public static IMountingStrategy getMountingStrategy(String Table_Name)
+	public static IMountingStrategy getMountingStrategy(String contentManagerType, String Table_Name)
 	{
 		IMountingStrategy mounting = null;
 		List<IMountingFactory> factories = Service.locator().list(IMountingFactory.class).getServices();
 
 		for (IMountingFactory factory : factories)
 		{
-			mounting = factory.getMountingStrategy(Table_Name);
+			mounting = factory.getMountingStrategy(contentManagerType, Table_Name);
 
 			if (mounting != null)
 			{
@@ -250,5 +258,35 @@ public class DMSFactoryUtils
 		}
 		return null;
 	} // getPermissionFactory
+
+	/**
+	 * Factory call for DMS Upload content form
+	 * 
+	 * @param  dms
+	 * @param  content
+	 * @param  isVersion
+	 * @param  tableID
+	 * @param  recordID
+	 * @param  windowNo
+	 * @param  tabNo
+	 * @return           {@link IDMSUploadContent}
+	 */
+	public static IDMSUploadContent getUploadContenFactory(DMS dms, MDMSContent content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo)
+	{
+		List<IDMSUploadContentFactory> factoryies = Service.locator().list(IDMSUploadContentFactory.class).getServices();
+		if (factoryies != null)
+		{
+			for (IDMSUploadContentFactory factory : factoryies)
+			{
+				IDMSUploadContent uploadContent = factory.getUploadForm(dms, content, isVersion, tableID, recordID, windowNo, tabNo);
+
+				if (uploadContent != null)
+				{
+					return uploadContent;
+				}
+			}
+		}
+		return null;
+	} // getUploadContenFactory
 
 }

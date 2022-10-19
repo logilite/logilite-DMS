@@ -107,9 +107,12 @@ public class DMSModelValidator implements ModelValidator
 					@Override
 					public void afterCommit(Trx trx, boolean success)
 					{
-						if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed())
+						if (success)
 						{
-							if (success)
+							// Prevent to fire multiple time event for the same document indexing
+							boolean isIndexed = DB.getSQLValueBooleanEx(null, "SELECT IsIndexed FROM DMS_Version WHERE DMS_Version_ID = ? ", version.getDMS_Version_ID());
+							
+							if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed() && !isIndexed)
 							{
 								MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), false, null);
 

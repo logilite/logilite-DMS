@@ -190,13 +190,12 @@ public class DMSSearchUtils
 		if (!Util.isEmpty(query.toString()))
 			query.append(" AND ");
 
-		query	.append(DMSConstant.AD_CLIENT_ID).append(":(").append(Env.getAD_Client_ID(Env.getCtx())).append(")")
-				.append(" AND ");
+		query.append(DMSConstant.AD_CLIENT_ID).append(":(").append(Env.getAD_Client_ID(Env.getCtx())).append(")");
 
 		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-			query.append(DMSConstant.SHOW_INACTIVE).append(" :true");
+			query.append(" AND ").append(DMSConstant.SHOW_INACTIVE).append(" :true");
 		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
-			query.append(DMSConstant.SHOW_INACTIVE).append(" :false");
+			query.append(" AND ").append(DMSConstant.SHOW_INACTIVE).append(" :false");
 
 		if (recordID > 0)
 			query.append(" AND ").append(DMSConstant.RECORD_ID).append(":").append(recordID);
@@ -229,22 +228,14 @@ public class DMSSearchUtils
 		query += DMSConstant.AD_CLIENT_ID + " :(" + (Env.getAD_Client_ID(Env.getCtx()) + ")");
 
 		//
-		StringBuffer hirachicalContent = new StringBuffer(" AND ").append(DMSConstant.DMS_CONTENT_ID).append(":(");
-
-		DMSSearchUtils.getHierarchicalContent(hirachicalContent, content != null ? content.getDMS_Content_ID() : 0, dms.AD_Client_ID, tableID, recordID);
-
-		if (content != null)
+		if (content != null && content.getDMS_Content_ID() > 0)
 		{
+			StringBuffer hirachicalContent = new StringBuffer(" AND ").append(DMSConstant.DMS_CONTENT_ID).append(":(");
+			//
+			DMSSearchUtils.getHierarchicalContent(hirachicalContent, content.getDMS_Content_ID(), dms.AD_Client_ID, tableID, recordID);
+			//
 			hirachicalContent.append(content.getDMS_Content_ID()).append(")");
 			query += " " + hirachicalContent.toString();
-		}
-		else
-		{
-			if (hirachicalContent.substring(hirachicalContent.length() - 4, hirachicalContent.length()).equals(" OR "))
-			{
-				hirachicalContent.replace(hirachicalContent.length() - 4, hirachicalContent.length(), ")");
-				query += " " + hirachicalContent.toString();
-			}
 		}
 
 		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query));

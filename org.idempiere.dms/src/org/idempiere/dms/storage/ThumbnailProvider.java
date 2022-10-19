@@ -30,10 +30,8 @@ import org.idempiere.model.I_DMS_Version;
 public class ThumbnailProvider implements IThumbnailProvider
 {
 
-	public static final String	DMS_THUMBNAILS_SIZES		= "DMS_THUMBNAILS_SIZES";
-
-	private String				thumbnailBasePath			= null;
-	private MStorageProvider	thumbnailStorageProvider	= null;
+	protected String			thumbnailBasePath			= null;
+	protected MStorageProvider	thumbnailStorageProvider	= null;
 
 	@Override
 	public void init()
@@ -111,7 +109,7 @@ public class ThumbnailProvider implements IThumbnailProvider
 		if (!Util.isEmpty(size, true))
 			path += "-" + size;
 		else
-			path += "-" + MSysConfig.getValue(DMS_THUMBNAILS_SIZES, "150,300,500").split(",")[0];
+			path += "-" + MSysConfig.getValue(DMSConstant.DMS_THUMBNAILS_SIZES, "150,300,500").split(",")[0];
 
 		return path + ".jpg";
 	}

@@ -33,6 +33,12 @@ public class MDMSVersion extends X_DMS_Version
 		super(ctx, rs, trxName);
 	}
 
+	public String toString()
+	{
+		StringBuffer sb = new StringBuffer("DMS Version[#").append(get_ID()).append(" - ").append(getSeqNo()).append(" - ").append(getValue()).append("]");
+		return sb.toString();
+	}
+
 	/**
 	 * Create DMS Content
 	 * 
