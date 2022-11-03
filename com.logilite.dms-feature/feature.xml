@@ -34,7 +34,7 @@
       <import plugin="zcommon" version="9.6.0" match="greaterOrEqual"/>
       <import plugin="org.apache.httpcomponents.httpclient"/>
       <import plugin="org.apache.httpcomponents.httpcore"/>
-      <import plugin="org.idempiere.dms" version="7.1.0" match="greaterOrEqual"/>
+      <import plugin="org.idempiere.dms" version="9.0.0" match="greaterOrEqual"/>
       <import plugin="zkbind" version="9.6.0" match="greaterOrEqual"/>
       <import plugin="zkplus" version="9.6.0" match="greaterOrEqual"/>
       <import plugin="zweb" version="9.6.0" match="greaterOrEqual"/>
