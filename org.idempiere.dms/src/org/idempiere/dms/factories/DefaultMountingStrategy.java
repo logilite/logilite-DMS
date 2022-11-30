@@ -64,8 +64,8 @@ public class DefaultMountingStrategy implements IMountingStrategy
 		if (mountingParentCache.containsKey(key))
 			return mountingParentCache.get(key);
 
-		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_CONTENT_FOR_TABLE, Utils.getDMSMountingBase(AD_Table_ID), AD_Table_ID,
-											Record_ID);
+		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_CONTENT_FOR_TABLE, Utils.getDMSMountingBase(Env.getAD_Client_ID(Env.getCtx())),
+											AD_Table_ID, Record_ID);
 
 		if (DMS_Content_ID > 0)
 		{
@@ -108,7 +108,6 @@ public class DefaultMountingStrategy implements IMountingStrategy
 			String pValue = process.getValue();
 
 			int processContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CNT_PROCESS, AD_Client_ID, mountingContentID, pValue);
-			
 			if (processContentID <= 0)
 			{
 				processContentID = MDMSContent.create(pValue, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + archiveBase, true);

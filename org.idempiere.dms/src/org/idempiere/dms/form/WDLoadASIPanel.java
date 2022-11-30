@@ -326,9 +326,9 @@ public class WDLoadASIPanel extends Panel
 			{
 				WEditor editor = (WEditor) m_editors.get(i);
 				Object item = editor.getValue();
-				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) ? new MAttributeValue(Env.getCtx(),
-								Integer.valueOf(String.valueOf(item)),
-								null) : null;
+				MAttributeValue value = (item != null && Integer.valueOf(String.valueOf(item)) > 0) 
+								? new MAttributeValue(Env.getCtx(), Integer.valueOf(String.valueOf(item)), null) 
+								: null;
 				if (log.isLoggable(Level.FINE))
 					log.fine(attributes[i].getName() + "=" + value);
 				if (attributes[i].isMandatory() && value == null)
