@@ -18,6 +18,16 @@ public interface IContentTypeAccess
 	public List<Integer> getAccessedContentsRoleWise(int AD_Role_ID);
 
 	/**
+	 * Get content list based on role wise filtered through ContentType Access and dynamic where
+	 * clause
+	 * 
+	 * @param  AD_Role_ID
+	 * @param  DynamicWhereClause
+	 * @return                    List of accessible DMS_Content_IDs
+	 */
+	public List<Integer> getAccessedContentsRoleWise(int AD_Role_ID, String DynamicWhereClause);
+
+	/**
 	 * Return accessible map data
 	 * 
 	 * @param  contentMap - Input map of version & association
