@@ -25,7 +25,10 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="5.1.0",
  zk;bundle-version="8.0.2",
  com.logilite.search.solr;bundle-version="7.1.0",
  zcommon,
- org.apache.ant
+ org.apache.ant,
+ org.apache.poi.poi,
+ org.apache.poi.poi-ooxml,
+ org.atmosphere.runtime
 Bundle-Vendor: Logilite
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,

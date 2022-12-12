@@ -246,80 +246,83 @@ public class ConvertXlsToPdf
 		{
 			out.append("background-color: rgb(").append(backRGB[0]).append(',').append(backRGB[1]).append(',').append(backRGB[2]).append(");");
 		}
+
+		// TODO Require to Fix below commented code
 		// Border
-		if (style.getBorderTop() != BorderStyle.NONE)
-		{
-			out.append("border-top-style: solid; ");
-		}
-		if (style.getBorderRight() != BorderStyle.NONE)
-		{
-			out.append("border-right-style: solid; ");
-		}
-		if (style.getBorderBottom() != BorderStyle.NONE)
-		{
-			out.append("border-bottom-style: solid; ");
-		}
-		if (style.getBorderLeft() != BorderStyle.NONE)
-		{
-			out.append("border-left-style: solid; ");
-		}
+//		if (style.getBorderTop() != BorderStyle.NONE)
+//		{
+//			out.append("border-top-style: solid; ");
+//		}
+//		if (style.getBorderRight() != BorderStyle.NONE)
+//		{
+//			out.append("border-right-style: solid; ");
+//		}
+//		if (style.getBorderBottom() != BorderStyle.NONE)
+//		{
+//			out.append("border-bottom-style: solid; ");
+//		}
+//		if (style.getBorderLeft() != BorderStyle.NONE)
+//		{
+//			out.append("border-left-style: solid; ");
+//		}
 		out.append("'>");
 		String val = "";
-		try
-		{
-			switch (cell.getCellType())
-			{
-				case STRING:
-					val = cell.getStringCellValue();
-					break;
-				case NUMERIC:
-					// POI does not distinguish between integer and double, thus:
-					final double original = cell.getNumericCellValue(),
-									rounded = Math.round(original);
-					if (Math.abs(rounded - original) < 0.00000000000000001)
-					{
-						val = String.valueOf((int) rounded);
-					}
-					else
-					{
-						val = String.valueOf(original);
-					}
-					break;
-				case FORMULA:
-					final CellValue cv = evaluator.evaluate(cell);
-					switch (cv.getCellType())
-					{
-						case BOOLEAN:
-							out.append(cv.getBooleanValue());
-							break;
-						case NUMERIC:
-							out.append(cv.getNumberValue());
-							break;
-						case STRING:
-							out.append(cv.getStringValue());
-							break;
-						case BLANK:
-							break;
-						case ERROR:
-							break;
-						default:
-							break;
-					}
-					break;
-				default:
-					// Neither string or number? Could be a date.
-					try
-					{
-						val = sdf.format(cell.getDateCellValue());
-					}
-					catch (final Exception e1)
-					{}
-			}
-		}
-		catch (final Exception e)
-		{
-			val = e.getMessage();
-		}
+//		try
+//		{
+//			switch (cell.getCellType())
+//			{
+//				case STRING:
+//					val = cell.getStringCellValue();
+//					break;
+//				case NUMERIC:
+//					// POI does not distinguish between integer and double, thus:
+//					final double original = cell.getNumericCellValue(),
+//									rounded = Math.round(original);
+//					if (Math.abs(rounded - original) < 0.00000000000000001)
+//					{
+//						val = String.valueOf((int) rounded);
+//					}
+//					else
+//					{
+//						val = String.valueOf(original);
+//					}
+//					break;
+//				case FORMULA:
+//					final CellValue cv = evaluator.evaluate(cell);
+//					switch (cv.getCellType())
+//					{
+//						case BOOLEAN:
+//							out.append(cv.getBooleanValue());
+//							break;
+//						case NUMERIC:
+//							out.append(cv.getNumberValue());
+//							break;
+//						case STRING:
+//							out.append(cv.getStringValue());
+//							break;
+//						case BLANK:
+//							break;
+//						case ERROR:
+//							break;
+//						default:
+//							break;
+//					}
+//					break;
+//				default:
+//					// Neither string or number? Could be a date.
+//					try
+//					{
+//						val = sdf.format(cell.getDateCellValue());
+//					}
+//					catch (final Exception e1)
+//					{}
+//			}
+//		}
+//		catch (final Exception e)
+//		{
+//			val = e.getMessage();
+//		}
+
 		if ("null".equals(val))
 		{
 			val = "";
