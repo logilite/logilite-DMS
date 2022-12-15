@@ -376,22 +376,22 @@ public class ConvertXlsxToPdf
 		if (HorizontalAlignment.RIGHT.equals(style.getAlignment()))
 			sb.append("text-align:").append("right;");
 
-//		if (style.getBorderBottom() != BorderStyle.NONE)
-//		{
-//			sb.append("border-bottom:solid; ").append(style.getBorderBottom()).append("px;");
-//		}
-//		if (style.getBorderLeft() != BorderStyle.NONE)
-//		{
-//			sb.append("border-left:solid; ").append(style.getBorderLeft()).append("px;");
-//		}
-//		if (style.getBorderTop() != BorderStyle.NONE)
-//		{
-//			sb.append("border-top:solid; ").append(style.getBorderTop()).append("px;");
-//		}
-//		if (style.getBorderRight() != BorderStyle.NONE)
-//		{
-//			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
-//		}
+		if (style.getBorderBottom() != BorderStyle.NONE)
+		{
+			sb.append("border-bottom:solid; ").append(style.getBorderBottom()).append("px;");
+		}
+		if (style.getBorderLeft() != BorderStyle.NONE)
+		{
+			sb.append("border-left:solid; ").append(style.getBorderLeft()).append("px;");
+		}
+		if (style.getBorderTop() != BorderStyle.NONE)
+		{
+			sb.append("border-top:solid; ").append(style.getBorderTop()).append("px;");
+		}
+		if (style.getBorderRight() != BorderStyle.NONE)
+		{
+			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
+		}
 
 		if (style.getFillBackgroundXSSFColor() != null)
 		{
