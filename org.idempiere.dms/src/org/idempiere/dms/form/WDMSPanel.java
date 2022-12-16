@@ -71,6 +71,7 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.FDialog;
+import org.apache.poi.ss.formula.CollaboratingWorkbooksEnvironment.WorkbookNotFoundException;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
@@ -1276,9 +1277,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 				catch (Exception e)
 				{
-					String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
-					log.log(Level.SEVERE, errorMsg, e);
-					FDialog.warn(windowID, errorMsg, "Document preview issue...");
+					if (e.getCause() instanceof WorkbookNotFoundException)
+					{
+						// Do not throw error, some document having complex function used and
+						// implemented libs not enough to handle that things.
+					}
+					else
+					{
+						String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
+						log.log(Level.SEVERE, errorMsg, e);
+						FDialog.warn(windowID, errorMsg, "Document preview issue...");
+					}
 				}
 
 				if (DMSFactoryUtils.getContentEditor(mimeType.getMimeType()) != null)
