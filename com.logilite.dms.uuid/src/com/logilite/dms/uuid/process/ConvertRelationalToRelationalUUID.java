@@ -477,7 +477,15 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				}
 
 				// append a list of lines, add new lines automatically
-				Files.writeString(outFile.toPath(), output, StandardOpenOption.APPEND);
+				// Option 1
+				ArrayList<String> outputList = new ArrayList<String>();
+				outputList.add(output.toString());
+				Files.write(outFile.toPath(), outputList, StandardOpenOption.APPEND);
+
+				// Option 2
+				// FileWriter writer = new FileWriter(outFile);
+				// writer.write(output.toString());
+				// writer.close();
 
 				//
 				fileListOutput.add(outFile);
