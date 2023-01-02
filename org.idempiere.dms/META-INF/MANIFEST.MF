@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS
 Bundle-SymbolicName: org.idempiere.dms;singleton:=true
-Bundle-Version: 7.1.0.qualifier
+Bundle-Version: 7.1.1.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Import-Package: org.apache.commons.io;version="2.2.0",
@@ -23,7 +23,6 @@ Require-Bundle: org.adempiere.plugin.utils;bundle-version="5.1.0",
  zel;bundle-version="8.0.2",
  zul;bundle-version="8.0.2",
  zk;bundle-version="8.0.2",
- com.logilite.search.solr;bundle-version="7.1.0",
  zcommon,
  org.apache.ant
 Bundle-Vendor: Logilite

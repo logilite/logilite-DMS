@@ -32,8 +32,6 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
@@ -55,7 +53,6 @@ import org.idempiere.model.MDMSVersion;
 
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
-import com.logilite.search.solr.tika.FileContentParsingThroughTika;
 
 /**
  * Util for DMS generic / advance searching from index server or normal content
@@ -70,7 +67,7 @@ public class DMSSearchUtils
 	public static final String	SOLR_FIELDTYPE_TLONGS		= "tlongs";
 	public static final String	SOLR_FIELDTYPE_TEXT_GENERAL	= "text_general";
 
-	static boolean				isIndexingInitiated			= false;
+	public static boolean		isIndexingInitiated			= false;
 
 	/**
 	 * Get DMS Contents for rendering for specific level wise.
@@ -297,13 +294,15 @@ public class DMSSearchUtils
 	/**
 	 * Create Index Map for Solr
 	 * 
+	 * @param  indexSearcher
 	 * @param  content
 	 * @param  association
 	 * @param  version
 	 * @param  file
-	 * @return             Map
+	 * @return               Map
 	 */
-	public static Map<String, Object> createIndexMap(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, File file)
+	public static Map<String, Object> createIndexMap(IIndexSearcher indexSearcher, I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
+														File file)
 	{
 		Map<String, Object> solrValue = new HashMap<String, Object>();
 		solrValue.put(DMSConstant.DMS_CONTENT_ID, content.getDMS_Content_ID());
@@ -327,7 +326,7 @@ public class DMSSearchUtils
 		// File Content
 		if (DMSSearchUtils.isAllowDocumentContentSearch() && file != null)
 		{
-			solrValue.put(DMSConstant.FILE_CONTENT, new FileContentParsingThroughTika(file).getParsedDocumentContent());
+			solrValue.put(DMSConstant.FILE_CONTENT, indexSearcher.getParseDocumentContent(file));
 		}
 
 		if (content.getM_AttributeSetInstance_ID() > 0)
@@ -468,31 +467,6 @@ public class DMSSearchUtils
 	}
 
 	/**
-	 * From query to search the content reference
-	 * 
-	 * @param  indexSearcher
-	 * @param  query
-	 * @return               search result as list of DMS_Content_ID
-	 */
-	public static HashSet<Integer> searchIndex(IIndexSearcher indexSearcher, String query)
-	{
-		Object docList = indexSearcher.searchIndexNoRestriction(query);
-
-		HashSet<Integer> set = new HashSet<Integer>();
-		if (docList != null && docList instanceof SolrDocumentList)
-		{
-			for (int i = 0; i < ((SolrDocumentList) docList).size(); i++)
-			{
-				SolrDocument solrDocument = ((SolrDocumentList) docList).get(i);
-				ArrayList<?> valueIDs = (ArrayList<?>) solrDocument.getFieldValue(DMSConstant.DMS_CONTENT_ID);
-				int contentID = ((Long) valueIDs.get(0)).intValue();
-				set.add(contentID);
-			}
-		}
-		return set;
-	} // searchIndex
-
-	/**
 	 * Create indexing in index server
 	 * 
 	 * @param content          DMS_Content
@@ -502,8 +476,8 @@ public class DMSSearchUtils
 	 */
 	public static void doIndexingInServer(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, String deleteIndexQuery)
 	{
-		IIndexSearcher indexSeracher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
-		if (indexSeracher == null)
+		IIndexSearcher indexSearcher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
+		if (indexSearcher == null)
 			throw new AdempiereException("Index Server not found");
 
 		IFileStorageProvider fsProvider = FileStorageUtil.get(content.getAD_Client_ID(), false);
@@ -516,12 +490,12 @@ public class DMSSearchUtils
 
 		// Delete existing index
 		if (!Util.isEmpty(deleteIndexQuery, true))
-			indexSeracher.deleteIndexByQuery(deleteIndexQuery);
+			indexSearcher.deleteIndexByQuery(deleteIndexQuery);
 
 		// Create index
 		File file = fsProvider.getFile(contentManager.getPathByValue(content));
-		Map<String, Object> solrValue = createIndexMap(content, association, version, file);
-		indexSeracher.indexContent(solrValue);
+		Map<String, Object> solrValue = createIndexMap(indexSearcher, content, association, version, file);
+		indexSearcher.indexContent(solrValue);
 
 		// Update the value of IsIndexed flag in Content
 		if (!version.isIndexed())

@@ -324,7 +324,7 @@ public class DMS
 
 	public HashSet<Integer> searchIndex(String query)
 	{
-		return DMSSearchUtils.searchIndex(indexSearcher, query);
+		return indexSearcher.searchIndex(query, DMSConstant.DMS_CONTENT_ID);
 	} // searchIndex
 
 	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
@@ -340,7 +340,7 @@ public class DMS
 	public void createIndexContent(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version)
 	{
 		File file = getFileFromStorage(version);
-		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(content, association, version, file));
+		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(indexSearcher, content, association, version, file));
 	} // createIndexContent
 
 	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	String searchText, int tableID, int recordID, MDMSContent content,
