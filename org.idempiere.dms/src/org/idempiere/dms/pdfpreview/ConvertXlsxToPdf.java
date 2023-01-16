@@ -24,7 +24,6 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.poi.hwpf.converter.HtmlDocumentFacade;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
-import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -239,6 +238,7 @@ public class ConvertXlsxToPdf
 		table.appendChild(tr);
 	}
 
+	@SuppressWarnings("deprecation")
 	private void processCell(Element tr, XSSFCell cell, String sID, int pos_col, int pos_row)
 	{
 		int cols = 1;
@@ -339,6 +339,7 @@ public class ConvertXlsxToPdf
 		tr.appendChild(td);
 	}
 
+	@SuppressWarnings("deprecation")
 	private void processCellStyle(Element td, XSSFCellStyle style, XSSFRichTextString rts, String sID)
 	{
 		StringBuilder sb = new StringBuilder();
@@ -376,22 +377,22 @@ public class ConvertXlsxToPdf
 		if (HorizontalAlignment.RIGHT.equals(style.getAlignment()))
 			sb.append("text-align:").append("right;");
 
-		if (style.getBorderBottom() != BorderStyle.NONE)
-		{
-			sb.append("border-bottom:solid; ").append(style.getBorderBottom()).append("px;");
-		}
-		if (style.getBorderLeft() != BorderStyle.NONE)
-		{
-			sb.append("border-left:solid; ").append(style.getBorderLeft()).append("px;");
-		}
-		if (style.getBorderTop() != BorderStyle.NONE)
-		{
-			sb.append("border-top:solid; ").append(style.getBorderTop()).append("px;");
-		}
-		if (style.getBorderRight() != BorderStyle.NONE)
-		{
-			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
-		}
+//		if (style.getBorderBottom() != BorderStyle.NONE)
+//		{
+//			sb.append("border-bottom:solid; ").append(style.getBorderBottom()).append("px;");
+//		}
+//		if (style.getBorderLeft() != BorderStyle.NONE)
+//		{
+//			sb.append("border-left:solid; ").append(style.getBorderLeft()).append("px;");
+//		}
+//		if (style.getBorderTop() != BorderStyle.NONE)
+//		{
+//			sb.append("border-top:solid; ").append(style.getBorderTop()).append("px;");
+//		}
+//		if (style.getBorderRight() != BorderStyle.NONE)
+//		{
+//			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
+//		}
 
 		if (style.getFillBackgroundXSSFColor() != null)
 		{
