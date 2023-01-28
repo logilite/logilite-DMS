@@ -27,9 +27,9 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.idempiere.dms.DMS;
-import org.idempiere.dms.constant.DMSConstant;
 
+import com.logilite.dms.DMS;
+import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.uuid.classes.UUIDContentManager;
 import com.logilite.dms.uuid.contant.DMSContantUUID;
 import com.logilite.dms.uuid.util.UtilsUUID;

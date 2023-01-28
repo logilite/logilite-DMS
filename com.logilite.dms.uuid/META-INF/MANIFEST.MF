@@ -7,7 +7,7 @@ Bundle-Vendor: LOGILITE
 Automatic-Module-Name: com.logilite.dms.uuid
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Service-Component: OSGI-INF/*.xml
-Require-Bundle: org.idempiere.dms;bundle-version="7.1.0",
+Require-Bundle: com.logilite.dms;bundle-version="7.1.0",
  org.adempiere.base;bundle-version="7.1.0",
  org.adempiere.plugin.utils;bundle-version="7.1.0",
  org.adempiere.ui.zk;bundle-version="7.1.0",

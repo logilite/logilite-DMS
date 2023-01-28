@@ -1,8 +1,7 @@
 package com.logilite.dms.uuid.factory;
 
-import org.idempiere.dms.factories.IMountingFactory;
-import org.idempiere.dms.factories.IMountingStrategy;
-
+import com.logilite.dms.factories.IMountingFactory;
+import com.logilite.dms.factories.IMountingStrategy;
 import com.logilite.dms.uuid.classes.UUIDContentManager;
 import com.logilite.dms.uuid.classes.UUIDMountingStrategy;
 

@@ -34,18 +34,18 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
-import org.idempiere.dms.DMS;
-import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
-import org.idempiere.model.MDMSContent;
-import org.idempiere.model.MDMSContentType;
-import org.idempiere.model.MDMSVersion;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.logilite.dms.DMS;
+import com.logilite.dms.constant.DMSConstant;
+import com.logilite.dms.model.MDMSAssociation;
+import com.logilite.dms.model.MDMSAssociationType;
+import com.logilite.dms.model.MDMSContent;
+import com.logilite.dms.model.MDMSContentType;
+import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.uuid.util.UtilsUUID;
 
 public class ArchiveDMSUU implements IArchiveStore

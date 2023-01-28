@@ -1,8 +1,7 @@
 package com.logilite.dms.uuid.factory;
 
-import org.idempiere.dms.factories.IContentManager;
-import org.idempiere.dms.factories.IContentManagerProvider;
-
+import com.logilite.dms.factories.IContentManager;
+import com.logilite.dms.factories.IContentManagerProvider;
 import com.logilite.dms.uuid.classes.UUIDContentManager;
 
 /**

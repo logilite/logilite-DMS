@@ -3,9 +3,10 @@ package com.logilite.dms.uuid.storage;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.storage.ThumbnailProvider;
-import org.idempiere.model.I_DMS_Version;
+
+import com.logilite.dms.constant.DMSConstant;
+import com.logilite.dms.model.I_DMS_Version;
+import com.logilite.dms.storage.ThumbnailProvider;
 
 public class UUIDThumbnailProvider extends ThumbnailProvider
 {

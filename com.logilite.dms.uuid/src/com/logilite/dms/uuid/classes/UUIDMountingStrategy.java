@@ -10,16 +10,16 @@ import org.compiere.util.CCache;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
-import org.idempiere.dms.constant.DMSConstant;
-import org.idempiere.dms.factories.IMountingStrategy;
-import org.idempiere.dms.util.Utils;
-import org.idempiere.model.FileStorageUtil;
-import org.idempiere.model.IFileStorageProvider;
-import org.idempiere.model.MDMSAssociation;
-import org.idempiere.model.MDMSAssociationType;
-import org.idempiere.model.MDMSContent;
-import org.idempiere.model.MDMSVersion;
 
+import com.logilite.dms.constant.DMSConstant;
+import com.logilite.dms.factories.IMountingStrategy;
+import com.logilite.dms.model.FileStorageUtil;
+import com.logilite.dms.model.IFileStorageProvider;
+import com.logilite.dms.model.MDMSAssociation;
+import com.logilite.dms.model.MDMSAssociationType;
+import com.logilite.dms.model.MDMSContent;
+import com.logilite.dms.model.MDMSVersion;
+import com.logilite.dms.util.Utils;
 import com.logilite.dms.uuid.util.UtilsUUID;
 
 /**
