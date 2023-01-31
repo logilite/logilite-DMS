@@ -20,6 +20,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Panel;
 import org.compiere.model.I_AD_StorageProvider;
 import org.compiere.util.CLogger;
+import org.compiere.util.Util;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.zul.Iframe;
 
@@ -68,7 +69,17 @@ public class PDFContentEditor extends Panel implements IContentEditor
 
 		try
 		{
-			media = new AMedia(file, null, null);
+			String fileName = file.getName();
+			String format = content.getDMS_MimeType().getFileExtension();
+			if (!Util.isEmpty(format, true) && !fileName.endsWith(format))
+			{
+				media = new AMedia(fileName.concat(format), null, null, file, null);
+			}
+			else
+			{
+				media = new AMedia(file, null, null);
+			}
+
 		}
 		catch (FileNotFoundException e)
 		{

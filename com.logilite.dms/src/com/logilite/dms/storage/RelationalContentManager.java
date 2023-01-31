@@ -337,9 +337,9 @@ public class RelationalContentManager implements IContentManager
 		}
 		else
 		{
-			String format = Utils.getFileExtension(fileName);
+			String format = Utils.getFileExtension(file.getName());
 			if (format == null)
-				format = Utils.getFileExtension(file.getName());
+				format = Utils.getFileExtension(fileName);
 			if (format == null)
 				throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
 
