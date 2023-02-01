@@ -17,3 +17,11 @@
 
 -- Removed pdf-renderer-1.0.5.jar and added new PDFrenderer.jar to support thumbnails generate of the latest PDF version. [ PDF thumbnail creation failure: com.sun.pdfview.PDFParseException: Expected 'xref' at start of table ]
 Reference link - https://github.com/katjas/PDFrenderer
+
+
+
+
+2023 - Jan - 31
+---------------
+	Deployment of new DMS plugin after renamed package from org.idempiere.dms to com.logilite.dms require to apply below script 1st.
+	Script: Script/07_202301311300_Rename_Package_Name.sql

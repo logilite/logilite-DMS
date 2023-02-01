@@ -27,9 +27,9 @@ import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.idempiere.dms.DMS;
-import org.idempiere.dms.constant.DMSConstant;
 
+import com.logilite.dms.DMS;
+import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.uuid.classes.UUIDContentManager;
 import com.logilite.dms.uuid.contant.DMSContantUUID;
 import com.logilite.dms.uuid.util.UtilsUUID;
@@ -477,7 +477,15 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				}
 
 				// append a list of lines, add new lines automatically
-				Files.writeString(outFile.toPath(), output, StandardOpenOption.APPEND);
+				// Option 1
+				ArrayList<String> outputList = new ArrayList<String>();
+				outputList.add(output.toString());
+				Files.write(outFile.toPath(), outputList, StandardOpenOption.APPEND);
+
+				// Option 2
+				// FileWriter writer = new FileWriter(outFile);
+				// writer.write(output.toString());
+				// writer.close();
 
 				//
 				fileListOutput.add(outFile);

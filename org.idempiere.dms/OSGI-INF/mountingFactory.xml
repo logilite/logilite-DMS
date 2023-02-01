@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.idempiere.dms.factories.DefaultMountingFactory">
-   <implementation class="org.idempiere.dms.factories.DefaultMountingFactory"/>
-   <property name="service.ranking" type="Integer" value="5"/>
-   <service>
-      <provide interface="org.idempiere.dms.factories.IMountingFactory"/>
-   </service>
-</scr:component>

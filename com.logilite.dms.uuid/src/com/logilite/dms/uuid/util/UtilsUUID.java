@@ -15,8 +15,9 @@ import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.compiere.model.MTable;
 import org.compiere.util.Env;
-import org.idempiere.dms.util.Utils;
-import org.idempiere.model.MDMSVersion;
+
+import com.logilite.dms.model.MDMSVersion;
+import com.logilite.dms.util.Utils;
 
 /**
  * Miscellaneous Utils

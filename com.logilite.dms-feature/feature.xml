@@ -22,6 +22,7 @@
       <import plugin="org.adempiere.base" version="9.0.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.ui.zk" version="9.0.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.ui" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="com.logilite.search" version="9.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi" version="3.16.300" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi.services" version="3.10.100" match="greaterOrEqual"/>
       <import plugin="zhtml" version="9.6.0" match="greaterOrEqual"/>
@@ -30,18 +31,16 @@
       <import plugin="zk" version="9.6.0" match="greaterOrEqual"/>
       <import plugin="zcommon" version="9.6.0" match="greaterOrEqual"/>
       <import plugin="org.apache.ant"/>
-      <import plugin="org.adempiere.ui.zk" version="9.0.0.qualifier" match="greaterOrEqual"/>
-      <import plugin="com.logilite.search" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="org.apache.commons.commons-io"/>
       <import plugin="org.apache.httpcomponents.httpclient" version="4.5.13" match="greaterOrEqual"/>
       <import plugin="org.apache.httpcomponents.httpcore" version="4.4.14" match="greaterOrEqual"/>
       <import plugin="zkbind" version="9.6.0" match="greaterOrEqual"/>
       <import plugin="zkplus" version="9.6.0" match="greaterOrEqual"/>
       <import plugin="zweb" version="9.6.0" match="greaterOrEqual"/>
-      <import plugin="org.apache.commons.commons-io"/>
    </requires>
 
    <plugin
-         id="org.idempiere.dms"
+         id="com.logilite.dms"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         id="com.logilite.dms.form.WDocumentExplorer"
+         name="com.logilite.dms.form.WDocumentExplorer"
+         point="org.adempiere.webui.Form">
+      <form
+            class="com.logilite.dms.form.WDocumentExplorer">
+      </form>
+   </extension>
+   <extension
+         id="com.logilite.dms.process.MigrateAttachmentToDMS"
+         name="com.logilite.dms.process.MigrateAttachmentToDMS"
+         point="org.adempiere.base.Process">
+      <process
+            class="com.logilite.dms.process.MigrateAttachmentToDMS">
+      </process>
+   </extension>
+   <extension
+         id="com.logilite.dms.process.FileSizeFixProcess"
+         name="com.logilite.dms.process.FileSizeFixProcess"
+         point="org.adempiere.base.Process">
+      <process
+            class="com.logilite.dms.process.FileSizeFixProcess">
+      </process>
+   </extension>
+   <extension
+         id="com.logilite.dms.model.DMSModelValidator"
+         name="com.logilite.dms.model.DMSModelValidator"
+         point="org.adempiere.base.ModelValidator">
+      <listener
+            class="com.logilite.dms.model.DMSModelValidator">
+      </listener>
+   </extension>
+   <extension
+         id="com.logilite.dms.process.ResetIndexingProcess"
+         name="com.logilite.dms.process.ResetIndexingProcess"
+         point="org.adempiere.base.Process">
+      <process
+            class="com.logilite.dms.process.ResetIndexingProcess">
+      </process>
+   </extension>
+</plugin>
