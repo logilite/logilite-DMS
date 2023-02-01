@@ -2,7 +2,7 @@
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="com.logilite.dms.uuid.factory.UUIDMountingFactory">
    <implementation class="com.logilite.dms.uuid.factory.UUIDMountingFactory"/>
    <service>
-      <provide interface="org.idempiere.dms.factories.IMountingFactory"/>
+      <provide interface="com.logilite.dms.factories.IMountingFactory"/>
    </service>
    <property name="service.ranking" type="Integer" value="10"/>
 </scr:component>

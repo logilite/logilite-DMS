@@ -238,7 +238,7 @@ public class ConvertXlsxToPdf
 		table.appendChild(tr);
 	}
 
-	@SuppressWarnings("deprecation")
+	@SuppressWarnings( { "deprecation", "unlikely-arg-type" })
 	private void processCell(Element tr, XSSFCell cell, String sID, int pos_col, int pos_row)
 	{
 		int cols = 1;
@@ -286,11 +286,11 @@ public class ConvertXlsxToPdf
 		}
 		else
 		{
-			if (CellType.BLANK.equals(cell.getCellType()))
+			if (CellType.BLANK.equals(cell.getCellTypeEnum()))
 			{
 				value = "\u00a0";
 			}
-			else if (CellType.NUMERIC.equals(cell.getCellType()))
+			else if (CellType.NUMERIC.equals(cell.getCellTypeEnum()))
 			{
 				if (DateUtil.isCellDateFormatted(cell))
 				{
@@ -303,13 +303,13 @@ public class ConvertXlsxToPdf
 					value = cell.getNumericCellValue();
 				}
 			}
-			else if (CellType.BOOLEAN.equals(cell.getCellType()))
+			else if (CellType.BOOLEAN.equals(cell.getCellTypeEnum()))
 			{
 				value = cell.getBooleanCellValue();
 			}
-			else if (CellType.FORMULA.equals(cell.getCellType()))
+			else if (CellType.FORMULA.equals(cell.getCellTypeEnum()))
 			{
-				if (CellType.ERROR.equals(cell.getCachedFormulaResultType()))
+				if (CellType.ERROR.equals(cell.getCellTypeEnum()))
 				{
 					value = cell.getCellFormula();
 				}
@@ -371,10 +371,10 @@ public class ConvertXlsxToPdf
 				}
 			}
 		}
-		if (HorizontalAlignment.CENTER.equals(style.getAlignment()))
+		if (HorizontalAlignment.CENTER.equals(style.getAlignmentEnum()))
 			sb.append("text-align:").append("center;");
 
-		if (HorizontalAlignment.RIGHT.equals(style.getAlignment()))
+		if (HorizontalAlignment.RIGHT.equals(style.getAlignmentEnum()))
 			sb.append("text-align:").append("right;");
 
 //		if (style.getBorderBottom() != BorderStyle.NONE)
