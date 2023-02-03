@@ -107,7 +107,6 @@ public class CustomToolbarFactory implements IAction
 		SessionManager.getAppDesktop().showWindow(dmsWindow);
 	} // execute
 
-	@Override
 	public void updateToolbarCustomBtn(Toolbarbutton toolbarButton, IADTabpanel tabPanel, boolean changed, boolean readOnly)
 	{
 

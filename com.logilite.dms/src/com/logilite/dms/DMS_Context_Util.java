@@ -127,8 +127,8 @@ public class DMS_Context_Util
 				return Boolean.valueOf("Y".equals(value));
 
 			// Multi-Select
-			if (DisplayType.isMultiSelect(displayType))
-				return Util.getArrayObjectFromString(displayType, value);
+//			if (DisplayType.isMultiSelect(displayType))
+//				return Util.getArrayObjectFromString(displayType, value);
 
 			// Default
 			return value;
