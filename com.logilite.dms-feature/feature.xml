@@ -36,14 +36,14 @@
       <import plugin="org.adempiere.plugin.utils" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.base" version="5.1.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi" version="3.12.100" match="greaterOrEqual"/>
-      <import plugin="org.idempiere.dms" version="7.1.0" match="greaterOrEqual"/>
+      <import plugin="com.logilite.dms" version="7.1.0" match="greaterOrEqual"/>
       <import plugin="zkbind" version="8.0.2" match="greaterOrEqual"/>
       <import plugin="zkplus" version="8.0.2" match="greaterOrEqual"/>
       <import plugin="zweb" version="8.0.2" match="greaterOrEqual"/>
    </requires>
 
    <plugin
-         id="org.idempiere.dms"
+         id="com.logilite.dms"
          download-size="0"
          install-size="0"
          version="0.0.0"

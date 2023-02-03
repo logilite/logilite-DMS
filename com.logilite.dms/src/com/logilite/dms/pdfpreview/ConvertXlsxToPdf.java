@@ -238,7 +238,7 @@ public class ConvertXlsxToPdf
 		table.appendChild(tr);
 	}
 
-	@SuppressWarnings( { "deprecation", "unlikely-arg-type" })
+	@SuppressWarnings( { "deprecation" })
 	private void processCell(Element tr, XSSFCell cell, String sID, int pos_col, int pos_row)
 	{
 		int cols = 1;
@@ -339,7 +339,6 @@ public class ConvertXlsxToPdf
 		tr.appendChild(td);
 	}
 
-	@SuppressWarnings("deprecation")
 	private void processCellStyle(Element td, XSSFCellStyle style, XSSFRichTextString rts, String sID)
 	{
 		StringBuilder sb = new StringBuilder();
