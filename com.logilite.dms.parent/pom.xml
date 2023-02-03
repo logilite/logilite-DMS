@@ -2,32 +2,33 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.logilite.dms</groupId>
   <artifactId>com.logilite.dms.parent</artifactId>
-  <version>7.1.0-SNAPSHOT</version>
+  <version>7.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <local.maven>${user.home}/.m2</local.maven>
-    <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_7_1/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
+    <tycho.version>1.5.0</tycho.version>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
     <maven.dependency.version>3.1.1</maven.dependency.version>
-    <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/7.1.0-SNAPSHOT/org.idempiere.p2-7.1.0-SNAPSHOT.zip!/</local.idempiere>
-	<local.idempiere.sb>file:///C:/Sachin/Work/iDempiere/IDM_LT-7.1/org.idempiere.p2/target/repository/</local.idempiere.sb>
-    <idempiere.repo>${jenkins.idempiere}</idempiere.repo>
     <download.maven.version>1.4.1</download.maven.version>
-    <tycho.version>1.5.0</tycho.version>
     <idempiere.repo-id>iDempiere71</idempiere.repo-id>
     <maven-clean-plugin.version>maven-clean-plugin.version</maven-clean-plugin.version>
     <lifecycle.mapping.version>1.0.0</lifecycle.mapping.version>
+
+    <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_7_1/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
+    <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/7.1.0-SNAPSHOT/org.idempiere.p2-7.1.0-SNAPSHOT.zip!/</local.idempiere>
+	<local.idempiere.sb>file:///C:/Sachin/Work/iDempiere/IDM_LT-7.1/org.idempiere.p2/target/repository/</local.idempiere.sb>
+    <idempiere.repo>${jenkins.idempiere}</idempiere.repo>
 	
 	<local.search>jar:file:///${local.maven}/repository/com/logilite/search/com.logilite.search.p2/7.1.0-SNAPSHOT/com.logilite.search.p2-7.1.0-SNAPSHOT.zip!/</local.search>
-	<local.search.sb>file:///C:/Sachin/Work/Modules/com.logilite.index-7.1/com.logilite.search.p2/target/repository/</local.search.sb>
+	<local.search.sb>file:///C:/Sachin/Work/Modules/index/index-7/com.logilite.search.p2/target/repository/</local.search.sb>
   	<jenkins.search>http://id-build.logilite.com/logilite-search/7.1.0/LATEST/repository/</jenkins.search>
   	<search.repo>${jenkins.search}</search.repo>
 
-	<local.esignature>jar:file:///${local.maven}/repository/com/logilite/esignature/com.logilite.esignature.p2/7.1.0-SNAPSHOT/com.logilite.esignature.p2-7.1.0-SNAPSHOT.zip!/</local.esignature>
-	<local.esignature.sb>file:///C:/Sachin/Work/Modules/esignature.topaz-7.1/com.logilite.esignature.p2/target/repository</local.esignature.sb>
-  	<jenkins.esignature>http://id-build.logilite.com/esignature/7.1.0/LATEST/repository/</jenkins.esignature>
-  	<esignature.repo>${jenkins.esignature}</esignature.repo>
-	  	
+<!-- 	<local.esignature>jar:file:///${local.maven}/repository/com/logilite/esignature/com.logilite.esignature.p2/7.1.0-SNAPSHOT/com.logilite.esignature.p2-7.1.0-SNAPSHOT.zip!/</local.esignature> -->
+<!-- 	<local.esignature.sb>file:///C:/Sachin/Work/Modules/esignature.topaz-7.1/com.logilite.esignature.p2/target/repository</local.esignature.sb> -->
+<!--   	<jenkins.esignature>http://id-build.logilite.com/esignature/7.1.0/LATEST/repository/</jenkins.esignature> -->
+<!--   	<esignature.repo>${jenkins.esignature}</esignature.repo> -->
+
   </properties>
   <build>
     <plugins>
@@ -114,11 +115,11 @@
           <url>${search.repo}</url>
           <layout>p2</layout>
         </repository>
-        <repository>
-          <id>esignature</id>
-          <url>${esignature.repo}</url>
-          <layout>p2</layout>
-        </repository>
+<!--         <repository> -->
+<!--           <id>esignature</id> -->
+<!--           <url>${esignature.repo}</url> -->
+<!--           <layout>p2</layout> -->
+<!--         </repository> -->
       </repositories>
     </profile>
   </profiles>

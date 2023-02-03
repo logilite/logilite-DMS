@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
 		<attributes>
 			<attribute name="module" value="true"/>
 		</attributes>
@@ -27,6 +27,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/tidy.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xmlbeans-3.1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xmlworker-5.4.1.1_LLP.jar"/>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src/"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
