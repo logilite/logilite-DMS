@@ -6,6 +6,6 @@
     <version>7.2.0-SNAPSHOT</version>
     <relativePath>../com.logilite.dms.parent/pom.xml</relativePath>
   </parent>
-  <artifactId>com.logilite.dms_lib</artifactId>
+  <artifactId>com.logilite.dmslib</artifactId>
   <packaging>eclipse-plugin</packaging>
 </project>

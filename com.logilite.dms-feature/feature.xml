@@ -36,14 +36,13 @@
       <import plugin="org.adempiere.plugin.utils" version="3.1.0" match="greaterOrEqual"/>
       <import plugin="org.adempiere.base" version="5.1.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi" version="3.12.100" match="greaterOrEqual"/>
-      <import plugin="com.logilite.dms" version="7.1.0" match="greaterOrEqual"/>
       <import plugin="zkbind" version="8.0.2" match="greaterOrEqual"/>
       <import plugin="zkplus" version="8.0.2" match="greaterOrEqual"/>
       <import plugin="zweb" version="8.0.2" match="greaterOrEqual"/>
    </requires>
 
    <plugin
-         id="com.logilite.dms_lib"
+         id="com.logilite.dmslib"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -86,7 +85,7 @@
          unpack="false"/>
 
    <plugin
-         id="com.logilite.search.solr_lib"
+         id="com.logilite.search.solrlib"
          download-size="0"
          install-size="0"
          version="0.0.0"

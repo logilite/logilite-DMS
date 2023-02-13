@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMSLib
-Bundle-SymbolicName: com.logilite.dms_lib;singleton:=true
+Bundle-SymbolicName: com.logilite.dmslib;singleton:=true
 Bundle-Version: 7.2.0.qualifier
-Bundle-Activator: com.logilite.dms_lib.Activator
+Bundle-Activator: com.logilite.dmslib.Activator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: com.logilite.dms.lib
