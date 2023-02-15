@@ -6,8 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry exported="true" kind="lib" path="lib/commons-collections4-4.4.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/commons-compress-1.19.jar"/>	
 	<classpathentry exported="true" kind="lib" path="lib/dom4j-1.6.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/fr.opensagres.poi.xwpf.converter.core-2.0.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/fr.opensagres.poi.xwpf.converter.pdf-2.0.1.jar"/>
@@ -25,6 +23,10 @@
 	<classpathentry exported="true" kind="lib" path="lib/tidy.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xmlbeans-3.1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xmlworker-5.4.1.1_LLP.jar"/>
-	<classpathentry kind="src" path="src/"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-collections4-4.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-compress-1.19.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-codec-1.5.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
