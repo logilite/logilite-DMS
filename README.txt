@@ -23,5 +23,5 @@ Reference link - https://github.com/katjas/PDFrenderer
 
 2023 - Jan - 31
 ---------------
-	Deployment of new DMS plugin after renamed package from org.idempiere.dms to com.logilite.dms require to apply below script 1st.
-	Script: Script/07_202301311300_Rename_Package_Name.sql
+	Deployment of new DMS plugin after renamed package from org.idempiere.dms to com.logilite.dms require to apply below script 1st. [ Or Customer project going to use Git based DMS repo ]
+		- Execute 		Script: Script/07_202301311300_Rename_Package_Name.sql

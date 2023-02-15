@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMSLib
-Bundle-SymbolicName: com.logilite.dms_lib;singleton:=true
+Bundle-SymbolicName: com.logilite.dmslib;singleton:=true
 Bundle-Version: 7.2.0.qualifier
-Bundle-Activator: com.logilite.dms_lib.Activator
+Bundle-Activator: com.logilite.dmslib.Activator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Automatic-Module-Name: com.logilite.dms.lib
@@ -46,10 +46,12 @@ Export-Package: com.itextpdf.text,
  org.apache.poi.hwpf,
  org.apache.poi.hwpf.converter,
  org.apache.poi.hwpf.extractor,
+ org.apache.poi.openxml4j.exceptions,
  org.apache.poi.openxml4j.opc,
  org.apache.poi.ss.formula,
  org.apache.poi.ss.usermodel,
  org.apache.poi.ss.util,
+ org.apache.poi.xssf.usermodel,
  org.apache.poi.xwpf.usermodel,
  org.openxmlformats.schemas.spreadsheetml.x2006.main,
  org.w3c.tidy
