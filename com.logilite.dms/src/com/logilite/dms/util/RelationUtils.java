@@ -118,8 +118,7 @@ public class RelationUtils
 									}
 								}
 							}
-							actualName = newFileNameWithVersion + DMSConstant.REG_EXP_LIKE_STR +
-											extention;
+							actualName = newFileNameWithVersion + DMSConstant.REG_EXP_LIKE_STR + extention;
 						}
 						// check if file exists on actual location or not
 						File newFile = storageProvider.getFile(content.getParentURL() + DMSConstant.FILE_SEPARATOR + actualName);
