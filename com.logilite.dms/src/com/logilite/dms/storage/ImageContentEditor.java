@@ -72,7 +72,7 @@ public class ImageContentEditor extends Panel implements IContentEditor
 
 		try
 		{
-			String fileName = file.getName();
+			String fileName = content.getName();
 			String format = content.getDMS_MimeType().getFileExtension();
 			if (!Util.isEmpty(format, true) && !fileName.endsWith(format))
 			{

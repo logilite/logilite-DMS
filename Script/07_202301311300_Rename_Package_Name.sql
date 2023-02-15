@@ -6,3 +6,9 @@ UPDATE AD_Package_IMP
 SET Name = 'com.logilite.dms' 
 WHERE Name ='org.idempiere.dms' AND PK_Status = 'Completed successfully'
 ;
+
+
+UPDATE AD_ModelValidator
+SET ModelValidationClass = 'com.logilite.dms.model.DMSModelValidator'
+WHERE ModelValidationClass = 'org.idempiere.model.DMSModelValidator'
+;

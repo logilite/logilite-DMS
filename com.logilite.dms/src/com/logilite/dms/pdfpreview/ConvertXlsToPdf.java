@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -22,6 +23,9 @@ import org.apache.poi.hssf.usermodel.HSSFShape;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.CellValue;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.util.CellRangeAddress;
 
 /**
@@ -32,11 +36,12 @@ import org.apache.poi.ss.util.CellRangeAddress;
 public class ConvertXlsToPdf
 {
 	final private StringBuilder									out	= new StringBuilder(65536);
-//	final private SimpleDateFormat								sdf;
+	final private SimpleDateFormat								sdf;
 	final private HSSFWorkbook									book;
 	final private HSSFPalette									palette;
-//	final private FormulaEvaluator								evaluator;
+	final private FormulaEvaluator								evaluator;
 	private int													colIndex, rowIndex, mergeStart, mergeEnd;
+
 	// Row -> Column -> Pictures
 	private Map<Integer, Map<Integer, List<HSSFPictureData>>>	pix	= new HashMap<Integer, Map<Integer, List<HSSFPictureData>>>();
 
@@ -49,17 +54,17 @@ public class ConvertXlsToPdf
 	 */
 	public ConvertXlsToPdf(final InputStream in) throws IOException
 	{
-		//		sdf = new SimpleDateFormat("dd/MM/yyyy");
+		sdf = new SimpleDateFormat("dd/MM/yyyy");
 		if (in == null)
 		{
 			book = null;
 			palette = null;
-//			evaluator = null;
+			evaluator = null;
 			return;
 		}
 		book = new HSSFWorkbook(in);
 		palette = book.getCustomPalette();
-//		evaluator = book.getCreationHelper().createFormulaEvaluator();
+		evaluator = book.getCreationHelper().createFormulaEvaluator();
 		for (int i = 0; i < book.getNumberOfSheets(); ++i)
 		{
 			table(book.getSheetAt(i));
@@ -199,7 +204,7 @@ public class ConvertXlsToPdf
 
 		// switch (style.getAlignment())
 		// {
-		// case CellStyle.ALIGN_LEFT:
+		// case HorizontalAlignment.CENTER:
 		// out.append("text-align: left; ");
 		// break;
 		// case CellStyle.ALIGN_RIGHT:
@@ -244,79 +249,79 @@ public class ConvertXlsToPdf
 		}
 
 		// Border
-//		if (style.getBorderTop() != BorderStyle.NONE)
-//		{
-//			out.append("border-top-style: solid; ");
-//		}
-//		if (style.getBorderRight() != BorderStyle.NONE)
-//		{
-//			out.append("border-right-style: solid; ");
-//		}
-//		if (style.getBorderBottom() != BorderStyle.NONE)
-//		{
-//			out.append("border-bottom-style: solid; ");
-//		}
-//		if (style.getBorderLeft() != BorderStyle.NONE)
-//		{
-//			out.append("border-left-style: solid; ");
-//		}
+		if (style.getBorderTop() != BorderStyle.NONE)
+		{
+			out.append("border-top-style: solid; ");
+		}
+		if (style.getBorderRight() != BorderStyle.NONE)
+		{
+			out.append("border-right-style: solid; ");
+		}
+		if (style.getBorderBottom() != BorderStyle.NONE)
+		{
+			out.append("border-bottom-style: solid; ");
+		}
+		if (style.getBorderLeft() != BorderStyle.NONE)
+		{
+			out.append("border-left-style: solid; ");
+		}
 		out.append("'>");
 		String val = "";
-//		try
-//		{
-//			switch (cell.getCellType())
-//			{
-//				case STRING:
-//					val = cell.getStringCellValue();
-//					break;
-//				case NUMERIC:
-//					// POI does not distinguish between integer and double, thus:
-//					final double original = cell.getNumericCellValue(),
-//									rounded = Math.round(original);
-//					if (Math.abs(rounded - original) < 0.00000000000000001)
-//					{
-//						val = String.valueOf((int) rounded);
-//					}
-//					else
-//					{
-//						val = String.valueOf(original);
-//					}
-//					break;
-//				case FORMULA:
-//					final CellValue cv = evaluator.evaluate(cell);
-//					switch (cv.getCellType())
-//					{
-//						case BOOLEAN:
-//							out.append(cv.getBooleanValue());
-//							break;
-//						case NUMERIC:
-//							out.append(cv.getNumberValue());
-//							break;
-//						case STRING:
-//							out.append(cv.getStringValue());
-//							break;
-//						case BLANK:
-//							break;
-//						case ERROR:
-//							break;
-//						default:
-//							break;
-//					}
-//					break;
-//				default:
-//					// Neither string or number? Could be a date.
-//					try
-//					{
-//						val = sdf.format(cell.getDateCellValue());
-//					}
-//					catch (final Exception e1)
-//					{}
-//			}
-//		}
-//		catch (final Exception e)
-//		{
-//			val = e.getMessage();
-//		}
+		try
+		{
+			switch (cell.getCellType())
+			{
+				case STRING:
+					val = cell.getStringCellValue();
+					break;
+				case NUMERIC:
+					// POI does not distinguish between integer and double, thus:
+					final double original = cell.getNumericCellValue(),
+									rounded = Math.round(original);
+					if (Math.abs(rounded - original) < 0.00000000000000001)
+					{
+						val = String.valueOf((int) rounded);
+					}
+					else
+					{
+						val = String.valueOf(original);
+					}
+					break;
+				case FORMULA:
+					final CellValue cv = evaluator.evaluate(cell);
+					switch (cv.getCellType())
+					{
+						case BOOLEAN:
+							out.append(cv.getBooleanValue());
+							break;
+						case NUMERIC:
+							out.append(cv.getNumberValue());
+							break;
+						case STRING:
+							out.append(cv.getStringValue());
+							break;
+						case BLANK:
+							break;
+						case ERROR:
+							break;
+						default:
+							break;
+					}
+					break;
+				default:
+					// Neither string or number? Could be a date.
+					try
+					{
+						val = sdf.format(cell.getDateCellValue());
+					}
+					catch (final Exception e1)
+					{}
+			}
+		}
+		catch (final Exception e)
+		{
+			val = e.getMessage();
+		}
 
 		if ("null".equals(val))
 		{

@@ -40,14 +40,14 @@
    </requires>
 
    <plugin
-         id="com.logilite.dms"
+         id="com.logilite.dmslib"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="com.logilite.search"
+         id="com.logilite.dms"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -62,6 +62,20 @@
          unpack="false"/>
 
    <plugin
+         id="com.logilite.dms.storageprovider"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.search"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
          id="com.logilite.search.solr"
          download-size="0"
          install-size="0"
@@ -69,10 +83,27 @@
          unpack="false"/>
 
    <plugin
-         id="com.logilite.dms.storageprovider"
+         id="com.logilite.search.solrlib"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+
+<!--
+   <plugin
+         id="com.logilite.esignature.topaz"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.esignature.topaztheme"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+--> 
 
 </feature>

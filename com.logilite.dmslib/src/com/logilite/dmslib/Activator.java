@@ -1,4 +1,4 @@
-package com.logilite.dms_lib;
+package com.logilite.dmslib;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;

@@ -30,8 +30,7 @@ public class DMSClipboard
 
 	public static void put(MDMSContent content, boolean isCopy)
 	{
-
-		MSession mSession = MSession.get(Env.getCtx(), false);
+		MSession mSession = MSession.get(Env.getCtx());
 
 		if (content != null && mSession != null)
 		{
@@ -42,7 +41,7 @@ public class DMSClipboard
 
 	public static MDMSContent get()
 	{
-		MSession mSession = MSession.get(Env.getCtx(), false);
+		MSession mSession = MSession.get(Env.getCtx());
 
 		if (mSession != null)
 		{
@@ -54,12 +53,11 @@ public class DMSClipboard
 	public static void removeSessionId(int ad_Session_ID)
 	{
 		sessionClip.remove(ad_Session_ID);
-
 	}
 
 	public static boolean getIsCopy()
 	{
-		MSession mSession = MSession.get(Env.getCtx(), false);
+		MSession mSession = MSession.get(Env.getCtx());
 
 		if (mSession != null)
 		{
