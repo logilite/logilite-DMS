@@ -5,7 +5,7 @@
   <version>${revision}</version>
   <packaging>pom</packaging>
   <properties>
-	<revision>9.0.0-SNAPSHOT</revision>
+	<revision>11.0.0-SNAPSHOT</revision>
     <local.maven>${user.home}/.m2</local.maven>
     <tycho.version>2.7.3</tycho.version>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
@@ -15,6 +15,7 @@
     <idempiere.repo-id>iDempiere9</idempiere.repo-id>
     <maven-clean-plugin.version>maven-clean-plugin.version</maven-clean-plugin.version>
     <lifecycle.mapping.version>1.0.0</lifecycle.mapping.version>
+
     <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_9/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
     <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/9.0.0-SNAPSHOT/org.idempiere.p2-9.0.0-SNAPSHOT.zip!/</local.idempiere>
     <local.idempiere.sb>file:///C:/Sachin/Work/iDempiere/IDM_LT-9/org.idempiere.p2/target/repository/</local.idempiere.sb>
