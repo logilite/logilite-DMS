@@ -3,7 +3,7 @@ package com.logilite.dms.process;
 import java.util.List;
 
 import org.adempiere.util.Callback;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MTable;
@@ -102,7 +102,7 @@ public class MigrateAttachmentToDMS extends SvrProcess
 					if (result)
 					{
 						int cntMigAtt = DB.executeUpdate("DELETE FROM AD_Attachment WHERE isMigratedToDMS = 'Y'", get_TrxName());
-						FDialog.info(0, null, cntMigAtt + " record(s) attachments were deleted as previously migrated from DB.");
+						Dialog.info(0, cntMigAtt + " record(s) attachments were deleted as previously migrated from DB.");
 					}
 				}
 			});

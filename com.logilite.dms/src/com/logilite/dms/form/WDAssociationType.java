@@ -29,7 +29,7 @@ import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.util.ZKUpdateUtil;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
@@ -197,7 +197,7 @@ public class WDAssociationType extends Window implements EventListener<Event>
 			}
 			else
 			{
-				FDialog.warn(0, "This Document is already associate.");
+				Dialog.warn(0, "This Document is already associate.");
 			}
 
 			this.detach();

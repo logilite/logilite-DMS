@@ -1,12 +1,8 @@
 package com.logilite.dms.model;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MClient;
 import org.compiere.model.MTable;

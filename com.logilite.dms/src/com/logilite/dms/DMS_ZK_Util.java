@@ -20,7 +20,7 @@ import org.adempiere.webui.component.Menupopup;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.theme.ThemeManager;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tools.ant.Project;
@@ -78,7 +78,7 @@ public class DMS_ZK_Util
 		if (document.exists())
 			downloadDocument(document, (MDMSContent) version.getDMS_Content());
 		else
-			FDialog.warn(0, "Document is not available.");
+			Dialog.warn(0, "Document is not available.");
 	} // downloadDocument
 
 	public static void downloadDocument(File document, I_DMS_Content content) throws FileNotFoundException, IOException

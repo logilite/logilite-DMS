@@ -35,7 +35,7 @@ import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.event.WTableModelEvent;
 import org.adempiere.webui.event.WTableModelListener;
 import org.adempiere.webui.util.ZKUpdateUtil;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.compiere.minigrid.ColumnInfo;
 import org.compiere.minigrid.IDColumn;
 import org.compiere.model.GridField;
@@ -420,7 +420,7 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 						}
 					};
 
-					FDialog.ask("Grant permission for the child content?", 0, this, "Will you grant same permission for the child content documents?",
+					Dialog.ask(	"Grant permission for the child content?", 0, "Will you grant same permission for the child content documents?",
 								callbackConfirmation);
 				}
 				else

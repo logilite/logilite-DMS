@@ -70,7 +70,7 @@ import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.util.ZKUpdateUtil;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.apache.poi.ss.formula.CollaboratingWorkbooksEnvironment.WorkbookNotFoundException;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
@@ -836,7 +836,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				if (destPasteContent != null && sourceContent.get_ID() == destPasteContent.get_ID() || isContentIDExists)
 				{
-					FDialog.warn(0, "You cannot copy a folder into itself");
+					Dialog.warn(0, "You cannot copy a folder into itself");
 				}
 				else
 				{
@@ -914,7 +914,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 								}
 							};
 
-							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete,
+							Dialog.ask(	"Want to Delete linkable references ?", 0,
 										"<b> Are you want to delete actual docs and associated its linkable documents ? </b>" + warningMsg, callbackWarning);
 						}
 						else
@@ -930,7 +930,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			};
 
-			FDialog.ask(0, this, "Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
+			Dialog.ask(	0, "Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
 						callback);
 
 		}
@@ -962,7 +962,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 								}
 							};
 
-							FDialog.ask("Want to un-Delete linkable references ?", 0, mnu_delete,
+							Dialog.ask(	"Want to un-Delete linkable references ?", 0,
 										"<b> Are you want to un-Delete actual docs and associated its linkable documents ? </b>" + warningMsg, callbackWarning);
 						}
 						else
@@ -978,8 +978,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			};
 
-			FDialog.ask(0, this, "Are you sure to un delete "	+ ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName()
-									+ "?", callback);
+			Dialog.ask(	0, "Are you sure to un delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
+						callback);
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
@@ -1287,7 +1287,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					{
 						String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
 						log.log(Level.SEVERE, errorMsg, e);
-						FDialog.warn(windowID, errorMsg, "Document preview issue...");
+						Dialog.warn(windowID, errorMsg, "Document preview issue...");
 					}
 				}
 
@@ -1320,7 +1320,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			else
 			{
-				FDialog.error(0, dms.getPathFromContentManager(version) + " Content missing in storage,");
+				Dialog.error(0, dms.getPathFromContentManager(version) + " Content missing in storage,");
 			}
 		}
 	} // openDirectoryORContent
@@ -1761,7 +1761,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		String warnMsg = dms.createLink(contentReferenceTo, DMSClipboard.get(), isDir, tableID, recordID);
 		if (!Util.isEmpty(warnMsg, true))
-			FDialog.warn(0, warnMsg);
+			Dialog.warn(0, warnMsg);
 
 		try
 		{

@@ -25,7 +25,7 @@ import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Window;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.compiere.util.CLogger;
 import org.compiere.util.Util;
 import org.zkoss.zk.ui.Component;
@@ -75,7 +75,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 
 			String msg = renderDMSVersion(content);
 			if (!Util.isEmpty(msg))
-				FDialog.info(0, this, msg);
+				Dialog.info(0, msg);
 			else
 				AEnv.showCenterScreen(this);
 		}

@@ -11,7 +11,6 @@ import org.compiere.model.GridField;
 import org.compiere.util.CLogger;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.Util;
 
 /**
  * Util for context related activities for developer
