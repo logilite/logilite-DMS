@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
     <feature 
-    	url="features/com.logilite.dms.feature_9.0.0.qualifier.jar" 
-    	id="com.logilite.dms.feature" version="9.0.0.qualifier">
+    	url="features/com.logilite.dms.feature_11.0.0.qualifier.jar" 
+    	id="com.logilite.dms.feature" version="11.0.0.qualifier">
 	    <category name="com.logilite.dms"/>
     </feature>
 </site>

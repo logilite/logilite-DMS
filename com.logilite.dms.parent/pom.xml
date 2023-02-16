@@ -18,7 +18,7 @@
 
     <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_9/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
     <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/9.0.0-SNAPSHOT/org.idempiere.p2-9.0.0-SNAPSHOT.zip!/</local.idempiere>
-    <local.idempiere.sb>file:///C:/Sachin/Work/iDempiere/IDM_LT-9/org.idempiere.p2/target/repository/</local.idempiere.sb>
+    <local.idempiere.sb>file:///C:/Sachin/Work/iDempiere/CORE-IDEMPIERE/org.idempiere.p2/target/repository/</local.idempiere.sb>
     <idempiere.repo>${local.idempiere.sb}</idempiere.repo>
 	
     <local.search>jar:file:///${local.maven}/repository/com/logilite/search/com.logilite.search.p2/9.0.0-SNAPSHOT/com.logilite.search.p2-9.0.0-SNAPSHOT.zip!/</local.search>
