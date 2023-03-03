@@ -255,8 +255,10 @@ public class DMSSearchUtils
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSVersion version = (MDMSVersion) mapEntry.getKey();
-			if (version.getDMS_Content().getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+			if (MDMSContent.CONTENTBASETYPE_Directory.equals(version.getDMS_Content().getContentBaseType()))
+			{
 				getHierarchicalContent(hierarchicalContent, version.getDMS_Content_ID(), AD_Client_ID, tableID, recordID);
+			}
 			else
 			{
 				MDMSAssociation association = (MDMSAssociation) mapEntry.getValue();
@@ -301,7 +303,7 @@ public class DMSSearchUtils
 	 * @param  file
 	 * @return               Map
 	 */
-	public static Map<String, Object> createIndexMap(IIndexSearcher indexSearcher, I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
+	public static Map<String, Object> createIndexMap(	IIndexSearcher indexSearcher, I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
 														File file)
 	{
 		Map<String, Object> solrValue = new HashMap<String, Object>();
