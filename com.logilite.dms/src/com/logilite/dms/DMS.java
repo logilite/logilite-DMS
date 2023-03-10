@@ -352,7 +352,13 @@ public class DMS
 	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
 																			int recordID)
 	{
-		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, validTableID(tableID), validRecordID(recordID));
+		return renderSearchedContent(queryParamas, content, tableID, recordID, DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE);
+	} // renderSearchedContent
+
+	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
+																			int recordID, String documentView)
+	{
+		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, validTableID(tableID), validRecordID(recordID), documentView);
 	} // renderSearchedContent
 
 	/*

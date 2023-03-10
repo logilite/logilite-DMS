@@ -1164,7 +1164,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			String documentView = cobDocumentView.getSelectedItem().getValue();
 			if (isSearch)
-				contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID);
+				contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID, documentView);
 			else if (isGenericSearch)
 				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent, documentView);
 			else
