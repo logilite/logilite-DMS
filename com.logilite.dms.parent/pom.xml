@@ -2,9 +2,10 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.logilite.dms</groupId>
   <artifactId>com.logilite.dms.parent</artifactId>
-  <version>7.2.0-SNAPSHOT</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
   <properties>
+  	<revision>7.2.0-SNAPSHOT</revision>
     <local.maven>${user.home}/.m2</local.maven>
     <tycho.version>1.5.0</tycho.version>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
