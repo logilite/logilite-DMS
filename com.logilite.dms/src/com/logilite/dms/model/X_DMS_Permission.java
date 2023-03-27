@@ -19,22 +19,18 @@ package com.logilite.dms.model;
 
 import java.sql.ResultSet;
 import java.util.Properties;
-
-import org.compiere.model.I_Persistent;
-import org.compiere.model.MTable;
-import org.compiere.model.PO;
-import org.compiere.model.POInfo;
+import org.compiere.model.*;
 
 /** Generated Model for DMS_Permission
  *  @author iDempiere (generated) 
- *  @version Release 5.1 - $Id$ */
+ *  @version Release 7.1 - $Id$ */
 public class X_DMS_Permission extends PO implements I_DMS_Permission, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20210322L;
+	private static final long serialVersionUID = 20230313L;
 
     /** Standard Constructor */
     public X_DMS_Permission (Properties ctx, int DMS_Permission_ID, String trxName)
@@ -43,7 +39,6 @@ public class X_DMS_Permission extends PO implements I_DMS_Permission, I_Persiste
       /** if (DMS_Permission_ID == 0)
         {
 			setDMS_Content_ID (0);
-			setDMS_Owner_ID (0);
 			setDMS_Permission_ID (0);
         } */
     }
@@ -152,31 +147,6 @@ public class X_DMS_Permission extends PO implements I_DMS_Permission, I_Persiste
 	public int getDMS_Content_ID () 
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_DMS_Content_ID);
-		if (ii == null)
-			 return 0;
-		return ii.intValue();
-	}
-
-	public org.compiere.model.I_AD_User getDMS_Owner() throws RuntimeException
-    {
-		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_Name)
-			.getPO(getDMS_Owner_ID(), get_TrxName());	}
-
-	/** Set DMS Owner.
-		@param DMS_Owner_ID DMS Owner	  */
-	public void setDMS_Owner_ID (int DMS_Owner_ID)
-	{
-		if (DMS_Owner_ID < 1) 
-			set_Value (COLUMNNAME_DMS_Owner_ID, null);
-		else 
-			set_Value (COLUMNNAME_DMS_Owner_ID, Integer.valueOf(DMS_Owner_ID));
-	}
-
-	/** Get DMS Owner.
-		@return DMS Owner	  */
-	public int getDMS_Owner_ID () 
-	{
-		Integer ii = (Integer)get_Value(COLUMNNAME_DMS_Owner_ID);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();

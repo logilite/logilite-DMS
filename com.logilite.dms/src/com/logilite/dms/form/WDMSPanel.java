@@ -94,6 +94,7 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Cell;
+import org.zkoss.zul.East;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.South;
@@ -221,6 +222,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem				mnu_versionList			= null;
 	private Menuitem				mnu_uploadVersion		= null;
 	private Menuitem				mnu_zoomContentWin		= null;
+	private Menuitem				mnu_owner				= null;
 
 	private Menuitem				mnu_canvasPaste			= null;
 	private Menuitem				mnu_canvasCreateLink	= null;
@@ -649,19 +651,26 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else
 		{
 			cell_layout.setWidth("70%");
-			cell_attribute.setWidth("30%");
 
 			Hbox boxViewSeparator = new Hbox();
 			boxViewSeparator.setWidth("100%");
 			boxViewSeparator.setHeight("100%");
-			boxViewSeparator.appendChild(cell_layout);
-			boxViewSeparator.appendChild(splitter);
 			boxViewSeparator.appendChild(cell_attribute);
 
+			Borderlayout borderViewSeparator = new Borderlayout();
+			borderViewSeparator.appendCenter(cell_layout);
+			borderViewSeparator.appendEast(boxViewSeparator);
+
+			East east = borderViewSeparator.getEast();
+			east.setWidth("30%");
+			east.setSplittable(true);
+			east.setCollapsible(true);
+			//
 			Tabpanel tabViewPanel = new Tabpanel();
 			tabViewPanel.setHeight("100%");
 			tabViewPanel.setWidth("100%");
-			tabViewPanel.appendChild(boxViewSeparator);
+			tabViewPanel.appendChild(borderViewSeparator);
+
 			tabPanels.appendChild(tabViewPanel);
 		}
 
@@ -687,6 +696,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
 		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
 		mnu_zoomContentWin = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ZOOMCONTENTWIN, "Zoom", this);
+		mnu_owner = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_OWNER, "Permission", this);
 
 		// Context Menu item for Right click on Canvas area
 		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
@@ -841,11 +851,33 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				else
 				{
 					if (DMSClipboard.getIsCopy())
-						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID);
+					{
+						// Create permission for paste content from parent if true
+						if (DMSPermissionUtils.isPermissionAllowed() && !destPasteContent.isMounting())
+						{
+							Callback<Boolean> callbackConfirmation = new Callback<Boolean>() {
+								@Override
+								public void onCallback(Boolean isCreatePermissionForPasteContent)
+								{
+									dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, isCreatePermissionForPasteContent);
+									renderViewer();
+								}
+							};
+							FDialog.ask("Grant permission to the paste content ?", 0, this,
+										" Will you grant same permission of the Parent Content to paste content documents?", callbackConfirmation);
+						}
+						else
+						{
+							dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, false);
+							renderViewer();
+						}
+					}
 					else
+					{
+						// TODO need to ask grant permission Dialog
 						dms.pasteCutContent(sourceContent, destPasteContent, tableID, recordID);
-
-					renderViewer();
+						renderViewer();
+					}
 				}
 			}
 		}
@@ -1002,6 +1034,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, permissionManager.isNavigation());
 			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISALLPERMISSION, permissionManager.isAllPermission());
 		}
+
+		else if (event.getTarget().equals(mnu_owner))
+		{
+			new WUpdateOwner(dms, dirContent);
+		}
+
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
 			linkCopyDocument(currDMSContent, false);
@@ -1585,6 +1623,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_versionList.setDisabled(false);
 				mnu_canvasPaste.setDisabled(true);
 				mnu_uploadVersion.setDisabled(false);
+				mnu_owner.setDisabled(false);
 			}
 			else if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
 			{
@@ -1615,6 +1654,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_createLink.setDisabled(true);
 				mnu_permission.setDisabled(true);
 				mnu_uploadVersion.setDisabled(true);
+				mnu_owner.setDisabled(true);
 			}
 
 			if (!isRead)
@@ -1655,6 +1695,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_versionList.setVisible(isActive);
 			mnu_uploadVersion.setVisible(isActive);
 			mnu_zoomContentWin.setVisible(isActive);
+			mnu_owner.setVisible(isActive);
 
 			if (DMSPermissionUtils.isPermissionAllowed())
 			{
@@ -1702,6 +1743,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_versionList.setDisabled(isDisabled);
 		mnu_uploadVersion.setDisabled(isDisabled);
 		mnu_zoomContentWin.setDisabled(isDisabled);
+		mnu_owner.setDisabled(isDisabled);
 	} // ctxMenuItemDisabled
 
 	private void openCanvasContextMenu(Event event)

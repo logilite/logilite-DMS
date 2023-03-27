@@ -443,14 +443,16 @@ public class UUIDContentManager implements IContentManager
 	/**
 	 * Paste the content [ Copy Operation ]
 	 * 
-	 * @param dms           - DMS
-	 * @param copiedContent - Content From
-	 * @param destContent   - Content To
-	 * @param tableID       - AD_Table_ID
-	 * @param recordID      - Record_ID
+	 * @param dms                               - DMS
+	 * @param copiedContent                     - Content From
+	 * @param destContent                       - Content To
+	 * @param tableID                           - AD_Table_ID
+	 * @param recordID                          - Record_ID
+	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
 	 */
 	@Override
-	public void pasteCopyContent(DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID)
+	public void pasteCopyContent(	DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID,
+									boolean isCreatePermissionForPasteContent)
 	{
 		if (destContent != null && destContent.getDMS_Content_ID() > 0)
 		{

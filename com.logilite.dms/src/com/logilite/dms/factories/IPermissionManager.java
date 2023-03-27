@@ -66,12 +66,13 @@ public interface IPermissionManager
 	public ArrayList<I_DMS_Content> getFilteredContentList(Set<I_DMS_Content> contentSet);
 
 	/**
-	 * Grant the permission to the current content based on parent content permissions
+	 * Grant the permission to the current content based on parent content permissions if result is true
 	 * 
 	 * @param content
 	 * @param parentContent
+	 * @param isCreateForChildContent
 	 */
-	public void grantChildPermissionFromParentContent(I_DMS_Content content, I_DMS_Content parentContent);
+	public void grantChildPermissionFromParentContent(I_DMS_Content content, I_DMS_Content parentContent, boolean isCreateForChildContent);
 
 	/**
 	 * Create Navigation Permission based on any new permission created then check if parent content

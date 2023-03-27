@@ -644,7 +644,21 @@ public class DMS
 	 */
 	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID)
 	{
-		contentManager.pasteCopyContent(this, copiedContent, destContent, validTableID(tableID), validRecordID(recordID));
+		pasteCopyContent(copiedContent, destContent, tableID, recordID, false);
+	} // pasteCopyContent
+
+	/**
+	 * Paste the content [ Copy Operation ]
+	 * 
+	 * @param copiedContent                     - Content From
+	 * @param destContent                       - Content To
+	 * @param tableID                           - AD_Table_ID
+	 * @param recordID                          - Record_ID
+	 * @param isCreatePermissionforPasteContent - create permission for paste content from parent if true
+	 */
+	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID, boolean isCreatePermissionforPasteContent)
+	{
+		contentManager.pasteCopyContent(this, copiedContent, destContent, validTableID(tableID), validRecordID(recordID), isCreatePermissionforPasteContent);
 	} // pasteCopyContent
 
 	/**
@@ -815,7 +829,13 @@ public class DMS
 	public void grantChildPermissionFromParentContent(MDMSContent content, MDMSContent parentContent)
 	{
 		if (DMSPermissionUtils.isPermissionAllowed())
-			permissionManager.grantChildPermissionFromParentContent(content, parentContent);
+			grantChildPermissionFromParentContent(content, parentContent, false);
+	} // grantChildPermissionFromParentContent
+
+	public void grantChildPermissionFromParentContent(MDMSContent content, MDMSContent parentContent, boolean isCreateForChildContent)
+	{
+		if (DMSPermissionUtils.isPermissionAllowed())
+			permissionManager.grantChildPermissionFromParentContent(content, parentContent, isCreateForChildContent);
 	} // grantChildPermissionFromParentContent
 
 	public boolean isWritePermission(MDMSContent content)

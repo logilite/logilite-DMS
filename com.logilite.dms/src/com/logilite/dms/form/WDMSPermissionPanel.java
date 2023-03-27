@@ -15,7 +15,6 @@ import org.adempiere.util.Callback;
 import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Borderlayout;
-import org.adempiere.webui.component.Combobox;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.GridFactory;
@@ -23,7 +22,6 @@ import org.adempiere.webui.component.ListboxFactory;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
-import org.adempiere.webui.component.Searchbox;
 import org.adempiere.webui.component.WListbox;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WEditor;
@@ -306,18 +304,6 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 			m_separators.add(null);
 		}
 
-		if (mField.getColumnName().equals(MDMSPermission.COLUMNNAME_DMS_Owner_ID))
-		{
-			if (DisplayType.Search == mField.getDisplayType())
-			{
-				((Searchbox) editor.getComponent()).setEnabled(isDMSAdmin);
-			}
-			else if (DisplayType.Table == mField.getDisplayType() || DisplayType.TableDir == mField.getDisplayType())
-			{
-				((Combobox) editor.getComponent()).setEnabled(isDMSAdmin);
-			}
-		}
-
 		rows.appendChild(row);
 	} // createField
 
@@ -326,7 +312,6 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 		Properties ctx = Env.getCtx();
 		ColumnInfo[] permissionColumns = new ColumnInfo[] {
 															new ColumnInfo("", "DMS_Permission_ID", IDColumn.class),
-																new ColumnInfo(Msg.translate(ctx, "DMS_Owner_ID"), "o.Name", String.class),
 																new ColumnInfo(Msg.translate(ctx, "CreatedBy"), "c.Name", String.class),
 																new ColumnInfo(Msg.translate(ctx, "AD_User_ID"), "u.Name", String.class),
 																new ColumnInfo(Msg.translate(ctx, "AD_Role_ID"), "r.Name", String.class),
@@ -340,7 +325,6 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 		sqlPopulateTableData = permissionTbl.prepareTable(	permissionColumns,
 															// FROM
 															" DMS_Permission p "
-																				+ " INNER JOIN AD_User o	ON (o.AD_User_ID = p.DMS_Owner_ID)	"
 																				+ " LEFT JOIN AD_User c		ON (c.AD_User_ID = p.CreatedBy)	"
 																				+ " LEFT JOIN AD_Role r		ON (r.AD_Role_ID = p.AD_Role_ID)	"
 																				+ " LEFT JOIN AD_User u		ON (u.AD_User_ID = p.AD_User_ID)	",

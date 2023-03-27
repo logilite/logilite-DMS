@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for DMS_Permission
  *  @author iDempiere (generated) 
- *  @version Release 5.1
+ *  @version Release 7.1
  */
 @SuppressWarnings("all")
 public interface I_DMS_Permission 
@@ -32,7 +32,7 @@ public interface I_DMS_Permission
     /** TableName=DMS_Permission */
     public static final String Table_Name = "DMS_Permission";
 
-    /** AD_Table_ID=1000013 */
+    /** AD_Table_ID=1000011 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -120,17 +120,6 @@ public interface I_DMS_Permission
 	public int getDMS_Content_ID();
 
 	public com.logilite.dms.model.I_DMS_Content getDMS_Content() throws RuntimeException;
-
-    /** Column name DMS_Owner_ID */
-    public static final String COLUMNNAME_DMS_Owner_ID = "DMS_Owner_ID";
-
-	/** Set DMS Owner	  */
-	public void setDMS_Owner_ID (int DMS_Owner_ID);
-
-	/** Get DMS Owner	  */
-	public int getDMS_Owner_ID();
-
-	public org.compiere.model.I_AD_User getDMS_Owner() throws RuntimeException;
 
     /** Column name DMS_Permission_ID */
     public static final String COLUMNNAME_DMS_Permission_ID = "DMS_Permission_ID";

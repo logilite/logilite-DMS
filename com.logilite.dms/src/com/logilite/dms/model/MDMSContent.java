@@ -109,6 +109,7 @@ public class MDMSContent extends X_DMS_Content
 		content.setIsMounting(isMounting);
 		content.setContentBaseType(contentBaseType);
 		content.setDMS_MimeType_ID(MDMSMimeType.getMimeTypeID(file));
+		content.setDMS_Owner_ID(content.getCreatedBy());
 		if (asiID > 0)
 			content.setM_AttributeSetInstance_ID(asiID);
 		if (contentTypeID > 0)
@@ -171,6 +172,8 @@ public class MDMSContent extends X_DMS_Content
 	public String getToolTipTextMsg()
 	{
 		StringBuffer msg = new StringBuffer(getName());
+		msg.append("\nOwner : ").append( getDMS_Owner().getName());
+
 		if (getDMS_ContentType_ID() > 0)
 		{
 			msg.append("\nContent Type: ").append(getDMS_ContentType().getName());
