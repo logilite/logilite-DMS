@@ -215,6 +215,8 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 
 			//
 			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, currDMSContent, false, tableID, recordID, windowNo, 0);
+			if (uploadContent instanceof Window && !Util.isEmpty(title))
+				((Window) uploadContent).setTitle(title);
 			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
