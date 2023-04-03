@@ -99,12 +99,11 @@ public class DMSConvertToPDFUtils
 			String fileName = documentToPreview.getName();
 			if (fileName != null && fileName.length() > 0)
 			{
-				String extension = fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
-				if ("xls".equalsIgnoreCase(extension))
+				if (".xls".equalsIgnoreCase(mimeType.getFileExtension()))
 				{
 					return DMSConvertToPDFUtils.convertXlsToPDF(documentToPreview);
 				}
-				else if ("xlsx".equalsIgnoreCase(extension))
+				else if (".xlsx".equalsIgnoreCase(mimeType.getFileExtension()))
 				{
 					return DMSConvertToPDFUtils.convertXlsxToPdf(documentToPreview);
 				}

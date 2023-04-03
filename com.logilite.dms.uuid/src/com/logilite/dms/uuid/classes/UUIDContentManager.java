@@ -14,6 +14,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.Adempiere;
 import org.compiere.model.MAttributeSetInstance;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -33,9 +34,11 @@ import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
+import com.logilite.dms.model.MDMSPermission;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSOprUtils;
+import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.Utils;
 import com.logilite.dms.uuid.util.RelationalUUIDUtils;
 import com.logilite.dms.uuid.util.UtilsUUID;
@@ -342,9 +345,9 @@ public class UUIDContentManager implements IContentManager
 		}
 		else
 		{
-			String format = Utils.getFileExtension(fileName);
+			String format = Utils.getFileExtension(file.getName());
 			if (format == null)
-				format = Utils.getFileExtension(file.getName());
+				format = Utils.getFileExtension(fileName);
 			if (format == null)
 				throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
 
@@ -476,6 +479,7 @@ public class UUIDContentManager implements IContentManager
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 			}
 			newDMSContent.setParentURL(dms.getPathFromContentManager(destContent));
+			newDMSContent.setDMS_Owner_ID(newDMSContent.getCreatedBy());
 			newDMSContent.saveEx();
 
 			// Copy Association
@@ -511,14 +515,16 @@ public class UUIDContentManager implements IContentManager
 			String baseURL = dms.getPathFromContentManager(copiedContent);
 			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + oldVersion.getDMS_Version_UU();
 
-			RelationalUUIDUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
+			RelationalUUIDUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID, isCreatePermissionForPasteContent);
 
-			//
-			dms.grantChildPermissionFromParentContent(newDMSContent, destContent);
+			if (isCreatePermissionForPasteContent)
+			{
+				dms.grantChildPermissionFromParentContent(newDMSContent, destContent, isCreatePermissionForPasteContent);
+			}
 		}
 		else
 		{
-			RelationalUUIDUtils.pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID);
+			RelationalUUIDUtils.pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID, isCreatePermissionForPasteContent);
 		}
 
 	} // pasteCopyContent
@@ -628,6 +634,36 @@ public class UUIDContentManager implements IContentManager
 			// solr indexing entry
 			dmsContent.setParentURL(dms.getPathFromContentManager(destContent));
 			dmsContent.saveEx();
+		}
+
+		// Create navigation premission for owner of cut content
+		MDMSPermission[] arrayCutContentPermission = (MDMSPermission[]) MDMSPermission.getAllPermissionForContent((MDMSContent) cutContent);
+		for (MDMSPermission cutContentPermission : arrayCutContentPermission)
+		{
+
+			int permissionID;
+
+			permissionID = DMSPermissionUtils.getPermissionIDByUserRole(destContent.getDMS_Content_ID(), cutContentPermission.getAD_Role_ID(), cutContentPermission.getAD_User_ID(), "  ");
+
+			MDMSPermission newPermission = (MDMSPermission) MTable	.get(((PO) destContent).getCtx(), MDMSPermission.Table_ID)
+																	.getPO(permissionID, ((PO) destContent).get_TrxName());
+
+			if (permissionID <= 0)
+			{
+				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()));
+				newPermission.setDMS_Content_ID(destContent.getDMS_Content_ID());
+				newPermission.setAD_User_ID(cutContentPermission.getAD_User_ID());
+				newPermission.setIsAllPermission(false);
+				newPermission.saveEx();
+			}
+			else
+			{
+				// Set navigation of destcontent true if permission is already created for the cut
+				// content owner
+				// but navigation flag is not true in the destcontent
+				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()) && !(newPermission.isRead() && newPermission.isWrite()));
+				newPermission.saveEx();
+			}
 		}
 
 		dms.grantChildPermissionFromParentContent(cutContent, destContent);

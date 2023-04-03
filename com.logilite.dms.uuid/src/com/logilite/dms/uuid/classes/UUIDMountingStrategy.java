@@ -64,7 +64,7 @@ public class UUIDMountingStrategy implements IMountingStrategy
 			return mountingParentCache.get(key);
 
 		int DMS_Content_ID = DB.getSQLValue(null, DMSConstant.SQL_GET_MOUNTING_CONTENT_FOR_TABLE,
-											Utils.getDMSMountingBase(AD_Table_ID), AD_Table_ID, Record_ID);
+											Utils.getDMSMountingBase(Env.getAD_Client_ID(Env.getCtx())), AD_Table_ID, Record_ID);
 
 		if (DMS_Content_ID > 0)
 		{
