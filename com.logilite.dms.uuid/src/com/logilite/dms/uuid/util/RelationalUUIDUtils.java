@@ -676,11 +676,13 @@ public class RelationalUUIDUtils
 						isContentSaved = true;
 					}
 
-					//
-					IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, newDMSContent.getDMS_MimeType().getMimeType());
-
-					if (thumbnailGenerator != null)
-						thumbnailGenerator.addThumbnail(newVersion, dms.getFileFromStorage(oldVersion), null);
+					//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+					if (dms.isAllowThumbnailContentCreation())
+					{
+						IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, newDMSContent.getDMS_MimeType().getMimeType());
+						if (thumbnailGenerator != null)
+							thumbnailGenerator.addThumbnail(newVersion, dms.getFileFromStorage(oldVersion), null);
+					}
 				}
 
 				trx.commit();

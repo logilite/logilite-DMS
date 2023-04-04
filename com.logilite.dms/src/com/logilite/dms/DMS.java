@@ -23,6 +23,7 @@ import java.util.Map;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MImage;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
@@ -91,16 +92,20 @@ public class DMS
 			if (fileStorageProvider == null)
 				throw new AdempiereException("Storage provider is not found.");
 
-			thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
-
-			if (thumbnailStorageProvider == null)
-				throw new AdempiereException("Thumbnail Storage provider is not found.");
-
-			thumbnailProvider = DMSFactoryUtils.getThumbnailProvider(AD_Client_ID);
-
-			if (thumbnailProvider == null)
-				throw new AdempiereException("Thumbnail provider is not found.");
-
+			//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+			if (isAllowThumbnailContentCreation())
+			{
+				thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
+			
+				if (thumbnailStorageProvider == null)
+					throw new AdempiereException("Thumbnail Storage provider is not found.");
+				
+				thumbnailProvider = DMSFactoryUtils.getThumbnailProvider(AD_Client_ID);
+				
+				if (thumbnailProvider == null)
+					throw new AdempiereException("Thumbnail provider is not found.");
+			}
+			
 			contentManager = DMSFactoryUtils.getContentManager(AD_Client_ID);
 
 			if (contentManager == null)
@@ -185,6 +190,16 @@ public class DMS
 	}
 
 	/**
+	 * To check thumbnail creation value is true or false
+	 * 
+	 * @return  if false then thumbnail will not be created/used otherwise it will be created/used
+	 */
+	public boolean isAllowThumbnailContentCreation()
+	{
+		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_THUMBNAIL_CREATION, true, Env.getAD_Client_ID(Env.getCtx()));
+	} // isThumbnailContentCreate
+	
+	/**
 	 * Utils Methods
 	 */
 
@@ -245,12 +260,20 @@ public class DMS
 
 	public String getThumbnailURL(I_DMS_Version version, String size)
 	{
-		return thumbnailProvider.getURL(version, size);
+		if (isAllowThumbnailContentCreation())
+		{
+			return thumbnailProvider.getURL(version, size);
+		}
+		return null;
 	} // getThumbnailURL
 
 	public File getThumbnailFile(I_DMS_Version version, String size)
 	{
-		return thumbnailProvider.getFile(version, size);
+		if (isAllowThumbnailContentCreation())
+		{
+			return thumbnailProvider.getFile(version, size);
+		}
+		return null;
 	} // getThumbnailFile
 
 	public MImage getDirThumbnail()

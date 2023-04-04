@@ -587,10 +587,10 @@ public class RelationUtils
 	 * @param renamedURL                        - Renamed URL
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionforPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
 	 */
 	public static void pasteCopyDirContent(	DMS dms, MDMSContent copiedContent, MDMSContent destPasteContent, String baseURL, String renamedURL, int tableID,
-											int recordID, boolean isCreatePermissionforPasteContent)
+											int recordID, boolean isCreatePermissionForPasteContent)
 	{
 		HashMap<I_DMS_Version, I_DMS_Association> map = dms.getDMSContentsWithAssociation(copiedContent, dms.AD_Client_ID, true);
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
@@ -626,7 +626,7 @@ public class RelationUtils
 						newDMSContent.setParentURL(dms.getPathFromContentManager(destPasteContent));
 						newDMSContent.saveEx();
 					}
-					pasteCopyDirContent(dms, oldDMSContent, newDMSContent, baseURL, renamedURL, tableID, recordID, isCreatePermissionforPasteContent);
+					pasteCopyDirContent(dms, oldDMSContent, newDMSContent, baseURL, renamedURL, tableID, recordID, isCreatePermissionForPasteContent);
 				}
 			}
 			else if (MDMSAssociationType.isLink(oldDMSAssociation))
@@ -637,7 +637,7 @@ public class RelationUtils
 			}
 			else
 			{
-				pasteCopyFileContent(dms, oldDMSContent, destPasteContent, tableID, recordID, isCreatePermissionforPasteContent);
+				pasteCopyFileContent(dms, oldDMSContent, destPasteContent, tableID, recordID, isCreatePermissionForPasteContent);
 			}
 		}
 	} // pasteCopyDirContent
@@ -650,10 +650,10 @@ public class RelationUtils
 	 * @param destContent                       - Destination Content
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionforPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
 	 */
 	public static void pasteCopyFileContent(DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID,
-											boolean isCreatePermissionforPasteContent)
+											boolean isCreatePermissionForPasteContent)
 	{
 		String fileName = null;
 		PreparedStatement pstmt = null;
@@ -746,18 +746,20 @@ public class RelationUtils
 						isContentSaved = true;
 					}
 
-					//
-					IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, newDMSContent.getDMS_MimeType().getMimeType());
-
-					if (thumbnailGenerator != null)
-						thumbnailGenerator.addThumbnail(newVersion, dms.getFileFromStorage(oldVersion), null);
+					//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+					if (dms.isAllowThumbnailContentCreation())
+					{
+						IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, newDMSContent.getDMS_MimeType().getMimeType());
+						
+						if (thumbnailGenerator != null)
+							thumbnailGenerator.addThumbnail(newVersion, dms.getFileFromStorage(oldVersion), null);
+					}
 				}
-
 				trx.commit();
 
-				if (isCreatePermissionforPasteContent)
+				if (isCreatePermissionForPasteContent)
 				{
-					dms.grantChildPermissionFromParentContent(newDMSContent, destContent, isCreatePermissionforPasteContent);
+					dms.grantChildPermissionFromParentContent(newDMSContent, destContent, isCreatePermissionForPasteContent);
 				}
 			}
 		}

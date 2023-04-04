@@ -428,10 +428,14 @@ public class RelationalContentManager implements IContentManager
 
 		IFileStorageProvider fsProvider = dms.getFileStorageProvider();
 		fsProvider.writeBLOB(dms.getBaseDirPath(version), data);
-
-		IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, version.getDMS_Content().getDMS_MimeType().getMimeType());
-		if (thumbnailGenerator != null)
-			thumbnailGenerator.addThumbnail(version, file, null);
+	
+		//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+		if (dms.isAllowThumbnailContentCreation())
+		{
+			IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, version.getDMS_Content().getDMS_MimeType().getMimeType());
+			if (thumbnailGenerator != null)
+				thumbnailGenerator.addThumbnail(version, file, null);
+		}
 	} // writeFileOnStorageAndThumnail
 
 	/*

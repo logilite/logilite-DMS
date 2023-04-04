@@ -40,6 +40,7 @@ public final class DMSConstant
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH		= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 	public static final String				DMS_ZK_MAX_UPLOAD_SIZE					= "DMS_ZK_MAX_UPLOAD_SIZE";
 	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
+	public static final String 				DMS_ALLOW_THUMBNAIL_CREATION			= "DMS_ALLOW_THUMBNAIL_CREATION";
 
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
