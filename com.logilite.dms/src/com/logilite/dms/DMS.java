@@ -92,20 +92,20 @@ public class DMS
 			if (fileStorageProvider == null)
 				throw new AdempiereException("Storage provider is not found.");
 
-			//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+			// This flag is false then do not initiate thumbnail factories
 			if (isAllowThumbnailContentCreation())
 			{
 				thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
-			
+
 				if (thumbnailStorageProvider == null)
 					throw new AdempiereException("Thumbnail Storage provider is not found.");
-				
+
 				thumbnailProvider = DMSFactoryUtils.getThumbnailProvider(AD_Client_ID);
-				
+
 				if (thumbnailProvider == null)
 					throw new AdempiereException("Thumbnail provider is not found.");
 			}
-			
+
 			contentManager = DMSFactoryUtils.getContentManager(AD_Client_ID);
 
 			if (contentManager == null)
@@ -189,16 +189,6 @@ public class DMS
 		this.isDocExplorerWindow = isDocExplorerWindow;
 	}
 
-	/**
-	 * To check thumbnail creation value is true or false
-	 * 
-	 * @return  if false then thumbnail will not be created/used otherwise it will be created/used
-	 */
-	public boolean isAllowThumbnailContentCreation()
-	{
-		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_THUMBNAIL_CREATION, true, Env.getAD_Client_ID(Env.getCtx()));
-	} // isThumbnailContentCreate
-	
 	/**
 	 * Utils Methods
 	 */
@@ -677,7 +667,8 @@ public class DMS
 	 * @param destContent                       - Content To
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionforPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionforPasteContent - create permission for paste content from parent if
+	 *                                          true
 	 */
 	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID, boolean isCreatePermissionforPasteContent)
 	{
@@ -911,5 +902,15 @@ public class DMS
 		}
 		return true;
 	} // isAllPermissionGranted
+
+	/**
+	 * To check thumbnail creation/visible allowed or not
+	 * 
+	 * @return if false then thumbnail will not be created/used otherwise it will be created/used
+	 */
+	public boolean isAllowThumbnailContentCreation()
+	{
+		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_THUMBNAIL_CREATION, true, AD_Client_ID);
+	} // isAllowThumbnailContentCreation
 
 }

@@ -428,8 +428,8 @@ public class RelationalContentManager implements IContentManager
 
 		IFileStorageProvider fsProvider = dms.getFileStorageProvider();
 		fsProvider.writeBLOB(dms.getBaseDirPath(version), data);
-	
-		//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+
+		// This flag is false then thumbnail will not be created otherwise it will be created
 		if (dms.isAllowThumbnailContentCreation())
 		{
 			IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, version.getDMS_Content().getDMS_MimeType().getMimeType());
@@ -450,7 +450,8 @@ public class RelationalContentManager implements IContentManager
 	 * @param destContent                       - Content To
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if
+	 *                                          true
 	 */
 	@Override
 	public void pasteCopyContent(	DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID,
@@ -635,24 +636,23 @@ public class RelationalContentManager implements IContentManager
 			dmsContent.saveEx();
 		}
 
-		// Create navigation premission for owner of cut content
+		/***
+		 * Create navigation permission for owner of cut content
+		 */
 		MDMSPermission[] arrayCutContentPermission = (MDMSPermission[]) MDMSPermission.getAllPermissionForContent((MDMSContent) cutContent);
 		for (MDMSPermission cutContentPermission : arrayCutContentPermission)
 		{
 
-			int permissionID;
-
-			permissionID = DMSPermissionUtils.getPermissionIDByUserRole(destContent.getDMS_Content_ID(), cutContentPermission.getAD_Role_ID(),
-																		cutContentPermission.getAD_User_ID(), "  ");
-
+			int permissionID = DMSPermissionUtils.getPermissionIDByUserRole(destContent.getDMS_Content_ID(), cutContentPermission.getAD_Role_ID(),
+																			cutContentPermission.getAD_User_ID(), "");
 			MDMSPermission newPermission = (MDMSPermission) MTable	.get(((PO) destContent).getCtx(), MDMSPermission.Table_ID)
 																	.getPO(permissionID, ((PO) destContent).get_TrxName());
-
 			if (permissionID <= 0)
 			{
 				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()));
 				newPermission.setDMS_Content_ID(destContent.getDMS_Content_ID());
 				newPermission.setAD_User_ID(cutContentPermission.getAD_User_ID());
+				newPermission.setAD_Role_ID(cutContentPermission.getAD_Role_ID());
 				newPermission.setIsAllPermission(false);
 				newPermission.saveEx();
 			}
@@ -661,7 +661,8 @@ public class RelationalContentManager implements IContentManager
 				// Set navigation of destcontent true if permission is already created for the cut
 				// content owner
 				// but navigation flag is not true in the destcontent
-				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()) && !(newPermission.isRead() && newPermission.isWrite()));
+				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()) && !(newPermission.isRead()
+																																	&& newPermission.isWrite()));
 				newPermission.saveEx();
 			}
 		}

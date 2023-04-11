@@ -139,7 +139,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Tabbox					tabBox					= new Tabbox();
 	private Tabs					tabs					= new Tabs();
-	private Tabpanels				tabPanels				= new Tabpanels();
+	public Tabpanels				tabPanels				= new Tabpanels();
 
 	private Grid					grid					= GridFactory.newGridLayout();
 	private Grid					gridBreadCrumb			= GridFactory.newGridLayout();
@@ -287,7 +287,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		initZK(Table_ID, Record_ID);
 	} // Constructor
 
-	private void initZK(int Table_ID, int Record_ID)
+	public void initZK(int Table_ID, int Record_ID)
 	{
 		// Toolbar button restriction
 		if (TOOLBAR_BTN_ID_DIR <= 0)
@@ -611,6 +611,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		cell_layout.appendChild(btnToggleView);
 		cell_layout.appendChild(gridBreadCrumb);
 		cell_layout.appendChild(grid);
+		cell_layout.setHeight("100%");
 
 		gridBreadCrumb.setClass("dms-breadcrumb");
 		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; height: 45px; "
@@ -654,25 +655,31 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			Hbox boxViewSeparator = new Hbox();
 			boxViewSeparator.setWidth("100%");
-			boxViewSeparator.setHeight("100%");
+			ZKUpdateUtil.setHeight(boxViewSeparator, "100%");
 			boxViewSeparator.appendChild(cell_attribute);
 
 			Borderlayout borderViewSeparator = new Borderlayout();
+			borderViewSeparator.setStyle("min-height: 300px;");
 			borderViewSeparator.appendCenter(cell_layout);
 			borderViewSeparator.appendEast(boxViewSeparator);
+			borderViewSeparator.getCenter().setSclass("SB-DMS-CenterView");
 
 			East east = borderViewSeparator.getEast();
 			east.setWidth("30%");
 			east.setSplittable(true);
 			east.setCollapsible(true);
+			east.setAutoscroll(true);
+
 			//
 			Tabpanel tabViewPanel = new Tabpanel();
+			tabViewPanel.setSclass("SB_DMS_Side_TabPanel");
 			tabViewPanel.setHeight("100%");
 			tabViewPanel.setWidth("100%");
 			tabViewPanel.appendChild(borderViewSeparator);
-
 			tabPanels.appendChild(tabViewPanel);
 		}
+
+		// tabPanels.setHeight("100%");
 
 		tabBox.setWidth("100%");
 		tabBox.setHeight("100%");
@@ -686,6 +693,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_cut = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CUT, "Cut", this);
 		mnu_copy = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_COPY, "Copy", this);
 		mnu_paste = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
+		mnu_owner = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_OWNER, "Owner", this);
 		mnu_rename = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_RENAME, "Rename", this);
 		mnu_delete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DELETE, "Delete", this);
 		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Download", this);
@@ -696,7 +704,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
 		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
 		mnu_zoomContentWin = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ZOOMCONTENTWIN, "Zoom", this);
-		mnu_owner = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_OWNER, "Permission", this);
 
 		// Context Menu item for Right click on Canvas area
 		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
@@ -1208,31 +1215,37 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			else
 				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, documentView);
 
-			// Content Type wise access restriction
-			IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
-			HashMap<I_DMS_Version, I_DMS_Association> contentsMapCTFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
-
-			// Permission wise access restriction
-			HashMap<I_DMS_Version, I_DMS_Association> mapPerFiltered;
-			if (DMSPermissionUtils.isPermissionAllowed())
-			{
-				mapPerFiltered = dms.getPermissionManager().getFilteredVersionList(contentsMapCTFiltered);
-			}
-			else
-			{
-				mapPerFiltered = contentsMapCTFiltered;
-			}
-
-			// Component Viewer
-			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
-			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
-			viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
-
-			lblCountAndSelected.setText(String.valueOf(mapPerFiltered.size()) + " items");
+			//
+			renderViewerWithContent(contentsMap);
 		}
 
 		tabBox.setSelectedIndex(0);
 	} // renderViewer
+
+	public void renderViewerWithContent(HashMap<I_DMS_Version, I_DMS_Association> contentsMap)
+	{
+		// Content Type wise access restriction
+		IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
+		HashMap<I_DMS_Version, I_DMS_Association> contentsMapCTFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
+
+		// Permission wise access restriction
+		HashMap<I_DMS_Version, I_DMS_Association> mapPerFiltered;
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			mapPerFiltered = dms.getPermissionManager().getFilteredVersionList(contentsMapCTFiltered);
+		}
+		else
+		{
+			mapPerFiltered = contentsMapCTFiltered;
+		}
+
+		// Component Viewer
+		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
+		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
+		viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+
+		lblCountAndSelected.setText(String.valueOf(mapPerFiltered.size()) + " items");
+	}
 
 	/**
 	 * Clear the grid view components
@@ -1614,6 +1627,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_cut.setDisabled(true);
 				mnu_copy.setDisabled(true);
 				mnu_paste.setDisabled(true);
+				mnu_owner.setDisabled(false);
 				mnu_rename.setDisabled(true);
 				mnu_delete.setDisabled(false);
 				mnu_download.setDisabled(false);
@@ -1623,7 +1637,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_versionList.setDisabled(false);
 				mnu_canvasPaste.setDisabled(true);
 				mnu_uploadVersion.setDisabled(false);
-				mnu_owner.setDisabled(false);
 			}
 			else if (MDMSContent.CONTENTBASETYPE_Directory.equals(dirContent.getContentBaseType()))
 			{
@@ -1648,13 +1661,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_cut.setDisabled(true);
 				mnu_copy.setDisabled(true);
 				mnu_paste.setDisabled(true);
+				mnu_owner.setDisabled(true);
 				mnu_rename.setDisabled(true);
 				mnu_download.setDisabled(true);
 				mnu_associate.setDisabled(true);
 				mnu_createLink.setDisabled(true);
 				mnu_permission.setDisabled(true);
 				mnu_uploadVersion.setDisabled(true);
-				mnu_owner.setDisabled(true);
 			}
 
 			if (!isRead)
@@ -1686,6 +1699,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_cut.setVisible(isActive);
 			mnu_copy.setVisible(isActive);
 			mnu_paste.setVisible(isActive);
+			mnu_owner.setVisible(isActive);
 			mnu_rename.setVisible(isActive);
 			mnu_delete.setVisible(isActive);
 			mnu_download.setVisible(isActive);
@@ -1695,7 +1709,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_versionList.setVisible(isActive);
 			mnu_uploadVersion.setVisible(isActive);
 			mnu_zoomContentWin.setVisible(isActive);
-			mnu_owner.setVisible(isActive);
 
 			if (DMSPermissionUtils.isPermissionAllowed())
 			{
@@ -1734,6 +1747,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_cut.setDisabled(isDisabled);
 		mnu_copy.setDisabled(isDisabled);
 		mnu_paste.setDisabled(isDisabled);
+		mnu_owner.setDisabled(isDisabled);
 		mnu_rename.setDisabled(isDisabled);
 		mnu_delete.setDisabled(isDisabled);
 		mnu_download.setDisabled(isDisabled);
@@ -1743,7 +1757,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_versionList.setDisabled(isDisabled);
 		mnu_uploadVersion.setDisabled(isDisabled);
 		mnu_zoomContentWin.setDisabled(isDisabled);
-		mnu_owner.setDisabled(isDisabled);
 	} // ctxMenuItemDisabled
 
 	private void openCanvasContextMenu(Event event)

@@ -31,6 +31,9 @@ import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSPermission;
 
+/**
+ * Update the Owner of the content dialog
+ */
 public class WUpdateOwner extends Window implements EventListener<Event>
 {
 	/**
@@ -39,25 +42,21 @@ public class WUpdateOwner extends Window implements EventListener<Event>
 	private static final long	serialVersionUID	= -6806826981614309201L;
 
 	private DMS					dms;
-
-	private Grid				gridView			= GridFactory.newGridLayout();
 	private MDMSContent			content				= null;
-
-	private Label				lblCurrentOwner		= new Label(DMSConstant.MSG_CURRENT_OWNER);
-	private Label				lblNewOwner			= new Label(DMSConstant.MSG_NEW_OWNER);
-
-	private Button				btnChangeOwner		= new Button(DMSConstant.MSG_CHANGE_OWNER);
 
 	private boolean				isDMSAdmin			= false;
 
+	private Grid				gridView			= GridFactory.newGridLayout();
+	private Button				btnChangeOwner		= new Button(DMSConstant.MSG_CHANGE_OWNER);
+	private Label				lblCurrentOwner		= new Label(DMSConstant.MSG_CURRENT_OWNER);
+	private Label				lblNewOwner			= new Label(DMSConstant.MSG_NEW_OWNER);
 	private WSearchEditor		currentOwner;
 	private WSearchEditor		newOwner;
 
 	/**
 	 * @param  dms
 	 * @param  DMSContent
-	 * @throws Exception
-	 * Update owner of the content when the user is DMSAdmin or content Creator
+	 * @throws Exception  Update owner of the content when the user is DMSAdmin or content Creator
 	 */
 	public WUpdateOwner(DMS dms, MDMSContent DMSContent) throws Exception
 	{
@@ -73,17 +72,16 @@ public class WUpdateOwner extends Window implements EventListener<Event>
 	{
 		if (!ClientInfo.isMobile())
 		{
-			this.setWidth("27%");
-			this.setHeight("27%");
+			this.setWidth("25%");
+			this.setHeight("25%");
 		}
 
-		this.setClosable(true);
 		this.setTitle(DMSConstant.MSG_OWNER);
-		this.addEventListener(Events.ON_OK, this);
-		this.setStyle("max-widht:230px; max-height:230px;");
-		this.setStyle("min-widht:230px; min-height:230px;");
 		this.setSizable(true);
+		this.setClosable(true);
 		this.setMaximizable(true);
+		this.addEventListener(Events.ON_OK, this);
+		this.setStyle("min-widht:150px; min-height:150px;");
 		this.appendChild(gridView);
 
 		gridView.setStyle("position:relative; overflow:auto;");
@@ -92,40 +90,45 @@ public class WUpdateOwner extends Window implements EventListener<Event>
 		gridView.setZclass("none");
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
-		gridView.setStyle("max-widht:230px; max-height:230px;");
 		gridView.setStyle("min-widht:230px; min-height:230px;");
 
 		int columnID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		MLookup lookup = MLookupFactory.get(Env.getCtx(), 0, columnID, DisplayType.Search, Env.getLanguage(Env.getCtx()), MUser.COLUMNNAME_AD_User_ID, 0, true,
 											"");
-
+		// Current Owner
 		currentOwner = new WSearchEditor(MUser.COLUMNNAME_AD_User_ID, true, true, true, lookup);
 		currentOwner.setValue(content.getDMS_Owner_ID());
 
+		// New Owner
 		newOwner = new WSearchEditor(MUser.COLUMNNAME_AD_User_ID, true, false, true, lookup);
 
+		//
 		btnChangeOwner.addEventListener(Events.ON_CLICK, this);
 		btnChangeOwner.setVisible(isDMSAdmin || content.getDMS_Owner_ID() == Env.getAD_User_ID(Env.getCtx()));
-		btnChangeOwner.setWidth("70%");
-		btnChangeOwner.setStyle("margin-left:100px !important");
-		btnChangeOwner.setLeft("100px");
+		btnChangeOwner.setWidth("98%");
+		btnChangeOwner.setHeight("40px");
 
+		//
 		Rows rows = gridView.newRows();
 
 		Row row = rows.newRow();
-		row.appendCellChild(lblCurrentOwner.rightAlign(), 3);
-		row.appendCellChild(currentOwner.getComponent(), 7);
+		row.appendCellChild(lblCurrentOwner.rightAlign(), 2);
 		row.appendCellChild(new Space(), 1);
+		row.appendCellChild(currentOwner.getComponent(), 5);
+		row.setHeight("40px");
 
 		row = rows.newRow();
 		rows.newRow();
-		row.appendCellChild(lblNewOwner.rightAlign(), 3);
-		row.appendCellChild(newOwner.getComponent(), 7);
+		row.appendCellChild(lblNewOwner.rightAlign(), 2);
+		row.appendCellChild(new Space(), 1);
+		row.appendCellChild(newOwner.getComponent(), 5);
 		row.setVisible(isDMSAdmin || content.getDMS_Owner_ID() == Env.getAD_User_ID(Env.getCtx()));
+		row.setHeight("40px");
 
 		row = rows.newRow();
 		row.setAlign("center");
-		row.appendCellChild(btnChangeOwner, 10);
+		row.appendCellChild(btnChangeOwner, 8);
+		row.setHeight("40px");
 
 		AEnv.showCenterScreen(this);
 	} // init
@@ -143,29 +146,35 @@ public class WUpdateOwner extends Window implements EventListener<Event>
 
 		if (btnChangeOwner.equals(event.getTarget()))
 		{
-			content.setDMS_Owner_ID((int) newOwner.getValue());
-			content.saveEx();
-
-			if (MDMSContent.CONTENTBASETYPE_Directory.equals(content.getContentBaseType()))
+			if (newOwner.getValue() != null)
 			{
-				Callback<Boolean> callbackConfirmation = new Callback<Boolean>() {
+				content.setDMS_Owner_ID((int) newOwner.getValue());
+				content.saveEx();
 
-					@Override
-					public void onCallback(Boolean result)
-					{
-						dms.getPermissionManager().createPermission(content, mapColumnValue, result);
-					}
-				};
+				if (MDMSContent.CONTENTBASETYPE_Directory.equals(content.getContentBaseType()))
+				{
+					Callback<Boolean> callbackConfirmation = new Callback<Boolean>() {
 
-				FDialog.ask("Grant permission for the child content?", 0, this, "Will you grant same permission for the child content documents?",
-							callbackConfirmation);
+						@Override
+						public void onCallback(Boolean result)
+						{
+							dms.getPermissionManager().createPermission(content, mapColumnValue, result);
+						}
+					};
+
+					FDialog.ask("Grant permission for the child content?", 0, this, "Will you grant same permission for the child content documents?",
+								callbackConfirmation);
+				}
+				else
+				{
+					dms.getPermissionManager().createPermission(content, mapColumnValue, false);
+				}
+				this.detach();
 			}
 			else
 			{
-				dms.getPermissionManager().createPermission(content, mapColumnValue, false);
+				FDialog.error(0, newOwner.getComponent(), "Please update the new owner...!!!");
 			}
-
-			this.detach();
 		}
 	}
 }

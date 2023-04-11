@@ -587,7 +587,8 @@ public class RelationUtils
 	 * @param renamedURL                        - Renamed URL
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionForPasteContent - create a permission for the paste content from
+	 *                                          parent content's permission if this flag is true
 	 */
 	public static void pasteCopyDirContent(	DMS dms, MDMSContent copiedContent, MDMSContent destPasteContent, String baseURL, String renamedURL, int tableID,
 											int recordID, boolean isCreatePermissionForPasteContent)
@@ -650,7 +651,8 @@ public class RelationUtils
 	 * @param destContent                       - Destination Content
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionForPasteContent - create a permission for the paste content from
+	 *                                          parent content's permission if this flag is true
 	 */
 	public static void pasteCopyFileContent(DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID,
 											boolean isCreatePermissionForPasteContent)
@@ -746,11 +748,11 @@ public class RelationUtils
 						isContentSaved = true;
 					}
 
-					//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+					// This flag is false then thumbnail will not be created/used otherwise it will
+					// be created/used
 					if (dms.isAllowThumbnailContentCreation())
 					{
 						IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, newDMSContent.getDMS_MimeType().getMimeType());
-						
 						if (thumbnailGenerator != null)
 							thumbnailGenerator.addThumbnail(newVersion, dms.getFileFromStorage(oldVersion), null);
 					}

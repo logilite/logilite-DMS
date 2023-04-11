@@ -28,11 +28,11 @@ import com.logilite.dms.util.DMSPermissionUtils;
  */
 public class DefaultPermission implements IPermissionManager
 {
-	protected boolean isRead          = true;
-	protected boolean isWrite         = true;
-	protected boolean isDelete        = true;
-	protected boolean isNavigation    = true;
-	protected boolean isAllPermission = true;
+	protected boolean	isRead			= true;
+	protected boolean	isWrite			= true;
+	protected boolean	isDelete		= true;
+	protected boolean	isNavigation	= true;
+	protected boolean	isAllPermission	= true;
 
 	@Override
 	public boolean createPermission(MDMSContent content, HashMap<String, Object> map, boolean isCreateForChildContent)
@@ -64,7 +64,7 @@ public class DefaultPermission implements IPermissionManager
 		// Create Permission for the sub content
 		if (isCreateForChildContent)
 		{
-			createPermissionForSubContent(content, map, isCreateForChildContent );
+			createPermissionForSubContent(content, map, isCreateForChildContent);
 		}
 		return true;
 	} // createPermission
@@ -155,7 +155,8 @@ public class DefaultPermission implements IPermissionManager
 		if (ignoreIfParentPermissionExists(DMS_Content_ID))
 		{
 			MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(DMS_Content_ID, null);
-			MDMSPermission permission = (MDMSPermission) MDMSPermission.getPermissionForGivenParams(content, Env.getAD_Role_ID(content.getCtx()), Env.getAD_User_ID(content.getCtx()));
+			MDMSPermission permission = (MDMSPermission) MDMSPermission.getPermissionForGivenParams(content, Env.getAD_Role_ID(content.getCtx()), Env
+																																						.getAD_User_ID(content.getCtx()));
 
 			if (permission == null)
 			{
@@ -240,7 +241,8 @@ public class DefaultPermission implements IPermissionManager
 
 				if (parentAccessiblePermissionID <= 0)
 				{
-					int parentNavPermissionID = getPermissionIDByUserRoleFromDMSPermission(permission, prntContentID, " AND IsActive = 'Y' AND IsNavigation = 'Y' ");
+					int parentNavPermissionID = getPermissionIDByUserRoleFromDMSPermission(	permission, prntContentID,
+																							" AND IsActive = 'Y' AND IsNavigation = 'Y' ");
 
 					if (parentNavPermissionID <= 0)
 					{
@@ -257,7 +259,7 @@ public class DefaultPermission implements IPermissionManager
 			}
 		}
 	} // createNavigationPermission
-	
+
 	public void grantChildPermissionFromParentContent(I_DMS_Content content, I_DMS_Content parentContent, boolean isCreateForChildContent)
 	{
 		MDMSPermission[] arrayParentPermission = (MDMSPermission[]) MDMSPermission.getAllPermissionForContent((MDMSContent) parentContent);
@@ -271,14 +273,14 @@ public class DefaultPermission implements IPermissionManager
 				continue;
 
 			HashMap<String, Object> mapColumnValue = new HashMap<String, Object>();
-			
-			mapColumnValue.put(MDMSPermission.COLUMNNAME_AD_Role_ID,0);
-			mapColumnValue.put(MDMSPermission.COLUMNNAME_AD_User_ID,parentPermission.getAD_User_ID());
+
+			mapColumnValue.put(MDMSPermission.COLUMNNAME_AD_Role_ID, parentPermission.getAD_Role_ID());
+			mapColumnValue.put(MDMSPermission.COLUMNNAME_AD_User_ID, parentPermission.getAD_User_ID());
 			mapColumnValue.put(MDMSPermission.COLUMNNAME_IsRead, parentPermission.isRead());
 			mapColumnValue.put(MDMSPermission.COLUMNNAME_IsWrite, parentPermission.isWrite());
 			mapColumnValue.put(MDMSPermission.COLUMNNAME_IsDelete, parentPermission.isDelete());
 
-			createPermission((MDMSContent)content, mapColumnValue, isCreateForChildContent);
+			createPermission((MDMSContent) content, mapColumnValue, isCreateForChildContent);
 		}
 	} // grantPermissionFromParentContent
 

@@ -325,7 +325,6 @@ public class UUIDContentManager implements IContentManager
 		int seqNo = 0;
 		int DMS_Content_Related_ID = 0;
 		int DMS_AssociationType_ID = 0;
-		@SuppressWarnings("unused")
 		String actualFileName = fileName;
 		String parentURL;
 		int dms_content_id = 0;
@@ -434,7 +433,7 @@ public class UUIDContentManager implements IContentManager
 		IFileStorageProvider fsProvider = dms.getFileStorageProvider();
 		fsProvider.writeBLOB(dms.getBaseDirPath(version), data);
 
-		//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+		// if it's false then thumbnail will not be created/used otherwise it will be created/used
 		if (dms.isAllowThumbnailContentCreation())
 		{
 			IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, version.getDMS_Content().getDMS_MimeType().getMimeType());
@@ -455,7 +454,8 @@ public class UUIDContentManager implements IContentManager
 	 * @param destContent                       - Content To
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if
+	 *                                          true
 	 */
 	@Override
 	public void pasteCopyContent(	DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID,
@@ -483,6 +483,7 @@ public class UUIDContentManager implements IContentManager
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 			}
 			newDMSContent.setParentURL(dms.getPathFromContentManager(destContent));
+			// set owner from the created in copy paste
 			newDMSContent.setDMS_Owner_ID(newDMSContent.getCreatedBy());
 			newDMSContent.saveEx();
 
@@ -519,7 +520,8 @@ public class UUIDContentManager implements IContentManager
 			String baseURL = dms.getPathFromContentManager(copiedContent);
 			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + oldVersion.getDMS_Version_UU();
 
-			RelationalUUIDUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID, isCreatePermissionForPasteContent);
+			RelationalUUIDUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID,
+													isCreatePermissionForPasteContent);
 
 			if (isCreatePermissionForPasteContent)
 			{
@@ -640,18 +642,17 @@ public class UUIDContentManager implements IContentManager
 			dmsContent.saveEx();
 		}
 
-		// Create navigation premission for owner of cut content
+		/***
+		 * Create navigation permission for owner of cut content
+		 */
 		MDMSPermission[] arrayCutContentPermission = (MDMSPermission[]) MDMSPermission.getAllPermissionForContent((MDMSContent) cutContent);
 		for (MDMSPermission cutContentPermission : arrayCutContentPermission)
 		{
 
-			int permissionID;
-
-			permissionID = DMSPermissionUtils.getPermissionIDByUserRole(destContent.getDMS_Content_ID(), cutContentPermission.getAD_Role_ID(), cutContentPermission.getAD_User_ID(), "  ");
-
+			int permissionID = DMSPermissionUtils.getPermissionIDByUserRole(destContent.getDMS_Content_ID(), cutContentPermission.getAD_Role_ID(),
+																			cutContentPermission.getAD_User_ID(), "");
 			MDMSPermission newPermission = (MDMSPermission) MTable	.get(((PO) destContent).getCtx(), MDMSPermission.Table_ID)
 																	.getPO(permissionID, ((PO) destContent).get_TrxName());
-
 			if (permissionID <= 0)
 			{
 				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()));
@@ -665,7 +666,8 @@ public class UUIDContentManager implements IContentManager
 				// Set navigation of destcontent true if permission is already created for the cut
 				// content owner
 				// but navigation flag is not true in the destcontent
-				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()) && !(newPermission.isRead() && newPermission.isWrite()));
+				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()) && !(newPermission.isRead()
+																																	&& newPermission.isWrite()));
 				newPermission.saveEx();
 			}
 		}
