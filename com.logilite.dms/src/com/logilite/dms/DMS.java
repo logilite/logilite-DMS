@@ -23,6 +23,7 @@ import java.util.Map;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MImage;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
@@ -91,15 +92,19 @@ public class DMS
 			if (fileStorageProvider == null)
 				throw new AdempiereException("Storage provider is not found.");
 
-			thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
+			// This flag is false then do not initiate thumbnail factories
+			if (isAllowThumbnailContentCreation())
+			{
+				thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
 
-			if (thumbnailStorageProvider == null)
-				throw new AdempiereException("Thumbnail Storage provider is not found.");
+				if (thumbnailStorageProvider == null)
+					throw new AdempiereException("Thumbnail Storage provider is not found.");
 
-			thumbnailProvider = DMSFactoryUtils.getThumbnailProvider(AD_Client_ID);
+				thumbnailProvider = DMSFactoryUtils.getThumbnailProvider(AD_Client_ID);
 
-			if (thumbnailProvider == null)
-				throw new AdempiereException("Thumbnail provider is not found.");
+				if (thumbnailProvider == null)
+					throw new AdempiereException("Thumbnail provider is not found.");
+			}
 
 			contentManager = DMSFactoryUtils.getContentManager(AD_Client_ID);
 
@@ -245,12 +250,20 @@ public class DMS
 
 	public String getThumbnailURL(I_DMS_Version version, String size)
 	{
-		return thumbnailProvider.getURL(version, size);
+		if (isAllowThumbnailContentCreation())
+		{
+			return thumbnailProvider.getURL(version, size);
+		}
+		return null;
 	} // getThumbnailURL
 
 	public File getThumbnailFile(I_DMS_Version version, String size)
 	{
-		return thumbnailProvider.getFile(version, size);
+		if (isAllowThumbnailContentCreation())
+		{
+			return thumbnailProvider.getFile(version, size);
+		}
+		return null;
 	} // getThumbnailFile
 
 	public MImage getDirThumbnail()
@@ -352,7 +365,13 @@ public class DMS
 	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
 																			int recordID)
 	{
-		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, validTableID(tableID), validRecordID(recordID));
+		return renderSearchedContent(queryParamas, content, tableID, recordID, DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE);
+	} // renderSearchedContent
+
+	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
+																			int recordID, String documentView)
+	{
+		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, validTableID(tableID), validRecordID(recordID), documentView);
 	} // renderSearchedContent
 
 	/*
@@ -638,7 +657,22 @@ public class DMS
 	 */
 	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID)
 	{
-		contentManager.pasteCopyContent(this, copiedContent, destContent, validTableID(tableID), validRecordID(recordID));
+		pasteCopyContent(copiedContent, destContent, tableID, recordID, false);
+	} // pasteCopyContent
+
+	/**
+	 * Paste the content [ Copy Operation ]
+	 * 
+	 * @param copiedContent                     - Content From
+	 * @param destContent                       - Content To
+	 * @param tableID                           - AD_Table_ID
+	 * @param recordID                          - Record_ID
+	 * @param isCreatePermissionforPasteContent - create permission for paste content from parent if
+	 *                                          true
+	 */
+	public void pasteCopyContent(MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID, boolean isCreatePermissionforPasteContent)
+	{
+		contentManager.pasteCopyContent(this, copiedContent, destContent, validTableID(tableID), validRecordID(recordID), isCreatePermissionforPasteContent);
 	} // pasteCopyContent
 
 	/**
@@ -809,7 +843,13 @@ public class DMS
 	public void grantChildPermissionFromParentContent(MDMSContent content, MDMSContent parentContent)
 	{
 		if (DMSPermissionUtils.isPermissionAllowed())
-			permissionManager.grantChildPermissionFromParentContent(content, parentContent);
+			grantChildPermissionFromParentContent(content, parentContent, false);
+	} // grantChildPermissionFromParentContent
+
+	public void grantChildPermissionFromParentContent(MDMSContent content, MDMSContent parentContent, boolean isCreateForChildContent)
+	{
+		if (DMSPermissionUtils.isPermissionAllowed())
+			permissionManager.grantChildPermissionFromParentContent(content, parentContent, isCreateForChildContent);
 	} // grantChildPermissionFromParentContent
 
 	public boolean isWritePermission(MDMSContent content)
@@ -862,5 +902,15 @@ public class DMS
 		}
 		return true;
 	} // isAllPermissionGranted
+
+	/**
+	 * To check thumbnail creation/visible allowed or not
+	 * 
+	 * @return if false then thumbnail will not be created/used otherwise it will be created/used
+	 */
+	public boolean isAllowThumbnailContentCreation()
+	{
+		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_THUMBNAIL_CREATION, true, AD_Client_ID);
+	} // isAllowThumbnailContentCreation
 
 }

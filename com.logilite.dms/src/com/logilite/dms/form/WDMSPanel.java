@@ -94,6 +94,7 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Cell;
+import org.zkoss.zul.East;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.South;
@@ -138,7 +139,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Tabbox					tabBox					= new Tabbox();
 	private Tabs					tabs					= new Tabs();
-	private Tabpanels				tabPanels				= new Tabpanels();
+	public Tabpanels				tabPanels				= new Tabpanels();
 
 	private Grid					grid					= GridFactory.newGridLayout();
 	private Grid					gridBreadCrumb			= GridFactory.newGridLayout();
@@ -221,6 +222,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem				mnu_versionList			= null;
 	private Menuitem				mnu_uploadVersion		= null;
 	private Menuitem				mnu_zoomContentWin		= null;
+	private Menuitem				mnu_owner				= null;
 
 	private Menuitem				mnu_canvasPaste			= null;
 	private Menuitem				mnu_canvasCreateLink	= null;
@@ -285,7 +287,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		initZK(Table_ID, Record_ID);
 	} // Constructor
 
-	private void initZK(int Table_ID, int Record_ID)
+	public void initZK(int Table_ID, int Record_ID)
 	{
 		// Toolbar button restriction
 		if (TOOLBAR_BTN_ID_DIR <= 0)
@@ -609,6 +611,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		cell_layout.appendChild(btnToggleView);
 		cell_layout.appendChild(gridBreadCrumb);
 		cell_layout.appendChild(grid);
+		cell_layout.setHeight("100%");
 
 		gridBreadCrumb.setClass("dms-breadcrumb");
 		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; height: 45px; "
@@ -649,21 +652,34 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else
 		{
 			cell_layout.setWidth("70%");
-			cell_attribute.setWidth("30%");
 
 			Hbox boxViewSeparator = new Hbox();
 			boxViewSeparator.setWidth("100%");
-			boxViewSeparator.setHeight("100%");
-			boxViewSeparator.appendChild(cell_layout);
-			boxViewSeparator.appendChild(splitter);
+			ZKUpdateUtil.setHeight(boxViewSeparator, "100%");
 			boxViewSeparator.appendChild(cell_attribute);
 
+			Borderlayout borderViewSeparator = new Borderlayout();
+			borderViewSeparator.setStyle("min-height: 300px;");
+			borderViewSeparator.appendCenter(cell_layout);
+			borderViewSeparator.appendEast(boxViewSeparator);
+			borderViewSeparator.getCenter().setSclass("SB-DMS-CenterView");
+
+			East east = borderViewSeparator.getEast();
+			east.setWidth("30%");
+			east.setSplittable(true);
+			east.setCollapsible(true);
+			east.setAutoscroll(true);
+
+			//
 			Tabpanel tabViewPanel = new Tabpanel();
+			tabViewPanel.setSclass("SB_DMS_Side_TabPanel");
 			tabViewPanel.setHeight("100%");
 			tabViewPanel.setWidth("100%");
-			tabViewPanel.appendChild(boxViewSeparator);
+			tabViewPanel.appendChild(borderViewSeparator);
 			tabPanels.appendChild(tabViewPanel);
 		}
+
+		// tabPanels.setHeight("100%");
 
 		tabBox.setWidth("100%");
 		tabBox.setHeight("100%");
@@ -677,6 +693,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_cut = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CUT, "Cut", this);
 		mnu_copy = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_COPY, "Copy", this);
 		mnu_paste = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
+		mnu_owner = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_OWNER, "Owner", this);
 		mnu_rename = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_RENAME, "Rename", this);
 		mnu_delete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DELETE, "Delete", this);
 		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Download", this);
@@ -841,11 +858,33 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				else
 				{
 					if (DMSClipboard.getIsCopy())
-						dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID);
+					{
+						// Create permission for paste content from parent if true
+						if (DMSPermissionUtils.isPermissionAllowed() && !destPasteContent.isMounting())
+						{
+							Callback<Boolean> callbackConfirmation = new Callback<Boolean>() {
+								@Override
+								public void onCallback(Boolean isCreatePermissionForPasteContent)
+								{
+									dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, isCreatePermissionForPasteContent);
+									renderViewer();
+								}
+							};
+							FDialog.ask("Grant permission to the paste content ?", 0, this,
+										" Will you grant same permission of the Parent Content to paste content documents?", callbackConfirmation);
+						}
+						else
+						{
+							dms.pasteCopyContent(sourceContent, destPasteContent, tableID, recordID, false);
+							renderViewer();
+						}
+					}
 					else
+					{
+						// TODO need to ask grant permission Dialog
 						dms.pasteCutContent(sourceContent, destPasteContent, tableID, recordID);
-
-					renderViewer();
+						renderViewer();
+					}
 				}
 			}
 		}
@@ -1002,6 +1041,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, permissionManager.isNavigation());
 			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISALLPERMISSION, permissionManager.isAllPermission());
 		}
+
+		else if (event.getTarget().equals(mnu_owner))
+		{
+			new WUpdateOwner(dms, dirContent);
+		}
+
 		else if (event.getTarget().equals(mnu_canvasCreateLink))
 		{
 			linkCopyDocument(currDMSContent, false);
@@ -1164,37 +1209,43 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			String documentView = cobDocumentView.getSelectedItem().getValue();
 			if (isSearch)
-				contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID);
+				contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID, documentView);
 			else if (isGenericSearch)
 				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent, documentView);
 			else
 				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, documentView);
 
-			// Content Type wise access restriction
-			IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
-			HashMap<I_DMS_Version, I_DMS_Association> contentsMapCTFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
-
-			// Permission wise access restriction
-			HashMap<I_DMS_Version, I_DMS_Association> mapPerFiltered;
-			if (DMSPermissionUtils.isPermissionAllowed())
-			{
-				mapPerFiltered = dms.getPermissionManager().getFilteredVersionList(contentsMapCTFiltered);
-			}
-			else
-			{
-				mapPerFiltered = contentsMapCTFiltered;
-			}
-
-			// Component Viewer
-			String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
-			AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
-			viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
-
-			lblCountAndSelected.setText(String.valueOf(mapPerFiltered.size()) + " items");
+			//
+			renderViewerWithContent(contentsMap);
 		}
 
 		tabBox.setSelectedIndex(0);
 	} // renderViewer
+
+	public void renderViewerWithContent(HashMap<I_DMS_Version, I_DMS_Association> contentsMap)
+	{
+		// Content Type wise access restriction
+		IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();
+		HashMap<I_DMS_Version, I_DMS_Association> contentsMapCTFiltered = contentTypeAccess.getFilteredContentList(contentsMap);
+
+		// Permission wise access restriction
+		HashMap<I_DMS_Version, I_DMS_Association> mapPerFiltered;
+		if (DMSPermissionUtils.isPermissionAllowed())
+		{
+			mapPerFiltered = dms.getPermissionManager().getFilteredVersionList(contentsMapCTFiltered);
+		}
+		else
+		{
+			mapPerFiltered = contentsMapCTFiltered;
+		}
+
+		// Component Viewer
+		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
+		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
+		viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+
+		lblCountAndSelected.setText(String.valueOf(mapPerFiltered.size()) + " items");
+	}
 
 	/**
 	 * Clear the grid view components
@@ -1576,6 +1627,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_cut.setDisabled(true);
 				mnu_copy.setDisabled(true);
 				mnu_paste.setDisabled(true);
+				mnu_owner.setDisabled(false);
 				mnu_rename.setDisabled(true);
 				mnu_delete.setDisabled(false);
 				mnu_download.setDisabled(false);
@@ -1609,6 +1661,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_cut.setDisabled(true);
 				mnu_copy.setDisabled(true);
 				mnu_paste.setDisabled(true);
+				mnu_owner.setDisabled(true);
 				mnu_rename.setDisabled(true);
 				mnu_download.setDisabled(true);
 				mnu_associate.setDisabled(true);
@@ -1646,6 +1699,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_cut.setVisible(isActive);
 			mnu_copy.setVisible(isActive);
 			mnu_paste.setVisible(isActive);
+			mnu_owner.setVisible(isActive);
 			mnu_rename.setVisible(isActive);
 			mnu_delete.setVisible(isActive);
 			mnu_download.setVisible(isActive);
@@ -1693,6 +1747,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_cut.setDisabled(isDisabled);
 		mnu_copy.setDisabled(isDisabled);
 		mnu_paste.setDisabled(isDisabled);
+		mnu_owner.setDisabled(isDisabled);
 		mnu_rename.setDisabled(isDisabled);
 		mnu_delete.setDisabled(isDisabled);
 		mnu_download.setDisabled(isDisabled);

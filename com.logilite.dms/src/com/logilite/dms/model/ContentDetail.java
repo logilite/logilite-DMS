@@ -138,13 +138,13 @@ public class ContentDetail
 		StringBuffer sb = new StringBuffer(((MDMSContent) version.getDMS_Content()).getToolTipTextMsg());
 
 		if (MDMSContent.CONTENTBASETYPE_Content.equals(version.getDMS_Content().getContentBaseType()) && version.getDMS_FileSize() != null)
-			sb.append("\nFileSize:" + version.getDMS_FileSize());
+			sb.append("\nFile Size: " + version.getDMS_FileSize());
 
 		if (association.getDMS_AssociationType_ID() > 0)
 			sb.append("\nAssociation as " + association.getDMS_AssociationType().getName());
 
-		sb.append("\nVersion ID:" + version.getDMS_Version_ID());
-		sb.append("\nContent ID:" + version.getDMS_Content_ID());
+		sb.append("\nVersion ID: " + version.getDMS_Version_ID());
+		sb.append("\nContent ID: " + version.getDMS_Content_ID());
 		return sb.toString();
 	} // getTooltipTextMsg
 

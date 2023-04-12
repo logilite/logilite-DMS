@@ -77,7 +77,7 @@ public interface IContentManager
 	 * 
 	 */
 
-	public void pasteCopyContent(DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID);
+	public void pasteCopyContent(DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID, boolean isCreatePermissionForPasteContent);
 
 	public void pasteCutContent(DMS dms, MDMSContent cutContent, MDMSContent destContent, int tableID, int recordID, boolean isDocExplorerWindow);
 

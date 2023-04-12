@@ -32,7 +32,7 @@ public interface I_DMS_Content
     /** TableName=DMS_Content */
     public static final String Table_Name = "DMS_Content";
 
-    /** AD_Table_ID=1000031 */
+    /** AD_Table_ID=1000000 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -149,6 +149,17 @@ public interface I_DMS_Content
 	public int getDMS_MimeType_ID();
 
 	public com.logilite.dms.model.I_DMS_MimeType getDMS_MimeType() throws RuntimeException;
+
+    /** Column name DMS_Owner_ID */
+    public static final String COLUMNNAME_DMS_Owner_ID = "DMS_Owner_ID";
+
+	/** Set Owner	  */
+	public void setDMS_Owner_ID (int DMS_Owner_ID);
+
+	/** Get Owner	  */
+	public int getDMS_Owner_ID();
+
+	public org.compiere.model.I_AD_User getDMS_Owner() throws RuntimeException;
 
     /** Column name DMS_Status_ID */
     public static final String COLUMNNAME_DMS_Status_ID = "DMS_Status_ID";
@@ -278,4 +289,17 @@ public interface I_DMS_Content
 	  * DMS Conent validity To Date
 	  */
 	public Timestamp getValidToDate();
+
+    /** Column name Value */
+    public static final String COLUMNNAME_Value = "Value";
+
+	/** Set Search Key.
+	  * Search key for the record in the format required - must be unique
+	  */
+	public void setValue (String Value);
+
+	/** Get Search Key.
+	  * Search key for the record in the format required - must be unique
+	  */
+	public String getValue();
 }
