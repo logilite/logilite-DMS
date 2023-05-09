@@ -870,8 +870,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 									renderViewer();
 								}
 							};
-							FDialog.ask("Grant permission to the paste content ?", 0, this,
-										" Will you grant same permission of the Parent Content to paste content documents?", callbackConfirmation);
+							FDialog.ask("Grant permission to the paste content ?", windowNo, this,
+										"GrantPermissionToPasteContent?", callbackConfirmation);
 						}
 						else
 						{
@@ -952,9 +952,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 									}
 								}
 							};
-
-							FDialog.ask("Want to Delete linkable references ?", 0, mnu_delete,
-										"<b> Are you want to delete actual docs and associated its linkable documents ? </b>" + warningMsg, callbackWarning);
+							FDialog.ask(windowNo, mnu_delete, "Want to Delete linkable references ?",
+										"DeleteAssociatedLinkableDocuments?", warningMsg, callbackWarning);
 						}
 						else
 						{
@@ -969,8 +968,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			};
 
-			FDialog.ask(0, this, "Are you sure to delete " + ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName() + "?",
-						callback);
+			FDialog.ask("Delete Content", windowNo, this, "DeleteContent?", callback,
+						((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName());
 
 		}
 		else if (event.getTarget().equals(mnu_undoDelete))
@@ -1000,9 +999,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 									}
 								}
 							};
-
-							FDialog.ask("Want to un-Delete linkable references ?", 0, mnu_delete,
-										"<b> Are you want to un-Delete actual docs and associated its linkable documents ? </b>" + warningMsg, callbackWarning);
+							FDialog.ask(windowNo, mnu_undoDelete, "Want to un-Delete linkable references ?",
+										"Un-DeleteAssociatedLinkableDocuments?", warningMsg, callbackWarning);
 						}
 						else
 						{
@@ -1017,8 +1015,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			};
 
-			FDialog.ask(0, this, "Are you sure to un delete "	+ ((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName()
-									+ "?", callback);
+			FDialog.ask("Un-Delete Content", windowNo, this, "Un-DeleteContent?", callback,
+						((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName());
 		}
 		else if (event.getTarget().equals(mnu_associate))
 		{
@@ -1371,7 +1369,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			else
 			{
-				FDialog.error(0, dms.getPathFromContentManager(version) + " Content missing in storage,");
+				FDialog.error(windowNo, this, "ContentNotFoundInStorage", dms.getPathFromContentManager(version), "Content Not Found In the Storage");
 			}
 		}
 	} // openDirectoryORContent

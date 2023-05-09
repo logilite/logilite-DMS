@@ -404,7 +404,7 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 						}
 					};
 
-					FDialog.ask("Grant permission for the child content?", 0, this, "Will you grant same permission for the child content documents?",
+					FDialog.ask("Grant permission for the child content?", 0, this, "GrantPermissionToChildContent?",
 								callbackConfirmation);
 				}
 				else
