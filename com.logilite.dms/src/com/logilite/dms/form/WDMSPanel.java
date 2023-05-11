@@ -870,6 +870,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 									renderViewer();
 								}
 							};
+
+							// Grant same permission of 'Parent Content' to 'paste content'?
 							FDialog.ask("Grant permission to the paste content ?", windowNo, this,
 										"GrantPermissionToPasteContent?", callbackConfirmation);
 						}
@@ -952,6 +954,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 									}
 								}
 							};
+
+							// Want to delete actual docs and associated its linkable documents ?
 							FDialog.ask(windowNo, mnu_delete, "Want to Delete linkable references ?",
 										"DeleteAssociatedLinkableDocuments?", warningMsg, callbackWarning);
 						}
@@ -999,6 +1003,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 									}
 								}
 							};
+
+							// Want to un-Delete actual docs and associated its linkable documents ?
 							FDialog.ask(windowNo, mnu_undoDelete, "Want to un-Delete linkable references ?",
 										"Un-DeleteAssociatedLinkableDocuments?", warningMsg, callbackWarning);
 						}

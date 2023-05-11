@@ -162,6 +162,7 @@ public class WUpdateOwner extends Window implements EventListener<Event>
 						}
 					};
 
+					// Grant same permission for the child content documents?
 					FDialog.ask("Grant permission for the child content?", 0, this, "GrantPermissionToChildContent?",
 								callbackConfirmation);
 				}

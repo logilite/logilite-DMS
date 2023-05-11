@@ -884,12 +884,14 @@ public class RelationalContentManager implements IContentManager
 
 		if (contentParent != null && dms.isHierarchyContentExists(contentParent.getDMS_Content_ID(), linkableContentID))
 		{
+			// You can't create link of parent content into itself or its children content
 			return "Can'tCreateLinkOfParentContentInItself";
 		}
 
 		boolean isDocPresent = DMSOprUtils.isDocumentPresent(contentParent, clipboardContent, isDir);
 		if (isDocPresent)
 		{
+			// "Document already exists at same position
 			return "DocumentExistIntheSamePosition";
 		}
 
