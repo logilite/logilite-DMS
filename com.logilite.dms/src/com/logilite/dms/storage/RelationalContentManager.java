@@ -647,7 +647,7 @@ public class RelationalContentManager implements IContentManager
 																			cutContentPermission.getAD_User_ID(), "");
 			MDMSPermission newPermission = (MDMSPermission) MTable	.get(((PO) destContent).getCtx(), MDMSPermission.Table_ID)
 																	.getPO(permissionID, ((PO) destContent).get_TrxName());
-			if (permissionID <= 0)
+			if (permissionID <= 0 && !destContent.isMounting())
 			{
 				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()));
 				newPermission.setDMS_Content_ID(destContent.getDMS_Content_ID());
@@ -891,7 +891,7 @@ public class RelationalContentManager implements IContentManager
 		boolean isDocPresent = DMSOprUtils.isDocumentPresent(contentParent, clipboardContent, isDir);
 		if (isDocPresent)
 		{
-			// "Document already exists at same position
+			// Document already exists at same position
 			return "DocumentExistIntheSamePosition";
 		}
 

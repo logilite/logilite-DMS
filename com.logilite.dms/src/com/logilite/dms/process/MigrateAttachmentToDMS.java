@@ -11,6 +11,7 @@ import org.compiere.model.Query;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
+import org.compiere.util.Env;
 
 import com.logilite.dms.DMS;
 import com.logilite.dms.model.MDMSContent;
@@ -55,8 +56,8 @@ public class MigrateAttachmentToDMS extends SvrProcess
 		 * 50008=AD_Package_Imp_Proc
 		 */
 		List<MAttachment> attachments = new Query(	getCtx(), MAttachment.Table_Name,
-													" AD_Table_ID NOT IN(284, 285, 376, 454, 489, 523, 50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y'",
-													get_TrxName()).list();
+													" AD_Table_ID NOT IN(284, 285, 376, 454, 489, 523, 50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y' AND AD_Client_ID = ? ",
+													get_TrxName()).setParameters(Env.getAD_Client_ID(Env.getCtx())).list();
 
 		for (MAttachment attachment : attachments)
 		{

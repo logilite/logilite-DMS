@@ -653,7 +653,7 @@ public class UUIDContentManager implements IContentManager
 																			cutContentPermission.getAD_User_ID(), "");
 			MDMSPermission newPermission = (MDMSPermission) MTable	.get(((PO) destContent).getCtx(), MDMSPermission.Table_ID)
 																	.getPO(permissionID, ((PO) destContent).get_TrxName());
-			if (permissionID <= 0)
+			if (permissionID <= 0 && !destContent.isMounting())
 			{
 				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()));
 				newPermission.setDMS_Content_ID(destContent.getDMS_Content_ID());
@@ -1019,5 +1019,4 @@ public class UUIDContentManager implements IContentManager
 	{
 		return RelationalUUIDUtils.checkDMSContentExists(parentURL, contentName, isActiveOnly, isCheckByContentName);
 	}
-
 }
