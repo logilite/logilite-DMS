@@ -117,7 +117,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			String filePrefix = "DMS_UUID_" + DMSConstant.SDF_NO_SPACE.format(new Date());
 
 			DMS dms = new DMS(getAD_Client_ID());
-			String baseDir = (p_ExportWithBaseDirPath ? dms.getFileStorageProvider().getBaseDirectory(null) : "");
+			String baseDir = (p_ExportWithBaseDirPath ? dms.getFileStorageProvider().getBaseDirectory(null) + DMSConstant.FILE_SEPARATOR : "");
 
 			HashMap<String, ArrayList<String>> mapCMDList = new HashMap<String, ArrayList<String>>(100000);
 			PreparedStatement pstmt = null;
@@ -297,6 +297,9 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				createFile(resetTableID, masterListPerFile, seqNo, count, filePrefix);
 				//
 				masterListPerFile = new ArrayList<String>();
+				// For Start Time log "echo %time:~-11%"
+				masterListPerFile.add((Adempiere.getOSInfo().startsWith("Windows") ? "echo.|time" : "datetime"));
+
 				resetTableID = tableID;
 				count = 0;
 				requireToSplitFile = false;
@@ -309,6 +312,9 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 
 			ArrayList<String> cmdList = mapCMDList.get(key);
 			masterListPerFile.addAll(cmdList);
+			// For End Time log
+			masterListPerFile.add((Adempiere.getOSInfo().startsWith("Windows") ? "echo.|time" : "datetime"));
+
 			count += cmdList.size();
 
 			if (count / p_NoOfRecordsExportPerFile >= 1)
