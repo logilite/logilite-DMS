@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS-UUID
 Bundle-SymbolicName: com.logilite.dms.uuid;singleton:=true
-Bundle-Version: 7.2.4.qualifier
+Bundle-Version: 7.2.8.qualifier
 Bundle-Vendor: LOGILITE
 Automatic-Module-Name: com.logilite.dms.uuid
 Bundle-RequiredExecutionEnvironment: JavaSE-11
