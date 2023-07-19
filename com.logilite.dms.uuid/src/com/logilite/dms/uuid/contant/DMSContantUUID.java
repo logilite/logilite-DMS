@@ -24,7 +24,7 @@ public class DMSContantUUID
 																	+ " 	SELECT	c.AD_Client_ID, c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, a.AD_Table_ID, a.Record_ID"
 																	+ " 			, v.Value, c.Name, c.ParentURL,  LEVEL + 1, Path || v.Value, a.DMS_AssociationType_ID 						"
 																	+ " 		 	, CASE 	WHEN	((c.IsMounting = 'Y' AND COALESCE(a.AD_Table_ID, 0) > 0 AND COALESCE(a.Record_ID, 0) = 0 ) 	"
-																	+ " 					     OR (c.IsMounting = 'Y' AND COALESCE(a.AD_Table_ID, 0) = 0 AND COALESCE(a.Record_ID, 0) = 0 ))	" 
+																	+ " 					     OR (c.IsMounting = 'Y' AND COALESCE(a.AD_Table_ID, 0) = 0 AND COALESCE(a.Record_ID, 0) = 0 ))	"
 																	+ "						THEN	v.Value 	ELSE 	v.DMS_Version_UU 		END												"
 																	+ " 			, st.BuildNewParentURL || ? ||  st.ParentValueORUU															"
 																	+ " 	FROM  DMS_Association a 																							"
@@ -42,10 +42,9 @@ public class DMSContantUUID
 																	+ " INNER JOIN DMS_Version v 			ON (v.DMS_content_ID = c.DMS_content_ID) 											"
 																	+ " WHERE (c.IsMounting = 'Y' AND Level > 2) OR (c.IsMounting = 'N')														"
 																	+ " ORDER BY	s.AD_Client_ID, COALESCE( s.AD_Table_ID, 0), COALESCE( s.Record_ID, 0), s.Level DESC,						"
-																	+ "		 		s.ParentURL, s.Path, s.DMS_Content_ID,	s.DMS_Content_Related_ID											";									
-																																	
+																	+ "		 		s.ParentURL, s.Path, s.DMS_Content_ID,	s.DMS_Content_Related_ID											";
 
-	public static final String	SQL_COUNT_VERSION				= " 	SELECT COUNT(1) FROM DMS_Version v 									"
+	public static final String	SQL_COUNT_NON_MOUNTED_VERSION	= " 	SELECT COUNT(1) FROM DMS_Version v 									"
 																	+ " INNER JOIN DMS_content c ON (c.DMS_content_ID = v.DMS_content_ID)	"
 																	+ " WHERE v.AD_Client_ID = ? AND c.IsMounting = 'N' 					";
 

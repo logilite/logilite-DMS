@@ -128,7 +128,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 
 				String key = "";
 				int count = 0;
-				int noOfRecords = DB.getSQLValue(get_TrxName(), DMSContantUUID.SQL_COUNT_VERSION, getAD_Client_ID());
+				int noOfRecords = DB.getSQLValue(get_TrxName(), DMSContantUUID.SQL_COUNT_NON_MOUNTED_VERSION, getAD_Client_ID());
 
 				pstmt = DB.prepareStatement(DMSContantUUID.SQL_OLD_NEW_PATH, get_TrxName());
 				pstmt.setInt(1, getAD_Client_ID());
@@ -163,8 +163,9 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 					count++;
 
 					if (count % 1000 == 0)
-						statusUpdate("UUID based path created " + count + " out of " + noOfRecords + " ( Approx )");
+						statusUpdate("UUID based path listed: " + count + ", Found non mounted versions: " + noOfRecords);
 				}
+				addLog("UUID based path listed: " + count + ", Found non mounted versions: " + noOfRecords);
 			}
 			catch (SQLException e)
 			{
@@ -184,8 +185,12 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				file.mkdir();
 			}
 
+			addLog("Write command list to File, Table+Records count: " + mapCMDList.size());
+
 			// Write data to the file
 			writeToFile(filePrefix, mapCMDList);
+
+			statusUpdate("Files Count: " + fileList.size() + ", Preparing for downloadable Zip file");
 
 			// Script file download
 			downloadableZip(filePrefix, file);
@@ -284,6 +289,9 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 		int resetTableID = -1;
 
 		ArrayList<String> masterListPerFile = new ArrayList<String>();
+		// For Start Time log "echo %time:~-11%"
+		masterListPerFile.add((Adempiere.getOSInfo().startsWith("Windows") ? "echo.|time" : "datetime"));
+
 		boolean requireToSplitFile = false;
 		Object[] keys = mapCMDList.keySet().toArray();
 		Arrays.sort(keys);
@@ -344,6 +352,8 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			{
 				addLog("Failed to create temporary file with name:" + fileName);
 			}
+
+			statusUpdate("Write command for file: " + fileName);
 
 			// append a list of lines, add new lines automatically
 			Files.write(fileDownload.toPath(), masterListPerFile, StandardOpenOption.APPEND);
