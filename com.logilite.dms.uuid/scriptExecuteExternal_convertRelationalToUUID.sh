@@ -2,6 +2,8 @@
 #################################################
 # Command to Execute this script
 #
+# Open terminal with /home/sachin/ path
+#
 # sudo bash scriptExecuteExternal_convertRelationalToUUID.sh > scriptExecuteExternal_convertRelationalToUUID.log
 #
 #################################################
@@ -19,7 +21,7 @@ processStartTime=$(date +%s%N)
 printf "Process Started with \t $(date +'%Y-%b-%d %H:%M:%S') \n"
 
 # Folder path containing the files to process
-SCRIPT_PATH="/home/sachin/"
+SCRIPT_PATH="/home/sachin/DMS_UUID_20230721/"
 
 # List of selected files to process
 #selected_files=("s1.sh" "s2.sh")
@@ -39,10 +41,11 @@ process_file()
     printf "2 Processing Path <><><> $file \t %s\n" "${PWD#*/}"
 	
     # Run the .sh script using bash command
+	# sudo su <user> script file name and create log for result
 	sudo su sachin "$file" &> $log_file &
 	
 	# Add your additional processing commands here
-    sleep 0.25  # Example: Sleep for 5 seconds as a placeholder
+    sleep 0.25  # Sleep for 0.25 second
 	
 	local endTime=$(date +%s%N)
 	diffTime=$((endTime-startTime))
@@ -53,7 +56,7 @@ process_file()
 export -f process_file
 
 # Execute the .sh files in parallel using xargs based on alphabetical order
-printf "%s\n" "${selected_files[@]}" | xargs -I{} -P 2 bash -c 'process_file "$@"' _ {}
+printf "%s\n" "${selected_files[@]}" | xargs -I{} -P 8 bash -c 'process_file "$@"' _ {}
 
 #
 printf "Process Finished with \t $(date +'%Y-%b-%d %H:%M:%S') \n"
