@@ -289,9 +289,6 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 		int resetTableID = -1;
 
 		ArrayList<String> masterListPerFile = new ArrayList<String>();
-		// For Start Time log "echo %time:~-11%"
-		masterListPerFile.add((Adempiere.getOSInfo().startsWith("Windows") ? "echo.|time" : "datetime"));
-
 		boolean requireToSplitFile = false;
 		Object[] keys = mapCMDList.keySet().toArray();
 		Arrays.sort(keys);
@@ -305,9 +302,6 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				createFile(resetTableID, masterListPerFile, seqNo, count, filePrefix);
 				//
 				masterListPerFile = new ArrayList<String>();
-				// For Start Time log "echo %time:~-11%"
-				masterListPerFile.add((Adempiere.getOSInfo().startsWith("Windows") ? "echo.|time" : "datetime"));
-
 				resetTableID = tableID;
 				count = 0;
 				requireToSplitFile = false;
@@ -320,9 +314,6 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 
 			ArrayList<String> cmdList = mapCMDList.get(key);
 			masterListPerFile.addAll(cmdList);
-			// For End Time log
-			masterListPerFile.add((Adempiere.getOSInfo().startsWith("Windows") ? "echo.|time" : "datetime"));
-
 			count += cmdList.size();
 
 			if (count / p_NoOfRecordsExportPerFile >= 1)
@@ -343,7 +334,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 		if (tableID > 0)
 			tablename = MTable.get(getCtx(), tableID).getTableName();
 
-		String fileName = filePrefix + "_" + seqNo + "_" + tablename + (Env.isWindows() ? ".bat" : ".sh");
+		String fileName = filePrefix + "_" + String.format("%04d", seqNo) + "_" + tablename + (Env.isWindows() ? ".bat" : ".sh");
 		File fileDownload = null;
 		try
 		{
@@ -356,6 +347,10 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			statusUpdate("Write command for file: " + fileName);
 
 			// append a list of lines, add new lines automatically
+			// For Start and End Time in the script for log "echo %time:~-11%"
+			String timeCmd = (Adempiere.getOSInfo().startsWith("Windows") ? "echo.|time" : "date");
+			masterListPerFile.add(0, timeCmd);
+			masterListPerFile.add(timeCmd);
 			Files.write(fileDownload.toPath(), masterListPerFile, StandardOpenOption.APPEND);
 		}
 		catch (IOException e)
