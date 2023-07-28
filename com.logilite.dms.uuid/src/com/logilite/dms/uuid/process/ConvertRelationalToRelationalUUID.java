@@ -66,6 +66,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 	private boolean			p_IsModifyContentParentURL			= false;
 	private boolean			p_IsExecuteShellCommandDirectly		= false;
 	private boolean			p_ArchiveStoreSetMethodToDMSUU		= false;
+	private boolean			p_IsDownloadSQL						= false;
 
 	private int				p_NoOfRecordsExportPerFile			= 100000;
 	private int				p_NoOfThreadInPool					= 1;
@@ -95,6 +96,8 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				p_NoOfThreadInPool = para[i].getParameterAsInt();
 			else if ("IsModifyContentParentURL".equals(name))
 				p_IsModifyContentParentURL = para[i].getParameterAsBoolean();
+			else if ("IsDownloadSQL".equals(name))
+				p_IsDownloadSQL = para[i].getParameterAsBoolean();
 			else if ("ClientInfoSetContentTypeToUUID".equals(name))
 				p_ClientInfoSetContentTypeToUUID = para[i].getParameterAsBoolean();
 			else if ("ArchiveStoreSetMethodToDMSUU".equals(name))
@@ -233,6 +236,39 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 
 		/**
 		 * Step 2
+		 * Download SQL Statement for updating content ParentURL based on UUID
+		 */
+		if (p_IsDownloadSQL)
+		{
+			String sql = DMSContantUUID.SQL_MODIFY_CONTENT_PARENTURL;
+			sql = sql.replaceFirst("\\?", "" + getAD_Client_ID());
+			sql = sql.replaceFirst("\\?", "'" + DMSConstant.FILE_SEPARATOR + "'");
+			sql = sql.replaceFirst("\\?", "" + getAD_Client_ID());
+			sql = sql.replaceFirst("\\?", "'" + DMSConstant.FILE_SEPARATOR + "'");
+			sql = sql.replaceFirst("\\?", "'" + DMSConstant.FILE_SEPARATOR + "'");
+
+			String fileName = "Step2_SQL_Update_Content_ParentURL_" + DMSConstant.SDF_NO_SPACE.format(new Date()) + ".sql";
+			File fileDownload = null;
+			try
+			{
+				fileDownload = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+				if (!fileDownload.createNewFile())
+				{
+					addLog("Failed to create temporary file with name:" + fileName);
+				}
+
+				ArrayList<String> sqls = new ArrayList<String>();
+				sqls.add(sql);
+				Files.write(fileDownload.toPath(), sqls, StandardOpenOption.APPEND);
+				processUI.download(fileDownload);
+			}
+			catch (IOException e)
+			{
+				addLog("Failed to write command into file:" + e.getLocalizedMessage());
+				log.log(Level.SEVERE, "Error while generating temporary file for exporting sql for updating content parentURL " + e.getLocalizedMessage());
+			}
+		}
+		/**
 		 * Modify content parent URL
 		 */
 		if (p_IsModifyContentParentURL)
