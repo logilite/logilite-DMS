@@ -872,7 +872,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							};
 
 							// Grant same permission of 'Parent Content' to 'paste content'?
-							FDialog.ask("Grant permission to the paste content ?", windowNo, this,
+							Dialog.ask("Grant permission to the paste content ?", windowNo,
 										"GrantPermissionToPasteContent?", callbackConfirmation);
 						}
 						else
@@ -1004,7 +1004,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 								}
 							};
 
-							// TODO check warningmsg proper to show
 							Dialog.ask(	"Want to un-Delete linkable references ?", windowNo,
 										"Un-DeleteAssociatedLinkableDocuments?", warningMsg, callbackWarning);
 						}
