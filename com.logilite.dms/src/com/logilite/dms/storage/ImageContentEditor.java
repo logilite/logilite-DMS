@@ -41,16 +41,16 @@ public class ImageContentEditor extends Panel implements IContentEditor, EventLi
 	/**
 	 * 
 	 */
-	private static final long		serialVersionUID			= 7241323248511502223L;
-	private static final String		EVENT_ON_LOAD_DMS_CONTENT	= "onLoadDMSContent";
+	private static final long	serialVersionUID			= 7241323248511502223L;
+	private static final String	EVENT_ON_LOAD_DMS_CONTENT	= "onLoadDMSContent";
 
-	public static CLogger			log							= CLogger.getCLogger(ImageContentEditor.class);
+	public static CLogger		log							= CLogger.getCLogger(ImageContentEditor.class);
 
-	private Div						divzoomcontent				= new Div();
-	private File					file						= null;
-	private String					src;
+	private Div					divZoomContent				= new Div();
+	private File				file						= null;
+	private String				src;
 	@SuppressWarnings("unused")
-	private I_DMS_Content			content						= null;
+	private I_DMS_Content		content						= null;
 
 	@Override
 	public void setFile(File file)
@@ -67,21 +67,21 @@ public class ImageContentEditor extends Panel implements IContentEditor, EventLi
 	@Override
 	public void init(I_AD_StorageProvider storageProvider)
 	{
-		
+
 	}
 
 	@Override
 	public Panel initPanel()
 	{
+		// Load JS for image previewer
 		loadPanAndZoomJS();
 
+		// Fetch image
 		getImageSrc();
 
-		this.appendChild(divzoomcontent);
-
-		divzoomcontent.addEventListener(EVENT_ON_LOAD_DMS_CONTENT, this);
-		
-		Events.echoEvent(EVENT_ON_LOAD_DMS_CONTENT, divzoomcontent, null);
+		this.appendChild(divZoomContent);
+		divZoomContent.addEventListener(EVENT_ON_LOAD_DMS_CONTENT, this);
+		Events.echoEvent(EVENT_ON_LOAD_DMS_CONTENT, divZoomContent, null);
 
 		return this;
 	} // initPanel
@@ -93,21 +93,21 @@ public class ImageContentEditor extends Panel implements IContentEditor, EventLi
 	{
 		// Load JS of PanAndZoom On the DMS Content
 		Script script = new Script();
-		URL urlJS = Core.getResourceFinder().getResource("js/dmscontentpreview_min.js");
+		URL urlJS = Core.getResourceFinder().getResource("js/ImageContentPreview.js");
 		if (urlJS == null)
-			throw new AdempiereException("Fail to load scanner JS");
+			throw new AdempiereException("Fail to load image content previewer JS");
 
 		try
 		{
 			byte[] byteCode = Files.readAll(urlJS.openStream());
 			script.setContent(new String(byteCode));
-			divzoomcontent.appendChild(script);
+			divZoomContent.appendChild(script);
 		}
 		catch (IOException e)
 		{
 			throw new AdempiereException("Fail to load script : " + e.getLocalizedMessage(), e);
 		}
-	}
+	} // loadPanAndZoomJS
 
 	/**
 	 * Get Base64 encoder src of the Image File
@@ -123,7 +123,7 @@ public class ImageContentEditor extends Panel implements IContentEditor, EventLi
 		{
 			throw new AdempiereException("Fail to encode src of the image file: " + e.getLocalizedMessage(), e);
 		}
-	}
+	} // getImageSrc
 
 	@Override
 	public void onEvent(Event event) throws Exception
@@ -133,5 +133,5 @@ public class ImageContentEditor extends Panel implements IContentEditor, EventLi
 			// Create canvas as per encoder src of image in the Image Container
 			Clients.evalJavaScript("onPenAndZoom('" + this.getUuid() + "', '" + src + "')");
 		}
-	}
+	} // onEvent
 }

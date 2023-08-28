@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="com.logilite.dms.form.DMSContentResourceFinder">
-   <implementation class="com.logilite.dms.form.DMSContentResourceFinder"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="com.logilite.dms.resource.DMSResourceFinder">
+   <implementation class="com.logilite.dms.resource.DMSResourceFinder"/>
    <service>
       <provide interface="org.adempiere.base.IResourceFinder"/>
    </service>

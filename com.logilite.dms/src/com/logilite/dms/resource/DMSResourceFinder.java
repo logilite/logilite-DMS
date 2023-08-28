@@ -10,7 +10,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,    *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
  *****************************************************************************/
-package com.logilite.dms.form;
+package com.logilite.dms.resource;
 
 import java.io.IOException;
 import java.net.URL;
@@ -25,9 +25,9 @@ import org.compiere.util.CLogger;
  * 
  * @author Logilite Technologies
  */
-public class DMSContentResourceFinder implements IResourceFinder
+public class DMSResourceFinder implements IResourceFinder
 {
-	public static final CLogger log = CLogger.getCLogger(DMSContentResourceFinder.class);
+	public static final CLogger log = CLogger.getCLogger(DMSResourceFinder.class);
 
 	@Override
 	public URL getResource(String name)

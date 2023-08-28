@@ -1,19 +1,21 @@
-var dmsContent = new Image;
+var imageComp = new Image;
 
 function onPenAndZoom(parentID, src) {
 
-	var imagePanel = document.getElementById(parentID);
 	var canvas = document.createElement('canvas');
 	canvas.id = 'panandzoom';
-	imagePanel.parentNode.insertBefore(canvas, imagePanel);
-	var ctx = canvas.getContext('2d');
-	trackTransforms(ctx);
 	canvas.width = 700;
 	canvas.height = 600;
-	dmsContent.src = 'data:image/png;base64,' + src;
 
-	dmsContent.onload = function() {
-		ctx.drawImage(dmsContent, 0, 0);
+	var imagePanel = document.getElementById(parentID);
+	imagePanel.parentNode.insertBefore(canvas, imagePanel);
+
+	var ctx = canvas.getContext('2d');
+	trackTransforms(ctx);
+	
+	imageComp.src = 'data:image/png;base64,' + src;
+	imageComp.onload = function() {
+		ctx.drawImage(imageComp, 0, 0);
 	};
 
 	function redraw() {
@@ -22,14 +24,16 @@ function onPenAndZoom(parentID, src) {
 		var p2 = ctx.transformedPoint(canvas.width, canvas.height);
 		ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
 
-		ctx.drawImage(dmsContent, 0, 0);
+		ctx.drawImage(imageComp, 0, 0);
 
 		ctx.save();
 	}
 	redraw();
+
 	var lastX = canvas.width / 2,
 		lastY = canvas.height / 2;
 	var dragStart, dragged;
+
 	canvas.addEventListener('mousedown', function(evt) {
 		document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
 		lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
@@ -37,6 +41,7 @@ function onPenAndZoom(parentID, src) {
 		dragStart = ctx.transformedPoint(lastX, lastY);
 		dragged = false;
 	}, false);
+
 	canvas.addEventListener('mousemove', function(evt) {
 		lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
 		lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
@@ -47,6 +52,7 @@ function onPenAndZoom(parentID, src) {
 			redraw();
 		}
 	}, false);
+
 	canvas.addEventListener('mouseup', function(evt) {
 		dragStart = null;
 		if (!dragged) zoom(evt.shiftKey ? -1 : 1);
