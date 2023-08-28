@@ -12,5 +12,6 @@
     <module>com.logilite.dms.storageprovider</module>
 	<module>com.logilite.dmstheme</module>
     <module>com.logilite.dms.p2</module>
+    <module>com.logilite.dms.uuid</module>
   </modules>
 </project>

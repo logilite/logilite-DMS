@@ -1,6 +1,4 @@
 
-package com.logilite.dms.uuid.process;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +13,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * External process run via command line for DMS convert Relational to UUID based file structure
  * </br>
  * </br>
  * NOTE: </br>

@@ -66,6 +66,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 	private boolean			p_IsModifyContentParentURL			= false;
 	private boolean			p_IsExecuteShellCommandDirectly		= false;
 	private boolean			p_ArchiveStoreSetMethodToDMSUU		= false;
+	private boolean			p_IsDownloadSQL						= false;
 
 	private int				p_NoOfRecordsExportPerFile			= 100000;
 	private int				p_NoOfThreadInPool					= 1;
@@ -95,6 +96,8 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				p_NoOfThreadInPool = para[i].getParameterAsInt();
 			else if ("IsModifyContentParentURL".equals(name))
 				p_IsModifyContentParentURL = para[i].getParameterAsBoolean();
+			else if ("IsDownloadSQL".equals(name))
+				p_IsDownloadSQL = para[i].getParameterAsBoolean();
 			else if ("ClientInfoSetContentTypeToUUID".equals(name))
 				p_ClientInfoSetContentTypeToUUID = para[i].getParameterAsBoolean();
 			else if ("ArchiveStoreSetMethodToDMSUU".equals(name))
@@ -117,7 +120,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 			String filePrefix = "DMS_UUID_" + DMSConstant.SDF_NO_SPACE.format(new Date());
 
 			DMS dms = new DMS(getAD_Client_ID());
-			String baseDir = (p_ExportWithBaseDirPath ? dms.getFileStorageProvider().getBaseDirectory(null) : "");
+			String baseDir = (p_ExportWithBaseDirPath ? dms.getFileStorageProvider().getBaseDirectory(null) + DMSConstant.FILE_SEPARATOR : "");
 
 			HashMap<String, ArrayList<String>> mapCMDList = new HashMap<String, ArrayList<String>>(100000);
 			PreparedStatement pstmt = null;
@@ -128,7 +131,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 
 				String key = "";
 				int count = 0;
-				int noOfRecords = DB.getSQLValue(get_TrxName(), DMSContantUUID.SQL_COUNT_VERSION, getAD_Client_ID());
+				int noOfRecords = DB.getSQLValue(get_TrxName(), DMSContantUUID.SQL_COUNT_NON_MOUNTED_VERSION, getAD_Client_ID());
 
 				pstmt = DB.prepareStatement(DMSContantUUID.SQL_OLD_NEW_PATH, get_TrxName());
 				pstmt.setInt(1, getAD_Client_ID());
@@ -163,8 +166,9 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 					count++;
 
 					if (count % 1000 == 0)
-						statusUpdate("UUID based path created " + count + " out of " + noOfRecords + " ( Approx )");
+						statusUpdate("UUID based path listed: " + count + ", Found non mounted versions: " + noOfRecords);
 				}
+				addLog("UUID based path listed: " + count + ", Found non mounted versions: " + noOfRecords);
 			}
 			catch (SQLException e)
 			{
@@ -184,8 +188,12 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				file.mkdir();
 			}
 
+			addLog("Write command list to File, Table+Records count: " + mapCMDList.size());
+
 			// Write data to the file
 			writeToFile(filePrefix, mapCMDList);
+
+			statusUpdate("Files Count: " + fileList.size() + ", Preparing for downloadable Zip file");
 
 			// Script file download
 			downloadableZip(filePrefix, file);
@@ -228,6 +236,39 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 
 		/**
 		 * Step 2
+		 * Download SQL Statement for updating content ParentURL based on UUID
+		 */
+		if (p_IsDownloadSQL)
+		{
+			String sql = DMSContantUUID.SQL_MODIFY_CONTENT_PARENTURL;
+			sql = sql.replaceFirst("\\?", "" + getAD_Client_ID());
+			sql = sql.replaceFirst("\\?", "'" + DMSConstant.FILE_SEPARATOR + "'");
+			sql = sql.replaceFirst("\\?", "" + getAD_Client_ID());
+			sql = sql.replaceFirst("\\?", "'" + DMSConstant.FILE_SEPARATOR + "'");
+			sql = sql.replaceFirst("\\?", "'" + DMSConstant.FILE_SEPARATOR + "'");
+
+			String fileName = "Step2_SQL_Update_Content_ParentURL_" + DMSConstant.SDF_NO_SPACE.format(new Date()) + ".sql";
+			File fileDownload = null;
+			try
+			{
+				fileDownload = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+				if (!fileDownload.createNewFile())
+				{
+					addLog("Failed to create temporary file with name:" + fileName);
+				}
+
+				ArrayList<String> sqls = new ArrayList<String>();
+				sqls.add(sql);
+				Files.write(fileDownload.toPath(), sqls, StandardOpenOption.APPEND);
+				processUI.download(fileDownload);
+			}
+			catch (IOException e)
+			{
+				addLog("Failed to write command into file:" + e.getLocalizedMessage());
+				log.log(Level.SEVERE, "Error while generating temporary file for exporting sql for updating content parentURL " + e.getLocalizedMessage());
+			}
+		}
+		/**
 		 * Modify content parent URL
 		 */
 		if (p_IsModifyContentParentURL)
@@ -329,7 +370,7 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 		if (tableID > 0)
 			tablename = MTable.get(getCtx(), tableID).getTableName();
 
-		String fileName = filePrefix + "_" + seqNo + "_" + tablename + (Env.isWindows() ? ".bat" : ".sh");
+		String fileName = filePrefix + "_" + String.format("%04d", seqNo) + "_" + tablename + (Env.isWindows() ? ".bat" : ".sh");
 		File fileDownload = null;
 		try
 		{
@@ -339,7 +380,13 @@ public class ConvertRelationalToRelationalUUID extends SvrProcess
 				addLog("Failed to create temporary file with name:" + fileName);
 			}
 
+			statusUpdate("Write command for file: " + fileName);
+
 			// append a list of lines, add new lines automatically
+			// For Start and End Time in the script for log "echo %time:~-11%"
+			String timeCmd = (Adempiere.getOSInfo().startsWith("Windows") ? "echo.|time" : "date");
+			masterListPerFile.add(0, timeCmd);
+			masterListPerFile.add(timeCmd);
 			Files.write(fileDownload.toPath(), masterListPerFile, StandardOpenOption.APPEND);
 		}
 		catch (IOException e)
