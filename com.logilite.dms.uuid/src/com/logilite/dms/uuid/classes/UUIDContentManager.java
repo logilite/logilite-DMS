@@ -14,6 +14,7 @@ import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.Adempiere;
 import org.compiere.model.MAttributeSetInstance;
+import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -33,9 +34,11 @@ import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
+import com.logilite.dms.model.MDMSPermission;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSOprUtils;
+import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.Utils;
 import com.logilite.dms.uuid.util.RelationalUUIDUtils;
 import com.logilite.dms.uuid.util.UtilsUUID;
@@ -322,7 +325,6 @@ public class UUIDContentManager implements IContentManager
 		int seqNo = 0;
 		int DMS_Content_Related_ID = 0;
 		int DMS_AssociationType_ID = 0;
-		@SuppressWarnings("unused")
 		String actualFileName = fileName;
 		String parentURL;
 		int dms_content_id = 0;
@@ -342,9 +344,9 @@ public class UUIDContentManager implements IContentManager
 		}
 		else
 		{
-			String format = Utils.getFileExtension(fileName);
+			String format = Utils.getFileExtension(file.getName());
 			if (format == null)
-				format = Utils.getFileExtension(file.getName());
+				format = Utils.getFileExtension(fileName);
 			if (format == null)
 				throw new AdempiereException("Did not found file extension: " + fileName + " " + file.getName());
 
@@ -431,9 +433,13 @@ public class UUIDContentManager implements IContentManager
 		IFileStorageProvider fsProvider = dms.getFileStorageProvider();
 		fsProvider.writeBLOB(dms.getBaseDirPath(version), data);
 
-		IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, version.getDMS_Content().getDMS_MimeType().getMimeType());
-		if (thumbnailGenerator != null)
-			thumbnailGenerator.addThumbnail(version, file, null);
+		// if it's false then thumbnail will not be created/used otherwise it will be created/used
+		if (dms.isAllowThumbnailContentCreation())
+		{
+			IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, version.getDMS_Content().getDMS_MimeType().getMimeType());
+			if (thumbnailGenerator != null)
+				thumbnailGenerator.addThumbnail(version, file, null);
+		}
 	} // writeFileOnStorageAndThumnail
 
 	/*
@@ -443,14 +449,17 @@ public class UUIDContentManager implements IContentManager
 	/**
 	 * Paste the content [ Copy Operation ]
 	 * 
-	 * @param dms           - DMS
-	 * @param copiedContent - Content From
-	 * @param destContent   - Content To
-	 * @param tableID       - AD_Table_ID
-	 * @param recordID      - Record_ID
+	 * @param dms                               - DMS
+	 * @param copiedContent                     - Content From
+	 * @param destContent                       - Content To
+	 * @param tableID                           - AD_Table_ID
+	 * @param recordID                          - Record_ID
+	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if
+	 *                                          true
 	 */
 	@Override
-	public void pasteCopyContent(DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID)
+	public void pasteCopyContent(	DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID,
+									boolean isCreatePermissionForPasteContent)
 	{
 		if (destContent != null && destContent.getDMS_Content_ID() > 0)
 		{
@@ -474,6 +483,8 @@ public class UUIDContentManager implements IContentManager
 				newDMSContent.setM_AttributeSetInstance_ID(newASI.getM_AttributeSetInstance_ID());
 			}
 			newDMSContent.setParentURL(dms.getPathFromContentManager(destContent));
+			// set owner from the created in copy paste
+			newDMSContent.setDMS_Owner_ID(newDMSContent.getCreatedBy());
 			newDMSContent.saveEx();
 
 			// Copy Association
@@ -509,14 +520,17 @@ public class UUIDContentManager implements IContentManager
 			String baseURL = dms.getPathFromContentManager(copiedContent);
 			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + oldVersion.getDMS_Version_UU();
 
-			RelationalUUIDUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID);
+			RelationalUUIDUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID,
+													isCreatePermissionForPasteContent);
 
-			//
-			dms.grantChildPermissionFromParentContent(newDMSContent, destContent);
+			if (isCreatePermissionForPasteContent)
+			{
+				dms.grantChildPermissionFromParentContent(newDMSContent, destContent, isCreatePermissionForPasteContent);
+			}
 		}
 		else
 		{
-			RelationalUUIDUtils.pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID);
+			RelationalUUIDUtils.pasteCopyFileContent(dms, copiedContent, destContent, tableID, recordID, isCreatePermissionForPasteContent);
 		}
 
 	} // pasteCopyContent
@@ -626,6 +640,36 @@ public class UUIDContentManager implements IContentManager
 			// solr indexing entry
 			dmsContent.setParentURL(dms.getPathFromContentManager(destContent));
 			dmsContent.saveEx();
+		}
+
+		/***
+		 * Create navigation permission for owner of cut content
+		 */
+		MDMSPermission[] arrayCutContentPermission = (MDMSPermission[]) MDMSPermission.getAllPermissionForContent((MDMSContent) cutContent);
+		for (MDMSPermission cutContentPermission : arrayCutContentPermission)
+		{
+
+			int permissionID = DMSPermissionUtils.getPermissionIDByUserRole(destContent.getDMS_Content_ID(), cutContentPermission.getAD_Role_ID(),
+																			cutContentPermission.getAD_User_ID(), "");
+			MDMSPermission newPermission = (MDMSPermission) MTable	.get(((PO) destContent).getCtx(), MDMSPermission.Table_ID)
+																	.getPO(permissionID, ((PO) destContent).get_TrxName());
+			if (permissionID <= 0 && !destContent.isMounting())
+			{
+				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()));
+				newPermission.setDMS_Content_ID(destContent.getDMS_Content_ID());
+				newPermission.setAD_User_ID(cutContentPermission.getAD_User_ID());
+				newPermission.setIsAllPermission(false);
+				newPermission.saveEx();
+			}
+			else
+			{
+				// Set navigation of destcontent true if permission is already created for the cut
+				// content owner
+				// but navigation flag is not true in the destcontent
+				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()) && !(newPermission.isRead()
+																																	&& newPermission.isWrite()));
+				newPermission.saveEx();
+			}
 		}
 
 		dms.grantChildPermissionFromParentContent(cutContent, destContent);
@@ -845,13 +889,15 @@ public class UUIDContentManager implements IContentManager
 
 		if (contentParent != null && dms.isHierarchyContentExists(contentParent.getDMS_Content_ID(), linkableContentID))
 		{
-			return "You can't create link of parent content into itself or its children content";
+			// You can't create link of parent content into itself or its children content
+			return "Can'tCreateLinkOfParentContentInItself";
 		}
 
 		boolean isDocPresent = DMSOprUtils.isDocumentPresent(contentParent, clipboardContent, isDir);
 		if (isDocPresent)
 		{
-			return "Document already exists at same position.";
+			// Document already exists at same position
+			return "DocumentExistIntheSamePosition";
 		}
 
 		int contentID = 0;
@@ -973,5 +1019,4 @@ public class UUIDContentManager implements IContentManager
 	{
 		return RelationalUUIDUtils.checkDMSContentExists(parentURL, contentName, isActiveOnly, isCheckByContentName);
 	}
-
 }

@@ -51,6 +51,10 @@
 	content: "\f0c0";
 }
 
+.z-icon-Owner:before {
+	content: "\f2bd";
+}
+
 .z-icon-com_logilite_dms_toolbar_CustomToolbarFactory:before {
 	content: "\f15b";
 }

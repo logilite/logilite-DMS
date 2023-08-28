@@ -31,7 +31,7 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20220712L;
+	private static final long serialVersionUID = 20230228L;
 
     /** Standard Constructor */
     public X_DMS_Content (Properties ctx, int DMS_Content_ID, String trxName)
@@ -42,6 +42,7 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 			setDMS_Content_ID (0);
 			setDMS_MimeType_ID (0);
 			setName (null);
+			setValue (null);
         } */
     }
 
@@ -194,6 +195,31 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 	public int getDMS_MimeType_ID () 
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_DMS_MimeType_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	public org.compiere.model.I_AD_User getDMS_Owner() throws RuntimeException
+    {
+		return (org.compiere.model.I_AD_User)MTable.get(getCtx(), org.compiere.model.I_AD_User.Table_Name)
+			.getPO(getDMS_Owner_ID(), get_TrxName());	}
+
+	/** Set Owner.
+		@param DMS_Owner_ID Owner	  */
+	public void setDMS_Owner_ID (int DMS_Owner_ID)
+	{
+		if (DMS_Owner_ID < 1) 
+			set_Value (COLUMNNAME_DMS_Owner_ID, null);
+		else 
+			set_Value (COLUMNNAME_DMS_Owner_ID, Integer.valueOf(DMS_Owner_ID));
+	}
+
+	/** Get Owner.
+		@return Owner	  */
+	public int getDMS_Owner_ID () 
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_DMS_Owner_ID);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
@@ -363,5 +389,22 @@ public class X_DMS_Content extends PO implements I_DMS_Content, I_Persistent
 	public Timestamp getValidToDate () 
 	{
 		return (Timestamp)get_Value(COLUMNNAME_ValidToDate);
+	}
+
+	/** Set Search Key.
+		@param Value 
+		Search key for the record in the format required - must be unique
+	  */
+	public void setValue (String Value)
+	{
+		set_Value (COLUMNNAME_Value, Value);
+	}
+
+	/** Get Search Key.
+		@return Search key for the record in the format required - must be unique
+	  */
+	public String getValue () 
+	{
+		return (String)get_Value(COLUMNNAME_Value);
 	}
 }

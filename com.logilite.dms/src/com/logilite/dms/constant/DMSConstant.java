@@ -40,6 +40,7 @@ public final class DMSConstant
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH		= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 	public static final String				DMS_ZK_MAX_UPLOAD_SIZE					= "DMS_ZK_MAX_UPLOAD_SIZE";
 	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
+	public static final String 				DMS_ALLOW_THUMBNAIL_CREATION			= "DMS_ALLOW_THUMBNAIL_CREATION";
 
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
@@ -125,6 +126,7 @@ public final class DMSConstant
 	public static final String				MENUITEM_UPLOADVERSION					= "Upload Version";
 	public static final String				MENUITEM_ZOOMCONTENTWIN					= "Zoom";
 	public static final String				MENUITEM_PERMISSION						= "Permission";
+	public static final String 				MENUITEM_OWNER							= "Owner Info";
 
 	// DMS MimeType
 	public static final String				DEFAULT									= "Default";
@@ -174,10 +176,14 @@ public final class DMSConstant
 	public static final String				MSG_SELECT_FILE							= Msg.getMsg(Env.getCtx(), "SelectFile");
 	public static final String				MSG_ATTRIBUTE_SET						= Msg.getMsg(Env.getCtx(), "attribute.set");
 	public static final String				MSG_DOCUMENT_VIEW						= Msg.getMsg(Env.getCtx(), "DocumentView");
+	public static final String				MSG_OWNER								= "Owner ";
 	public static final String				MSG_SIZE								= "Size";
 	public static final String				MSG_LINK								= "Link";
+	public static final String				MSG_NEW_OWNER							= "New Owner";
 	public static final String				MSG_FILE_TYPE							= "File Type";
 	public static final String				MSG_FILE_FOLDER							= "File Folder";
+	public static final String				MSG_CHANGE_OWNER						= "Change Owner ";
+	public static final String				MSG_CURRENT_OWNER						= "Current Owner";
 	public static final String				MSG_SHOW_IN_ACTIVE						= "Show InActive";
 	public static final String				MSG_UPLOAD_CONTENT						= "Upload Content";
 	public static final String				MSG_VERSION_HISTORY						= "Version History";
