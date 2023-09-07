@@ -69,6 +69,7 @@ import org.adempiere.webui.editor.WTimeEditor;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
+import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.Dialog;
 import org.apache.poi.ss.formula.CollaboratingWorkbooksEnvironment.WorkbookNotFoundException;
@@ -77,6 +78,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.MToolBarButtonRestrict;
 import org.compiere.model.MUser;
@@ -133,6 +135,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private static int				TOOLBAR_BTN_ID_DIR		= 0;
 	private static int				TOOLBAR_BTN_ID_UPLOAD	= 0;
+	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
+	private boolean isUseEscForTabClosing 					= MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
 
 	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
 
@@ -420,6 +424,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		this.appendChild(tabBox);
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(DMSConstant.EVENT_ON_SELECTION_CHANGE, this);
+		this.addEventListener(Events.ON_CANCEL, this);
 
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_DOUBLE_CLICK, this);
@@ -1064,6 +1069,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(btnSearch))
 		{
 			searchContents(true);
+		}
+		else if (event.getName().equals(Events.ON_CANCEL)) {
+			onCancel();
 		}
 
 	} // onEvent
@@ -2218,5 +2226,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public void setButtonCleanEnabled(boolean isEnabled)
 	{
 		btnClear.setEnabled(isEnabled);
+	}
+
+	/**
+	 * cancel form
+	 */
+	public void onCancel() {
+		// do not allow to close tab for Events.ON_CTRL_KEY event
+		if(isUseEscForTabClosing)
+			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
+
+		getParent().detach();
 	}
 }
