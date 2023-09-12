@@ -325,6 +325,7 @@ public class UUIDContentManager implements IContentManager
 		int seqNo = 0;
 		int DMS_Content_Related_ID = 0;
 		int DMS_AssociationType_ID = 0;
+		@SuppressWarnings("unused")
 		String actualFileName = fileName;
 		String parentURL;
 		int dms_content_id = 0;

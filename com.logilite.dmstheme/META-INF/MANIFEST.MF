@@ -2,10 +2,11 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMSTheme
 Bundle-SymbolicName: com.logilite.dmstheme
-Bundle-Version: 7.2.8.qualifier
+Bundle-Version: 7.2.9.qualifier
 Fragment-Host: org.adempiere.ui.zk;bundle-version="7.1.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-11
 Bundle-ClassPath: .,
+ js/,
  css/,
  dmsimages/
 Automatic-Module-Name: com.logilite.dmstheme
