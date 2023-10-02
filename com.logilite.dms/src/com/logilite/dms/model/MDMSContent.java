@@ -132,7 +132,7 @@ public class MDMSContent extends X_DMS_Content
 		if (Util.isEmpty(DMS_Content_UU, true))
 			return null;
 
-		return (I_DMS_Content) new Query(Env.getCtx(), MDMSContent.Table_Name, " DMS_Content_UU ILIKE ? ", null).setParameters(DMS_Content_UU).first();
+		return (I_DMS_Content) new Query(Env.getCtx(), MDMSContent.Table_Name, " DMS_Content_UU = ? ", null).setParameters(DMS_Content_UU).first();
 	} // getContent
 
 	/**
