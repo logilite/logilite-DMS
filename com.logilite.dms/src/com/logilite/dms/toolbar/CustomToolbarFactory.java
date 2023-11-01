@@ -111,4 +111,9 @@ public class CustomToolbarFactory implements IAction
 	{
 
 	}
+
+	@Override
+	public String getIconSclass() {
+		return "z-icon-DocumentExplorer";
+	}
 }
