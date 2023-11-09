@@ -180,7 +180,8 @@ public class DMSSearchUtils
 	 * @param tableID
 	 * @param recordID
 	 */
-	public static void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int AD_Client_ID, int tableID, int recordID, String orSeparator)
+	public static void getHierarchicalContent(	StringBuffer hierarchicalContent, int DMS_Content_ID, int AD_Client_ID, int tableID, int recordID,
+												String orSeparator)
 	{
 		MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(	content, AD_Client_ID,
@@ -409,7 +410,8 @@ public class DMSSearchUtils
 	 * @param version          DMS_Version
 	 * @param deleteIndexQuery Query for delete existing index
 	 */
-	public static void doIndexingInServer(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, String deleteIndexQuery)
+	public static void doIndexingInServer(	I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, String deleteIdxColumnName,
+											String deleteIdxColumnValue)
 	{
 		IIndexSearcher indexSearcher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
 		if (indexSearcher == null)
@@ -424,8 +426,8 @@ public class DMSSearchUtils
 			throw new AdempiereException("Content manager is not found.");
 
 		// Delete existing index
-		if (!Util.isEmpty(deleteIndexQuery, true))
-			indexSearcher.deleteIndexByQuery(deleteIndexQuery);
+		if (!Util.isEmpty(deleteIdxColumnName, true))
+			indexSearcher.deleteIndexByField(deleteIdxColumnName, deleteIdxColumnValue);
 
 		// Create index
 		File file = fsProvider.getFile(contentManager.getPathByValue(content));

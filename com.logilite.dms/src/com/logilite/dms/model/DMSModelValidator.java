@@ -120,11 +120,8 @@ public class DMSModelValidator implements ModelValidator
 								MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), false, null);
 
 								// Delete index for version wise and create same
-								HashMap<String, List<Object>> params = new HashMap<>();
-								DMSSearchUtils.setSearchParams(DMSConstant.DMS_VERSION_ID, version.getDMS_Version_ID(), null, params);
-								String deleteIndexQuery = DMSFactoryUtils.getIndexQueryBuilder(version.getAD_Client_ID()).buildSearchQueryFromMap(params);
-
-								DMSSearchUtils.doIndexingInServer(content, association, version, deleteIndexQuery);
+								DMSSearchUtils.doIndexingInServer(	content, association, version,
+																	DMSConstant.DMS_VERSION_ID, "" + version.getDMS_Version_ID());
 
 								/***
 								 * Get linkable association and do indexing for same
@@ -136,11 +133,8 @@ public class DMSModelValidator implements ModelValidator
 									I_DMS_Version linkVersion = MDMSVersion.getLatestVersion(linkContent, false);
 
 									// Delete index for linkable association and Create indexing
-									params = new HashMap<>();
-									DMSSearchUtils.setSearchParams(DMSConstant.DMS_ASSOCIATION_ID, linkAssociation.getDMS_Association_ID(), null, params);
-									deleteIndexQuery = DMSFactoryUtils.getIndexQueryBuilder(version.getAD_Client_ID()).buildSearchQueryFromMap(params);
-
-									DMSSearchUtils.doIndexingInServer(linkContent, linkAssociation, linkVersion, deleteIndexQuery);
+									DMSSearchUtils.doIndexingInServer(	linkContent, linkAssociation, linkVersion,
+																		DMSConstant.DMS_ASSOCIATION_ID, "" + linkAssociation.getDMS_Association_ID());
 								}
 							}
 						}
@@ -175,11 +169,8 @@ public class DMSModelValidator implements ModelValidator
 			{
 				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 				//
-				HashMap<String, List<Object>> params = new HashMap<>();
-				DMSSearchUtils.setSearchParams(DMSConstant.DMS_ASSOCIATION_ID, association.getDMS_Association_ID(), null, params);
-				String deleteIndexQuery = DMSFactoryUtils.getIndexQueryBuilder(linkContent.getAD_Client_ID()).buildSearchQueryFromMap(params);
-
-				DMSSearchUtils.doIndexingInServer(linkContent, association, MDMSVersion.getLatestVersion(linkContent), deleteIndexQuery);
+				DMSSearchUtils.doIndexingInServer(	linkContent, association, MDMSVersion.getLatestVersion(linkContent),
+													DMSConstant.DMS_ASSOCIATION_ID, "" + association.getDMS_Association_ID());
 			}
 		}
 		else if (MDMSPermission.Table_Name.equals(po.get_TableName()) && type == TYPE_AFTER_NEW)

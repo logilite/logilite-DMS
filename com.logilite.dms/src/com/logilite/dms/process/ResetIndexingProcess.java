@@ -150,14 +150,14 @@ public class ResetIndexingProcess extends SvrProcess
 
 				for (MDMSVersion version : versionList)
 				{
-					DMSSearchUtils.doIndexingInServer(content, association, version, null);
+					DMSSearchUtils.doIndexingInServer(content, association, version, null, null);
 				}
 
 				// Linkable association
 				List<MDMSAssociation> linkAssociations = MDMSAssociation.getLinkableAssociationFromContent(content.getDMS_Content_ID(), false);
 				for (MDMSAssociation associationLink : linkAssociations)
 				{
-					DMSSearchUtils.doIndexingInServer(content, associationLink, MDMSVersion.getLatestVersion(content, false), null);
+					DMSSearchUtils.doIndexingInServer(content, associationLink, MDMSVersion.getLatestVersion(content, false), null, null);
 				}
 
 				cntSuccess++;

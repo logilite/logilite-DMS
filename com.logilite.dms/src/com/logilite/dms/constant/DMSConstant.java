@@ -42,10 +42,6 @@ public final class DMSConstant
 	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
 	public static final String				DMS_ALLOW_THUMBNAIL_CREATION			= "DMS_ALLOW_THUMBNAIL_CREATION";
 
-	//
-	public static final String				INDEXING_TYPE_SOLR						= "SOL";
-	public static final String				INDEXING_TYPE_ELASTIC					= "ELS";
-
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
 	// Client Info table
