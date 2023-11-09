@@ -144,31 +144,10 @@ public class DMSSearchUtils
 	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
 																						MDMSContent content, String documentView)
 	{
-		StringBuffer query = new StringBuffer();
-		if (!Util.isEmpty(searchText, true))
-		{
-			String inputParam = searchText.toLowerCase().trim().replaceAll(" +", " ");
-			query.append("(").append(DMSConstant.NAME).append(":*").append(inputParam).append("*");
-			query.append(" OR ").append(DMSConstant.DESCRIPTION).append(":*").append(inputParam).append("*");
-
-			// Lookup from file content
-			if (DMSSearchUtils.isAllowDocumentContentSearch())
-			{
-				query.append(" OR ").append(DMSConstant.FILE_CONTENT).append(":*").append(inputParam).append("*");
-			}
-
-			query.append(")");
-		}
-		else
-		{
-			query.append("*:*");
-		}
+		String query = dms.getIndexQueryBuilder().getGenericSearchedContentQuery(searchText, dms.AD_Client_ID, content, tableID, recordID, documentView);
 
 		//
-		query.append(" AND ").append(commonSearch(dms.AD_Client_ID, content, tableID, recordID, documentView));
-
-		//
-		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query.toString()));
+		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query));
 	} // getGenericSearchedContent
 
 	/**
@@ -185,66 +164,12 @@ public class DMSSearchUtils
 	public static HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	DMS dms, HashMap<String, List<Object>> queryParamas, MDMSContent content,
 																					int tableID, int recordID, String documentView)
 	{
-		String query = dms.buildSolrSearchQuery(queryParamas);
-
-		// AD_Client_id append for search client wise
-		if (!Util.isEmpty(query))
-			query += " AND ";
-
-		//
-		query += commonSearch(dms.AD_Client_ID, content, tableID, recordID, documentView);
+		String query = dms.buildSearchQueryFromMap(queryParamas);
+		query = dms.getIndexQueryBuilder().appendCriteria(query, dms.AD_Client_ID, content, tableID, recordID, documentView);
 
 		//
 		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query));
 	} // renderSearchedContent
-
-	private static String commonSearch(int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
-	{
-		StringBuffer query = new StringBuffer();
-		query.append(DMSConstant.AD_CLIENT_ID + " :(" + AD_Client_ID + ")");
-
-		//
-		StringBuffer hirachicalContent = new StringBuffer("");
-		if (content != null && content.getDMS_Content_ID() > 0)
-		{
-			MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), false, null);
-			if (content.isMounting() && association.getRecord_ID() <= 0)
-			{
-				if (association.getAD_Table_ID() > 0)
-				{
-					hirachicalContent.append("AD_Table_ID:").append(association.getAD_Table_ID());
-				}
-				else
-				{
-					// Search those content which has any Table ID reference
-					// (ass.getAD_Table_ID() <= 0)
-					hirachicalContent.append("-AD_Table_ID:0");
-				}
-			}
-			else
-			{
-				hirachicalContent.append(DMSConstant.DMS_CONTENT_ID).append(":(");
-				DMSSearchUtils.getHierarchicalContent(hirachicalContent, content.getDMS_Content_ID(), AD_Client_ID, tableID, recordID);
-				hirachicalContent.append(content.getDMS_Content_ID()).append(")");
-			}
-
-			//
-			query.append(" AND ").append(hirachicalContent.toString());
-		}
-
-		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-			query.append(" AND ").append(DMSConstant.SHOW_INACTIVE).append(" :true");
-		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
-			query.append(" AND ").append(DMSConstant.SHOW_INACTIVE).append(" :false");
-
-		if (recordID > 0)
-			query.append(" AND ").append(DMSConstant.RECORD_ID).append(":").append(recordID);
-
-		if (tableID > 0)
-			query.append(" AND ").append(DMSConstant.AD_TABLE_ID).append(":").append(tableID);
-
-		return query.toString();
-	}
 
 	/**
 	 * Build Hierarchical Content Condition for searching
@@ -255,7 +180,7 @@ public class DMSSearchUtils
 	 * @param tableID
 	 * @param recordID
 	 */
-	private static void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int AD_Client_ID, int tableID, int recordID)
+	public static void getHierarchicalContent(StringBuffer hierarchicalContent, int DMS_Content_ID, int AD_Client_ID, int tableID, int recordID, String orSeparator)
 	{
 		MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(	content, AD_Client_ID,
@@ -265,15 +190,15 @@ public class DMSSearchUtils
 			MDMSVersion version = (MDMSVersion) mapEntry.getKey();
 			if (MDMSContent.CONTENTBASETYPE_Directory.equals(version.getDMS_Content().getContentBaseType()))
 			{
-				getHierarchicalContent(hierarchicalContent, version.getDMS_Content_ID(), AD_Client_ID, tableID, recordID);
+				getHierarchicalContent(hierarchicalContent, version.getDMS_Content_ID(), AD_Client_ID, tableID, recordID, orSeparator);
 			}
 			else
 			{
 				MDMSAssociation association = (MDMSAssociation) mapEntry.getValue();
-				hierarchicalContent.append(association.getDMS_Content_ID()).append(" OR ");
+				hierarchicalContent.append(association.getDMS_Content_ID()).append(orSeparator);
 
 				if (association.getDMS_Content_ID() != version.getDMS_Content_ID())
-					hierarchicalContent.append(version.getDMS_Content_ID()).append(" OR ");
+					hierarchicalContent.append(version.getDMS_Content_ID()).append(orSeparator);
 			}
 		}
 	} // getHierarchicalContent

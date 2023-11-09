@@ -1,5 +1,6 @@
 package com.logilite.dms.model;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -111,14 +112,18 @@ public class DMSModelValidator implements ModelValidator
 						if (success)
 						{
 							// Prevent to fire multiple time event for the same document indexing
-							boolean isIndexed = DB.getSQLValueBooleanEx(null, "SELECT IsIndexed FROM DMS_Version WHERE DMS_Version_ID = ? ", version.getDMS_Version_ID());
-							
+							boolean isIndexed = DB.getSQLValueBooleanEx(null, "SELECT IsIndexed FROM DMS_Version WHERE DMS_Version_ID = ? ",
+																		version.getDMS_Version_ID());
+
 							if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed() && !isIndexed)
 							{
 								MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), false, null);
 
 								// Delete index for version wise and create same
-								String deleteIndexQuery = DMSConstant.DMS_VERSION_ID + ":" + version.getDMS_Version_ID();
+								HashMap<String, List<Object>> params = new HashMap<>();
+								DMSSearchUtils.setSearchParams(DMSConstant.DMS_VERSION_ID, version.getDMS_Version_ID(), null, params);
+								String deleteIndexQuery = DMSFactoryUtils.getIndexQueryBuilder(version.getAD_Client_ID()).buildSearchQueryFromMap(params);
+
 								DMSSearchUtils.doIndexingInServer(content, association, version, deleteIndexQuery);
 
 								/***
@@ -131,7 +136,10 @@ public class DMSModelValidator implements ModelValidator
 									I_DMS_Version linkVersion = MDMSVersion.getLatestVersion(linkContent, false);
 
 									// Delete index for linkable association and Create indexing
-									deleteIndexQuery = DMSConstant.DMS_ASSOCIATION_ID + ":" + linkAssociation.getDMS_Association_ID();
+									params = new HashMap<>();
+									DMSSearchUtils.setSearchParams(DMSConstant.DMS_ASSOCIATION_ID, linkAssociation.getDMS_Association_ID(), null, params);
+									deleteIndexQuery = DMSFactoryUtils.getIndexQueryBuilder(version.getAD_Client_ID()).buildSearchQueryFromMap(params);
+
 									DMSSearchUtils.doIndexingInServer(linkContent, linkAssociation, linkVersion, deleteIndexQuery);
 								}
 							}
@@ -167,7 +175,10 @@ public class DMSModelValidator implements ModelValidator
 			{
 				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 				//
-				String deleteIndexQuery = DMSConstant.DMS_ASSOCIATION_ID + ":" + association.getDMS_Association_ID();
+				HashMap<String, List<Object>> params = new HashMap<>();
+				DMSSearchUtils.setSearchParams(DMSConstant.DMS_ASSOCIATION_ID, association.getDMS_Association_ID(), null, params);
+				String deleteIndexQuery = DMSFactoryUtils.getIndexQueryBuilder(linkContent.getAD_Client_ID()).buildSearchQueryFromMap(params);
+
 				DMSSearchUtils.doIndexingInServer(linkContent, association, MDMSVersion.getLatestVersion(linkContent), deleteIndexQuery);
 			}
 		}

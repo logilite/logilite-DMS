@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: QueryBuildElastic
+Bundle-SymbolicName: com.logilite.dms.querybuildelastic
+Bundle-Version: 7.1.0.qualifier
+Bundle-Activator: com.logilite.dms.querybuildelastic.Activator
+Bundle-Vendor: LOGILITE
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Automatic-Module-Name: com.logilite.dms.querybuildelastic
+Import-Package: org.osgi.framework;version="1.3.0"
+Require-Bundle: com.logilite.dms;bundle-version="7.2.10",
+ org.adempiere.base;bundle-version="7.1.0",
+ com.logilite.search.elastic;bundle-version="7.1.0"
+Service-Component: OSGI-INF/*.xml
+Bundle-ActivationPolicy: lazy

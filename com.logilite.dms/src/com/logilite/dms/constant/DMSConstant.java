@@ -40,7 +40,11 @@ public final class DMSConstant
 	public static final String				DMS_ALLOW_DOCUMENT_CONTENT_SEARCH		= "DMS_ALLOW_DOCUMENT_CONTENT_SEARCH";
 	public static final String				DMS_ZK_MAX_UPLOAD_SIZE					= "DMS_ZK_MAX_UPLOAD_SIZE";
 	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
-	public static final String 				DMS_ALLOW_THUMBNAIL_CREATION			= "DMS_ALLOW_THUMBNAIL_CREATION";
+	public static final String				DMS_ALLOW_THUMBNAIL_CREATION			= "DMS_ALLOW_THUMBNAIL_CREATION";
+
+	//
+	public static final String				INDEXING_TYPE_SOLR						= "SOL";
+	public static final String				INDEXING_TYPE_ELASTIC					= "ELS";
 
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
@@ -126,7 +130,7 @@ public final class DMSConstant
 	public static final String				MENUITEM_UPLOADVERSION					= "Upload Version";
 	public static final String				MENUITEM_ZOOMCONTENTWIN					= "Zoom";
 	public static final String				MENUITEM_PERMISSION						= "Permission";
-	public static final String 				MENUITEM_OWNER							= "Owner Info";
+	public static final String				MENUITEM_OWNER							= "Owner Info";
 
 	// DMS MimeType
 	public static final String				DEFAULT									= "Default";
