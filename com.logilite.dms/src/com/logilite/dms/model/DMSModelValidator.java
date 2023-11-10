@@ -1,5 +1,6 @@
 package com.logilite.dms.model;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -111,17 +112,16 @@ public class DMSModelValidator implements ModelValidator
 						if (success)
 						{
 							// Prevent to fire multiple time event for the same document indexing
-							int isIndexed =DB.getSQLValue(null, " SELECT "
-																	+" CASE WHEN isIndexed ='N' THEN 1 ELSE 0 END "
-																	+" FROM DMS_Version WHERE DMS_version_ID=? ", version.getDMS_Version_ID());							
-						
-							if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed() && isIndexed>0)
+							boolean isIndexed = DB.getSQLValueBooleanEx(null, "SELECT IsIndexed FROM DMS_Version WHERE DMS_Version_ID = ? ",
+																		version.getDMS_Version_ID());
+
+							if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed() && !isIndexed)
 							{
 								MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), false, null);
 
 								// Delete index for version wise and create same
-								String deleteIndexQuery = DMSConstant.DMS_VERSION_ID + ":" + version.getDMS_Version_ID();
-								DMSSearchUtils.doIndexingInServer(content, association, version, deleteIndexQuery);
+								DMSSearchUtils.doIndexingInServer(	content, association, version,
+																	DMSConstant.DMS_VERSION_ID, "" + version.getDMS_Version_ID());
 
 								/***
 								 * Get linkable association and do indexing for same
@@ -133,8 +133,8 @@ public class DMSModelValidator implements ModelValidator
 									I_DMS_Version linkVersion = MDMSVersion.getLatestVersion(linkContent, false);
 
 									// Delete index for linkable association and Create indexing
-									deleteIndexQuery = DMSConstant.DMS_ASSOCIATION_ID + ":" + linkAssociation.getDMS_Association_ID();
-									DMSSearchUtils.doIndexingInServer(linkContent, linkAssociation, linkVersion, deleteIndexQuery);
+									DMSSearchUtils.doIndexingInServer(	linkContent, linkAssociation, linkVersion,
+																		DMSConstant.DMS_ASSOCIATION_ID, "" + linkAssociation.getDMS_Association_ID());
 								}
 							}
 						}
@@ -169,8 +169,8 @@ public class DMSModelValidator implements ModelValidator
 			{
 				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 				//
-				String deleteIndexQuery = DMSConstant.DMS_ASSOCIATION_ID + ":" + association.getDMS_Association_ID();
-				DMSSearchUtils.doIndexingInServer(linkContent, association, MDMSVersion.getLatestVersion(linkContent), deleteIndexQuery);
+				DMSSearchUtils.doIndexingInServer(	linkContent, association, MDMSVersion.getLatestVersion(linkContent),
+													DMSConstant.DMS_ASSOCIATION_ID, "" + association.getDMS_Association_ID());
 			}
 		}
 		else if (MDMSPermission.Table_Name.equals(po.get_TableName()) && type == TYPE_AFTER_NEW)

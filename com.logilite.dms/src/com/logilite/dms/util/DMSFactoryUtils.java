@@ -33,6 +33,8 @@ import com.logilite.dms.factories.IDMSUploadContent;
 import com.logilite.dms.factories.IDMSUploadContentFactory;
 import com.logilite.dms.factories.IDMSViewer;
 import com.logilite.dms.factories.IDMSViewerFactory;
+import com.logilite.dms.factories.IIndexQueryBuildFactory;
+import com.logilite.dms.factories.IIndexQueryBuilder;
 import com.logilite.dms.factories.IMountingFactory;
 import com.logilite.dms.factories.IMountingStrategy;
 import com.logilite.dms.factories.IPermissionFactory;
@@ -42,6 +44,7 @@ import com.logilite.dms.factories.IThumbnailGeneratorFactory;
 import com.logilite.dms.factories.IThumbnailProvider;
 import com.logilite.dms.factories.IThumbnailProviderFactory;
 import com.logilite.dms.model.MDMSContent;
+import com.logilite.search.model.MIndexingConfig;
 
 /**
  * Utils for Factory get
@@ -54,6 +57,7 @@ public class DMSFactoryUtils
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider		= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
 	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator	= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
 	static CCache<Integer, IContentManager>		cache_contentManager		= new CCache<Integer, IContentManager>("ContentManager", 2);
+	static CCache<Integer, IIndexQueryBuilder>	cache_idxQueryBuilder		= new CCache<Integer, IIndexQueryBuilder>("IndexQueryBuilder", 1);
 
 	/**
 	 * Factory - Content Editor
@@ -289,5 +293,50 @@ public class DMSFactoryUtils
 		}
 		return null;
 	} // getUploadContenFactory
+
+	/**
+	 * Get Index Query Builder
+	 * 
+	 * @param  AD_Client_ID
+	 * @return              {@link IIndexQueryBuilder}
+	 */
+	public static IIndexQueryBuilder getIndexQueryBuilder(int AD_Client_ID)
+	{
+		IIndexQueryBuilder idxQueryBuilder = cache_idxQueryBuilder.get(AD_Client_ID);
+
+		if (idxQueryBuilder != null)
+		{
+			return idxQueryBuilder;
+		}
+
+		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID, null);
+		int indexingConf_ID = clientInfo.get_ValueAsInt("LTX_Indexing_Conf_ID");
+		MIndexingConfig indexingConfig = null;
+
+		if (indexingConf_ID > 0)
+		{
+			indexingConfig = new MIndexingConfig(Env.getCtx(), indexingConf_ID, null);
+		}
+		else
+		{
+			throw new AdempiereException("Missing to configure Index Server in Client Info");
+		}
+
+		// Factory call
+		List<IIndexQueryBuildFactory> factories = Service.locator().list(IIndexQueryBuildFactory.class).getServices();
+
+		for (IIndexQueryBuildFactory factory : factories)
+		{
+			idxQueryBuilder = factory.get(indexingConfig.getLTX_Indexing_Type());
+
+			if (idxQueryBuilder != null)
+			{
+				cache_idxQueryBuilder.put(AD_Client_ID, idxQueryBuilder);
+				break;
+			}
+		}
+
+		return idxQueryBuilder;
+	} // getIndexQueryBuilder
 
 }

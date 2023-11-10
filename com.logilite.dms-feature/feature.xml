@@ -96,6 +96,34 @@
          version="0.0.0"
          unpack="false"/>
 
+   <plugin
+         id="com.logilite.search.elastic"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.search.elasticlib"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.dms.querybuildelastic"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+    <plugin
+         id="com.logilite.dms.querybuildsolr"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 <!--
    <plugin
          id="com.logilite.esignature.topaz"

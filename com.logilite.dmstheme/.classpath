@@ -6,7 +6,8 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="src" path="src/"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry exported="true" kind="lib" path="js/"/>
 	<classpathentry exported="true" kind="lib" path="css" sourcepath="css"/>
 	<classpathentry exported="true" kind="lib" path="dmsimages" sourcepath="dmsimages"/>
 	<classpathentry kind="output" path="target/classes"/>

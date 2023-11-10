@@ -4,12 +4,16 @@ function onPenAndZoom(parentID, src) {
 
 	var canvas = document.createElement('canvas');
 	canvas.id = 'panandzoom';
-	canvas.width = 700;
-	canvas.height = 600;
 
 	var imagePanel = document.getElementById(parentID);
 	imagePanel.parentNode.insertBefore(canvas, imagePanel);
-
+	
+	canvas.width = imagePanel.parentNode.getBoundingClientRect().width;
+	canvas.height = imagePanel.parentNode.getBoundingClientRect().height;
+ 	
+ 	canvas.style.width ='100%';
+  	canvas.style.height='100%';
+	
 	var ctx = canvas.getContext('2d');
 	trackTransforms(ctx);
 	
@@ -23,9 +27,7 @@ function onPenAndZoom(parentID, src) {
 		var p1 = ctx.transformedPoint(0, 0);
 		var p2 = ctx.transformedPoint(canvas.width, canvas.height);
 		ctx.clearRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
-
 		ctx.drawImage(imageComp, 0, 0);
-
 		ctx.save();
 	}
 	redraw();

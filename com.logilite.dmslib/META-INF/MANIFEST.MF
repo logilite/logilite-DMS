@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMSLib
 Bundle-SymbolicName: com.logilite.dmslib;singleton:=true
-Bundle-Version: 11.0.0.qualifier
+Bundle-Version: 11.1.0.qualifier
 Bundle-Activator: com.logilite.dmslib.Activator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-11
@@ -18,7 +18,6 @@ Bundle-ClassPath: lib/commons-codec-1.5.jar,
  lib/fr.opensagres.xdocreport.itext.extension-2.0.1.jar,
  lib/imgscalr-lib-4.2.jar,
  lib/itext-2.1.7.jar,
- lib/itextpdf-5.4.1.jar,
  lib/ooxml-schemas-1.1.jar,
  lib/PDFrenderer.jar,
  lib/poi-4.1.0.jar,
@@ -31,8 +30,10 @@ Bundle-ClassPath: lib/commons-codec-1.5.jar,
  lib/xmlworker-5.4.1.1_LLP.jar,
  lib/commons-collections4-4.4.jar,
  lib/commons-compress-1.19.jar,
+ lib/itextpdf-5.4.1.jar,
  .
-Export-Package: com.itextpdf.text,
+Export-Package: 
+ com.itextpdf.text,
  com.itextpdf.text.pdf,
  com.itextpdf.tool.xml,
  com.lowagie.text,

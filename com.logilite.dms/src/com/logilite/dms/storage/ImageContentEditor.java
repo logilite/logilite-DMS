@@ -73,6 +73,8 @@ public class ImageContentEditor extends Panel implements IContentEditor, EventLi
 	@Override
 	public Panel initPanel()
 	{
+		this.setSclass("DMSImageContainer");
+
 		// Load JS for image previewer
 		loadPanAndZoomJS();
 
@@ -93,7 +95,7 @@ public class ImageContentEditor extends Panel implements IContentEditor, EventLi
 	{
 		// Load JS of PanAndZoom On the DMS Content
 		Script script = new Script();
-		URL urlJS = Core.getResourceFinder().getResource("js/ImageContentPreview.js");
+		URL urlJS = Core.getResourceFinder().getResource("/js/ImageContentPreview.js");
 		if (urlJS == null)
 			throw new AdempiereException("Fail to load image content previewer JS");
 
