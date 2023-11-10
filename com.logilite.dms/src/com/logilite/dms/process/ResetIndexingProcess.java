@@ -17,6 +17,7 @@ import org.compiere.util.DB;
 
 import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.factories.IContentManager;
+import com.logilite.dms.factories.IIndexQueryBuilder;
 import com.logilite.dms.model.FileStorageUtil;
 import com.logilite.dms.model.IFileStorageProvider;
 import com.logilite.dms.model.MDMSAssociation;
@@ -28,7 +29,10 @@ import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
 
 /**
+ * Reset Indexing as per criteria wise
+ * 
  * @author ravi
+ * @author Sachin Bhimani @ Logilite Technologies
  */
 public class ResetIndexingProcess extends SvrProcess
 {
@@ -44,6 +48,7 @@ public class ResetIndexingProcess extends SvrProcess
 
 	//
 	private IIndexSearcher		indexSeracher					= null;
+	private IIndexQueryBuilder	indexQueryBuilder				= null;
 
 	private Timestamp			p_createdFrom;
 	private Timestamp			p_createdTo;
@@ -52,7 +57,6 @@ public class ResetIndexingProcess extends SvrProcess
 
 	private String				p_isIndexed						= null;
 	private String				whereCreatedRange;
-	private String				solrQuery;
 
 	@Override
 	protected void prepare()
@@ -76,7 +80,11 @@ public class ResetIndexingProcess extends SvrProcess
 
 		indexSeracher = ServiceUtils.getIndexSearcher(getAD_Client_ID());
 		if (indexSeracher == null)
-			throw new AdempiereException("Solr Index server is not found.");
+			throw new AdempiereException("Indexing server is not configured.");
+
+		indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(getAD_Client_ID());
+		if (indexSeracher == null)
+			throw new AdempiereException("Indexing query builder artifact not started/deployed.");
 
 		//
 		isAllReIndex = "A".equals(p_isIndexed);
@@ -99,32 +107,32 @@ public class ResetIndexingProcess extends SvrProcess
 		/*
 		 * build query for solr clearing index of range wise and where clause too
 		 */
+		HashMap<String, List<Object>> params = new LinkedHashMap<String, List<Object>>();
 		if (p_createdFrom == null && p_createdTo == null)
 		{
 			whereCreatedRange = "";
-			solrQuery = "*:*";
+			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, "*", "*", params);
 		}
 		else if (p_createdFrom != null && p_createdTo != null)
 		{
 			whereCreatedRange = " AND c.Created BETWEEN " + DB.TO_DATE(p_createdFrom) + " AND " + DB.TO_DATE(p_createdTo);
-			solrQuery = DMSConstant.CREATED + ":[" + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdFrom)
-						+ " TO " + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdTo) + " ]";
+			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, p_createdFrom, p_createdTo, params);
 		}
 		else if (p_createdFrom != null && p_createdTo == null)
 		{
 			whereCreatedRange = " AND c.Created >= " + DB.TO_DATE(p_createdFrom);
-			solrQuery = DMSConstant.CREATED + ":[" + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdFrom) + " TO * ]";
+			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, p_createdFrom, "*", params);
 		}
 		else if (p_createdFrom == null && p_createdTo != null)
 		{
 			whereCreatedRange = " AND c.Created <= " + DB.TO_DATE(p_createdTo);
-			solrQuery = DMSConstant.CREATED + ":[ * TO " + DMSConstant.SDF_WITH_TIME_INDEXING.format(p_createdTo) + " ]";
+			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, "*", p_createdTo, params);
 		}
 
 		// Delete all the index from indexing server
 		if (isAllReIndex)
 		{
-			indexSeracher.deleteIndexByQuery(solrQuery);
+			indexSeracher.deleteIndexByQuery(indexQueryBuilder.buildSearchQueryFromMap(params));
 
 			int no = DB.executeUpdate(SQL_UPDATE_CONTENT_INDEX_FALSE + whereCreatedRange, getAD_Client_ID(), null);
 			log.log(Level.INFO, "DMS content indexed marked as false for, count: " + no);
@@ -150,14 +158,14 @@ public class ResetIndexingProcess extends SvrProcess
 
 				for (MDMSVersion version : versionList)
 				{
-					DMSSearchUtils.doIndexingInServer(content, association, version, null);
+					DMSSearchUtils.doIndexingInServer(content, association, version, null, null);
 				}
 
 				// Linkable association
 				List<MDMSAssociation> linkAssociations = MDMSAssociation.getLinkableAssociationFromContent(content.getDMS_Content_ID(), false);
 				for (MDMSAssociation associationLink : linkAssociations)
 				{
-					DMSSearchUtils.doIndexingInServer(content, associationLink, MDMSVersion.getLatestVersion(content, false), null);
+					DMSSearchUtils.doIndexingInServer(content, associationLink, MDMSVersion.getLatestVersion(content, false), null, null);
 				}
 
 				cntSuccess++;

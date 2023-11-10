@@ -31,6 +31,7 @@ import org.compiere.util.Env;
 
 import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.factories.IContentManager;
+import com.logilite.dms.factories.IIndexQueryBuilder;
 import com.logilite.dms.factories.IMountingStrategy;
 import com.logilite.dms.factories.IPermissionManager;
 import com.logilite.dms.factories.IThumbnailProvider;
@@ -68,6 +69,7 @@ public class DMS
 	private IContentManager			contentManager				= null;
 	private IIndexSearcher			indexSearcher				= null;
 	private IPermissionManager		permissionManager			= null;
+	private IIndexQueryBuilder		indexQueryBuilder			= null;
 
 	private boolean					isDocExplorerWindow			= false;
 
@@ -88,7 +90,6 @@ public class DMS
 			this.AD_Client_ID = AD_Client_ID;
 
 			fileStorageProvider = FileStorageUtil.get(AD_Client_ID, false);
-
 			if (fileStorageProvider == null)
 				throw new AdempiereException("Storage provider is not found.");
 
@@ -96,25 +97,25 @@ public class DMS
 			if (isAllowThumbnailContentCreation())
 			{
 				thumbnailStorageProvider = FileStorageUtil.get(AD_Client_ID, true);
-
 				if (thumbnailStorageProvider == null)
 					throw new AdempiereException("Thumbnail Storage provider is not found.");
 
 				thumbnailProvider = DMSFactoryUtils.getThumbnailProvider(AD_Client_ID);
-
 				if (thumbnailProvider == null)
 					throw new AdempiereException("Thumbnail provider is not found.");
 			}
 
 			contentManager = DMSFactoryUtils.getContentManager(AD_Client_ID);
-
 			if (contentManager == null)
 				throw new AdempiereException("Content manager is not found.");
 
 			indexSearcher = DMSSearchUtils.getIndexSearcher(AD_Client_ID);
-
 			if (indexSearcher == null)
 				throw new AdempiereException("Index server is not found.");
+
+			indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(AD_Client_ID);
+			if (indexQueryBuilder == null)
+				throw new AdempiereException("Index query builder artifact not deployed.");
 
 			// When open Document Explorer
 			ssTableInfo = new DMSSubstituteTableInfo(0);
@@ -177,6 +178,11 @@ public class DMS
 	public IIndexSearcher getIndexSearcher()
 	{
 		return indexSearcher;
+	}
+
+	public IIndexQueryBuilder getIndexQueryBuilder()
+	{
+		return indexQueryBuilder;
 	}
 
 	public boolean isDocExplorerWindow()
@@ -340,10 +346,10 @@ public class DMS
 		return indexSearcher.searchIndex(query, DMSConstant.DMS_CONTENT_ID);
 	} // searchIndex
 
-	public String buildSolrSearchQuery(HashMap<String, List<Object>> params)
+	public String buildSearchQueryFromMap(HashMap<String, List<Object>> params)
 	{
-		return indexSearcher.buildSolrSearchQuery(params);
-	} // buildSolrSearchQuery
+		return indexQueryBuilder.buildSearchQueryFromMap(params);
+	} // buildSearchQueryFromMap
 
 	public void createIndexContent(MDMSContent content, MDMSAssociation association)
 	{
