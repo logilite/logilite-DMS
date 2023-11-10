@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: QueryBuildSolr
 Bundle-SymbolicName: com.logilite.dms.querybuildsolr
-Bundle-Version: 7.1.0.qualifier
+Bundle-Version: 9.1.0.qualifier
 Bundle-Activator: com.logilite.dms.querybuildsolr.Activator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-11

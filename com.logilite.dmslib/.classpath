@@ -15,6 +15,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/fr.opensagres.xdocreport.itext.extension-2.0.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/imgscalr-lib-4.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/itext-2.1.7.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/itextpdf-5.4.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/ooxml-schemas-1.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/PDFrenderer.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/poi-4.1.0.jar"/>
