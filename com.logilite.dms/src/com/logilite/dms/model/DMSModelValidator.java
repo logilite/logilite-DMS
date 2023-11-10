@@ -1,6 +1,5 @@
 package com.logilite.dms.model;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -112,10 +111,11 @@ public class DMSModelValidator implements ModelValidator
 						if (success)
 						{
 							// Prevent to fire multiple time event for the same document indexing
-							boolean isIndexed = DB.getSQLValueBooleanEx(null, "SELECT IsIndexed FROM DMS_Version WHERE DMS_Version_ID = ? ",
-																		version.getDMS_Version_ID());
+							int isIndexed = DB.getSQLValue(null, " SELECT "
+																	+ " CASE WHEN isIndexed ='N' THEN 1 ELSE 0 END "
+																	+ " FROM DMS_Version WHERE DMS_version_ID=? ", version.getDMS_Version_ID());
 
-							if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed() && !isIndexed)
+							if (MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()) && !version.isIndexed() && isIndexed > 0)
 							{
 								MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), false, null);
 
