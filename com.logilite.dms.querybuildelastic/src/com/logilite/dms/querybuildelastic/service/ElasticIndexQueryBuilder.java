@@ -38,7 +38,7 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 				}
 				else if (value.get(0) instanceof String || value.get(1) instanceof String)
 				{
-					query.append(" AND \"").append(key + "\" :*" + value.get(0) + "* TO *" + value.get(1) + "* ");
+					query.append(" AND (\"").append(key + "\" BETWEEN '" + value.get(0) + "' AND '" + value.get(1) + "') ");
 				} // Handle condition when two boolean value passed.
 				else if (value.get(0) instanceof Boolean || value.get(1) instanceof Boolean)
 				{
@@ -92,8 +92,27 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 	@Override
 	public String getGenericSearchedContentQuery(String searchText, int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
-		// TODO
-		return null;
+		StringBuffer query = new StringBuffer();
+		if (!Util.isEmpty(searchText, true))
+		{
+			String inputParam = searchText.toLowerCase().trim().replaceAll(" +", " ");
+			query.append(" \"").append(DMSConstant.NAME).append("\" = '*").append(inputParam).append("*'");
+			query.append(" OR \"").append(DMSConstant.DESCRIPTION).append("\"='*").append(inputParam).append("*'");
+
+			// Lookup from file content
+			if (DMSSearchUtils.isAllowDocumentContentSearch())
+			{
+				query.append(" OR \"").append(DMSConstant.FILE_CONTENT).append("\"='*").append(inputParam).append("*'");
+			}
+		}
+		if (!Util.isEmpty(searchText, true))
+		{
+			query.append(" AND ");
+		}
+
+		query.append(commonSearch(ad_client_ID, content, tableID, recordID, documentView));
+
+		return query.toString();
 	} // getGenericSearchedContentQuery
 
 	private String commonSearch(int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
