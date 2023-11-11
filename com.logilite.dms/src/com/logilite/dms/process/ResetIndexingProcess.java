@@ -44,7 +44,7 @@ public class ResetIndexingProcess extends SvrProcess
 																	+ " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT' 									";
 
 	public static final String	SQL_UPDATE_CONTENT_INDEX_FALSE	= "UPDATE DMS_Version v SET IsIndexed='N'	"
-																	+ " WHERE v.DMS_Content_ID IN (SELECT c.DMS_Content_ID FROM DMS_Content c WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=?) ";
+																	+ " WHERE v.DMS_Content_ID IN (SELECT c.DMS_Content_ID FROM DMS_Content c WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=? ";
 
 	//
 	private IIndexSearcher		indexSeracher					= null;
@@ -134,7 +134,7 @@ public class ResetIndexingProcess extends SvrProcess
 		{
 			indexSeracher.deleteIndexByQuery(indexQueryBuilder.buildSearchQueryFromMap(params));
 
-			int no = DB.executeUpdate(SQL_UPDATE_CONTENT_INDEX_FALSE + whereCreatedRange, getAD_Client_ID(), null);
+			int no = DB.executeUpdate(SQL_UPDATE_CONTENT_INDEX_FALSE + whereCreatedRange + " )", getAD_Client_ID(), null);
 			log.log(Level.INFO, "DMS content indexed marked as false for, count: " + no);
 		}
 

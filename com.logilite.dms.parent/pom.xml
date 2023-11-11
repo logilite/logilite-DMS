@@ -5,7 +5,7 @@
   <version>${revision}</version>
   <packaging>pom</packaging>
   <properties>
-  	<revision>7.2.8-SNAPSHOT</revision>
+  	<revision>7.3.0-SNAPSHOT</revision>
     <local.maven>${user.home}/.m2</local.maven>
     <tycho.version>1.5.0</tycho.version>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
