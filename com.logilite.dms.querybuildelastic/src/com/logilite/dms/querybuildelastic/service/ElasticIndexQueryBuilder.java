@@ -71,8 +71,8 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 
 		if (query.length() > 0)
 			query.delete(0, 5);
-		else
-			query.append("*:*");
+//		else
+//			query.append("*:*");
 
 		return query.toString();
 	} // buildSearchQueryFromMap
