@@ -38,7 +38,12 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 				}
 				else if (value.get(0) instanceof String || value.get(1) instanceof String)
 				{
-					query.append(" AND (\"").append(key + "\" BETWEEN '" + value.get(0) + "' AND '" + value.get(1) + "') ");
+					if (value.get(0).equals("*"))
+						query.append(" AND (\"").append(key + "\" <= '" + value.get(1) + "') ");
+					else if (value.get(1).equals("*"))
+						query.append(" AND (\"").append(key + "\" >= '" + value.get(0) + "') ");
+					else
+						query.append(" AND (\"").append(key + "\" BETWEEN '" + value.get(0) + "' AND '" + value.get(1) + "') ");
 				} // Handle condition when two boolean value passed.
 				else if (value.get(0) instanceof Boolean || value.get(1) instanceof Boolean)
 				{
