@@ -1888,15 +1888,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			for (WEditor editor : m_editors)
 			{
-				String compName = null;
 				int dt = editor.getGridField().getDisplayType();
-
-				if (dt == DisplayType.Search || dt == DisplayType.Table || dt == DisplayType.List)
-					compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
-				else
-					compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
-
-				compName = compName.replaceAll("/", "");
+				String compName = DMS_ZK_Util.getIndexibleColumnName(editor, dt);
 
 				Object from = null;
 				Object to = null;
@@ -2055,14 +2048,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 				for (WEditor editor : m_editors)
 				{
-					String compName = null;
 					int dt = editor.getGridField().getDisplayType();
-
-					if (dt == DisplayType.Search || dt == DisplayType.Table)
-						compName = "ASI_" + editor.getColumnName().replaceAll("(?i)[^a-z0-9-_/]", "_");
-					else
-						compName = "ASI_" + editor.getLabel().getValue().replaceAll("(?i)[^a-z0-9-_/]", "_");
-					compName = compName.replaceAll("/", "");
+					String compName = DMS_ZK_Util.getIndexibleColumnName(editor, dt);
 
 					Row row = rows.newRow();
 					row.setSclass("SB-Grid-field");

@@ -63,9 +63,9 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 				if (value.get(0) instanceof String)
 				{
 					if (Util.isEmpty((String) value.get(0), true))
-						query.append(" AND \"").append(key + "\"='*'");
+						query.append(" AND \"").append(key + "\" LIKE '%'");
 					else
-						query.append(" AND \"").append(key + "\"='" + value.get(0) + "'");
+						query.append(" AND \"").append(key + "\" LIKE '%" + value.get(0) + "%'");
 				}
 				else
 				{
@@ -101,18 +101,18 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 		if (!Util.isEmpty(searchText, true))
 		{
 			String inputParam = searchText.toLowerCase().trim().replaceAll(" +", " ");
-			query.append(" \"").append(DMSConstant.NAME).append("\" = '*").append(inputParam).append("*'");
-			query.append(" OR \"").append(DMSConstant.DESCRIPTION).append("\"='*").append(inputParam).append("*'");
+			query.append(" ( \"").append(DMSConstant.NAME).append("\" LIKE '%").append(inputParam).append("%'");
+			query.append(" OR \"").append(DMSConstant.DESCRIPTION).append("\" LIKE '%").append(inputParam).append("%'");
 
 			// Lookup from file content
 			if (DMSSearchUtils.isAllowDocumentContentSearch())
 			{
-				query.append(" OR \"").append(DMSConstant.FILE_CONTENT).append("\"='*").append(inputParam).append("*'");
+				query.append(" OR \"").append(DMSConstant.FILE_CONTENT).append("\" LIKE '%").append(inputParam).append("%'");
 			}
 		}
 		if (!Util.isEmpty(searchText, true))
 		{
-			query.append(" AND ");
+			query.append(" ) AND ");
 		}
 
 		query.append(commonSearch(ad_client_ID, content, tableID, recordID, documentView));

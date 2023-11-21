@@ -279,7 +279,7 @@ public class DMSSearchUtils
 				{
 					while (rs.next())
 					{
-						String fieldName = "ASI_" + rs.getString("Name");
+						String fieldName = getIndexFieldName("ASI_" + rs.getString("Name"));
 
 						if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate) != null)
 							solrValue.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate));
@@ -305,6 +305,11 @@ public class DMSSearchUtils
 
 		return solrValue;
 	} // createIndexMap
+
+	public static String getIndexFieldName(String columnName)
+	{
+		return columnName.replaceAll("(?i)[^a-z0-9-_]", "_");
+	}
 
 	/**
 	 * Check is Allowed to extract content text from the document and use for searching
