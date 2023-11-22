@@ -63,9 +63,19 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 				if (value.get(0) instanceof String)
 				{
 					if (Util.isEmpty((String) value.get(0), true))
+					{
 						query.append(" AND \"").append(key + "\" LIKE '%'");
+					}
+					else if (DMSConstant.DESCRIPTION.equals(key))
+					{
+						String description = (String) value.get(0);
+						description = description.replace('*', '%');
+						query.append(" AND \"").append(key + "\" LIKE '" + description + "'");
+					}
 					else
+					{
 						query.append(" AND \"").append(key + "\" LIKE '%" + value.get(0) + "%'");
+					}
 				}
 				else
 				{
