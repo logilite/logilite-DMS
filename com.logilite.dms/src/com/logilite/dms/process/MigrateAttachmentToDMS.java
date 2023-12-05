@@ -88,6 +88,8 @@ public class MigrateAttachmentToDMS extends SvrProcess
 				attachment.set_CustomColumn("isMigratedToDMS", true);
 				attachment.saveEx();
 			}
+			// CLDE Commit after each record migrated successfully changes // so we do not revert changes when process fails in middle of migration.
+			commitEx();
 		}
 
 		addLog(cntMigrated + " Attachment(s) Backuped to DMS.");
