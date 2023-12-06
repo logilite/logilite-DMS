@@ -19,6 +19,7 @@ import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Menupopup;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.ZkCssHelper;
+import org.adempiere.webui.editor.WEditor;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.Dialog;
 import org.apache.commons.io.FileUtils;
@@ -29,6 +30,7 @@ import org.apache.tools.ant.taskdefs.Zip;
 import org.compiere.model.MImage;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
+import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.zkoss.image.AImage;
@@ -48,6 +50,7 @@ import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.I_DMS_Version;
 import com.logilite.dms.model.MDMSContent;
+import com.logilite.dms.util.DMSSearchUtils;
 
 /**
  * @author Sachin
@@ -427,5 +430,18 @@ public class DMS_ZK_Util
 	{
 		return directoryName.replaceAll("[^a-zA-Z 0-9_()-]", "_");
 	} // doValidDirName
+
+	/**
+	 * @param  editor - Editor component
+	 * @param  dt     - DisplayType
+	 * @return        removed special characters and indexable field name for ASI
+	 */
+	public static String getIndexibleColumnName(WEditor editor, int dt)
+	{
+		if (dt == DisplayType.Search || dt == DisplayType.Table || dt == DisplayType.List)
+			return "ASI_" + DMSSearchUtils.getIndexFieldName(editor.getColumnName());
+		else
+			return "ASI_" + DMSSearchUtils.getIndexFieldName(editor.getLabel().getValue());
+	} // getIndexibleColumnName
 
 }

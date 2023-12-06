@@ -51,6 +51,7 @@ import com.logilite.dms.model.I_DMS_Version;
 import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSVersion;
+import com.logilite.dms.tika.service.FileContentExtract;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
 
@@ -228,7 +229,7 @@ public class DMSSearchUtils
 	} // fillSearchedContentMap
 
 	/**
-	 * Create Index Map for Solr
+	 * Create Index Map for indexing server
 	 * 
 	 * @param  indexSearcher
 	 * @param  content
@@ -240,29 +241,29 @@ public class DMSSearchUtils
 	public static Map<String, Object> createIndexMap(	IIndexSearcher indexSearcher, I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
 														File file)
 	{
-		Map<String, Object> solrValue = new HashMap<String, Object>();
-		solrValue.put(DMSConstant.DMS_CONTENT_ID, content.getDMS_Content_ID());
-		solrValue.put(DMSConstant.NAME, content.getName().toLowerCase());
-		solrValue.put(DMSConstant.CREATED, content.getCreated());
-		solrValue.put(DMSConstant.UPDATED, content.getUpdated());
-		solrValue.put(DMSConstant.CREATEDBY, content.getCreatedBy());
-		solrValue.put(DMSConstant.UPDATEDBY, content.getUpdatedBy());
-		solrValue.put(DMSConstant.CONTENTTYPE, content.getDMS_ContentType_ID());
-		solrValue.put(DMSConstant.DESCRIPTION, (!Util.isEmpty(content.getDescription(), true) ? content.getDescription().toLowerCase() : null));
-		solrValue.put(DMSConstant.AD_CLIENT_ID, content.getAD_Client_ID());
-		solrValue.put(DMSConstant.SHOW_INACTIVE, !(content.isActive() && association.isActive()));
+		Map<String, Object> indexMap = new HashMap<String, Object>();
+		indexMap.put(DMSConstant.DMS_CONTENT_ID, content.getDMS_Content_ID());
+		indexMap.put(DMSConstant.NAME, content.getName().toLowerCase());
+		indexMap.put(DMSConstant.CREATED, content.getCreated());
+		indexMap.put(DMSConstant.UPDATED, content.getUpdated());
+		indexMap.put(DMSConstant.CREATEDBY, content.getCreatedBy());
+		indexMap.put(DMSConstant.UPDATEDBY, content.getUpdatedBy());
+		indexMap.put(DMSConstant.CONTENTTYPE, content.getDMS_ContentType_ID());
+		indexMap.put(DMSConstant.DESCRIPTION, (!Util.isEmpty(content.getDescription(), true) ? content.getDescription().toLowerCase() : null));
+		indexMap.put(DMSConstant.AD_CLIENT_ID, content.getAD_Client_ID());
+		indexMap.put(DMSConstant.SHOW_INACTIVE, !(content.isActive() && association.isActive()));
 
-		solrValue.put(DMSConstant.RECORD_ID, association.getRecord_ID());
-		solrValue.put(DMSConstant.AD_TABLE_ID, association.getAD_Table_ID());
-		solrValue.put(DMSConstant.DMS_ASSOCIATION_ID, association.getDMS_Association_ID());
+		indexMap.put(DMSConstant.RECORD_ID, association.getRecord_ID());
+		indexMap.put(DMSConstant.AD_TABLE_ID, association.getAD_Table_ID());
+		indexMap.put(DMSConstant.DMS_ASSOCIATION_ID, association.getDMS_Association_ID());
 
-		solrValue.put(DMSConstant.VERSION_SEQ_NO, version.getSeqNo());
-		solrValue.put(DMSConstant.DMS_VERSION_ID, version.getDMS_Version_ID());
+		indexMap.put(DMSConstant.VERSION_SEQ_NO, version.getSeqNo());
+		indexMap.put(DMSConstant.DMS_VERSION_ID, version.getDMS_Version_ID());
 
 		// File Content
 		if (DMSSearchUtils.isAllowDocumentContentSearch() && file != null)
 		{
-			solrValue.put(DMSConstant.FILE_CONTENT, indexSearcher.getParseDocumentContent(file));
+			indexMap.put(DMSConstant.FILE_CONTENT, getParseDocumentContent(file));
 		}
 
 		if (content.getM_AttributeSetInstance_ID() > 0)
@@ -279,14 +280,14 @@ public class DMSSearchUtils
 				{
 					while (rs.next())
 					{
-						String fieldName = "ASI_" + rs.getString("Name");
+						String fieldName = getIndexFieldName("ASI_" + rs.getString("Name"));
 
 						if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate) != null)
-							solrValue.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate));
+							indexMap.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate));
 						else if (rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber) > 0)
-							solrValue.put(fieldName, rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber));
+							indexMap.put(fieldName, rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber));
 						else if (!Util.isEmpty(rs.getString(MAttributeInstance.COLUMNNAME_Value), true))
-							solrValue.put(fieldName, rs.getString(MAttributeInstance.COLUMNNAME_Value));
+							indexMap.put(fieldName, rs.getString(MAttributeInstance.COLUMNNAME_Value));
 					}
 				}
 			}
@@ -303,8 +304,13 @@ public class DMSSearchUtils
 			}
 		}
 
-		return solrValue;
+		return indexMap;
 	} // createIndexMap
+
+	public static String getIndexFieldName(String columnName)
+	{
+		return columnName.replaceAll("(?i)[^a-z0-9-_]", "_");
+	}
 
 	/**
 	 * Check is Allowed to extract content text from the document and use for searching
@@ -327,6 +333,8 @@ public class DMSSearchUtils
 		IIndexSearcher idxSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
 		if (!isIndexingInitiated)
 		{
+			// TODO Require to refactor for solr related things
+
 			/*
 			 * Create Fields Type in schema if not exists
 			 */
@@ -431,8 +439,8 @@ public class DMSSearchUtils
 
 		// Create index
 		File file = fsProvider.getFile(contentManager.getPathByValue(content));
-		Map<String, Object> solrValue = createIndexMap(indexSearcher, content, association, version, file);
-		indexSearcher.indexContent(solrValue);
+		Map<String, Object> indexMap = createIndexMap(indexSearcher, content, association, version, file);
+		indexSearcher.indexContent(indexMap);
 
 		// Update the value of IsIndexed flag in Content
 		if (!version.isIndexed())
@@ -605,5 +613,13 @@ public class DMSSearchUtils
 
 		params.put(searchAttributeName, value);
 	} // setSearchParams
+
+	/**
+	 * File content parsing through Apache Tika
+	 */
+	public static String getParseDocumentContent(File file)
+	{
+		return new FileContentExtract(file).getParsedDocumentContent();
+	} // getParseDocumentContent
 
 }

@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Tika
+Bundle-SymbolicName: com.logilite.dms.tika
+Bundle-Version: 7.3.0.qualifier
+Export-Package: com.logilite.dms.tika.service
+Bundle-Activator: com.logilite.dms.tika.Activator
+Bundle-Vendor: LOGILITE
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Automatic-Module-Name: com.logilite.search.tika
+Import-Package: org.osgi.framework;version="1.3.0"
+Require-Bundle: org.adempiere.base
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: lib/tika-app-2.2.1.jar,
+ .
