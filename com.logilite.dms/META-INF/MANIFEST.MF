@@ -24,7 +24,6 @@ Require-Bundle: com.logilite.dmslib;bundle-version="7.2.0",
  zul;bundle-version="8.0.2",
  zk;bundle-version="8.0.2",
  zcommon,
- com.itextpdf;bundle-version="5.5.13",
  org.apache.ant,
  com.logilite.dms.tika;bundle-version="7.3.0"
 Bundle-Vendor: Logilite
