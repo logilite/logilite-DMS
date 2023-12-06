@@ -38,7 +38,12 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 				}
 				else if (value.get(0) instanceof String || value.get(1) instanceof String)
 				{
-					query.append(" AND (\"").append(key + "\" BETWEEN '" + value.get(0) + "' AND '" + value.get(1) + "') ");
+					if (value.get(0).equals("*"))
+						query.append(" AND (\"").append(key + "\" <= '" + value.get(1) + "') ");
+					else if (value.get(1).equals("*"))
+						query.append(" AND (\"").append(key + "\" >= '" + value.get(0) + "') ");
+					else
+						query.append(" AND (\"").append(key + "\" BETWEEN '" + value.get(0) + "' AND '" + value.get(1) + "') ");
 				} // Handle condition when two boolean value passed.
 				else if (value.get(0) instanceof Boolean || value.get(1) instanceof Boolean)
 				{
@@ -58,9 +63,19 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 				if (value.get(0) instanceof String)
 				{
 					if (Util.isEmpty((String) value.get(0), true))
-						query.append(" AND \"").append(key + "\"='*'");
+					{
+						query.append(" AND \"").append(key + "\" LIKE '%'");
+					}
+					else if (DMSConstant.DESCRIPTION.equals(key))
+					{
+						String description = (String) value.get(0);
+						description = description.replace('*', '%');
+						query.append(" AND \"").append(key + "\" LIKE '" + description + "'");
+					}
 					else
-						query.append(" AND \"").append(key + "\"='" + value.get(0) + "'");
+					{
+						query.append(" AND \"").append(key + "\" LIKE '%" + value.get(0) + "%'");
+					}
 				}
 				else
 				{
@@ -96,18 +111,18 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 		if (!Util.isEmpty(searchText, true))
 		{
 			String inputParam = searchText.toLowerCase().trim().replaceAll(" +", " ");
-			query.append(" \"").append(DMSConstant.NAME).append("\" = '*").append(inputParam).append("*'");
-			query.append(" OR \"").append(DMSConstant.DESCRIPTION).append("\"='*").append(inputParam).append("*'");
+			query.append(" ( \"").append(DMSConstant.NAME).append("\" LIKE '%").append(inputParam).append("%'");
+			query.append(" OR \"").append(DMSConstant.DESCRIPTION).append("\" LIKE '%").append(inputParam).append("%'");
 
 			// Lookup from file content
 			if (DMSSearchUtils.isAllowDocumentContentSearch())
 			{
-				query.append(" OR \"").append(DMSConstant.FILE_CONTENT).append("\"='*").append(inputParam).append("*'");
+				query.append(" OR \"").append(DMSConstant.FILE_CONTENT).append("\" LIKE '%").append(inputParam).append("%'");
 			}
 		}
 		if (!Util.isEmpty(searchText, true))
 		{
-			query.append(" AND ");
+			query.append(" ) AND ");
 		}
 
 		query.append(commonSearch(ad_client_ID, content, tableID, recordID, documentView));
