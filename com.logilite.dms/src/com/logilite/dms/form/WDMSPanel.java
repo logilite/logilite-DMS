@@ -770,7 +770,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			else
 			{
-				FDialog.warn(windowNo, "UnableToUploadContent");
+				Dialog.warn(windowNo, "UnableToUploadContent");
 			}
 		}
 		else if (event.getTarget().equals(btnBack))
