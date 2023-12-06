@@ -766,7 +766,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			else
 			{
-				FDialog.warn(windowNo, "Unable to upload content due to access restrictions.");
+				FDialog.warn(windowNo, "UnableToUploadContent");
 			}
 		}
 		else if (event.getTarget().equals(btnBack))
