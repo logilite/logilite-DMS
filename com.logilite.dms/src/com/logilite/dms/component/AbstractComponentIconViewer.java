@@ -14,7 +14,6 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.theme.ThemeManager;
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
@@ -97,12 +96,28 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 	private void renderZK()
 	{
+		Rows rows;
+
 		// Clearing Grid layout children's
 		if (grid.getChildren() != null && grid.getChildren().size() > 0)
-			Components.removeAllChildren(grid);
+		{
+			for (Component compRows : grid.getChildren())
+			{
+				for (Component cell : compRows.getChildren())
+				{
+					compRows.removeChild(cell);
+				}
+			}
 
-		Rows rows = grid.newRows();
-		rows.setSclass("SB-ROWS");
+			// Get existing rows object for Drag & Drop event already registered and no need to do
+			// register each navigation event.
+			rows = (Rows) grid.getFirstChild();
+		}
+		else
+		{
+			rows = grid.newRows();
+			rows.setSclass("SB-ROWS");
+		}
 
 		// Grid Header Part creation
 		createHeaderPart();

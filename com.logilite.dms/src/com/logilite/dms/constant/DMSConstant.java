@@ -108,6 +108,7 @@ public final class DMSConstant
 	public static final String				EVENT_ON_RENAME_COMPLETE				= "onRenameComplete";
 	public static final String				EVENT_ON_UPLOAD_COMPLETE				= "onUploadComplete";
 	public static final String				EVENT_ON_SELECTION_CHANGE				= "onSelectionChange";
+	public static final String				EVENT_ON_LOAD_DRAGNDROP					= "onLoadDragNDrop";
 
 	// all selection
 	public static final String				All_SELECT								= "AllSelect";

@@ -30,6 +30,8 @@ import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
 
+import javax.servlet.http.HttpSession;
+
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
 import org.adempiere.webui.ClientInfo;
@@ -77,6 +79,7 @@ import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
 import org.compiere.model.MRole;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.MToolBarButtonRestrict;
 import org.compiere.model.MUser;
@@ -88,15 +91,19 @@ import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
+import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
+import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Cell;
+import org.zkoss.zul.Div;
 import org.zkoss.zul.East;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Menuitem;
+import org.zkoss.zul.Progressmeter;
 import org.zkoss.zul.South;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Splitter;
@@ -249,6 +256,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private AbstractADWindowContent	winContent;
 
 	protected Set<I_DMS_Version>	downloadSet				= new HashSet<I_DMS_Version>();
+
+	private Progressmeter			uploadProgressMtr;
+	private Label					lblUploadSize;
 
 	/**
 	 * Constructor initialize
@@ -419,17 +429,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		ZKUpdateUtil.setHeight(this, "100%");
 		ZKUpdateUtil.setWidth(this, "100%");
+
 		this.appendChild(tabBox);
 		this.addEventListener(Events.ON_CLICK, this);
 		this.addEventListener(DMSConstant.EVENT_ON_SELECTION_CHANGE, this);
+		this.addEventListener(DMSConstant.EVENT_ON_LOAD_DRAGNDROP, this);
 
+		// Fire event for drag and drop functionality
+		Events.postEvent(DMSConstant.EVENT_ON_LOAD_DRAGNDROP, this, null);
+
+		//
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_DOUBLE_CLICK, this);
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
-		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");//
+		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");
+		grid.addEventListener(Events.ON_UPLOAD, this);
 
 		// View Result Tab
 		Grid btnGrid = GridFactory.newGridLayout();
+
 		// Rows Header Buttons
 		Rows rowsBtn = btnGrid.newRows();
 
@@ -484,6 +502,19 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		searchGridView.setStyle("max-height: 100%; width: 100%; height: calc( 100% - 90px); position: relative; overflow: auto;");
 
 		Rows rowsSearch = searchGridView.newRows();
+
+		uploadProgressMtr = new Progressmeter(0);
+		uploadProgressMtr.setClass("drop-progress-meter");
+		uploadProgressMtr.setVisible(false);
+
+		lblUploadSize = new Label();
+
+		Div div = new Div();
+		div.appendChild(lblUploadSize);
+		div.appendChild(uploadProgressMtr);
+
+		row = rowsSearch.newRow();
+		DMS_ZK_Util.createCellUnderRow(row, 1, 3, div);
 
 		row = rowsSearch.newRow();
 		DMS_ZK_Util.createCellUnderRow(row, 1, 3, vsearchBox);
@@ -726,10 +757,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (isWindowAccess)
 				createDirectory();
 		}
-		else if (event.getTarget().equals(btnUploadContent))
+		else if (event.getTarget().equals(btnUploadContent) || event instanceof UploadEvent)
 		{
-			if (isWindowAccess)
-				uploadContent();
+			if (btnUploadContent.isEnabled())
+			{
+				if (isWindowAccess)
+					uploadContent(event);
+			}
+			else
+			{
+				FDialog.warn(windowNo, "Unable to upload content due to access restrictions.");
+			}
 		}
 		else if (event.getTarget().equals(btnBack))
 		{
@@ -809,7 +847,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
-
 			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(	dms, dirContent, true, this.getTable_ID(), this.getRecord_ID(), windowNo,
 																						tabNo);
 			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
@@ -1045,7 +1082,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION, permissionManager.isNavigation());
 			compCellRowViewer.setAttribute(DMSConstant.COMP_ATTRIBUTE_ISALLPERMISSION, permissionManager.isAllPermission());
 		}
-
 		else if (event.getTarget().equals(mnu_owner))
 		{
 			new WUpdateOwner(dms, dirContent);
@@ -1098,6 +1134,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (cobDocumentView != null && Events.ON_SELECT.equals(event.getName()) && event.getTarget().equals(cobDocumentView))
 		{
 			renderViewer();
+		}
+		else if (DMSConstant.EVENT_ON_LOAD_DRAGNDROP.equals(event.getName()))
+		{
+			callDragAndDropAction();
 		}
 
 		if (!(Events.ON_CLICK.equals(event.getName()) && event.getTarget() == this))
@@ -1518,10 +1558,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	/**
 	 * Upload Content
+	 * 
+	 * @param event
 	 */
-	private void uploadContent()
+	private void uploadContent(Event event)
 	{
 		uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, currDMSContent, false, tableID, recordID, windowNo, tabNo);
+
+		if (event != null && event instanceof UploadEvent)
+			Events.postEvent((Component) uploadContent, event);
 
 		((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
@@ -2265,4 +2310,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		btnClear.setEnabled(isEnabled);
 	}
+
+	public void callDragAndDropAction()
+	{
+		int maxUploadSize = 0;
+		int size = MSysConfig.getIntValue(MSysConfig.ZK_MAX_UPLOAD_SIZE, 0);
+		if (size > 0)
+			maxUploadSize += size;
+		String desktopID = this.getPage().getDesktop().getId();
+		String sessionID = ((HttpSession) Executions.getCurrent().getSession().getNativeSession()).getId();
+		Clients.evalJavaScript(	"dropToAttachFiles.init('"	+ this.getUuid() + "','"
+								+ grid.getUuid() + "','" + desktopID + "','"
+								+ uploadProgressMtr.getUuid() + "','" + lblUploadSize.getUuid() + "','"
+								+ maxUploadSize + "','" + sessionID + "');");
+	} // callDragAndDropAction
 }
