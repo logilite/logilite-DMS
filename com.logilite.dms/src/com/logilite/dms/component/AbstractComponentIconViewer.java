@@ -101,11 +101,20 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		// Clearing Grid layout children's
 		if (grid.getChildren() != null && grid.getChildren().size() > 0)
 		{
-			for (Component compRows : grid.getChildren())
+			for (Component comp : grid.getChildren())
 			{
-				for (Component cell : compRows.getChildren())
+				ArrayList<Component> list = new ArrayList<>();
+				list.addAll(comp.getChildren());
+
+				for (Component c : list)
 				{
-					compRows.removeChild(cell);
+					comp.removeChild(c);
+				}
+
+				if (!(comp instanceof Rows))
+				{
+					grid.removeChild(comp);
+					grid.invalidate();
 				}
 			}
 
