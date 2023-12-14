@@ -11,7 +11,6 @@ import org.compiere.model.Query;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
-import org.compiere.util.Env;
 
 import com.logilite.dms.DMS;
 import com.logilite.dms.model.MDMSContent;
@@ -20,7 +19,8 @@ public class MigrateAttachmentToDMS extends SvrProcess
 {
 
 	private DMS		dms;
-	private Boolean	m_isDelete	= false;
+	private Boolean	p_isDeleteOrigAttch	= false;
+	private int		p_tableID			= 0;
 
 	@Override
 	protected void prepare()
@@ -33,7 +33,11 @@ public class MigrateAttachmentToDMS extends SvrProcess
 				;
 			else if (("DeleteOriginalAttachment").equals(name))
 			{
-				m_isDelete = para[i].getParameterAsBoolean();
+				p_isDeleteOrigAttch = para[i].getParameterAsBoolean();
+			}
+			else if ("AD_Table_ID".equals(name))
+			{
+				p_tableID = para[i].getParameterAsInt();
 			}
 		}
 
@@ -55,9 +59,14 @@ public class MigrateAttachmentToDMS extends SvrProcess
 		 * 523 = AD_PrintTableFormat
 		 * 50008=AD_Package_Imp_Proc
 		 */
-		List<MAttachment> attachments = new Query(	getCtx(), MAttachment.Table_Name,
-													" AD_Table_ID NOT IN(284, 285, 376, 454, 489, 523, 50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y' AND AD_Client_ID = ? ",
-													get_TrxName()).setParameters(Env.getAD_Client_ID(Env.getCtx())).list();
+		String whereClause = " AD_Table_ID NOT IN(284, 285, 376, 454, 489, 523, 50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y'";
+		if (p_tableID > 0)
+			whereClause += " AND AD_Table_ID = " + p_tableID;
+
+		List<MAttachment> attachments = new Query(getCtx(), MAttachment.Table_Name, whereClause, get_TrxName())
+																												.setClient_ID()
+																												.setOrderBy("AD_Table_ID")
+																												.list();
 
 		for (MAttachment attachment : attachments)
 		{
@@ -68,17 +77,17 @@ public class MigrateAttachmentToDMS extends SvrProcess
 			MDMSContent mountingParent = dms.getRootMountingContent(table.getAD_Table_ID(), attachment.getRecord_ID());
 
 			MAttachmentEntry[] attachmentEntries = attachment.getEntries();
-
 			for (MAttachmentEntry entry : attachmentEntries)
 			{
-				statusUpdate(" Backup attachment of " + table.getTableName() + " for Record ID #" + attachment.getRecord_ID() + ": " + entry.getName());
+				statusUpdate("Move attachment of " + table.getTableName() + " for Record ID #" + attachment.getRecord_ID() + " : " + entry.getName());
 
+				//
 				int contentID = dms.addFile(mountingParent, entry.getFile(), attachment.getAD_Table_ID(), attachment.getRecord_ID());
 				if (contentID > 0)
 					cntMigrated++;
 			}
 
-			if (m_isDelete)
+			if (p_isDeleteOrigAttch)
 			{
 				cntDeleted++;
 				attachment.deleteEx(true);
@@ -88,12 +97,15 @@ public class MigrateAttachmentToDMS extends SvrProcess
 				attachment.set_CustomColumn("isMigratedToDMS", true);
 				attachment.saveEx();
 			}
+			// CLDE Commit after each record migrated successfully changes
+			// so we do not revert changes when process fails in middle of migration.
+			commitEx();
 		}
 
 		addLog(cntMigrated + " Attachment(s) Backuped to DMS.");
 		addLog(cntDeleted + " Attachment(s) Deleted from DB.");
 
-		if (m_isDelete || attachments.size() == 0)
+		if (p_isDeleteOrigAttch || attachments.size() == 0)
 		{
 			processUI.ask("Do you want to delete previously migrated attachments?", new Callback<Boolean>() {
 
