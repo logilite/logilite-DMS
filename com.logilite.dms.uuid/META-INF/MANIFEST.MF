@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS-UUID
 Bundle-SymbolicName: com.logilite.dms.uuid;singleton:=true
-Bundle-Version: 7.3.0.qualifier
+Bundle-Version: 7.3.1.qualifier
 Bundle-Vendor: LOGILITE
 Automatic-Module-Name: com.logilite.dms.uuid
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -14,5 +14,6 @@ Require-Bundle: com.logilite.dms;bundle-version="7.1.0",
  zcommon;bundle-version="8.6.0",
  zhtml;bundle-version="8.6.0"
 Bundle-ActivationPolicy: lazy
-Import-Package: org.apache.commons.io
+Import-Package: com.logilite.search.exception,
+ org.apache.commons.io
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator

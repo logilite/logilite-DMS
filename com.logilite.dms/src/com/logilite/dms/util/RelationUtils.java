@@ -165,9 +165,8 @@ public class RelationUtils
 																													+ DMSConstant.FILE_SEPARATOR + actualName);
 						if (newFile != null)
 						{
-							actualName = RelationUtils.getActualContentName(rcm, storageProvider, contentType, content,
-																			actualName.substring(0, actualName.lastIndexOf(".")) + "_1", extention, type,
-																			operationType);
+							actualName = getActualContentName(	rcm, storageProvider, contentType, content,
+																actualName.substring(0, actualName.lastIndexOf(".")) + "_1", extention, type, operationType);
 						}
 						break;
 					}
