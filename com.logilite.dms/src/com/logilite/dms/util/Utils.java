@@ -349,10 +349,10 @@ public class Utils
 		if (!isDirName)
 		{
 			if (!fileName.matches(DMSConstant.REG_EXP_FILENAME))
-				return "Invalid File Name.";
+				return "File name is invalid; it should not contain characters such as \" | * :  ? / ^ \\ < > { } ";
 
 			if (!Utils.isFileNameEndWithNotBracket(fileName))
-				return "Invalid File Name. Not supportted end with ()";
+				return "Invalid file name. Should not end with parentheses ().";
 		}
 		else
 		{
@@ -364,7 +364,7 @@ public class Utils
 			}
 
 			if (!Util.isEmpty(invalidChars, true))
-				return "A file name can't contain as below characters" + invalidChars;
+				return "A directory name cannot be : " + invalidChars;
 		}
 		return null;
 	} // isValidFileName
