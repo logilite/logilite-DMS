@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMS
 Bundle-SymbolicName: com.logilite.dms;singleton:=true
-Bundle-Version: 9.1.0.qualifier
+Bundle-Version: 9.1.1.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: javax.servlet.http;version="3.1.0",
@@ -34,6 +34,7 @@ Export-Package:
  com.logilite.dms,
  com.logilite.dms.component,
  com.logilite.dms.constant,
+ com.logilite.dms.exception,
  com.logilite.dms.factories,
  com.logilite.dms.form,
  com.logilite.dms.model,

@@ -335,6 +335,7 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		try
 		{
 			docDMSPanel.renderViewer();
+			docDMSPanel.callDragAndDropAction();
 		}
 		catch (Exception e)
 		{
