@@ -82,7 +82,7 @@ public final class DMSConstant
 
 	// Regular Expression
 	public static final String				REG_SPACE								= "\\S+";
-	public static final String				REG_EXP_FILENAME						= "^[A-Za-z0-9\\s\\-\\._\\(\\)]+$";
+	public static final String				REG_EXP_FILENAME						= "^[^\"|^*|^:|^?|^\\\\|^\\/|^^|^<|^>|^\\{|^\\}|^|]*$";
 	public static final String				REG_EXP_WINDOWS_DIRNAME_VALIDATE		= "((^(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])$)|([\\\\//:*?\\\"<>|?*\\x00-\\x1F]))";
 	public static final String				REG_EXP_LINUX_DIRNAME_VALIDATE			= "(/)";
 	public static final String				REG_EXP_VERSION_FILE					= "^.*\\(\\d+\\).\\w+$";

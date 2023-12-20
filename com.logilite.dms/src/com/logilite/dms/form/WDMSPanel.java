@@ -824,7 +824,15 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
 
+			//
 			renderViewer();
+
+			// After rendering, register drag and drop event
+			if (btnToggleView.getAttribute(ATTRIBUTE_TOGGLE).equals(DMSConstant.ICON_VIEW_LARGE))
+			{
+				callDragAndDropAction();
+			}
+
 		}
 		// Event for any area of panel user doing right click then show context
 		// related paste or else...

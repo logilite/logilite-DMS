@@ -36,6 +36,8 @@ import org.compiere.util.Util;
 
 import com.logilite.dms.DMS;
 import com.logilite.dms.constant.DMSConstant;
+import com.logilite.dms.exception.DMSContentExistException;
+import com.logilite.dms.exception.DMSException;
 import com.logilite.dms.factories.IContentManager;
 import com.logilite.dms.factories.IThumbnailGenerator;
 import com.logilite.dms.model.IFileStorageProvider;
@@ -53,6 +55,7 @@ import com.logilite.dms.util.DMSOprUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.RelationUtils;
 import com.logilite.dms.util.Utils;
+import com.logilite.search.exception.IndexException;
 
 /**
  * @author Deepak Pansheria
@@ -278,23 +281,32 @@ public class RelationalContentManager implements IContentManager
 		Trx trx = Trx.get(trxName, true);
 
 		// Create Content, Association, Store File & Thumbnail generate
+		int contentID = 0;
 		try
 		{
-			int contentID = createContentAssociationFileStoreAndThumnail(	dms, parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID,
-																			isVersion, trx.getTrxName());
+			contentID = createContentAssociationFileStoreAndThumnail(	dms, parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID,
+																		isVersion, trx.getTrxName());
 			trx.commit();
-			return contentID;
+		}
+		catch (IndexException | DMSContentExistException e)
+		{
+			DMSException dmsExc = new DMSException();
+			dmsExc.setException(e);
+			if (e instanceof IndexException)
+				dmsExc.setContentID(contentID);
+			throw dmsExc;
 		}
 		catch (Exception e)
 		{
 			trx.rollback();
-			throw new AdempiereException("Upload Content Failure:\n" + e.getLocalizedMessage());
+			throw new AdempiereException("Upload Content Failure:\n" + e.getLocalizedMessage(), e);
 		}
 		finally
 		{
 			if (trx != null)
 				trx.close();
 		}
+		return contentID;
 	} // addFile
 
 	/**
@@ -374,7 +386,10 @@ public class RelationalContentManager implements IContentManager
 
 		if (dms_content_id > 0)
 		{
-			throw new AdempiereException("File already exists, either rename or upload as a version. \n (Either same file name content exist in inActive mode)");
+			throw new DMSContentExistException(	"File already exists, either rename or upload as a version."
+												+ "\n (Either same file name content exist in inActive mode)"
+												+ "\n Content Path = " + parentURL
+												+ "\n Content Name = " + fileName);
 		}
 		else
 		{
