@@ -339,4 +339,22 @@ public class DMSFactoryUtils
 		return idxQueryBuilder;
 	} // getIndexQueryBuilder
 
+	public static IIndexQueryBuilder getGenericQueryBuilder(int AD_Client_ID)
+	{
+		IIndexQueryBuilder idxQueryBuilder = null;
+		List<IIndexQueryBuildFactory> factories = Service.locator().list(IIndexQueryBuildFactory.class).getServices();
+
+		for (IIndexQueryBuildFactory factory : factories)
+		{
+			idxQueryBuilder = factory.get("GNR");
+
+			if (idxQueryBuilder != null)
+			{
+				cache_idxQueryBuilder.put(AD_Client_ID, idxQueryBuilder);
+				break;
+			}
+		}
+		return idxQueryBuilder;
+	}
+	
 }

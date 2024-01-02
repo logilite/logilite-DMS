@@ -281,7 +281,7 @@ public class DMSSearchUtils
 				{
 					while (rs.next())
 					{
-						String fieldName = getIndexFieldName("ASI_" + rs.getString("Name"));
+						String fieldName = getIndexFieldName(DMSConstant.PREFIX_SEARCH_ATTRIB_ASI + rs.getString("Name"));
 
 						if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate) != null)
 							indexMap.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate));

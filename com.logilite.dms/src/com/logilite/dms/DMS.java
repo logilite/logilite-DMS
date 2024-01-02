@@ -113,7 +113,10 @@ public class DMS
 			if (indexSearcher == null)
 				throw new AdempiereException("Index server is not found.");
 
-			indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(AD_Client_ID);
+			if (indexSearcher.getClass().getName().contains("Generic"))
+				indexQueryBuilder = DMSFactoryUtils.getGenericQueryBuilder(AD_Client_ID);
+			else
+				indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(AD_Client_ID);
 			if (indexQueryBuilder == null)
 				throw new AdempiereException("Index query builder artifact not deployed.");
 
