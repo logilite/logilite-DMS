@@ -16,7 +16,6 @@ import org.compiere.util.Trx;
 import org.compiere.util.TrxEventListener;
 
 import com.logilite.dms.constant.DMSConstant;
-import com.logilite.dms.exception.DMSContentExistException;
 import com.logilite.dms.factories.IPermissionManager;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSPermissionUtils;

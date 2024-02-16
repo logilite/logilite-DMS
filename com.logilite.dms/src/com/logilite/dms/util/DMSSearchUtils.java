@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -146,10 +147,17 @@ public class DMSSearchUtils
 	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
 																						MDMSContent content, String documentView)
 	{
-		String query = dms.getIndexQueryBuilder().getGenericSearchedContentQuery(searchText, dms.AD_Client_ID, content, tableID, recordID, documentView);
+		// Build Search Query
+		ArrayList<String> query = dms.getIndexQueryBuilder().getGenericSearchedContentQuery(searchText, dms.AD_Client_ID, content, tableID, recordID,
+																							documentView);
+		// Data searched from Indexing server
+		HashSet<Integer> contentID = dms.searchIndex(query.get(0));
+
+		// Apply content hierarchical filter if query string length are more
+		applyFilterContentIDCheckIfMoreSize(query, contentID);
 
 		//
-		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query));
+		return DMSSearchUtils.fillSearchedContentMap(contentID);
 	} // getGenericSearchedContent
 
 	/**
@@ -167,10 +175,14 @@ public class DMSSearchUtils
 																					int tableID, int recordID, String documentView)
 	{
 		String query = dms.buildSearchQueryFromMap(queryParamas);
-		query = dms.getIndexQueryBuilder().appendCriteria(query, dms.AD_Client_ID, content, tableID, recordID, documentView);
+		ArrayList<String> qList = dms.getIndexQueryBuilder().appendCriteria(query, dms.AD_Client_ID, content, tableID, recordID, documentView);
+
+		HashSet<Integer> contentID = dms.searchIndex(qList.get(0));
+
+		applyFilterContentIDCheckIfMoreSize(qList, contentID);
 
 		//
-		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query));
+		return DMSSearchUtils.fillSearchedContentMap(contentID);
 	} // renderSearchedContent
 
 	/**
@@ -332,7 +344,7 @@ public class DMSSearchUtils
 	public static IIndexSearcher getIndexSearcher(int AD_Client_ID)
 	{
 		IIndexSearcher idxSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
-		if (!isIndexingInitiated)
+		if (!isIndexingInitiated && idxSearcher.getClass().toString().contains("SolrIndexSearcher"))
 		{
 			// TODO Require to refactor for solr related things
 
@@ -622,5 +634,32 @@ public class DMSSearchUtils
 	{
 		return new FileContentExtract(file).getParsedDocumentContent();
 	} // getParseDocumentContent
+
+	/**
+	 * Do filter on searched result if ContentIDs List are too long [ More than 7K characters ]
+	 * 
+	 * @param qList     - Query List
+	 * @param contentID - Set of Searched ContentIDs
+	 */
+	private static void applyFilterContentIDCheckIfMoreSize(ArrayList<String> qList, HashSet<Integer> contentID)
+	{
+		/*
+		 * When search query having more no of contentIDs and its length more than 7K characters
+		 * then only checked resulted contentID with query part.
+		 * Reference:
+		 * com.logilite.dms.querybuildsolr.service.SolrIndexQueryBuilder.commonSearch() method
+		 */
+		if (qList.size() > 1 && !Util.isEmpty(qList.get(1)))
+		{
+			String queryContentIDs = qList.get(1);
+			Iterator<Integer> cntIterator = contentID.iterator();
+			while (cntIterator.hasNext())
+			{
+				Integer cntID = (Integer) cntIterator.next();
+				if (!queryContentIDs.contains(cntID.toString()))
+					cntIterator.remove();
+			}
+		}
+	} // applyFilterContentIDCheckIfMoreSize
 
 }

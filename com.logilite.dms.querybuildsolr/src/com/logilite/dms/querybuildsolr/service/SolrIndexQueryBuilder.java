@@ -1,5 +1,6 @@
 package com.logilite.dms.querybuildsolr.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -86,23 +87,25 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 	 * Append addition query criteria
 	 */
 	@Override
-	public String appendCriteria(String query, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	public ArrayList<String> appendCriteria(String query, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
+		ArrayList<String> qList = commonSearch(AD_Client_ID, content, tableID, recordID, documentView);
 		// AD_Client_id append for search client wise
 		if (!Util.isEmpty(query))
-			query += " AND ";
+		{
+			query += " AND " + qList.get(0);
+			qList.set(0, query);
+		}
 
-		//
-		query += commonSearch(AD_Client_ID, content, tableID, recordID, documentView);
-
-		return query;
+		return qList;
 	} // appendCriteria
 
 	/**
 	 * Query build for genericSearched Content
 	 */
 	@Override
-	public String getGenericSearchedContentQuery(String searchText, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	public ArrayList<String> getGenericSearchedContentQuery(String searchText, int AD_Client_ID, MDMSContent content, int tableID, int recordID,
+															String documentView)
 	{
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
@@ -124,10 +127,12 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 			query.append("*:*");
 		}
 
-		//
-		query.append(" AND ").append(commonSearch(AD_Client_ID, content, tableID, recordID, documentView));
-
-		return query.toString();
+		// 0 Index - for common search query
+		// 1 Index - for ContentID Hierarchical search query if string characters are more than 7K
+		ArrayList<String> qList = commonSearch(AD_Client_ID, content, tableID, recordID, documentView);
+		query.append(" AND ").append(qList.get(0));
+		qList.set(0, query.toString());
+		return qList;
 	} // getGenericSearchedContentQuery
 
 	/**
@@ -140,7 +145,7 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 	 * @param  documentView
 	 * @return              String
 	 */
-	private static String commonSearch(int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	private static ArrayList<String> commonSearch(int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
 		query.append(DMSConstant.AD_CLIENT_ID + " :(" + AD_Client_ID + ")");
@@ -166,12 +171,10 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 			else
 			{
 				hirachicalContent.append(DMSConstant.DMS_CONTENT_ID).append(":(");
+				// TODO Check improvement by Recursive SQL
 				DMSSearchUtils.getHierarchicalContent(hirachicalContent, content.getDMS_Content_ID(), AD_Client_ID, tableID, recordID, " OR ");
 				hirachicalContent.append(content.getDMS_Content_ID()).append(")");
 			}
-
-			//
-			query.append(" AND ").append(hirachicalContent.toString());
 		}
 
 		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
@@ -185,7 +188,21 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 		if (tableID > 0)
 			query.append(" AND ").append(DMSConstant.AD_TABLE_ID).append(":").append(tableID);
 
-		return query.toString();
+		//
+		ArrayList<String> qList = new ArrayList<String>();
+		if (hirachicalContent.toString().length() > 7000)
+		{
+			qList.add(query.toString());
+			qList.add(hirachicalContent.toString());
+		}
+		else
+		{
+			if (!Util.isEmpty(hirachicalContent.toString(), true))
+				query.append(" AND ").append(hirachicalContent.toString());
+			qList.add(query.toString());
+		}
+
+		return qList;
 	} // commonSearch
 
 }
