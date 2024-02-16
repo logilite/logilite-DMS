@@ -16,11 +16,11 @@ import org.compiere.util.Trx;
 import org.compiere.util.TrxEventListener;
 
 import com.logilite.dms.constant.DMSConstant;
-import com.logilite.dms.exception.DMSContentExistException;
 import com.logilite.dms.factories.IPermissionManager;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.DMSSearchUtils;
+import com.logilite.search.factory.ServiceUtils;
 
 public class DMSModelValidator implements ModelValidator
 {
@@ -100,6 +100,12 @@ public class DMSModelValidator implements ModelValidator
 			 */
 			final MDMSVersion version = (MDMSVersion) po;
 			final MDMSContent content = (MDMSContent) version.getDMS_Content();
+
+			if (ServiceUtils.isSQLIndexSearcher(content.getAD_Client_ID()))
+			{
+				// Ignore to do indexing as SQL based query building
+				return null;
+			}
 
 			Trx trx = Trx.get(version.get_TrxName(), false);
 			if (trx != null)

@@ -52,7 +52,6 @@ import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.tika.service.FileContentExtract;
-import com.logilite.search.exception.IndexException;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
 
@@ -423,8 +422,8 @@ public class DMSSearchUtils
 											String deleteIdxColumnValue)
 	{
 		IIndexSearcher indexSearcher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
-		if (indexSearcher == null)
-			throw new IndexException("Index Server not found");
+		if (indexSearcher != null && indexSearcher.getClass().getName().equals("com.logilite.search.sql.service.SQLIndexSearcher"))
+			return;
 
 		IFileStorageProvider fsProvider = FileStorageUtil.get(content.getAD_Client_ID(), false);
 		if (fsProvider == null)

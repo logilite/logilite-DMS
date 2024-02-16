@@ -18,6 +18,7 @@ import java.util.List;
 import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MClientInfo;
+import org.compiere.model.MTable;
 import org.compiere.util.CCache;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -311,50 +312,36 @@ public class DMSFactoryUtils
 
 		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID, null);
 		int indexingConf_ID = clientInfo.get_ValueAsInt("LTX_Indexing_Conf_ID");
-		MIndexingConfig indexingConfig = null;
-
-		if (indexingConf_ID > 0)
-		{
-			indexingConfig = new MIndexingConfig(Env.getCtx(), indexingConf_ID, null);
-		}
-		else
-		{
-			throw new AdempiereException("Missing to configure Index Server in Client Info");
-		}
 
 		// Factory call
 		List<IIndexQueryBuildFactory> factories = Service.locator().list(IIndexQueryBuildFactory.class).getServices();
 
 		for (IIndexQueryBuildFactory factory : factories)
 		{
-			idxQueryBuilder = factory.get(indexingConfig.getLTX_Indexing_Type());
-
-			if (idxQueryBuilder != null)
+			if (indexingConf_ID > 0)
 			{
-				cache_idxQueryBuilder.put(AD_Client_ID, idxQueryBuilder);
-				break;
+				MIndexingConfig indexingConfig = (MIndexingConfig) MTable	.get(Env.getCtx(), MIndexingConfig.Table_ID)
+																			.getPO(indexingConf_ID, null);
+
+				idxQueryBuilder = factory.get(indexingConfig.getLTX_Indexing_Type());
+
+				if (idxQueryBuilder != null)
+				{
+					cache_idxQueryBuilder.put(AD_Client_ID, idxQueryBuilder);
+					break;
+				}
+			}
+			else
+			{
+				// Default index searcher as SQLIndexSearcherFactory
+				// FIXME parameter
+				idxQueryBuilder = factory.get("GNR");
+				if (idxQueryBuilder != null)
+					break;
 			}
 		}
 
 		return idxQueryBuilder;
 	} // getIndexQueryBuilder
 
-	public static IIndexQueryBuilder getGenericQueryBuilder(int AD_Client_ID)
-	{
-		IIndexQueryBuilder idxQueryBuilder = null;
-		List<IIndexQueryBuildFactory> factories = Service.locator().list(IIndexQueryBuildFactory.class).getServices();
-
-		for (IIndexQueryBuildFactory factory : factories)
-		{
-			idxQueryBuilder = factory.get("GNR");
-
-			if (idxQueryBuilder != null)
-			{
-				cache_idxQueryBuilder.put(AD_Client_ID, idxQueryBuilder);
-				break;
-			}
-		}
-		return idxQueryBuilder;
-	}
-	
 }

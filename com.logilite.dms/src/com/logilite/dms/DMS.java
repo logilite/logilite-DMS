@@ -89,6 +89,7 @@ public class DMS
 		{
 			this.AD_Client_ID = AD_Client_ID;
 
+			// File Storage
 			fileStorageProvider = FileStorageUtil.get(AD_Client_ID, false);
 			if (fileStorageProvider == null)
 				throw new AdempiereException("Storage provider is not found.");
@@ -105,25 +106,20 @@ public class DMS
 					throw new AdempiereException("Thumbnail provider is not found.");
 			}
 
+			// Content Manager
 			contentManager = DMSFactoryUtils.getContentManager(AD_Client_ID);
 			if (contentManager == null)
 				throw new AdempiereException("Content manager is not found.");
 
+			// Index Searcher
 			indexSearcher = DMSSearchUtils.getIndexSearcher(AD_Client_ID);
-			if (indexSearcher == null)
-				throw new AdempiereException("Index server is not found.");
-
-			if (indexSearcher.getClass().getName().contains("Generic"))
-				indexQueryBuilder = DMSFactoryUtils.getGenericQueryBuilder(AD_Client_ID);
-			else
-				indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(AD_Client_ID);
-			if (indexQueryBuilder == null)
-				throw new AdempiereException("Index query builder artifact not deployed.");
+			// Index Query Builder
+			indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(AD_Client_ID);
 
 			// When open Document Explorer
 			ssTableInfo = new DMSSubstituteTableInfo(0);
 
-			//
+			// Permission Manager
 			permissionManager = DMSFactoryUtils.getPermissionFactory();
 		}
 	} // Constructor

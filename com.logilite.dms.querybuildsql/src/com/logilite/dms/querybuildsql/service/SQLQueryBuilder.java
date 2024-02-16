@@ -18,7 +18,7 @@ import com.logilite.dms.util.DMSSearchUtils;
  * 
  * @author Bhautik Panchal
  */
-public class SqlQueryBuilder implements IIndexQueryBuilder
+public class SQLQueryBuilder implements IIndexQueryBuilder
 {
 	// TODO Should be move in DMSConstant class
 	private String	isActive	= "IsActive";
