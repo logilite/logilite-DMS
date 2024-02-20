@@ -95,11 +95,11 @@ public class DMSSearchUtils
 			String sql = "";
 
 			if (DMSConstant.DOCUMENT_VIEW_ALL_VALUE.equalsIgnoreCase(documentView))
-				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL;
+				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL, contentID);
 			else if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE;
+				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE, contentID);
 			else
-				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE;
+				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE, contentID);
 
 			int i = 1;
 			pstmt = DB.prepareStatement(sql, null);
@@ -476,7 +476,7 @@ public class DMSSearchUtils
 		if (parentContent != null)
 			contentID = parentContent.getDMS_Content_ID();
 
-		StringBuffer sql = new StringBuffer(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE);
+		StringBuffer sql = new StringBuffer(DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE, contentID));
 		if (contentTypeID > 0)
 			sql.append(" AND c.DMS_ContentType_ID = ").append(contentTypeID);
 		if (associationTypeID > 0)
