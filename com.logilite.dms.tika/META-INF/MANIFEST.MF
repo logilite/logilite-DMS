@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Tika
 Bundle-SymbolicName: com.logilite.dms.tika
-Bundle-Version: 7.3.0.qualifier
+Bundle-Version: 7.3.1.qualifier
 Export-Package: com.logilite.dms.tika.service
 Bundle-Activator: com.logilite.dms.tika.Activator
 Bundle-Vendor: LOGILITE
