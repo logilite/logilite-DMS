@@ -35,6 +35,8 @@ import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.util.media.Media;
+import org.zkoss.zhtml.Div;
+import org.zkoss.zhtml.Text;
 import org.zkoss.zk.ui.Components;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
@@ -149,7 +151,15 @@ public class WUploadContentForm extends AbstractUploadContent
 
 		//
 		rows = gridView.newRows();
+
 		Row row = rows.newRow();
+		Div div = new Div();
+		Text text = new Text(Msg.getMsg(Env.getCtx(), "DMSUploadMsg"));
+		div.appendChild(text);
+		div.setStyle(" font-style: italic; height: 30px; color:red ");
+		row.appendCellChild(div, 5);
+
+		row = rows.newRow();
 		row.appendCellChild(btnFileUpload, 5);
 
 		tableRow = new Row();
@@ -300,7 +310,7 @@ public class WUploadContentForm extends AbstractUploadContent
 				btnCancel.setAttribute(ATTRIB_ROW_NO, rowCount);
 				btnCancel.addEventListener(Events.ON_CLICK, this);
 
-				rows.insertBefore(row, contentTypeRow);
+				rows.insertBefore(row, tableRow);
 				row.getLastCell().setWidth("10px");
 
 				Object[] value = new Object[] { row, new AMedia(media.getName(), null, null, media.getByteData()), txtName, txtDesc };
@@ -363,7 +373,7 @@ public class WUploadContentForm extends AbstractUploadContent
 		if (!Util.isEmpty(dirName) && recordID <= 0 && tableID <= 0)
 		{
 			dms.initMountingStrategy(tableName);
-			content = dms.getMountingParentForArchive();
+			content = dms.getDMSMountingParent(0, 0);
 			content = dms.createDirectory(dirName, content, tableID, recordID, false, null);
 		}
 		else
