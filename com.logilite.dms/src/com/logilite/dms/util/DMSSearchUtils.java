@@ -148,10 +148,13 @@ public class DMSSearchUtils
 																						int tableID, int recordID, MDMSContent content, String documentView)
 	{
 		// Build Search Query
-		String query = dms.getIndexQueryBuilder().getGenericSearchContentQuery(	searchText, dms.AD_Client_ID, content, tableID, recordID,
-																					documentView);
-		query += " AND " + dms.buildSearchQueryFromMap(queryParamas);
-		return searchUtility(query, dms, content, tableID, recordID, documentView);
+		String queryGeneric = dms.getIndexQueryBuilder().getGenericSearchContentQuery(searchText, dms.AD_Client_ID, content, tableID, recordID, documentView);
+		String queryParams = dms.buildSearchQueryFromMap(queryParamas);
+
+		if (!Util.isEmpty(queryParams, true))
+			queryGeneric += " AND " + queryParams;
+
+		return searchUtility(queryGeneric, dms, content, tableID, recordID, documentView);
 	} // getGenericSearchedContent
 
 	/**
