@@ -22,6 +22,7 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.factory.ButtonFactory;
+import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
@@ -74,11 +75,14 @@ public class WUploadContentForm extends AbstractUploadContent
 	private Label				lblTable;
 	private Label				lblRecord;
 	private Label				lblDirName;
-	private WEditor				eTable;
-	private WEditor				eRecord;
+
+	private WEditor				editorTable;
+	private WEditor				editorRecord;
 	private Textbox				txtDirName;
-	private Row					tableRow;
-	private Row					recordRow;
+
+	private Row					rowTable;
+	private Row					rowRecord;
+
 	private String				dirName;
 
 	public WUploadContentForm()
@@ -134,13 +138,13 @@ public class WUploadContentForm extends AbstractUploadContent
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
-		MLookup lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
-		lookup.refresh();
-		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
+		int columnIDCT = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
+		MLookup lookupCT = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, columnIDCT, DisplayType.TableDir);
+		lookupCT.refresh();
+		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookupCT);
 
 		// Load value from context if available for Content Type field
-		DMS_Context_Util.setEditorDefaultValueFromCtx(Env.getCtx(), windowNo, tabNo, lookup.getDisplayType(), editorContentType);
+		DMS_Context_Util.setEditorDefaultValueFromCtx(Env.getCtx(), windowNo, tabNo, lookupCT.getDisplayType(), editorContentType);
 
 		//
 		lblContentType.setValue(DMSConstant.MSG_DMS_CONTENT_TYPE);
@@ -149,64 +153,77 @@ public class WUploadContentForm extends AbstractUploadContent
 		btnFileUpload.setHeight("60px");
 		LayoutUtils.addSclass("txt-btn", btnFileUpload);
 
-		//
+		// Rows
 		rows = gridView.newRows();
+		rows.setClass("bulk-form");
+
+		// Row 1
+		Text text = new Text(Msg.getMsg(Env.getCtx(), DMSConstant.MSG_DMS_BULK_UPLOAD));
+		Div div = new Div();
+		div.setStyle(" font-style: italic; height: 30px; color:red ");
+		div.appendChild(text);
 
 		Row row = rows.newRow();
-		Div div = new Div();
-		Text text = new Text(Msg.getMsg(Env.getCtx(), "DMSUploadMsg"));
-		div.appendChild(text);
-		div.setStyle(" font-style: italic; height: 30px; color:red ");
 		row.appendCellChild(div, 5);
 
-		row = rows.newRow();
-		row.appendCellChild(btnFileUpload, 5);
-
-		tableRow = new Row();
-		int eColumn_ID = MColumn.getColumn_ID(MTab.Table_Name, MTab.COLUMNNAME_AD_Table_ID);
-		MLookup elookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, eColumn_ID, DisplayType.TableDir);
-		elookup.refresh();
-		eTable = new WTableDirEditor(MTab.COLUMNNAME_AD_Table_ID, false, false, true, elookup);
-		eTable.addValueChangeListener(this);
+		// Row 2
 		lblTable = new Label(Msg.translate(Env.getCtx(), DMSConstant.AD_TABLE_ID));
-		tableRow.appendCellChild(lblTable, 2);
-		tableRow.appendCellChild(eTable.getComponent(), 3);
-		rows.appendChild(tableRow);
 
-		recordRow = new Row();
-		recordRow.setVisible(false);
-		rows.appendChild(recordRow);
+		int columnIDTable = MColumn.getColumn_ID(MTab.Table_Name, MTab.COLUMNNAME_AD_Table_ID);
+		MLookup lookupTable = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, columnIDTable, DisplayType.TableDir);
+		lookupTable.refresh();
 
-		row = new Row();
+		editorTable = new WTableDirEditor(MTab.COLUMNNAME_AD_Table_ID, false, false, true, lookupTable);
+		editorTable.addValueChangeListener(this);
+		editorTable.fillHorizontal();
+
+		rowTable = new Row();
+		rowTable.appendCellChild(lblTable, 2);
+		rowTable.appendCellChild(editorTable.getComponent(), 3);
+		rows.appendChild(rowTable);
+
+		// Row 3
+		rowRecord = new Row();
+		rowRecord.setVisible(false);
+		rows.appendChild(rowRecord);
+
+		// Row 4
 		lblDirName = new Label(Msg.translate(Env.getCtx(), DMSConstant.DIRECTORY));
 		txtDirName = new Textbox();
+		txtDirName.setWidth("100%");
 		txtDirName.addEventListener(Events.ON_CHANGE, this);
+		row = new Row();
 		row.appendCellChild(lblDirName, 2);
 		row.appendCellChild(txtDirName, 3);
 		rows.appendChild(row);
 
+		// Row 5
 		contentTypeRow.appendCellChild(lblContentType, 2);
 		contentTypeRow.appendCellChild(editorContentType.getComponent(), 3);
+		editorContentType.fillHorizontal();
 		editorContentType.addValueChangeListener(this);
 		rows.appendChild(contentTypeRow);
 
-		//
-		row = rows.newRow();
-		Cell cell = new Cell();
-		cell.setColspan(5);
+		// Row 6
+		tabsAttribute.appendChild(tabAttribute);
+		tabAttribute.setLabel(DMSConstant.MSG_ATTRIBUTE_SET);
+		tabPanelsAttribute.appendChild(tabPanelAttribute);
+		tabPanelAttribute.setStyle("min-height :20px; overflow: auto;");
 
 		tabBoxAttribute.appendChild(tabsAttribute);
 		tabBoxAttribute.appendChild(tabPanelsAttribute);
-
-		tabAttribute.setLabel(DMSConstant.MSG_ATTRIBUTE_SET);
-		tabsAttribute.appendChild(tabAttribute);
-		tabPanelsAttribute.appendChild(tabPanelAttribute);
-		tabPanelAttribute.setStyle("min-height :20px; overflow: auto;");
 		tabBoxAttribute.setMold("accordion");
 		tabBoxAttribute.setVisible(false);
 
+		Cell cell = new Cell();
+		cell.setColspan(5);
 		cell.appendChild(tabBoxAttribute);
+		row = rows.newRow();
 		row.appendChild(cell);
+
+		// Row 7
+		row = rows.newRow();
+		row.appendCellChild(btnFileUpload, 5);
 
 		//
 		South south = new South();
@@ -310,7 +327,7 @@ public class WUploadContentForm extends AbstractUploadContent
 				btnCancel.setAttribute(ATTRIB_ROW_NO, rowCount);
 				btnCancel.addEventListener(Events.ON_CLICK, this);
 
-				rows.insertBefore(row, tableRow);
+				rows.appendChild(row);
 				row.getLastCell().setWidth("10px");
 
 				Object[] value = new Object[] { row, new AMedia(media.getName(), null, null, media.getByteData()), txtName, txtDesc };
@@ -350,9 +367,9 @@ public class WUploadContentForm extends AbstractUploadContent
 		if (Util.isEmpty(dirName))
 			throw new WrongValueException(txtDirName, DMSConstant.MSG_FILL_MANDATORY);
 		if (tableID <= 0)
-			throw new WrongValueException(eTable.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
+			throw new WrongValueException(editorTable.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 		if (recordID <= 0)
-			throw new WrongValueException(eRecord.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
+			throw new WrongValueException(editorRecord.getComponent(), DMSConstant.MSG_FILL_MANDATORY);
 
 	} // validateUploadedDocInfo
 
@@ -460,6 +477,9 @@ public class WUploadContentForm extends AbstractUploadContent
 		}
 
 		//
+		FDialog.info(this.windowNo, this, "", "Total: " + contentIDs.size() + " Documents Uploaded", "Bulk Content Upload");
+
+		//
 		for (Entry<Integer, Timestamp> map : contentCreateMap.entrySet())
 		{
 			DB.executeUpdate("UPDATE DMS_Content SET Created=? WHERE DMS_Content_ID = ? ", new Object[] { map.getValue(), map.getKey() }, false, null);
@@ -499,39 +519,45 @@ public class WUploadContentForm extends AbstractUploadContent
 			// Add id in list for returning
 			contentIDs.add(contentID);
 		}
+
 		return contentID;
 	} // saveToDMS
 
 	@Override
 	public void valueChange(ValueChangeEvent event)
 	{
-		if (event.getSource().equals(eTable))
+		if (event.getSource().equals(editorTable))
 		{
 			if (event.getNewValue() != null)
 			{
 				tableID = (int) event.getNewValue();
-				Components.removeAllChildren(recordRow);
-				recordRow.setVisible(true);
+				Components.removeAllChildren(rowRecord);
+				rowRecord.setVisible(true);
+
 				MTable table = MTable.get(Env.getCtx(), tableID);
 				String columnName = table.getTableName() + "_ID";
+
 				int rColumn_ID = MColumn.getColumn_ID(table.getTableName(), columnName);
 				MLookup rlookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, rColumn_ID, DisplayType.Search);
 				rlookup.refresh();
+
 				lblRecord = new Label(Msg.translate(Env.getCtx(), DMSConstant.RECORD_ID));
-				eRecord = new WSearchEditor(rlookup, columnName, null, false, false, true);
-				recordRow.appendCellChild(lblRecord, 2);
-				recordRow.appendCellChild(eRecord.getComponent(), 1);
-				eRecord.addValueChangeListener(this);
+				editorRecord = new WSearchEditor(rlookup, columnName, null, false, false, true);
+				editorRecord.fillHorizontal();
+				editorRecord.addValueChangeListener(this);
+
+				rowRecord.appendCellChild(lblRecord, 2);
+				rowRecord.appendCellChild(editorRecord.getComponent(), 3);
 			}
 			else
 			{
 				tableID = 0;
-				Components.removeAllChildren(recordRow);
-				recordRow.setVisible(false);
+				Components.removeAllChildren(rowRecord);
+				rowRecord.setVisible(false);
 			}
 
 		}
-		else if (event.getSource().equals(eRecord))
+		else if (event.getSource().equals(editorRecord))
 		{
 			recordID = event.getNewValue() == null ? 0 : (int) event.getNewValue();
 		}

@@ -177,6 +177,7 @@ public final class DMSConstant
 	public static final String				MSG_SELECT_FILE							= Msg.getMsg(Env.getCtx(), "SelectFile");
 	public static final String				MSG_ATTRIBUTE_SET						= Msg.getMsg(Env.getCtx(), "attribute.set");
 	public static final String				MSG_DOCUMENT_VIEW						= Msg.getMsg(Env.getCtx(), "DocumentView");
+	public static final String				MSG_DMS_BULK_UPLOAD						= "DMSBulkUploadMsg";
 	public static final String				MSG_OWNER								= "Owner ";
 	public static final String				MSG_SIZE								= "Size";
 	public static final String				MSG_LINK								= "Link";
