@@ -1261,11 +1261,18 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			String documentView = cobDocumentView.getSelectedItem().getValue();
 			if (isSearch)
+			{
 				contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID, documentView);
+			}
 			else if (isGenericSearch)
-				contentsMap = dms.getGenericSearchedContent(vsearchBox.getTextbox().getValue(), tableID, recordID, currDMSContent, documentView);
+			{
+				String genericSearchText = vsearchBox.getTextbox().getValue();
+				contentsMap = dms.getGenericSearchedContent(genericSearchText, getQueryParams(), currDMSContent, tableID, recordID, documentView);
+			}
 			else
+			{
 				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, documentView);
+			}
 
 			//
 			renderViewerWithContent(contentsMap);
@@ -1928,12 +1935,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		if (lstboxUpdatedBy.getValue() != null)
 			DMSSearchUtils.setSearchParams(DMSConstant.UPDATEDBY, lstboxUpdatedBy.getValue(), null, params);
 
-//		String documentView = cobDocumentView.getSelectedItem().getValue();
-//		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-//			DMSSearchUtils.setSearchParams(DMSConstant.SHOW_INACTIVE, true, null, params);
-//		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
-//			DMSSearchUtils.setSearchParams(DMSConstant.SHOW_INACTIVE, false, null, params);
-
 		//
 		if (lstboxContentType.getValue() != null)
 		{
@@ -2069,12 +2070,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					DMSSearchUtils.setSearchParams(compName, from, to, params);
 			}
 		}
-
-//		if (tableID > 0)
-//			DMSSearchUtils.setSearchParams(DMSConstant.AD_TABLE_ID, dms.validTableID(tableID), null, params);
-//
-//		if (recordID > 0)
-//			DMSSearchUtils.setSearchParams(DMSConstant.RECORD_ID, dms.validRecordID(recordID), null, params);
 
 		return params;
 	} // getQueryParamas

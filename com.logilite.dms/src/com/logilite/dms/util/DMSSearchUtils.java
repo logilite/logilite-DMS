@@ -144,20 +144,14 @@ public class DMSSearchUtils
 	 * @param  documentView
 	 * @return              Map of Content with Association
 	 */
-	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
-																						MDMSContent content, String documentView)
+	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, HashMap<String, List<Object>> queryParamas,
+																						int tableID, int recordID, MDMSContent content, String documentView)
 	{
 		// Build Search Query
-		ArrayList<String> query = dms.getIndexQueryBuilder().getGenericSearchedContentQuery(searchText, dms.AD_Client_ID, content, tableID, recordID,
-																							documentView);
-		// Data searched from Indexing server
-		HashSet<Integer> contentID = dms.searchIndex(query.get(0));
-
-		// Apply content hierarchical filter if query string length are more
-		applyFilterContentIDCheckIfMoreSize(query, contentID);
-
-		//
-		return DMSSearchUtils.fillSearchedContentMap(contentID);
+		String query = dms.getIndexQueryBuilder().getGenericSearchContentQuery(	searchText, dms.AD_Client_ID, content, tableID, recordID,
+																					documentView);
+		query += " AND " + dms.buildSearchQueryFromMap(queryParamas);
+		return searchUtility(query, dms, content, tableID, recordID, documentView);
 	} // getGenericSearchedContent
 
 	/**
@@ -175,15 +169,33 @@ public class DMSSearchUtils
 																					int tableID, int recordID, String documentView)
 	{
 		String query = dms.buildSearchQueryFromMap(queryParamas);
-		ArrayList<String> qList = dms.getIndexQueryBuilder().appendCriteria(query, dms.AD_Client_ID, content, tableID, recordID, documentView);
 
+		return searchUtility(query, dms, content, tableID, recordID, documentView);
+	} // renderSearchedContent
+
+	/**
+	 * @param  query        Search Query
+	 * @param  dms          DMS Object
+	 * @param  content      DMS Content
+	 * @param  tableID      Table ID
+	 * @param  recordID     Record ID
+	 * @param  documentView 0Document View
+	 * @return
+	 */
+	private static HashMap<I_DMS_Version, I_DMS_Association> searchUtility(	String query, DMS dms, MDMSContent content, int tableID, int recordID,
+																			String documentView)
+	{
+		ArrayList<String> qList = dms.getIndexQueryBuilder().addCommonCriteria(query, dms.AD_Client_ID, content, tableID, recordID, documentView);
+
+		// Data searched from Indexing server
 		HashSet<Integer> contentID = dms.searchIndex(qList.get(0));
 
+		// Apply content hierarchical filter if query string length are more
 		applyFilterContentIDCheckIfMoreSize(qList, contentID);
 
 		//
 		return DMSSearchUtils.fillSearchedContentMap(contentID);
-	} // renderSearchedContent
+	} // searchUtility
 
 	/**
 	 * Build Hierarchical Content Condition for searching

@@ -16,8 +16,8 @@ public interface IIndexQueryBuilder
 
 	public String buildSearchQueryFromMap(HashMap<String, List<Object>> params);
 
-	public ArrayList<String> appendCriteria(String query, int aD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView);
+	public ArrayList<String> addCommonCriteria(String query, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView);
 
-	public ArrayList<String> getGenericSearchedContentQuery(String searchText, int aD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView);
+	public String getGenericSearchContentQuery(String searchText, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView);
 
 }

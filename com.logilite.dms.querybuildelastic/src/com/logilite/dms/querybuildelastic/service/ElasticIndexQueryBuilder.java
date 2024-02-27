@@ -92,7 +92,7 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 	} // buildSearchQueryFromMap
 
 	@Override
-	public ArrayList<String> appendCriteria(String query, int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	public ArrayList<String> addCommonCriteria(String query, int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		ArrayList<String> qList = new ArrayList<>();
 		// AD_Client_id append for search client wise
@@ -104,11 +104,10 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 		qList.add(query);
 
 		return qList;
-	} // appendCriteria
+	} // addCommonCriteria
 
 	@Override
-	public ArrayList<String> getGenericSearchedContentQuery(String searchText, int AD_Client_ID, MDMSContent content, int tableID, int recordID,
-															String documentView)
+	public String getGenericSearchContentQuery(String searchText, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
@@ -122,19 +121,11 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 			{
 				query.append(" OR \"").append(DMSConstant.FILE_CONTENT).append("\" LIKE '%").append(inputParam).append("%'");
 			}
-		}
-		if (!Util.isEmpty(searchText, true))
-		{
-			query.append(" ) AND ");
+			query.append(" ) ");
 		}
 
-		query.append(commonSearch(AD_Client_ID, content, tableID, recordID, documentView));
-
-		ArrayList<String> qList = new ArrayList<String>();
-		qList.add(query.toString());
-
-		return qList;
-	} // getGenericSearchedContentQuery
+		return query.toString();
+	} // getGenericSearchContentQuery
 
 	private static String commonSearch(int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{

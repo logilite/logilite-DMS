@@ -84,12 +84,15 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 	} // buildSearchQueryFromMap
 
 	/**
-	 * Append addition query criteria
+	 * Append addition common query criteria
 	 */
 	@Override
-	public ArrayList<String> appendCriteria(String query, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	public ArrayList<String> addCommonCriteria(String query, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
+		// 0 Index - for common search query
+		// 1 Index - for ContentID Hierarchical search query if string characters are more than 7K
 		ArrayList<String> qList = commonSearch(AD_Client_ID, content, tableID, recordID, documentView);
+
 		// AD_Client_id append for search client wise
 		if (!Util.isEmpty(query))
 		{
@@ -98,14 +101,13 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 		}
 
 		return qList;
-	} // appendCriteria
+	} // addCommonCriteria
 
 	/**
 	 * Query build for genericSearched Content
 	 */
 	@Override
-	public ArrayList<String> getGenericSearchedContentQuery(String searchText, int AD_Client_ID, MDMSContent content, int tableID, int recordID,
-															String documentView)
+	public String getGenericSearchContentQuery(String searchText, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
@@ -127,13 +129,8 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 			query.append("*:*");
 		}
 
-		// 0 Index - for common search query
-		// 1 Index - for ContentID Hierarchical search query if string characters are more than 7K
-		ArrayList<String> qList = commonSearch(AD_Client_ID, content, tableID, recordID, documentView);
-		query.append(" AND ").append(qList.get(0));
-		qList.set(0, query.toString());
-		return qList;
-	} // getGenericSearchedContentQuery
+		return query.toString();
+	} // getGenericSearchContentQuery
 
 	/**
 	 * Query build form Common Search criteria
@@ -188,7 +185,10 @@ public class SolrIndexQueryBuilder implements IIndexQueryBuilder
 		if (tableID > 0)
 			query.append(" AND ").append(DMSConstant.AD_TABLE_ID).append(":").append(tableID);
 
-		//
+		/*
+		 * 0 Index - for common search query
+		 * 1 Index - for ContentID Hierarchical search query if string characters are more than 7K
+		 */
 		ArrayList<String> qList = new ArrayList<String>();
 		if (hirachicalContent.toString().length() > 7000)
 		{

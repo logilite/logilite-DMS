@@ -362,10 +362,10 @@ public class DMS
 		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(indexSearcher, content, association, version, file));
 	} // createIndexContent
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	String searchText, int tableID, int recordID, MDMSContent content,
-																				String documentView)
+	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	String searchText, HashMap<String, List<Object>> queryParamas,
+																				MDMSContent content, int tableID, int recordID, String documentView)
 	{
-		return DMSSearchUtils.getGenericSearchedContent(this, searchText, validTableID(tableID), validRecordID(recordID), content, documentView);
+		return DMSSearchUtils.getGenericSearchedContent(this, searchText, queryParamas, validTableID(tableID), validRecordID(recordID), content, documentView);
 	} // getGenericSearchedContent
 
 	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
