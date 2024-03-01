@@ -1,4 +1,4 @@
-package com.logilite.dms.fileuploader;
+package com.logilite.dms.fileuploader.form;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,7 +51,7 @@ import com.logilite.dms.DMS;
 import com.logilite.dms.DMS_Context_Util;
 import com.logilite.dms.DMS_ZK_Util;
 import com.logilite.dms.constant.DMSConstant;
-import com.logilite.dms.fileuploader.utils.FileUploaderUtils;
+import com.logilite.dms.fileuploader.util.FileUploaderUtils;
 import com.logilite.dms.form.AbstractUploadContent;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.MDMSAssociation;
@@ -65,7 +65,7 @@ import com.logilite.dms.util.Utils;
  * @author Sachin Bhimani @ Logilite Technologies
  * @author Parth Ambani @ Logilite Technologies
  */
-public class WUploadContentForm extends AbstractUploadContent
+public class WDMSBulkUploadForm extends AbstractUploadContent
 {
 	/**
 	 * 
@@ -85,7 +85,7 @@ public class WUploadContentForm extends AbstractUploadContent
 
 	private String				dirName;
 
-	public WUploadContentForm()
+	public WDMSBulkUploadForm()
 	{
 		this(null, null, false, -1, -1, 0, 0);
 	}
@@ -101,7 +101,7 @@ public class WUploadContentForm extends AbstractUploadContent
 	 * @param windowNo
 	 * @param tabNo
 	 */
-	public WUploadContentForm(DMS dms, I_DMS_Content content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo)
+	public WDMSBulkUploadForm(DMS dms, I_DMS_Content content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo)
 	{
 		super(dms, content, isVersion, tableID, recordID, windowNo, tabNo);
 		this.dms = new DMS(Env.getAD_Client_ID(Env.getCtx()));
@@ -443,7 +443,7 @@ public class WUploadContentForm extends AbstractUploadContent
 				}
 
 				int contentID = saveFileToDMS(tmpFile, txtName.getValue(), txtDesc.getValue());
-				Timestamp date = FileUploaderUtils.getCreateDate(tmpFile);
+				Timestamp date = FileUploaderUtils.getCreatedDate(tmpFile);
 				if (date != null)
 					contentCreateMap.put(contentID, date);
 

@@ -1,4 +1,4 @@
-package com.logilite.dms.fileuploader.utils;
+package com.logilite.dms.fileuploader.util;
 
 import java.io.File;
 import java.sql.Timestamp;
@@ -14,7 +14,7 @@ public class FileUploaderUtils
 {
 	private static final DateTimeFormatter ISO_DATE_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
-	public static Timestamp getCreateDate(File file)
+	public static Timestamp getCreatedDate(File file)
 	{
 		String extension = Utils.getFileExtension(file.getName());
 		if (extension != null && extension.toLowerCase().equalsIgnoreCase(".pdf"))
@@ -29,15 +29,14 @@ public class FileUploaderUtils
 			}
 		}
 		return null;
-	}
+	} // getCreatedDate
 
 	public static String removeSpecialChars(String str)
 	{
-		// Define the regular expression for special characters
-		String regex = "[^a-zA-Z0-9&\\s]";
-		String result = str.replaceAll(regex, "_");
 		// Replace & with '_AND_'
-		result = result.replaceAll("&", "_AND_");
-		return result;
-	}
+		String result = str.replaceAll("&", "_AND_");
+
+		// Define the regular expression for special characters
+		return result.replaceAll("[^a-zA-Z0-9\\s]", "_");
+	} // removeSpecialChars
 }
