@@ -82,7 +82,8 @@ public class FileContentExtract
 		ParseContext context = new ParseContext();
 		// Configure the parser to only extract metadata
 		context.set(Parser.class, parser);
-		parser.parse(stream, handler, metadata, context);
+		if (stream.getLength() > 0)
+			parser.parse(stream, handler, metadata, context);
 		stream.close();
 	}// parsedDocument
 
