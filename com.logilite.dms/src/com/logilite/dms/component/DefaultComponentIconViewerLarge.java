@@ -47,13 +47,13 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight)
+	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage)
 	{
-		if (row == null)
+		if (row == null || isFirstPage)
 		{
 			row = rows.newRow();
 			row.setSclass("SB-ROW");
-			row.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION + " width: 100%; overflow: hidden; padding: 2px;");
+			row.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION + " width: 100%; overflow: hidden; padding: 2px; padding-bottom: 2rem;");
 		}
 
 		// Content Label

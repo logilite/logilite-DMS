@@ -41,6 +41,7 @@ public final class DMSConstant
 	public static final String				DMS_ZK_MAX_UPLOAD_SIZE					= "DMS_ZK_MAX_UPLOAD_SIZE";
 	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
 	public static final String				DMS_ALLOW_THUMBNAIL_CREATION			= "DMS_ALLOW_THUMBNAIL_CREATION";
+	public static final String				DMS_EXPLORER_CONTENT_PAGE_SIZE			= "DMS_EXPLORER_CONTENT_PAGE_SIZE";
 
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
@@ -73,6 +74,8 @@ public final class DMSConstant
 	public static final String				ATTRIB_FIELDTYPE						= "ATTR_FIELDTYPE";
 	public static final String				ATTRIB_MODIFIEDBY						= "ATTR_MODIFIEDBY";
 	public static final String				ATTRIB_CONTENT_TYPE						= "ATTR_CONTENT_TYPE";
+
+	public static final String				ATTRIB_PAGING_MOVE_TO_FIRST_PAGE		= "PagingMoveToFirstPage";
 
 	// View thumbnail toggle action
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";

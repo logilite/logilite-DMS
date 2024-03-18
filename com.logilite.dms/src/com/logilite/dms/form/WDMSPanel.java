@@ -103,6 +103,7 @@ import org.zkoss.zul.Div;
 import org.zkoss.zul.East;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Menuitem;
+import org.zkoss.zul.Paging;
 import org.zkoss.zul.Progressmeter;
 import org.zkoss.zul.South;
 import org.zkoss.zul.Space;
@@ -1182,6 +1183,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		setNavigationButtonEnabled(false);
 
+		// Paging - Move to 1st page
+		grid.setAttribute(DMSConstant.ATTRIB_PAGING_MOVE_TO_FIRST_PAGE, true);
+		//
 		renderViewer();
 	} // searchContents
 
@@ -1334,6 +1338,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		Components.removeAllChildren(panelAttribute);
 		Components.removeAllChildren(grid);
 
+		// Remove paging if exist in grid
+		for (Component cmp : grid.getParent().getChildren())
+		{
+			if (cmp instanceof Paging)
+				grid.getParent().removeChild(cmp);
+		}
 		downloadSet.clear();
 	} // clearComponents
 
