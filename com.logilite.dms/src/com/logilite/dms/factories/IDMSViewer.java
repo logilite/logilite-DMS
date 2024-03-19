@@ -22,7 +22,7 @@ public interface IDMSViewer
 {
 
 	public void init(	DMS dms, HashMap<I_DMS_Version, I_DMS_Association> contentsMap, Grid grid, int compWidth,
-						int compHeight, EventListener<? extends Event> listener, String[] eventsList);
+						int compHeight, EventListener<? extends Event> listener, String[] eventsList,String sortFieldName);
 
 	public void removeSelection(Component prevComponent);
 

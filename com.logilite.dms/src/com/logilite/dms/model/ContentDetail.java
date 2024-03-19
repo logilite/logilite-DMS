@@ -86,6 +86,11 @@ public class ContentDetail
 		return size;
 	}
 
+	public Timestamp getCreated()
+	{
+		return version.getDMS_Content().getCreated();
+	}
+
 	public Timestamp getUpdated()
 	{
 		return version.getUpdated();

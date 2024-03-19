@@ -188,6 +188,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Button					btnBack					= new Button();
 	private Button					btnNext					= new Button();
 	private Button					btnToggleView			= new Button();
+	private Button					btnContentSort			= new Button();
 
 	private Textbox					txtDocumentName			= new Textbox();
 	private Textbox					txtDescription			= new Textbox();
@@ -214,9 +215,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Panel					panelAttribute			= new Panel();
 
-	private Menupopup				contentContextMenu		= new Menupopup();
-	private Menupopup				canvasContextMenu		= new Menupopup();
+	private Menupopup				ctxMenuContent			= new Menupopup();
+	private Menupopup				ctxMenuCanvas			= new Menupopup();
+	private Menupopup				ctxMenuSort				= new Menupopup();
 
+	// Content Options
 	private Menuitem				mnu_cut					= null;
 	private Menuitem				mnu_copy				= null;
 	private Menuitem				mnu_paste				= null;
@@ -232,8 +235,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Menuitem				mnu_zoomContentWin		= null;
 	private Menuitem				mnu_owner				= null;
 
+	// Non content selected/Canvas Options
 	private Menuitem				mnu_canvasPaste			= null;
 	private Menuitem				mnu_canvasCreateLink	= null;
+
+	// For Sort Options
+	private Menuitem				mnu_sort_name			= null;
+	private Menuitem				mnu_sort_link			= null;
+	private Menuitem				mnu_sort_created		= null;
+	private Menuitem				mnu_sort_updated		= null;
+	private Menuitem				mnu_sort_fileType		= null;
+	private Menuitem				mnu_sort_contentType	= null;
 
 	private int						recordID				= 0;
 	private int						tableID					= 0;
@@ -254,12 +266,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
 
-	private AbstractADWindowContent	winContent;
-
 	protected Set<I_DMS_Version>	downloadSet				= new HashSet<I_DMS_Version>();
+
+	private AbstractADWindowContent	winContent;
 
 	private Progressmeter			uploadProgressMtr;
 	private Label					lblUploadSize;
+
+	private String					sortFieldName			= null;
 
 	/**
 	 * Constructor initialize
@@ -623,6 +637,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMS_ZK_Util.setButtonData(btnSearch, "Search", DMSConstant.TTT_SEARCH, this);
 		DMS_ZK_Util.setButtonData(btnCloseTab, "Home", "Clear all & Go to Home Directory", this);
 		DMS_ZK_Util.setButtonData(btnToggleView, "List", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
+		DMS_ZK_Util.setButtonData(btnContentSort, "Sorting", DMSConstant.TTT_CONTENT_SORTING, this);
 
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
 		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important; height: 45px; width: 45px;");
@@ -632,6 +647,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox.appendChild(btnSearch);
 		hbox.appendChild(btnClear);
 		hbox.appendChild(btnCloseTab);
+		hbox.appendChild(btnContentSort);
 
 		Cell cell = DMS_ZK_Util.createCellUnderRow(row, 1, 3, hbox);
 		cell.setAlign("right");
@@ -722,24 +738,39 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		tabs.appendChild(new Tab(DMSConstant.MSG_EXPLORER));
 
 		// Context Menu item for Right click on DMSContent
-		mnu_cut = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CUT, "Cut", this);
-		mnu_copy = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_COPY, "Copy", this);
-		mnu_paste = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
-		mnu_owner = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_OWNER, "Owner", this);
-		mnu_rename = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_RENAME, "Rename", this);
-		mnu_delete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DELETE, "Delete", this);
-		mnu_download = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_DOWNLOAD, "Download", this);
-		mnu_associate = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ASSOCIATE, "Associate", this);
-		mnu_createLink = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link", this);
-		mnu_permission = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_PERMISSION, "Permission", this);
-		mnu_undoDelete = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UN_ARCHIVE, "UndoDelete", this);
-		mnu_versionList = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
-		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
-		mnu_zoomContentWin = DMS_ZK_Util.createMenuItem(contentContextMenu, DMSConstant.MENUITEM_ZOOMCONTENTWIN, "Zoom", this);
+		mnu_cut = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_CUT, "Cut", this);
+		mnu_copy = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_COPY, "Copy", this);
+		mnu_paste = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_PASTE, "Paste", this);
+		mnu_owner = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_OWNER, "Owner", this);
+		mnu_rename = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_RENAME, "Rename", this);
+		mnu_delete = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_DELETE, "Delete", this);
+		mnu_download = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_DOWNLOAD, "Download", this);
+		mnu_associate = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_ASSOCIATE, "Associate", this);
+		mnu_createLink = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_CREATELINK, "Link", this);
+		mnu_permission = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_PERMISSION, "Permission", this);
+		mnu_undoDelete = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_UN_ARCHIVE, "UndoDelete", this);
+		mnu_versionList = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_VERSIONlIST, "Version", this);
+		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
+		mnu_zoomContentWin = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_ZOOMCONTENTWIN, "Zoom", this);
 
 		// Context Menu item for Right click on Canvas area
-		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_PASTE, "Paste", this);
-		mnu_canvasCreateLink = DMS_ZK_Util.createMenuItem(canvasContextMenu, DMSConstant.MENUITEM_CREATELINK, "Link", this);
+		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(ctxMenuCanvas, DMSConstant.MENUITEM_PASTE, "Paste", this);
+		mnu_canvasCreateLink = DMS_ZK_Util.createMenuItem(ctxMenuCanvas, DMSConstant.MENUITEM_CREATELINK, "Link", this);
+
+		// Context Menu item for sort the content`
+		mnu_sort_name = DMS_ZK_Util.createMenuItem(ctxMenuSort, DMSConstant.MSG_NAME, "UploadFile", this);
+		mnu_sort_link = DMS_ZK_Util.createMenuItem(ctxMenuSort, DMSConstant.MSG_LINK, "Link", this);
+		mnu_sort_created = DMS_ZK_Util.createMenuItem(ctxMenuSort, DMSConstant.MSG_CREATED, "Created", this);
+		mnu_sort_updated = DMS_ZK_Util.createMenuItem(ctxMenuSort, DMSConstant.MSG_UPDATED, "Updated", this);
+		mnu_sort_fileType = DMS_ZK_Util.createMenuItem(ctxMenuSort, DMSConstant.MSG_FILE_TYPE, "FileType", this);
+		mnu_sort_contentType = DMS_ZK_Util.createMenuItem(ctxMenuSort, DMSConstant.MSG_CONTENT_TYPE, "ContentType", this);
+
+		mnu_sort_name.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_NAME);
+		mnu_sort_link.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_LINK);
+		mnu_sort_created.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_CREATED);
+		mnu_sort_updated.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_UPDATED);
+		mnu_sort_fileType.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_FIELDTYPE);
+		mnu_sort_contentType.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_CONTENT_TYPE);
 
 		//
 		DMSConstant.SDF_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -849,6 +880,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				mnu_download.setDisabled(false);
 				mnu_copy.setDisabled(false);
 			}
+		}
+		else if (event.getTarget().equals(btnContentSort))
+		{
+			openSortContextMenu(event.getTarget());
+		}
+		else if (event.getTarget().equals(mnu_sort_fileType)
+					|| event.getTarget().equals(mnu_sort_name)
+					|| event.getTarget().equals(mnu_sort_link)
+					|| event.getTarget().equals(mnu_sort_updated)
+					|| event.getTarget().equals(mnu_sort_created)
+					|| event.getTarget().equals(mnu_sort_contentType))
+		{
+			sortFieldName = (String) ((Menuitem) event.getTarget()).getAttribute(DMSConstant.ATTRIB_NAME);
+			renderViewer();
 		}
 		else if (event.getTarget().equals(mnu_versionList))
 		{
@@ -1305,7 +1350,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// Component Viewer
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
-		viewerComponent.init(dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList);
+		viewerComponent.init(	dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList,
+								sortFieldName);
 
 		lblCountAndSelected.setText(String.valueOf(mapPerFiltered.size()) + " items");
 	}
@@ -1604,6 +1650,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		((Component) uploadContent).addEventListener(Events.ON_CLOSE, this);
 	} // uploadContent
 
+	public void openSortContextMenu(Component comp)
+	{
+		ctxMenuSort.setPage(comp.getPage());
+		((XulElement) comp).setContext(ctxMenuSort);
+		ctxMenuSort.open(this, "at_pointer");
+	} // openSortContextMenu
+
 	/**
 	 * Open MenuPopup when Right click on Directory OR Content
 	 * 
@@ -1612,7 +1665,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private void openContentContextMenu(final Component compCellRowViewer)
 	{
 		dirContent = (MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
-		contentContextMenu.setPage(compCellRowViewer.getPage());
+		ctxMenuContent.setPage(compCellRowViewer.getPage());
 		copyDMSContent = DMSClipboard.get();
 
 		if (!isWindowAccess
@@ -1622,8 +1675,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			ctxMenuItemDisabled(true);
 			mnu_undoDelete.setVisible(false);
 
-			((XulElement) compCellRowViewer).setContext(contentContextMenu);
-			contentContextMenu.open(this, "at_pointer");
+			((XulElement) compCellRowViewer).setContext(ctxMenuContent);
+			ctxMenuContent.open(this, "at_pointer");
 			return;
 		}
 		else
@@ -1691,8 +1744,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		mnu_copy.setDisabled(false);
 
-		((XulElement) compCellRowViewer).setContext(contentContextMenu);
-		contentContextMenu.open(this, "at_pointer");
+		((XulElement) compCellRowViewer).setContext(ctxMenuContent);
+		ctxMenuContent.open(this, "at_pointer");
 
 		if (MDMSAssociationType.isLink(((MDMSAssociation) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION))))
 		{
@@ -1837,8 +1890,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		Component compCellRowViewer = event.getTarget();
 		dirContent = currDMSContent;
-		canvasContextMenu.setPage(compCellRowViewer.getPage());
-		((XulElement) compCellRowViewer).setContext(canvasContextMenu);
+		ctxMenuCanvas.setPage(compCellRowViewer.getPage());
+		((XulElement) compCellRowViewer).setContext(ctxMenuCanvas);
 
 		if (DMSClipboard.get() == null)
 		{
@@ -1879,7 +1932,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			mnu_canvasPaste.setDisabled(true);
 		}
 
-		canvasContextMenu.open(this, "at_pointer");
+		ctxMenuCanvas.open(this, "at_pointer");
 	} // openCanvasContextMenu
 
 	/**

@@ -55,6 +55,27 @@
 	content: "\f2bd";
 }
 
+.z-icon-Created:before {
+	content: "\f271";
+}
+
+.z-icon-Updated:before {
+	content: "\f277";
+}
+
+.z-icon-FileType:before {
+	content: "\f1b3";
+}
+
+.z-icon-ContentType:before {
+	content: "\f03a";
+}
+
+.z-icon-Sorting:before {
+	content: "\f0dc";
+	font-size: large;
+}
+
 .z-icon-com_logilite_dms_toolbar_CustomToolbarFactory:before {
 	content: "\f15b";
 }

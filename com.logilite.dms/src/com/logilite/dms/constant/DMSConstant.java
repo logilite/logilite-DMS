@@ -70,6 +70,7 @@ public final class DMSConstant
 	public static final String				ATTRIB_NAME								= "ATTR_NAME";
 	public static final String				ATTRIB_SIZE								= "ATTR_SIZE";
 	public static final String				ATTRIB_LINK								= "ATTR_LINK";
+	public static final String				ATTRIB_CREATED							= "ATTR_CREATED";
 	public static final String				ATTRIB_UPDATED							= "ATTR_UPDATED";
 	public static final String				ATTRIB_FIELDTYPE						= "ATTR_FIELDTYPE";
 	public static final String				ATTRIB_MODIFIEDBY						= "ATTR_MODIFIEDBY";
@@ -208,6 +209,7 @@ public final class DMSConstant
 	public static final String				TTT_UPLOAD_VERSION						= "Upload Version";
 	public static final String				TTT_PREVIOUS_RECORD						= "Previous Record";
 	public static final String				TTT_DISPLAYS_ITEMS_LAYOUT				= "Displays items Layout";
+	public static final String				TTT_CONTENT_SORTING						= "Content Sorting";
 
 	// Contents Type
 	public static final String				CONTENT_FILE							= "File";

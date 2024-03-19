@@ -14,6 +14,7 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.theme.ThemeManager;
 import org.compiere.model.MSysConfig;
+import org.compiere.util.Util;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -84,7 +85,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 	@Override
 	public void init(	DMS dms, HashMap<I_DMS_Version, I_DMS_Association> contentsMap, Grid gridLayout, int compWidth, int compHeight,
-						EventListener<? extends Event> listener, String[] eventsList)
+						EventListener<? extends Event> listener, String[] eventsList, String sortFieldName)
 	{
 		this.dms = dms;
 		this.grid = gridLayout;
@@ -129,6 +130,18 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 			grid.getParent().appendChild(paging);
 		}
+
+		//
+		if (Util.isEmpty(sortFieldName))
+		{
+			sortFieldName = DMSConstant.ATTRIB_NAME;
+		}
+		// If click on sort button then sort it with the desired name
+		else if (contentItems != null && !Util.isEmpty(sortFieldName))
+		{
+			doSorting(sortFieldName, true);
+		}
+
 		//
 		renderZK();
 	} // init
@@ -317,9 +330,24 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		isSortedAsc = sortType;
 		isSorted = true;
 
+		//
+		doSorting(sortedColumn, isSortedAsc);
+
+		//
+		renderZK();
+	} // doSortGridColumn
+
+	/**
+	 * Do Sorting operation on the Content list
+	 * 
+	 * @param sortingColumn - Sorting Column or Attribute name
+	 * @param isSortingAsc  - Order of sorting ASC/DESC
+	 */
+	public void doSorting(String sortingColumn, boolean isSortingAsc)
+	{
 		// Implement comparator for sorting based on column and ascending/descending
 		Comparator<ContentDetail> comparator = null;
-		switch (sortedColumn)
+		switch (sortingColumn)
 		{
 			case DMSConstant.ATTRIB_NAME:
 				comparator = Comparator.comparing(ContentDetail::getName);
@@ -329,6 +357,9 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 				break;
 			case DMSConstant.ATTRIB_SIZE:
 				comparator = Comparator.comparing(ContentDetail::getSize);
+				break;
+			case DMSConstant.ATTRIB_CREATED:
+				comparator = Comparator.comparing(ContentDetail::getCreated);
 				break;
 			case DMSConstant.ATTRIB_UPDATED:
 				comparator = Comparator.comparing(ContentDetail::getUpdated);
@@ -348,14 +379,11 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 		if (comparator != null)
 		{
-			if (isSortedAsc)
+			if (isSortingAsc)
 				contentItems.sort(comparator);
 			else
 				contentItems.sort(comparator.reversed());
 		}
-
-		//
-		renderZK();
-	} // doSortGridColumn
+	} // doSorting
 
 }
