@@ -1535,6 +1535,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		nextDMSContent = currDMSContent;
 
+		// TODO Sometime error in back navigation against table record, its shows root content
 		if (contentID == 0)
 		{
 			currDMSContent = null;
@@ -2383,11 +2384,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		int size = MSysConfig.getIntValue(MSysConfig.ZK_MAX_UPLOAD_SIZE, 0);
 		if (size > 0)
 			maxUploadSize += size;
-		String desktopID = this.getPage().getDesktop().getId();
-		String sessionID = ((HttpSession) Executions.getCurrent().getSession().getNativeSession()).getId();
-		Clients.evalJavaScript(	"dropToAttachFiles.init('"	+ this.getUuid() + "','"
-								+ grid.getUuid() + "','" + desktopID + "','"
-								+ uploadProgressMtr.getUuid() + "','" + lblUploadSize.getUuid() + "','"
-								+ maxUploadSize + "','" + sessionID + "');");
+
+		// TODO Need to check in DMS as Tab
+		if (this.getPage() != null)
+		{
+			String desktopID = this.getPage().getDesktop().getId();
+			String sessionID = ((HttpSession) Executions.getCurrent().getSession().getNativeSession()).getId();
+			Clients.evalJavaScript(	"dropToAttachFiles.init('"	+ this.getUuid() + "','"
+									+ grid.getUuid() + "','" + desktopID + "','"
+									+ uploadProgressMtr.getUuid() + "','" + lblUploadSize.getUuid() + "','"
+									+ maxUploadSize + "','" + sessionID + "');");
+		}
 	} // callDragAndDropAction
 }
