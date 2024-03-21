@@ -1240,13 +1240,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		boolean isRoot = breadCrumbEvent.getPathId().equals("0");
 		if (isTabViewer())
 		{
+			MDMSContent mountingContent = dms.getRootMountingContent(tableID, recordID);
 			if (isRoot)
 			{
-				MDMSContent mountingContent = dms.getRootMountingContent(tableID, recordID);
 				breadCrumbEvent.setPathId(String.valueOf(mountingContent.getDMS_Content_ID()));
 			}
 
-			if (breadCrumbEvent.getImageContent() != null)
+			if (Integer.valueOf(breadCrumbEvent.getPathId()) == mountingContent.getDMS_Content_ID())
 			{
 				setNavigationButtonEnabled(false);
 			}
