@@ -13,6 +13,8 @@ import org.adempiere.webui.component.Grid;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.theme.ThemeManager;
+import org.compiere.model.MSysConfig;
+import org.compiere.util.Util;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -20,6 +22,8 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.A;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Image;
+import org.zkoss.zul.Paging;
+import org.zkoss.zul.event.ZulEvents;
 
 import com.logilite.dms.DMS;
 import com.logilite.dms.DMS_ZK_Util;
@@ -65,16 +69,23 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 	protected boolean							isSortedAsc;
 	protected String							sortedColumn;
 
+	/***
+	 * Paging
+	 */
+	protected Paging							paging;
+	protected int								contentSize;
+	protected int								contentPerPage	= MSysConfig.getIntValue(DMSConstant.DMS_EXPLORER_CONTENT_PAGE_SIZE, 50);
+
 	// Abstract method definition
 	public abstract void createHeaderPart();
 
 	public abstract void setNoComponentExistsMsg(Rows rows);
 
-	public abstract void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight);
+	public abstract void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage);
 
 	@Override
 	public void init(	DMS dms, HashMap<I_DMS_Version, I_DMS_Association> contentsMap, Grid gridLayout, int compWidth, int compHeight,
-						EventListener<? extends Event> listener, String[] eventsList)
+						EventListener<? extends Event> listener, String[] eventsList, String sortFieldName)
 	{
 		this.dms = dms;
 		this.grid = gridLayout;
@@ -88,6 +99,47 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		for (Map.Entry<I_DMS_Version, I_DMS_Association> entry : contentsMap.entrySet())
 		{
 			contentItems.add(new ContentDetail(entry.getKey(), entry.getValue()));
+		}
+
+		// Remove paging if binded to grid
+		for (Component cmp : grid.getParent().getChildren())
+		{
+			if (cmp instanceof Paging)
+				grid.getParent().removeChild(cmp);
+		}
+
+		contentSize = contentItems.size();
+		// If content size is less than the default size then don't show paging
+		if (contentSize > contentPerPage)
+		{
+			boolean isPagingMoveToFirstPage = false;
+			if (grid.hasAttribute(DMSConstant.ATTRIB_PAGING_MOVE_TO_FIRST_PAGE))
+			{
+				isPagingMoveToFirstPage = (boolean) grid.getAttribute(DMSConstant.ATTRIB_PAGING_MOVE_TO_FIRST_PAGE);
+				grid.removeAttribute(DMSConstant.ATTRIB_PAGING_MOVE_TO_FIRST_PAGE);
+			}
+
+			paging = new Paging();
+			paging.setVisible(true);
+			paging.setDetailed(true);
+			paging.setSclass("dms_paging");
+			paging.setPageSize(contentPerPage);
+			paging.addEventListener(ZulEvents.ON_PAGING, this);
+			if (isPagingMoveToFirstPage)
+				paging.setActivePage(0);
+
+			grid.getParent().appendChild(paging);
+		}
+
+		//
+		if (Util.isEmpty(sortFieldName))
+		{
+			sortFieldName = DMSConstant.ATTRIB_NAME;
+		}
+		// If click on sort button then sort it with the desired name
+		else if (contentItems != null && !Util.isEmpty(sortFieldName))
+		{
+			doSorting(sortFieldName, true);
 		}
 
 		//
@@ -131,15 +183,46 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		// Grid Header Part creation
 		createHeaderPart();
 
-		//
+		/***
+		 * Paging Handler + Content Renderer
+		 */
 		if (contentItems == null || contentItems.isEmpty())
 		{
 			setNoComponentExistsMsg(rows);
+			if (paging != null)
+				paging.setVisible(false);
 		}
 		else
 		{
-			for (ContentDetail contentDetail : contentItems)
+			int currentPage = 1; // Assuming we start from the first page
+			int totalPages = (int) Math.ceil((double) contentSize / contentPerPage);
+
+			// If paging is not null then set the size and current page
+			if (paging != null)
 			{
+				paging.setTotalSize(contentSize);
+				currentPage = paging.getActivePage() + 1;
+			}
+
+			//
+			if (currentPage < 1)
+			{
+				currentPage = 1;
+			}
+			else if (currentPage > totalPages)
+			{
+				// Set to last page if it exceeds totalPages
+				currentPage = totalPages;
+			}
+
+			// Assign the start and end index for the current page
+			int startIndex = (currentPage - 1) * contentPerPage;
+			int endIndex = Math.min(startIndex + contentPerPage, contentSize);
+
+			// Iteration of component renderer
+			for (int i = startIndex; i < endIndex; i++)
+			{
+				ContentDetail contentDetail = contentItems.get(i);
 				I_DMS_Version version = contentDetail.getVersion();
 				I_DMS_Association association = contentDetail.getAssociation();
 				isContentActive = (version != null && association != null && contentDetail.getContent().isActive() && association.isActive());
@@ -147,8 +230,9 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 					isContentActive = association.isActive();
 
 				//
-				createComponent(rows, contentDetail, compWidth, compHeight);
+				createComponent(rows, contentDetail, compWidth, compHeight, startIndex == i);
 			}
+
 		}
 	} // renderZK
 
@@ -192,6 +276,10 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 			// Remove downloaded set in sorting event
 			Events.sendEvent(new Event(DMSConstant.EVENT_ON_SELECTION_CHANGE, (Component) listener, Boolean.FALSE));
+		}
+		else if (event.getName().equals("onPaging"))
+		{
+			renderZK();
 		}
 	} // onEvent
 
@@ -242,9 +330,24 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		isSortedAsc = sortType;
 		isSorted = true;
 
+		//
+		doSorting(sortedColumn, isSortedAsc);
+
+		//
+		renderZK();
+	} // doSortGridColumn
+
+	/**
+	 * Do Sorting operation on the Content list
+	 * 
+	 * @param sortingColumn - Sorting Column or Attribute name
+	 * @param isSortingAsc  - Order of sorting ASC/DESC
+	 */
+	public void doSorting(String sortingColumn, boolean isSortingAsc)
+	{
 		// Implement comparator for sorting based on column and ascending/descending
 		Comparator<ContentDetail> comparator = null;
-		switch (sortedColumn)
+		switch (sortingColumn)
 		{
 			case DMSConstant.ATTRIB_NAME:
 				comparator = Comparator.comparing(ContentDetail::getName);
@@ -254,6 +357,9 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 				break;
 			case DMSConstant.ATTRIB_SIZE:
 				comparator = Comparator.comparing(ContentDetail::getSize);
+				break;
+			case DMSConstant.ATTRIB_CREATED:
+				comparator = Comparator.comparing(ContentDetail::getCreated);
 				break;
 			case DMSConstant.ATTRIB_UPDATED:
 				comparator = Comparator.comparing(ContentDetail::getUpdated);
@@ -273,14 +379,11 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 		if (comparator != null)
 		{
-			if (isSortedAsc)
+			if (isSortingAsc)
 				contentItems.sort(comparator);
 			else
 				contentItems.sort(comparator.reversed());
 		}
-
-		//
-		renderZK();
-	} // doSortGridColumn
+	} // doSorting
 
 }

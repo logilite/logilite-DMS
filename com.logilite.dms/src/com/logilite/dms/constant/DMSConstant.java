@@ -41,6 +41,7 @@ public final class DMSConstant
 	public static final String				DMS_ZK_MAX_UPLOAD_SIZE					= "DMS_ZK_MAX_UPLOAD_SIZE";
 	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
 	public static final String				DMS_ALLOW_THUMBNAIL_CREATION			= "DMS_ALLOW_THUMBNAIL_CREATION";
+	public static final String				DMS_EXPLORER_CONTENT_PAGE_SIZE			= "DMS_EXPLORER_CONTENT_PAGE_SIZE";
 
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
@@ -69,10 +70,13 @@ public final class DMSConstant
 	public static final String				ATTRIB_NAME								= "ATTR_NAME";
 	public static final String				ATTRIB_SIZE								= "ATTR_SIZE";
 	public static final String				ATTRIB_LINK								= "ATTR_LINK";
+	public static final String				ATTRIB_CREATED							= "ATTR_CREATED";
 	public static final String				ATTRIB_UPDATED							= "ATTR_UPDATED";
 	public static final String				ATTRIB_FIELDTYPE						= "ATTR_FIELDTYPE";
 	public static final String				ATTRIB_MODIFIEDBY						= "ATTR_MODIFIEDBY";
 	public static final String				ATTRIB_CONTENT_TYPE						= "ATTR_CONTENT_TYPE";
+
+	public static final String				ATTRIB_PAGING_MOVE_TO_FIRST_PAGE		= "PagingMoveToFirstPage";
 
 	// View thumbnail toggle action
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
@@ -177,6 +181,7 @@ public final class DMSConstant
 	public static final String				MSG_SELECT_FILE							= Msg.getMsg(Env.getCtx(), "SelectFile");
 	public static final String				MSG_ATTRIBUTE_SET						= Msg.getMsg(Env.getCtx(), "attribute.set");
 	public static final String				MSG_DOCUMENT_VIEW						= Msg.getMsg(Env.getCtx(), "DocumentView");
+	public static final String				MSG_DMS_BULK_UPLOAD						= "DMSBulkUploadMsg";
 	public static final String				MSG_OWNER								= "Owner ";
 	public static final String				MSG_SIZE								= "Size";
 	public static final String				MSG_LINK								= "Link";
@@ -204,6 +209,7 @@ public final class DMSConstant
 	public static final String				TTT_UPLOAD_VERSION						= "Upload Version";
 	public static final String				TTT_PREVIOUS_RECORD						= "Previous Record";
 	public static final String				TTT_DISPLAYS_ITEMS_LAYOUT				= "Displays items Layout";
+	public static final String				TTT_CONTENT_SORTING						= "Content Sorting";
 
 	// Contents Type
 	public static final String				CONTENT_FILE							= "File";
@@ -333,20 +339,21 @@ public final class DMSConstant
 																						+ " ORDER BY DMS_Association_ID													";
 
 	public static final String				SQL_GET_CONTENT_DIR_LEVEL_WISE			= " WITH ContentAssociation AS ( 																										"
-																						+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, c.ContentBasetype, a.DMS_Association_ID, a.DMS_AssociationType_ID,		"
-																						+ " 			c.DMS_ContentType_ID, a.AD_Table_ID, a.Record_ID 																	"
+																						+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, a.DMS_AssociationType_ID, c.DMS_ContentType_ID	"
+//																						+ " 			, c.ContentBasetype, a.AD_Table_ID, a.Record_ID 																	"
 																						+ " 	FROM 	DMS_Association a 																									"
 																						+ " 	JOIN 	DMS_Content c 			ON ( c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) 										"
 																						+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.DMS_Content_Related_ID, 0) = ? 														"
 																						+ " ), 																																"
 																						+ " VersionList AS ( 																												"
-																						+ " 	SELECT 	vr.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0) AS AD_Table_ID, 		"
-																						+ "				NVL(a.Record_ID, 0) AS Record_ID, MAX(vr.SeqNo) AS SeqNo 															"
+																						+ " 	SELECT 	vr.DMS_Content_ID, a.DMS_Content_Related_ID, MAX(vr.SeqNo) AS SeqNo													"
+//																						+ "				, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0) AS AD_Table_ID, NVL(a.Record_ID, 0) AS Record_ID					"
 																						+ " 	FROM 	DMS_Association a 																									"
 																						+ "		JOIN 	ContentAssociation ca 	ON ( ca.DMS_Content_ID = a.DMS_Content_Related_ID OR ca.DMS_Content_Related_ID = a.DMS_Content_Related_ID ) "
 																						+ "		JOIN 	DMS_Version vr 			ON ( vr.DMS_Content_ID = ca.DMS_Content_ID AND vr.IsActive='Y' )							"
-																						+ " 	WHERE 	a.AD_Client_ID=? AND NVL(a.DMS_Content_Related_ID, 0)=? AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001, 1000002, 1000003)"
-																						+ " 	GROUP BY vr.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0), NVL(a.Record_ID, 0) 	"
+																						+ " 	WHERE 	a.AD_Client_ID=? AND NVL(a.DMS_Content_Related_ID, 0) = ? AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001, 1000002, 1000003)	"
+																						+ " 	GROUP BY vr.DMS_Content_ID, a.DMS_Content_Related_ID																		"
+//																						+ "				, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0), NVL(a.Record_ID, 0) 												"
 																						+ " ) 																																"
 																						+ " SELECT  DISTINCT																												"
 																						+ "			NVL(a.DMS_Content_ID, 			c.DMS_Content_ID) 			AS DMS_Content_ID, 											"
@@ -359,7 +366,7 @@ public final class DMSConstant
 																						+ " LEFT JOIN 	DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID = c.DMS_Content_Related_ID "
 																						+ "										AND NVL(a.DMS_AssociationType_ID, 0) = NVL(c.DMS_AssociationType_ID, 0))					"
 																						+ " LEFT JOIN 	DMS_Version vrs 	ON (vrs.DMS_Content_ID = c.DMS_Content_ID AND vrs.SeqNo = NVL(v.SeqNo, 0))  					"
-																						+ " WHERE 		(NVL(c.DMS_Content_Related_ID,0) = ?) 																				";
+																						+ " WHERE 		NVL(c.DMS_Content_Related_ID, 0) = ? 																				";
 
 	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL		= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "");
 
@@ -369,38 +376,62 @@ public final class DMSConstant
 	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace(	"#IsActive#",
 																																"AND c.IsActive='N' AND a.IsActive='N'");
 
+	/**
+	 * Improve Performance of Content ID search
+	 * If Content ID is more than zero replace Coalesce of a.DMS_Content_Related_ID of Filter
+	 * 
+	 * @param  sql       - SQL related of Content Directory level wise
+	 * @param  contentID - Content ID
+	 * @return           optimize Content SQL
+	 */
+	public static String optimizeContentSQL(String sql, int contentID)
+	{
+		if (contentID > 0)
+		{
+			/*
+			 * Replace below condition for performance improvement
+			 * FROM: NVL(c.DMS_Content_Related_ID, 0) = ?
+			 * TO : c.DMS_Content_Related_ID = ?
+			 */
+			sql = sql.replaceAll("NVL\\(a\\.DMS_Content_Related_ID, 0\\) = \\?", "a.DMS_Content_Related_ID = ?");
+			sql = sql.replaceAll("NVL\\(c\\.DMS_Content_Related_ID, 0\\) = \\?", "c.DMS_Content_Related_ID = ?");
+		}
+
+		return sql;
+	}
+
 	// Restrict copy paste while parent directory copy paste into itself or it's child directory.
-	public static String					SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY	= " WITH RECURSIVE ContentHierarchy AS "
-																						+ " (	SELECT DMS_Content_ID,DMS_Content_Related_ID FROM DMS_Association "
-																						+ "		WHERE  AD_Client_ID = ? AND DMS_Content_ID = ? "
-																						+ "	 UNION"
-																						+ "		SELECT a.DMS_Content_ID, a.DMS_Content_Related_ID FROM DMS_Association a "
-																						+ " 	JOIN ContentHierarchy h ON (h.DMS_Content_Related_ID = a.DMS_Content_ID)"
-																						+ " ) SELECT DMS_Content_ID FROM ContentHierarchy WHERE DMS_Content_ID = ? ";
+	public static String		SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY	= " WITH RECURSIVE ContentHierarchy AS 												"
+																			+ " (	SELECT DMS_Content_ID,DMS_Content_Related_ID FROM DMS_Association 		"
+																			+ "		WHERE  AD_Client_ID = ? AND DMS_Content_ID = ? 							"
+																			+ "	 UNION																		"
+																			+ "		SELECT a.DMS_Content_ID, a.DMS_Content_Related_ID FROM DMS_Association a"
+																			+ " 	JOIN ContentHierarchy h ON (h.DMS_Content_Related_ID = a.DMS_Content_ID)"
+																			+ " ) SELECT DMS_Content_ID FROM ContentHierarchy WHERE DMS_Content_ID = ? 		";
 
 	/*
 	 * Access & Permission
 	 */
 
 	// Content Type wise access
-	public static final String				SQL_GET_CONTENT_ON_CONTENTTYPE_ACCESS	= "SELECT c.DMS_Content_ID FROM DMS_Content c "
-																						+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
-																						+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) ";
+	public static final String	SQL_GET_CONTENT_ON_CONTENTTYPE_ACCESS	= "SELECT c.DMS_Content_ID FROM DMS_Content c 																		"
+																			+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
+																			+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) 			";
 
-	public static final String				SQL_GET_TOOLBAR_BUTTON_ID				= "SELECT AD_ToolbarButton_ID FROM AD_ToolBarButton WHERE AD_Client_ID IN (0, ?) AND Name = ?";
+	public static final String	SQL_GET_TOOLBAR_BUTTON_ID				= "SELECT AD_ToolbarButton_ID FROM AD_ToolBarButton WHERE AD_Client_ID IN (0, ?) AND Name = ?	";
 
 	// Count the permission entries per content wise
-	public static final String				SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ?  AND IsActive = 'Y'";
+	public static final String	SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ? AND IsActive = 'Y' 				";
 
 	// User permission wise access
-	public static final String				SQL_GET_PERMISSION_ID_FROM_CONTENT		= "SELECT DMS_Permission_ID FROM DMS_Permission 	WHERE DMS_Content_ID = ? AND IsActive = 'Y'			"
-																						+ "	AND ( 	COALESCE(AD_Role_ID, 0) = ? OR COALESCE(AD_User_ID, 0) = ? OR IsAllPermission = 'Y' )	"
-																						+ "	ORDER BY IsAllPermission DESC, IsNavigation, COALESCE(AD_Role_ID, 0), COALESCE(AD_User_ID, 0)	";
+	public static final String	SQL_GET_PERMISSION_ID_FROM_CONTENT		= "SELECT DMS_Permission_ID FROM DMS_Permission 	WHERE DMS_Content_ID = ? AND IsActive = 'Y'			"
+																			+ "	AND ( 	COALESCE(AD_Role_ID, 0) = ? OR COALESCE(AD_User_ID, 0) = ? OR IsAllPermission = 'Y' )	"
+																			+ "	ORDER BY IsAllPermission DESC, IsNavigation, COALESCE(AD_Role_ID, 0), COALESCE(AD_User_ID, 0)	";
 	// Parent content ID from child content and non mounting
-	public static final String				SQL_GET_PARENT_CONTENT_ID_NON_MOUNTING	= "SELECT a.DMS_Content_Related_ID 		FROM DMS_Content c																"
-																						+ " INNER JOIN DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID IS NOT NULL"
-																						+ "								 			AND COALESCE(a.DMS_AssociationType_ID, 0) IN (0, 1000001))				"
-																						+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N') 		"
-																						+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
+	public static final String	SQL_GET_PARENT_CONTENT_ID_NON_MOUNTING	= "SELECT a.DMS_Content_Related_ID 		FROM DMS_Content c																"
+																			+ " INNER JOIN DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID IS NOT NULL"
+																			+ "								 			AND COALESCE(a.DMS_AssociationType_ID, 0) IN (0, 1000001))				"
+																			+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N') 		"
+																			+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
 
 }

@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,11 +95,11 @@ public class DMSSearchUtils
 			String sql = "";
 
 			if (DMSConstant.DOCUMENT_VIEW_ALL_VALUE.equalsIgnoreCase(documentView))
-				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL;
+				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL, contentID);
 			else if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE;
+				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE, contentID);
 			else
-				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE;
+				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE, contentID);
 
 			int i = 1;
 			pstmt = DB.prepareStatement(sql, null);
@@ -143,13 +144,17 @@ public class DMSSearchUtils
 	 * @param  documentView
 	 * @return              Map of Content with Association
 	 */
-	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, int tableID, int recordID,
-																						MDMSContent content, String documentView)
+	public static HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	DMS dms, String searchText, HashMap<String, List<Object>> queryParamas,
+																						int tableID, int recordID, MDMSContent content, String documentView)
 	{
-		String query = dms.getIndexQueryBuilder().getGenericSearchedContentQuery(searchText, dms.AD_Client_ID, content, tableID, recordID, documentView);
+		// Build Search Query
+		String queryGeneric = dms.getIndexQueryBuilder().getGenericSearchContentQuery(searchText, dms.AD_Client_ID, content, tableID, recordID, documentView);
+		String queryParams = dms.buildSearchQueryFromMap(queryParamas);
 
-		//
-		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query));
+		if (!Util.isEmpty(queryParams, true))
+			queryGeneric += " AND " + queryParams;
+
+		return searchUtility(queryGeneric, dms, content, tableID, recordID, documentView);
 	} // getGenericSearchedContent
 
 	/**
@@ -167,11 +172,33 @@ public class DMSSearchUtils
 																					int tableID, int recordID, String documentView)
 	{
 		String query = dms.buildSearchQueryFromMap(queryParamas);
-		query = dms.getIndexQueryBuilder().appendCriteria(query, dms.AD_Client_ID, content, tableID, recordID, documentView);
+
+		return searchUtility(query, dms, content, tableID, recordID, documentView);
+	} // renderSearchedContent
+
+	/**
+	 * @param  query        Search Query
+	 * @param  dms          DMS Object
+	 * @param  content      DMS Content
+	 * @param  tableID      Table ID
+	 * @param  recordID     Record ID
+	 * @param  documentView 0Document View
+	 * @return
+	 */
+	private static HashMap<I_DMS_Version, I_DMS_Association> searchUtility(	String query, DMS dms, MDMSContent content, int tableID, int recordID,
+																			String documentView)
+	{
+		ArrayList<String> qList = dms.getIndexQueryBuilder().addCommonCriteria(query, dms.AD_Client_ID, content, tableID, recordID, documentView);
+
+		// Data searched from Indexing server
+		HashSet<Integer> contentID = dms.searchIndex(qList.get(0));
+
+		// Apply content hierarchical filter if query string length are more
+		applyFilterContentIDCheckIfMoreSize(qList, contentID);
 
 		//
-		return DMSSearchUtils.fillSearchedContentMap(dms.searchIndex(query));
-	} // renderSearchedContent
+		return DMSSearchUtils.fillSearchedContentMap(contentID);
+	} // searchUtility
 
 	/**
 	 * Build Hierarchical Content Condition for searching
@@ -332,7 +359,7 @@ public class DMSSearchUtils
 	public static IIndexSearcher getIndexSearcher(int AD_Client_ID)
 	{
 		IIndexSearcher idxSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
-		if (!isIndexingInitiated)
+		if (!isIndexingInitiated && idxSearcher.getClass().toString().contains("SolrIndexSearcher"))
 		{
 			// TODO Require to refactor for solr related things
 
@@ -464,7 +491,7 @@ public class DMSSearchUtils
 		if (parentContent != null)
 			contentID = parentContent.getDMS_Content_ID();
 
-		StringBuffer sql = new StringBuffer(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE);
+		StringBuffer sql = new StringBuffer(DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE, contentID));
 		if (contentTypeID > 0)
 			sql.append(" AND c.DMS_ContentType_ID = ").append(contentTypeID);
 		if (associationTypeID > 0)
@@ -622,5 +649,32 @@ public class DMSSearchUtils
 	{
 		return new FileContentExtract(file).getParsedDocumentContent();
 	} // getParseDocumentContent
+
+	/**
+	 * Do filter on searched result if ContentIDs List are too long [ More than 7K characters ]
+	 * 
+	 * @param qList     - Query List
+	 * @param contentID - Set of Searched ContentIDs
+	 */
+	private static void applyFilterContentIDCheckIfMoreSize(ArrayList<String> qList, HashSet<Integer> contentID)
+	{
+		/*
+		 * When search query having more no of contentIDs and its length more than 7K characters
+		 * then only checked resulted contentID with query part.
+		 * Reference:
+		 * com.logilite.dms.querybuildsolr.service.SolrIndexQueryBuilder.commonSearch() method
+		 */
+		if (qList.size() > 1 && !Util.isEmpty(qList.get(1)))
+		{
+			String queryContentIDs = qList.get(1);
+			Iterator<Integer> cntIterator = contentID.iterator();
+			while (cntIterator.hasNext())
+			{
+				Integer cntID = (Integer) cntIterator.next();
+				if (!queryContentIDs.contains(cntID.toString()))
+					cntIterator.remove();
+			}
+		}
+	} // applyFilterContentIDCheckIfMoreSize
 
 }

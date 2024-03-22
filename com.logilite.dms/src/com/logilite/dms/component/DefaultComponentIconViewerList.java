@@ -63,7 +63,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight)
+	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage)
 	{
 		I_DMS_Version version = contentDetail.getVersion();
 

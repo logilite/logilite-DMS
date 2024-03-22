@@ -131,6 +131,10 @@ public class DMSOprUtils
 		{
 			content.setIsActive(isActive);
 			content.saveEx(trxName);
+
+			// Update Version too
+			DB.executeUpdate(	"UPDATE DMS_Version SET IsActive = ? WHERE DMS_Content_ID = ? ",
+								new Object[] { (isActive ? "Y" : "N"), content.getDMS_Content_ID() }, true, trxName);
 		}
 	} // setContentAndAssociationInActive
 

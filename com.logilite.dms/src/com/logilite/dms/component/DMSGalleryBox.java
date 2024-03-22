@@ -176,7 +176,7 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 		String[] eventsList = new String[] { Events.ON_CLICK, Events.ON_SELECT };
 		DefaultComponentIconViewerGallery viewerComponent = (DefaultComponentIconViewerGallery) DMSFactoryUtils.getDMSComponentViewer(DMSConstant.ICON_VIEW_GALLERY);
 		viewerComponent.init(	dms, mapPerFiltered, gridGalleryViewer, DMSConstant.CONTENT_GALLERY_ICON_WIDTH, DMSConstant.CONTENT_GALLERY_ICON_HEIGHT, this,
-								eventsList);
+								eventsList, null);
 
 		gridGalleryViewer.setVisible(!mapPerFiltered.isEmpty());
 	} // renderViewer
