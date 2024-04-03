@@ -5,6 +5,7 @@ import java.util.logging.Level;
 
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MClient;
+import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.ModelValidator;
@@ -20,6 +21,7 @@ import com.logilite.dms.factories.IPermissionManager;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.DMSSearchUtils;
+import com.logilite.dms.util.Utils;
 
 public class DMSModelValidator implements ModelValidator
 {
@@ -108,7 +110,7 @@ public class DMSModelValidator implements ModelValidator
 					@Override
 					public void afterCommit(Trx trx, boolean success)
 					{
-						if (success)
+						if (success && Utils.isAllowAutoCreateIndex())
 						{
 							// Prevent to fire multiple time event for the same document indexing
 							boolean isIndexed = DB.getSQLValueBooleanEx(null, "SELECT IsIndexed FROM DMS_Version WHERE DMS_Version_ID = ? ",
@@ -164,7 +166,8 @@ public class DMSModelValidator implements ModelValidator
 			MDMSAssociation association = (MDMSAssociation) po;
 			if (MDMSAssociationType.isLink(association)
 				&& association.getDMS_Content().isActive()
-				&& (type == TYPE_AFTER_NEW || association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)))
+				&& (type == TYPE_AFTER_NEW || association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)) 
+				&& Utils.isAllowAutoCreateIndex() )
 			{
 				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 				//
@@ -223,5 +226,4 @@ public class DMSModelValidator implements ModelValidator
 			version.save(content.get_TrxName());
 		}
 	} // doReIndexInAllVersions
-
 }
