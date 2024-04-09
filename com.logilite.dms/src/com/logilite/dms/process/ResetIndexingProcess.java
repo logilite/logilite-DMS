@@ -38,10 +38,11 @@ public class ResetIndexingProcess extends SvrProcess
 {
 
 	public static final String	SQL_GET_ALL_DMS_CONTENT_DOCS	= " SELECT c.DMS_Content_ID, a.DMS_Association_ID												"
-																	+ " FROM DMS_Content c																		"
+																	+ " FROM DMS_Content c							"
+																	+ "LEFT JOIN DMS_ContentType ct ON ct.DMS_ContentType_ID = c.DMS_ContentType_ID\n"
 																	+ " INNER JOIN DMS_Association a	ON (a.DMS_Content_ID = c.DMS_Content_ID  AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001))	"
 																	+ " INNER JOIN DMS_Version v		ON (v.DMS_Content_ID = c.DMS_Content_ID AND v.SeqNo = 0)"
-																	+ " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT' 									";
+																	+ " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT'  AND (ct.DMS_ContentType_ID IS NULL OR ct.IndexCreationDisabled = 'N')								";
 
 	public static final String	SQL_UPDATE_CONTENT_INDEX_FALSE	= "UPDATE DMS_Version v SET IsIndexed='N'	"
 																	+ " WHERE v.DMS_Content_ID IN (SELECT c.DMS_Content_ID FROM DMS_Content c WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=? ";

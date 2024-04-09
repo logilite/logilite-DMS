@@ -5,7 +5,6 @@ import java.util.logging.Level;
 
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MClient;
-import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.ModelValidationEngine;
 import org.compiere.model.ModelValidator;
@@ -101,7 +100,6 @@ public class DMSModelValidator implements ModelValidator
 			 */
 			final MDMSVersion version = (MDMSVersion) po;
 			final MDMSContent content = (MDMSContent) version.getDMS_Content();
-
 			Trx trx = Trx.get(version.get_TrxName(), false);
 			if (trx != null)
 			{
@@ -110,7 +108,7 @@ public class DMSModelValidator implements ModelValidator
 					@Override
 					public void afterCommit(Trx trx, boolean success)
 					{
-						if (success && Utils.isAllowAutoCreateIndex())
+						if (success && !content.getDMS_ContentType().isIndexCreationDisabled() && Utils.isAllowAutoCreateIndex())
 						{
 							// Prevent to fire multiple time event for the same document indexing
 							boolean isIndexed = DB.getSQLValueBooleanEx(null, "SELECT IsIndexed FROM DMS_Version WHERE DMS_Version_ID = ? ",
@@ -164,12 +162,13 @@ public class DMSModelValidator implements ModelValidator
 		{
 			// Index creation for any changes in linkable association
 			MDMSAssociation association = (MDMSAssociation) po;
+			MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 			if (MDMSAssociationType.isLink(association)
 				&& association.getDMS_Content().isActive()
-				&& (type == TYPE_AFTER_NEW || association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)) 
-				&& Utils.isAllowAutoCreateIndex() )
+				&& (type == TYPE_AFTER_NEW || association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive))
+				&& Utils.isAllowAutoCreateIndex()
+				&& !linkContent.getDMS_ContentType().isIndexCreationDisabled())
 			{
-				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 				//
 				DMSSearchUtils.doIndexingInServer(	linkContent, association, MDMSVersion.getLatestVersion(linkContent),
 													DMSConstant.DMS_ASSOCIATION_ID, "" + association.getDMS_Association_ID());
