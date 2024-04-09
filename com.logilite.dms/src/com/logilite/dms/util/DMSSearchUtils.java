@@ -270,75 +270,77 @@ public class DMSSearchUtils
 	public static Map<String, Object> createIndexMap(	IIndexSearcher indexSearcher, I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
 														File file)
 	{
-		if (!content.getDMS_ContentType().isIndexCreationDisabled())
+		if (content.getDMS_ContentType().isIndexCreationDisabled())
 		{
-			Map<String, Object> indexMap = new HashMap<String, Object>();
-			indexMap.put(DMSConstant.DMS_CONTENT_ID, content.getDMS_Content_ID());
-			indexMap.put(DMSConstant.NAME, content.getName().toLowerCase());
-			indexMap.put(DMSConstant.CREATED, content.getCreated());
-			indexMap.put(DMSConstant.UPDATED, content.getUpdated());
-			indexMap.put(DMSConstant.CREATEDBY, content.getCreatedBy());
-			indexMap.put(DMSConstant.UPDATEDBY, content.getUpdatedBy());
-			indexMap.put(DMSConstant.CONTENTTYPE, content.getDMS_ContentType_ID());
-			indexMap.put(DMSConstant.DESCRIPTION,
-					(!Util.isEmpty(content.getDescription(), true) ? content.getDescription().toLowerCase() : null));
-			indexMap.put(DMSConstant.AD_CLIENT_ID, content.getAD_Client_ID());
-			indexMap.put(DMSConstant.SHOW_INACTIVE, !(content.isActive() && association.isActive()));
+			return new HashMap<String, Object>();
+		}
 
-			indexMap.put(DMSConstant.RECORD_ID, association.getRecord_ID());
-			indexMap.put(DMSConstant.AD_TABLE_ID, association.getAD_Table_ID());
-			indexMap.put(DMSConstant.DMS_ASSOCIATION_ID, association.getDMS_Association_ID());
+		//
+		Map<String, Object> indexMap = new HashMap<String, Object>();
+		indexMap.put(DMSConstant.DMS_CONTENT_ID, content.getDMS_Content_ID());
+		indexMap.put(DMSConstant.NAME, content.getName().toLowerCase());
+		indexMap.put(DMSConstant.CREATED, content.getCreated());
+		indexMap.put(DMSConstant.UPDATED, content.getUpdated());
+		indexMap.put(DMSConstant.CREATEDBY, content.getCreatedBy());
+		indexMap.put(DMSConstant.UPDATEDBY, content.getUpdatedBy());
+		indexMap.put(DMSConstant.CONTENTTYPE, content.getDMS_ContentType_ID());
+		indexMap.put(DMSConstant.DESCRIPTION, (!Util.isEmpty(content.getDescription(), true) ? content.getDescription().toLowerCase() : null));
+		indexMap.put(DMSConstant.AD_CLIENT_ID, content.getAD_Client_ID());
+		indexMap.put(DMSConstant.SHOW_INACTIVE, !(content.isActive() && association.isActive()));
 
-			indexMap.put(DMSConstant.VERSION_SEQ_NO, version.getSeqNo());
-			indexMap.put(DMSConstant.DMS_VERSION_ID, version.getDMS_Version_ID());
+		indexMap.put(DMSConstant.RECORD_ID, association.getRecord_ID());
+		indexMap.put(DMSConstant.AD_TABLE_ID, association.getAD_Table_ID());
+		indexMap.put(DMSConstant.DMS_ASSOCIATION_ID, association.getDMS_Association_ID());
 
-			// File Content
-			if (DMSSearchUtils.isAllowDocumentContentSearch() && file != null)
+		indexMap.put(DMSConstant.VERSION_SEQ_NO, version.getSeqNo());
+		indexMap.put(DMSConstant.DMS_VERSION_ID, version.getDMS_Version_ID());
+
+		// File Content
+		if (DMSSearchUtils.isAllowDocumentContentSearch() && file != null)
+		{
+			indexMap.put(DMSConstant.FILE_CONTENT, getParseDocumentContent(file));
+		}
+
+		if (content.getM_AttributeSetInstance_ID() > 0)
+		{
+			PreparedStatement stmt = null;
+			ResultSet rs = null;
+			try
 			{
-				indexMap.put(DMSConstant.FILE_CONTENT, getParseDocumentContent(file));
-			}
+				stmt = DB.prepareStatement(DMSConstant.SQL_GET_ASI_INFO, null);
+				stmt.setInt(1, content.getM_AttributeSetInstance_ID());
+				rs = stmt.executeQuery();
 
-			if (content.getM_AttributeSetInstance_ID() > 0)
-			{
-				PreparedStatement stmt = null;
-				ResultSet rs = null;
-				try
+				if (rs.isBeforeFirst())
 				{
-					stmt = DB.prepareStatement(DMSConstant.SQL_GET_ASI_INFO, null);
-					stmt.setInt(1, content.getM_AttributeSetInstance_ID());
-					rs = stmt.executeQuery();
-
-					if (rs.isBeforeFirst())
+					while (rs.next())
 					{
-						while (rs.next())
-						{
-							String fieldName = getIndexFieldName("ASI_" + rs.getString("Name"));
+						String fieldName = getIndexFieldName("ASI_" + rs.getString("Name"));
 
-							if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate) != null)
-								indexMap.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate));
-							else if (rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber) > 0)
-								indexMap.put(fieldName, rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber));
-							else if (!Util.isEmpty(rs.getString(MAttributeInstance.COLUMNNAME_Value), true))
-								indexMap.put(fieldName, rs.getString(MAttributeInstance.COLUMNNAME_Value));
-						}
+						if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate) != null)
+							indexMap.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate));
+						else if (rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber) > 0)
+							indexMap.put(fieldName, rs.getDouble(MAttributeInstance.COLUMNNAME_ValueNumber));
+						else if (!Util.isEmpty(rs.getString(MAttributeInstance.COLUMNNAME_Value), true))
+							indexMap.put(fieldName, rs.getString(MAttributeInstance.COLUMNNAME_Value));
 					}
 				}
-				catch (SQLException e)
-				{
-					log.log(Level.SEVERE, "ASI fetching failure.", e);
-					throw new AdempiereException("ASI fetching failure." + e.getLocalizedMessage());
-				}
-				finally
-				{
-					DB.close(rs, stmt);
-					rs = null;
-					stmt = null;
-				}
 			}
-
-			return indexMap;
+			catch (SQLException e)
+			{
+				log.log(Level.SEVERE, "ASI fetching failure.", e);
+				throw new AdempiereException("ASI fetching failure." + e.getLocalizedMessage());
+			}
+			finally
+			{
+				DB.close(rs, stmt);
+				rs = null;
+				stmt = null;
+			}
 		}
-		return null;
+
+		return indexMap;
+
 	} // createIndexMap
 
 	public static String getIndexFieldName(String columnName)
