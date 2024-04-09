@@ -42,7 +42,7 @@ public final class DMSConstant
 	public static final String				DMS_THUMBNAILS_SIZES					= "DMS_THUMBNAILS_SIZES";
 	public static final String				DMS_ALLOW_THUMBNAIL_CREATION			= "DMS_ALLOW_THUMBNAIL_CREATION";
 	public static final String				DMS_EXPLORER_CONTENT_PAGE_SIZE			= "DMS_EXPLORER_CONTENT_PAGE_SIZE";
-	public static final String 				DMS_ALLOW_AUTO_CREATE_INDEX				= "DMS_ALLOW_AUTO_CREATE_INDEX";
+	public static final String				DMS_ALLOW_AUTO_CREATE_INDEX				= "DMS_ALLOW_AUTO_CREATE_INDEX";
 
 	// Role table
 	public static final String				COLUMNNAME_IS_DMS_ADMIN					= "IsDMSAdmin";
@@ -235,7 +235,7 @@ public final class DMSConstant
 	public static final SimpleDateFormat	SDF										= new SimpleDateFormat("yyyy-MM-dd hh:mm z");
 	public static final SimpleDateFormat	SDF_NO_SPACE							= new SimpleDateFormat("yyyyMMdd_hhmmssSSS");
 	public static final SimpleDateFormat	SDF_WITH_TIME							= new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
-	public static final SimpleDateFormat	SDF_DATE_FORMAT_WITH_TIME				= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	public static final SimpleDateFormat	SDF_UTC_DATE_FORMAT_WITH_TIME			= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	public static final SimpleDateFormat	SDF_WITH_TIME_INDEXING					= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
 	/*

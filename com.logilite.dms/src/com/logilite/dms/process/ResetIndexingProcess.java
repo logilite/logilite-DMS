@@ -56,7 +56,7 @@ public class ResetIndexingProcess extends SvrProcess
 	private boolean				isAllReIndex					= false;
 
 	private String				p_isIndexed						= null;
-	private String				whereCreatedRange;
+	private String				whereCreatedRange				= " AND TO_CHAR(c.Created, 'YYYY-MM-DD')::date ";
 
 	@Override
 	protected void prepare()
@@ -65,7 +65,7 @@ public class ResetIndexingProcess extends SvrProcess
 		for (int i = 0; i < para.length; i++)
 		{
 			String name = para[i].getParameterName();
-			if (para[i].getParameter() == null)
+			if (para[i].getParameter() == null && para[i].getParameter_To() == null)
 				;
 			else if ("IsIndexed".equals(name))
 			{
@@ -115,17 +115,17 @@ public class ResetIndexingProcess extends SvrProcess
 		}
 		else if (p_createdFrom != null && p_createdTo != null)
 		{
-			whereCreatedRange = " AND c.Created BETWEEN " + DB.TO_DATE(p_createdFrom) + " AND " + DB.TO_DATE(p_createdTo);
+			whereCreatedRange += " BETWEEN " + DB.TO_DATE(p_createdFrom) + " AND " + DB.TO_DATE(p_createdTo);
 			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, p_createdFrom, p_createdTo, params);
 		}
 		else if (p_createdFrom != null && p_createdTo == null)
 		{
-			whereCreatedRange = " AND c.Created >= " + DB.TO_DATE(p_createdFrom);
+			whereCreatedRange += " >= " + DB.TO_DATE(p_createdFrom);
 			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, p_createdFrom, "*", params);
 		}
 		else if (p_createdFrom == null && p_createdTo != null)
 		{
-			whereCreatedRange = " AND c.Created <= " + DB.TO_DATE(p_createdTo);
+			whereCreatedRange += " <= " + DB.TO_DATE(p_createdTo);
 			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, "*", p_createdTo, params);
 		}
 

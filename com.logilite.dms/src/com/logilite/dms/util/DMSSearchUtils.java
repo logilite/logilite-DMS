@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -629,15 +630,28 @@ public class DMSSearchUtils
 	{
 		ArrayList<Object> value = new ArrayList<Object>();
 
+		//
 		if (data instanceof Date || data instanceof Timestamp)
-			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data));
+		{
+			value.add(DMSConstant.SDF_UTC_DATE_FORMAT_WITH_TIME.format(data));
+		}
 		else if (data != null)
+		{
 			value.add(data);
+		}
 
 		if (data2 instanceof Date || data2 instanceof Timestamp)
-			value.add(DMSConstant.SDF_DATE_FORMAT_WITH_TIME.format(data2));
+		{
+			Calendar cal = Calendar.getInstance();
+			cal.setTime((Date) data2);
+			cal.add(Calendar.DATE, 1);
+			cal.add(Calendar.MILLISECOND, -1);
+			value.add(DMSConstant.SDF_UTC_DATE_FORMAT_WITH_TIME.format(cal.getTime()));
+		}
 		else if (data2 != null)
+		{
 			value.add(data2);
+		}
 
 		params.put(searchAttributeName, value);
 	} // setSearchParams

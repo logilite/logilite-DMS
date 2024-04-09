@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MClientInfo;
@@ -123,6 +124,9 @@ public class DMS
 			//
 			permissionManager = DMSFactoryUtils.getPermissionFactory();
 		}
+
+		//
+		DMSConstant.SDF_UTC_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
 	} // Constructor
 
 	/**

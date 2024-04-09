@@ -771,8 +771,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_sort_fileType.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_FIELDTYPE);
 		mnu_sort_contentType.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_CONTENT_TYPE);
 
-		//
-		// DMSConstant.SDF_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
 		addRootBreadCrumb();
 	}
 
