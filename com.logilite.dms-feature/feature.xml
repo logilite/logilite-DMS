@@ -2,7 +2,7 @@
 <feature
       id="com.logilite.dms.feature"
       label="dms-feature"
-      version="9.1.0.qualifier"
+      version="9.2.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
@@ -124,28 +124,11 @@
          version="0.0.0"
          unpack="false"/>
 
-    <plugin
+   <plugin
          id="com.logilite.dms.querybuildsolr"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-
-<!--
-   <plugin
-         id="com.logilite.esignature.topaz"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="com.logilite.esignature.topaztheme"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         fragment="true"
-         unpack="false"/>
---> 
 
 </feature>
