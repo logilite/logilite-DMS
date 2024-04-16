@@ -13,7 +13,7 @@ import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.editor.WSearchEditor;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
@@ -163,8 +163,7 @@ public class WUpdateOwner extends Window implements EventListener<Event>
 					};
 
 					// Grant same permission for the child content documents?
-					FDialog.ask("Grant permission for the child content?", 0, this, "GrantPermissionToChildContent?",
-								callbackConfirmation);
+					Dialog.ask("Grant permission for the child content?", 0, "GrantPermissionToChildContent?", callbackConfirmation);
 				}
 				else
 				{
@@ -174,7 +173,7 @@ public class WUpdateOwner extends Window implements EventListener<Event>
 			}
 			else
 			{
-				FDialog.error(0, newOwner.getComponent(), "Please update the new owner...!!!");
+				Dialog.error(0, "Please update the new owner...!!!");
 			}
 		}
 	}
