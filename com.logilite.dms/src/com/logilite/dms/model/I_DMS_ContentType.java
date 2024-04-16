@@ -1,16 +1,19 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP								  *
- * This program is free software; you can redistribute it and/or modify it    *
+ * Product: iDempiere ERP & CRM Smart Business Solution                       *
+ * Copyright (C) 1999-2012 ComPiere, Inc. All Rights Reserved.                *
+ * This program is free software, you can redistribute it and/or modify it    *
  * under the terms version 2 of the GNU General Public License as published   *
  * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * that it will be useful, but WITHOUT ANY WARRANTY, without even the implied *
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
  * See the GNU General Public License for more details.                       *
  * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * with this program, if not, write to the Free Software Foundation, Inc.,    *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * For the text or an alternative of this public license, you may reach us    *
+ * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
+ * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
-
 package com.logilite.dms.model;
 
 import java.math.BigDecimal;
@@ -20,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for DMS_ContentType
  *  @author iDempiere (generated) 
- *  @version Release 3.1
+ *  @version Release 7.1
  */
 @SuppressWarnings("all")
 public interface I_DMS_ContentType 
@@ -103,6 +106,15 @@ public interface I_DMS_ContentType
 	  */
 	public int getDMS_ContentType_ID();
 
+    /** Column name DMS_ContentType_UU */
+    public static final String COLUMNNAME_DMS_ContentType_UU = "DMS_ContentType_UU";
+
+	/** Set DMS_ContentType_UU	  */
+	public void setDMS_ContentType_UU (String DMS_ContentType_UU);
+
+	/** Get DMS_ContentType_UU	  */
+	public String getDMS_ContentType_UU();
+
     /** Column name Icon_ID */
     public static final String COLUMNNAME_Icon_ID = "Icon_ID";
 
@@ -111,6 +123,19 @@ public interface I_DMS_ContentType
 
 	/** Get Icon	  */
 	public int getIcon_ID();
+
+    /** Column name IndexCreationDisabled */
+    public static final String COLUMNNAME_IndexCreationDisabled = "IndexCreationDisabled";
+
+	/** Set Prevent To Create Index?.
+	  * If this flag is set to Y, the index will not be created automatically, nor will it be created by using Reset Indexing Process
+	  */
+	public void setIndexCreationDisabled (boolean IndexCreationDisabled);
+
+	/** Get Prevent To Create Index?.
+	  * If this flag is set to Y, the index will not be created automatically, nor will it be created by using Reset Indexing Process
+	  */
+	public boolean isIndexCreationDisabled();
 
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";

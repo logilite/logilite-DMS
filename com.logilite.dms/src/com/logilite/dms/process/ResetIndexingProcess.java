@@ -37,11 +37,12 @@ import com.logilite.search.factory.ServiceUtils;
 public class ResetIndexingProcess extends SvrProcess
 {
 
-	public static final String	SQL_GET_ALL_DMS_CONTENT_DOCS	= " SELECT c.DMS_Content_ID, a.DMS_Association_ID												"
-																	+ " FROM DMS_Content c																		"
+	public static final String	SQL_GET_ALL_DMS_CONTENT_DOCS	= " SELECT c.DMS_Content_ID, a.DMS_Association_ID											"
+																	+ " FROM DMS_Content c																	"
+																	+ " LEFT  JOIN DMS_ContentType ct 	ON (ct.DMS_ContentType_ID = c.DMS_ContentType_ID) 	"
 																	+ " INNER JOIN DMS_Association a	ON (a.DMS_Content_ID = c.DMS_Content_ID  AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001))	"
 																	+ " INNER JOIN DMS_Version v		ON (v.DMS_Content_ID = c.DMS_Content_ID AND v.SeqNo = 0)"
-																	+ " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT' 									";
+																	+ " WHERE c.AD_Client_ID = ? AND c.ContentBaseType = 'CNT'  AND (ct.DMS_ContentType_ID IS NULL OR ct.IndexCreationDisabled = 'N')								";
 
 	public static final String	SQL_UPDATE_CONTENT_INDEX_FALSE	= "UPDATE DMS_Version v SET IsIndexed='N'	"
 																	+ " WHERE v.DMS_Content_ID IN (SELECT c.DMS_Content_ID FROM DMS_Content c WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=? ";
@@ -56,7 +57,7 @@ public class ResetIndexingProcess extends SvrProcess
 	private boolean				isAllReIndex					= false;
 
 	private String				p_isIndexed						= null;
-	private String				whereCreatedRange;
+	private String				whereCreatedRange				= " AND TO_CHAR(c.Created, 'YYYY-MM-DD')::date ";
 
 	@Override
 	protected void prepare()
@@ -65,7 +66,7 @@ public class ResetIndexingProcess extends SvrProcess
 		for (int i = 0; i < para.length; i++)
 		{
 			String name = para[i].getParameterName();
-			if (para[i].getParameter() == null)
+			if (para[i].getParameter() == null && para[i].getParameter_To() == null)
 				;
 			else if ("IsIndexed".equals(name))
 			{
@@ -115,17 +116,17 @@ public class ResetIndexingProcess extends SvrProcess
 		}
 		else if (p_createdFrom != null && p_createdTo != null)
 		{
-			whereCreatedRange = " AND c.Created BETWEEN " + DB.TO_DATE(p_createdFrom) + " AND " + DB.TO_DATE(p_createdTo);
+			whereCreatedRange += " BETWEEN " + DB.TO_DATE(p_createdFrom) + " AND " + DB.TO_DATE(p_createdTo);
 			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, p_createdFrom, p_createdTo, params);
 		}
 		else if (p_createdFrom != null && p_createdTo == null)
 		{
-			whereCreatedRange = " AND c.Created >= " + DB.TO_DATE(p_createdFrom);
+			whereCreatedRange += " >= " + DB.TO_DATE(p_createdFrom);
 			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, p_createdFrom, "*", params);
 		}
 		else if (p_createdFrom == null && p_createdTo != null)
 		{
-			whereCreatedRange = " AND c.Created <= " + DB.TO_DATE(p_createdTo);
+			whereCreatedRange += " <= " + DB.TO_DATE(p_createdTo);
 			DMSSearchUtils.setSearchParams(DMSConstant.CREATED, "*", p_createdTo, params);
 		}
 

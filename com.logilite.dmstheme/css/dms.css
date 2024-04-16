@@ -86,7 +86,7 @@
 }
 
 .SB-Grid .z-grid-body {
-	height: 100%;
+	height: calc( 100% - 65px );
 }
 
 .SB-InActive-Content .z-tab-text , .SB-InActive-Content table tr td span, .SB-InActive-Content td span {

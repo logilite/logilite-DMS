@@ -1,16 +1,20 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP								  *
- * This program is free software; you can redistribute it and/or modify it    *
+ * Product: iDempiere ERP & CRM Smart Business Solution                       *
+ * Copyright (C) 1999-2012 ComPiere, Inc. All Rights Reserved.                *
+ * This program is free software, you can redistribute it and/or modify it    *
  * under the terms version 2 of the GNU General Public License as published   *
  * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * that it will be useful, but WITHOUT ANY WARRANTY, without even the implied *
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
  * See the GNU General Public License for more details.                       *
  * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * with this program, if not, write to the Free Software Foundation, Inc.,    *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * For the text or an alternative of this public license, you may reach us    *
+ * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
+ * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
-
+/** Generated Model - DO NOT CHANGE */
 package com.logilite.dms.model;
 
 import java.sql.ResultSet;
@@ -19,14 +23,14 @@ import org.compiere.model.*;
 
 /** Generated Model for DMS_ContentType
  *  @author iDempiere (generated) 
- *  @version Release 3.1 - $Id$ */
+ *  @version Release 7.1 - $Id$ */
 public class X_DMS_ContentType extends PO implements I_DMS_ContentType, I_Persistent 
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20151201L;
+	private static final long serialVersionUID = 20240409L;
 
     /** Standard Constructor */
     public X_DMS_ContentType (Properties ctx, int DMS_ContentType_ID, String trxName)
@@ -35,6 +39,8 @@ public class X_DMS_ContentType extends PO implements I_DMS_ContentType, I_Persis
       /** if (DMS_ContentType_ID == 0)
         {
 			setDMS_ContentType_ID (0);
+			setIndexCreationDisabled (false);
+// N
 			setIsDefault (false);
 			setM_AttributeSet_ID (0);
 			setName (null);
@@ -110,6 +116,20 @@ public class X_DMS_ContentType extends PO implements I_DMS_ContentType, I_Persis
 		return ii.intValue();
 	}
 
+	/** Set DMS_ContentType_UU.
+		@param DMS_ContentType_UU DMS_ContentType_UU	  */
+	public void setDMS_ContentType_UU (String DMS_ContentType_UU)
+	{
+		set_Value (COLUMNNAME_DMS_ContentType_UU, DMS_ContentType_UU);
+	}
+
+	/** Get DMS_ContentType_UU.
+		@return DMS_ContentType_UU	  */
+	public String getDMS_ContentType_UU () 
+	{
+		return (String)get_Value(COLUMNNAME_DMS_ContentType_UU);
+	}
+
 	/** Set Icon.
 		@param Icon_ID Icon	  */
 	public void setIcon_ID (int Icon_ID)
@@ -128,6 +148,30 @@ public class X_DMS_ContentType extends PO implements I_DMS_ContentType, I_Persis
 		if (ii == null)
 			 return 0;
 		return ii.intValue();
+	}
+
+	/** Set Prevent To Create Index?.
+		@param IndexCreationDisabled 
+		If this flag is set to Y, the index will not be created automatically, nor will it be created by using Reset Indexing Process
+	  */
+	public void setIndexCreationDisabled (boolean IndexCreationDisabled)
+	{
+		set_Value (COLUMNNAME_IndexCreationDisabled, Boolean.valueOf(IndexCreationDisabled));
+	}
+
+	/** Get Prevent To Create Index?.
+		@return If this flag is set to Y, the index will not be created automatically, nor will it be created by using Reset Indexing Process
+	  */
+	public boolean isIndexCreationDisabled () 
+	{
+		Object oo = get_Value(COLUMNNAME_IndexCreationDisabled);
+		if (oo != null) 
+		{
+			 if (oo instanceof Boolean) 
+				 return ((Boolean)oo).booleanValue(); 
+			return "Y".equals(oo);
+		}
+		return false;
 	}
 
 	/** Set Default.
