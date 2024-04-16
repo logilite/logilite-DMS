@@ -59,9 +59,9 @@ public class DefaultComponentIconViewerGallery extends AbstractComponentIconView
 	} // setSelection
 
 	@Override
-	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight)
+	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage)
 	{
-		if (row == null)
+		if (row == null || isFirstPage)
 		{
 			row = rows.newRow();
 			row.setSclass("SB-ROW");

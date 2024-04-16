@@ -49,6 +49,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, DMSConstant.ATTRIB_NAME, "35%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, DMSConstant.ATTRIB_CONTENT_TYPE, "12%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, DMSConstant.ATTRIB_SIZE, "10%", "Left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CREATED, DMSConstant.ATTRIB_CREATED, "15%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, DMSConstant.ATTRIB_UPDATED, "15%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, DMSConstant.ATTRIB_FIELDTYPE, "10%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, DMSConstant.ATTRIB_MODIFIEDBY, "10%", "center"));
@@ -63,7 +64,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight)
+	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage)
 	{
 		I_DMS_Version version = contentDetail.getVersion();
 
@@ -83,6 +84,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		Label lblName = new Label(contentDetail.getName());
 		Label lblCType = new Label(contentDetail.getContentTypeName());
 		Label lblSize = new Label(contentDetail.getSize());
+		Label lblCreated = new Label(DMSConstant.SDF.format(new Date(contentDetail.getCreated().getTime())));
 		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(contentDetail.getUpdated().getTime())));
 		Label lblFileType = new Label(contentDetail.getFileType());
 		Label lblModifiedBy = new Label(contentDetail.getModifiedByName());
@@ -96,6 +98,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		row.appendCellChild(hbox);
 		row.appendCellChild(lblCType);
 		row.appendCellChild(lblSize);
+		row.appendCellChild(lblCreated);
 		row.appendCellChild(lblUpdated);
 		row.appendCellChild(lblFileType);
 		row.appendCellChild(lblModifiedBy);

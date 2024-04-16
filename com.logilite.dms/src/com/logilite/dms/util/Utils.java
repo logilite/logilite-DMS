@@ -693,5 +693,14 @@ public class Utils
 
 		return actualNames;
 	} // getMatchingContentList
+	/**
+	 * To check is create index allow or not
+	 * 
+	 * @return if it's false then it will not create index automatically, user need to run reset indexing process to create index 
+	 */
+	public static boolean isAllowAutoCreateIndex()
+	{
+		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_AUTO_CREATE_INDEX, true, Env.getAD_Client_ID(Env.getCtx()));
+	} // isAllowAutoCreateIndex
 
 }

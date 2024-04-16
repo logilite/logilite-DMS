@@ -355,7 +355,7 @@ public class RelationalUUIDUtils
 
 			String sql = "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
 							+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-							+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND da.Record_ID = ? AND dc.Name = ? ";
+							+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND NVL(da.Record_ID, 0) = ? AND dc.Name = ? ";
 
 			if (parentContent == null)
 				sql += "AND dc.ParentURL IS NULL";

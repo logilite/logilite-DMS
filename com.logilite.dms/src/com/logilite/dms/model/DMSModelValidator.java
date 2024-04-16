@@ -16,11 +16,11 @@ import org.compiere.util.Trx;
 import org.compiere.util.TrxEventListener;
 
 import com.logilite.dms.constant.DMSConstant;
-import com.logilite.dms.exception.DMSContentExistException;
 import com.logilite.dms.factories.IPermissionManager;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.DMSSearchUtils;
+import com.logilite.dms.util.Utils;
 
 public class DMSModelValidator implements ModelValidator
 {
@@ -100,7 +100,6 @@ public class DMSModelValidator implements ModelValidator
 			 */
 			final MDMSVersion version = (MDMSVersion) po;
 			final MDMSContent content = (MDMSContent) version.getDMS_Content();
-
 			Trx trx = Trx.get(version.get_TrxName(), false);
 			if (trx != null)
 			{
@@ -109,7 +108,7 @@ public class DMSModelValidator implements ModelValidator
 					@Override
 					public void afterCommit(Trx trx, boolean success)
 					{
-						if (success)
+						if (success && !content.getDMS_ContentType().isIndexCreationDisabled() && Utils.isAllowAutoCreateIndex())
 						{
 							// Prevent to fire multiple time event for the same document indexing
 							int isIndexed = DB.getSQLValue(null, " SELECT "
@@ -164,11 +163,13 @@ public class DMSModelValidator implements ModelValidator
 		{
 			// Index creation for any changes in linkable association
 			MDMSAssociation association = (MDMSAssociation) po;
+			MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 			if (MDMSAssociationType.isLink(association)
 				&& association.getDMS_Content().isActive()
-				&& (type == TYPE_AFTER_NEW || association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive)))
+				&& (type == TYPE_AFTER_NEW || association.is_ValueChanged(MDMSAssociation.COLUMNNAME_IsActive))
+				&& Utils.isAllowAutoCreateIndex()
+				&& !linkContent.getDMS_ContentType().isIndexCreationDisabled())
 			{
-				MDMSContent linkContent = (MDMSContent) association.getDMS_Content();
 				//
 				DMSSearchUtils.doIndexingInServer(	linkContent, association, MDMSVersion.getLatestVersion(linkContent),
 													DMSConstant.DMS_ASSOCIATION_ID, "" + association.getDMS_Association_ID());
@@ -225,5 +226,4 @@ public class DMSModelValidator implements ModelValidator
 			version.save(content.get_TrxName());
 		}
 	} // doReIndexInAllVersions
-
 }

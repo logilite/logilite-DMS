@@ -330,7 +330,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(DMSConstant.ICON_VIEW_VERSION);
 		viewerComponent.init(	dms, contentsMap, versionGrid, DMSConstant.CONTENT_LARGE_ICON_WIDTH - 30, DMSConstant.CONTENT_LARGE_ICON_HEIGHT - 30, this,
-								eventsList);
+								eventsList, null);
 
 	} // initVersionHistory
 

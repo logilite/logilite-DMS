@@ -35,6 +35,10 @@ public class DMS_Context_Util
 	public static void setEditorDefaultValueFromCtx(Properties ctx, int windowNo, int tabNo, int displayType, WEditor editor)
 	{
 		String value = Env.getContext(ctx, windowNo, tabNo, editor.getColumnName(), false, true);
+		if (Util.isEmpty(value, true))
+		{
+			value = Env.getContext(ctx, windowNo, Env.PREFIX_PREDEFINED_VARIABLE + editor.getColumnName());
+		}
 		if (value != null)
 		{
 			editor.setValue(getDataTypeWiseValue(value, displayType, editor.getColumnName()));

@@ -7,12 +7,12 @@ import java.io.IOException;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.compiere.util.CLogger;
 import org.xml.sax.SAXException;
@@ -27,29 +27,29 @@ import org.xml.sax.helpers.DefaultHandler;
 public class FileContentExtract
 {
 
-	public static CLogger	log	= CLogger.getCLogger(FileContentExtract.class);
+	public static CLogger	log				= CLogger.getCLogger(FileContentExtract.class);
 
 	private File			file;
+	private Metadata		metadata;
+	private DefaultHandler	handler;
+	private boolean			isParseHandler	= true;
 
 	public FileContentExtract(File file)
 	{
-		this.file = file;
+		this(file, true);
 	}
 
-	public String getParsedDocumentContent()
+	/**
+	 * @param file
+	 * @param isParseHandler true to enable the parsing of data using the document handler.
+	 */
+	public FileContentExtract(File file, boolean isParseHandler)
 	{
+		this.file = file;
+		this.isParseHandler = isParseHandler;
 		try
 		{
-			Metadata metadata = new Metadata();
-			DefaultHandler handler = new BodyContentHandler(-1);
-			TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
-			AutoDetectParser parser = new AutoDetectParser(tikaConfig);
-			TikaInputStream stream = TikaInputStream.get(new FileInputStream(file));
-
-			parser.parse(stream, handler, metadata, new ParseContext());
-			stream.close();
-
-			return handler.toString();
+			parsedDocument();
 		}
 		catch (FileNotFoundException e)
 		{
@@ -71,6 +71,29 @@ public class FileContentExtract
 			log.log(Level.SEVERE, "Fail to parse file content: ", e);
 			throw new AdempiereException("Fail to parse file content: " + e.getLocalizedMessage(), e);
 		}
+	}// FileContentExtract
+
+	private void parsedDocument() throws FileNotFoundException, IOException, SAXException, TikaException
+	{
+		metadata = new Metadata();
+		handler = isParseHandler ? new BodyContentHandler(-1) : null;
+		Parser parser = new AutoDetectParser();
+		TikaInputStream stream = TikaInputStream.get(new FileInputStream(file));
+		ParseContext context = new ParseContext();
+		// Configure the parser to only extract metadata
+		context.set(Parser.class, parser);
+		if (stream.getLength() > 0)
+			parser.parse(stream, handler, metadata, context);
+		stream.close();
+	}// parsedDocument
+
+	public String getParsedDocumentContent()
+	{
+		return isParseHandler ? handler.toString() : null;
 	} // getParsedDocumentContent
 
+	public String getParsedDocumentMetadataValue(String propertyName)
+	{
+		return metadata.get(propertyName);
+	} // getParsedDocumentMetadataValue
 }

@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MClientInfo;
@@ -123,6 +124,9 @@ public class DMS
 			//
 			permissionManager = DMSFactoryUtils.getPermissionFactory();
 		}
+
+		//
+		DMSConstant.SDF_UTC_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
 	} // Constructor
 
 	/**
@@ -362,10 +366,10 @@ public class DMS
 		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(indexSearcher, content, association, version, file));
 	} // createIndexContent
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	String searchText, int tableID, int recordID, MDMSContent content,
-																				String documentView)
+	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	String searchText, HashMap<String, List<Object>> queryParamas,
+																				MDMSContent content, int tableID, int recordID, String documentView)
 	{
-		return DMSSearchUtils.getGenericSearchedContent(this, searchText, validTableID(tableID), validRecordID(recordID), content, documentView);
+		return DMSSearchUtils.getGenericSearchedContent(this, searchText, queryParamas, validTableID(tableID), validRecordID(recordID), content, documentView);
 	} // getGenericSearchedContent
 
 	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,

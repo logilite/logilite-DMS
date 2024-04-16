@@ -1,5 +1,6 @@
 package com.logilite.dms.querybuildelastic.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -86,26 +87,27 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 
 		if (query.length() > 0)
 			query.delete(0, 5);
-//		else
-//			query.append("*:*");
 
 		return query.toString();
 	} // buildSearchQueryFromMap
 
 	@Override
-	public String appendCriteria(String query, int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	public ArrayList<String> addCommonCriteria(String query, int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
+		ArrayList<String> qList = new ArrayList<>();
 		// AD_Client_id append for search client wise
 		if (!Util.isEmpty(query))
 			query += " AND ";
 
 		query += commonSearch(ad_client_ID, content, tableID, recordID, documentView);
 
-		return query;
-	} // appendCriteria
+		qList.add(query);
+
+		return qList;
+	} // addCommonCriteria
 
 	@Override
-	public String getGenericSearchedContentQuery(String searchText, int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	public String getGenericSearchContentQuery(String searchText, int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
@@ -119,18 +121,13 @@ public class ElasticIndexQueryBuilder implements IIndexQueryBuilder
 			{
 				query.append(" OR \"").append(DMSConstant.FILE_CONTENT).append("\" LIKE '%").append(inputParam).append("%'");
 			}
+			query.append(" ) ");
 		}
-		if (!Util.isEmpty(searchText, true))
-		{
-			query.append(" ) AND ");
-		}
-
-		query.append(commonSearch(ad_client_ID, content, tableID, recordID, documentView));
 
 		return query.toString();
-	} // getGenericSearchedContentQuery
+	} // getGenericSearchContentQuery
 
-	private String commonSearch(int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	private static String commonSearch(int AD_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
 		query.append(" \"").append(DMSConstant.AD_CLIENT_ID + "\" =" + AD_Client_ID);
