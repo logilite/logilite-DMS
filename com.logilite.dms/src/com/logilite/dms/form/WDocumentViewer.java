@@ -22,6 +22,7 @@ import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
 import org.adempiere.webui.component.Window;
 import org.compiere.util.Env;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.South;
@@ -50,13 +51,14 @@ public class WDocumentViewer extends Window
 	private MDMSContent			mDMSContent			= null;
 	private MDMSMimeType		mimeType			= null;
 	private WDMSAttributePanel	attributePanel		= null;
+	private Component			component			= null;
 
 	private int					tableID				= 0;
 	private int					recordID			= 0;
 	private int					windowNo			= 0;
 	private int					tabNo				= 0;
 
-	public WDocumentViewer(DMS dms, Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID, int windowNo, int tabNo)
+	public WDocumentViewer(DMS dms, Tabbox tabBox, File document_preview, MDMSContent mdms_content, int tableID, int recordID, int windowNo, int tabNo, Component component)
 	{
 		mimeType = new MDMSMimeType(Env.getCtx(), mdms_content.getDMS_MimeType_ID(), null);
 		this.dms = dms;
@@ -67,6 +69,7 @@ public class WDocumentViewer extends Window
 		this.recordID = recordID;
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
+		this.component = component;
 	}
 
 	public WDMSAttributePanel getAttributePanel()
@@ -100,7 +103,7 @@ public class WDocumentViewer extends Window
 		// Content attribute view
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure, isLink, windowNo, tabNo);
+		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure, isLink, windowNo, tabNo, component);
 		cellCPreview.appendChild(attributePanel);
 
 		if (ClientInfo.isMobile())

@@ -261,7 +261,7 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 																	null, contentTypeID);
 				docDMSPanel.valueChange(changeEvent);
 				docDMSPanel.setDocExplorerWindow(true);
-				docDMSPanel.searchContents(true);
+				docDMSPanel.searchContents();
 			}
 			else
 			{

@@ -18,12 +18,18 @@ import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.Menupopup;
 import org.adempiere.webui.component.Row;
+import org.adempiere.webui.component.Tab;
+import org.adempiere.webui.component.Tabbox;
+import org.adempiere.webui.component.Tabpanel;
+import org.adempiere.webui.component.Tabpanels;
+import org.adempiere.webui.component.Tabs;
 import org.adempiere.webui.component.ZkCssHelper;
 import org.adempiere.webui.editor.WEditor;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.window.Dialog;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.poi.ss.formula.CollaboratingWorkbooksEnvironment.WorkbookNotFoundException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
 import org.apache.tools.ant.taskdefs.Zip;
@@ -47,9 +53,16 @@ import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.impl.LabelImageElement;
 
 import com.logilite.dms.constant.DMSConstant;
+import com.logilite.dms.form.WDocumentViewer;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.I_DMS_Version;
+import com.logilite.dms.model.MDMSAssociation;
+import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
+import com.logilite.dms.model.MDMSMimeType;
+import com.logilite.dms.model.MDMSVersion;
+import com.logilite.dms.util.DMSConvertToPDFUtils;
+import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSSearchUtils;
 
 /**
@@ -443,5 +456,87 @@ public class DMS_ZK_Util
 		else
 			return "ASI_" + DMSSearchUtils.getIndexFieldName(editor.getLabel().getValue());
 	} // getIndexibleColumnName
+
+	/**
+	 * Open Content Document for the Viewing
+	 * 
+	 * @param dms                     DMS
+	 * @param windowNo                Window No
+	 * @param tabNo                   Tab No
+	 * @param tableID                 Table_ID
+	 * @param recordID                Record_ID
+	 * @param isMountingBaseStructure True - If its Mounting Based Structure
+	 * @param isWindowAccess          Having Window Access
+	 * @param tabs
+	 * @param tabBox
+	 * @param tabPanels
+	 * @param component               Component of the Content
+	 * @param version                 MDMSVersion
+	 * @param selectedContent         MDMSContent
+	 * @param selectedAssociation     MDMSAssociation
+	 * @param panelClass              Class
+	 */
+	public static void openContentDocumentViewer(	DMS dms, int windowNo, int tabNo, int tableID, int recordID,
+													boolean isMountingBaseStructure, boolean isWindowAccess,
+													Tabs tabs, Tabbox tabBox, Tabpanels tabPanels, Component component,
+													MDMSVersion version, MDMSContent selectedContent, MDMSAssociation selectedAssociation, Component panelClass)
+	{
+		MDMSMimeType mimeType = (MDMSMimeType) selectedContent.getDMS_MimeType();
+		File documentToPreview = dms.getFileFromStorage(version);
+
+		if (documentToPreview != null)
+		{
+			String name = selectedContent.getName();
+
+			try
+			{
+				documentToPreview = DMSConvertToPDFUtils.convertDocToPDF(documentToPreview, mimeType);
+			}
+			catch (Exception e)
+			{
+				if (e.getCause() instanceof WorkbookNotFoundException)
+				{
+					// Do not throw error, some document having complex function used and
+					// implemented libs not enough to handle that things.
+				}
+				else
+				{
+					String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
+					log.log(Level.SEVERE, errorMsg, e);
+					FDialog.warn(windowNo, errorMsg, "Document preview issue...");
+				}
+			}
+
+			if (DMSFactoryUtils.getContentEditor(mimeType.getMimeType()) != null)
+			{
+				boolean isContentActive = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
+
+				Tab tabData = new Tab(name);
+				tabData.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
+				tabData.setClosable(true);
+				tabs.appendChild(tabData);
+				tabBox.setSelectedTab(tabData);
+
+				//
+				WDocumentViewer documentViewer = new WDocumentViewer(	dms, tabBox, documentToPreview, selectedContent, tableID, recordID, windowNo, tabNo,
+																		component);
+				Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure, MDMSAssociationType.isLink(selectedAssociation));
+				tabPanels.appendChild(tabPanel);
+				documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, (EventListener<?>) panelClass);
+				documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_RENAME_COMPLETE, (EventListener<?>) panelClass);
+
+				// panelClass.appendChild(tabBox);
+			}
+			else
+			{
+				FDialog.warn(windowNo, "Not able to preview for this content, Please download it...", "Document preview issue...");
+				// downloadDocument(documentToPreview, selectedContent);
+			}
+		}
+		else
+		{
+			FDialog.error(windowNo, panelClass, "ContentNotFoundInStorage", dms.getPathFromContentManager(version), "Content Not Found In the Storage");
+		}
+	} // openContentDocumentViewer
 
 }
