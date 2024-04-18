@@ -51,7 +51,6 @@ import org.adempiere.webui.component.NumberBox;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
-import org.adempiere.webui.component.Searchbox;
 import org.adempiere.webui.component.Tab;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
@@ -152,6 +151,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Rows					breadRows				= new Rows();
 	private Row						breadRow				= new Row();
 
+	private Label					lblGlobalSearch			= new Label(DMSConstant.MSG_GLOBAL_SEARCH);
 	private Label					lblAdvanceSearch		= new Label(DMSConstant.MSG_ADVANCE_SEARCH);
 	private Label					lblDocumentName			= new Label(DMSConstant.MSG_NAME);
 	private Label					lblContentType			= new Label(DMSConstant.MSG_CONTENT_TYPE);
@@ -164,7 +164,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Label					lblDocumentView			= new Label(DMSConstant.MSG_DOCUMENT_VIEW);
 	private Label					lblPositionInfo			= new Label();
 	private Label					lblCountAndSelected		= new Label();
-	private Label 					lblGlobalSearch			= new Label(DMSConstant.MSG_GLOBAL_SEARCH);
 	private Label					lblShowBreadCrumb		= null;
 
 	private Datebox					dbCreatedTo				= new Datebox();
@@ -186,8 +185,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Textbox					txtDocumentName			= new Textbox();
 	private Textbox					txtDescription			= new Textbox();
-	private Textbox					vSearchText				= new Textbox();
-	
+	private Textbox					txtGlobalSearch			= new Textbox();
+
 	private Combobox				cobDocumentView			= null;
 
 	private WTableDirEditor			lstboxContentType		= null;
@@ -525,21 +524,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		DMS_ZK_Util.createCellUnderRow(row, 1, 3, div);
 
+		// Global Search
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblGlobalSearch);
-		vSearchText.setRows(2);
-		row.appendCellChild(vSearchText, 2);
+		row.appendCellChild(txtGlobalSearch, 2);
 		ZkCssHelper.appendStyle(lblGlobalSearch, "font-weight: bold;");
-		
+		txtGlobalSearch.setRows(2);
+
+		// Advance Search
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblAdvanceSearch, 3);
 		ZkCssHelper.appendStyle(lblAdvanceSearch, DMSConstant.CSS_HIGHLIGHT_LABEL);
 
+		// Name
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblDocumentName);
 		row.appendCellChild(txtDocumentName, 2);
 		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
 
+		// Description
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblDescription);
 		row.appendCellChild(txtDescription, 2);
@@ -1292,12 +1295,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 
 			String documentView = cobDocumentView.getSelectedItem().getValue();
-			if(isSearch)
+			if (isSearch)
 			{
-				if (!Util.isEmpty(vSearchText.getText()))
+				String genericSearch = txtGlobalSearch.getValue();
+				if (!Util.isEmpty(genericSearch))
 				{
-					String genericSearchText = vSearchText.getText();
-					contentsMap = dms.getGenericSearchedContent(genericSearchText, getQueryParams(), currDMSContent, tableID, recordID, documentView);
+					contentsMap = dms.getGenericSearchedContent(genericSearch, getQueryParams(), currDMSContent, tableID, recordID, documentView);
 				}
 				else
 				{
@@ -1348,8 +1351,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		isSearch = false;
 
-		vSearchText.setText(null);
-
+		txtGlobalSearch.setValue(null);
 		txtDocumentName.setValue(null);
 		txtDescription.setValue(null);
 		lstboxContentType.setValue(null);

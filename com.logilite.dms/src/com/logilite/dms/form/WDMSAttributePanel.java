@@ -403,7 +403,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		 */
 		btnBack = new Button();
 		btnBack.setTooltiptext(DMSConstant.TTT_PREVIOUS_RECORD);
-		ZkCssHelper.appendStyle(btnNext, "float: right; ");
 		DMS_ZK_Util.setFontOrImageAsIcon("PreviousRecord", btnBack);
 		btnBack.setEnabled(	previousContent != null && previousContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content)
 							&& (isRead_Previous || isNavigation_Previous));
@@ -411,6 +410,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		btnNext = new Button();
 		btnNext.setTooltiptext(DMSConstant.TTT_NEXT_RECORD);
 		DMS_ZK_Util.setFontOrImageAsIcon("NextRecord", btnNext);
+		ZkCssHelper.appendStyle(btnNext, "float: right; ");
 		btnNext.setEnabled(	nextContent != null && nextContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content)
 							&& (isRead_Next || isNavigation_Next));
 
