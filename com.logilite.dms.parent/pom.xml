@@ -7,7 +7,7 @@
   <properties>
 	<revision>11.2.0-SNAPSHOT</revision>
     <local.maven>${user.home}/.m2</local.maven>
-    <tycho.version>2.7.3</tycho.version>
+    <tycho.version>4.0.4</tycho.version>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
     <maven.dependency.version>3.1.1</maven.dependency.version>
 
@@ -100,8 +100,8 @@
                   <arch>x86_64</arch>
                 </environment>
               </environments>
-              <executionEnvironmentDefault>JavaSE-11</executionEnvironmentDefault>
-              <executionEnvironment>JavaSE-11</executionEnvironment>
+              <executionEnvironmentDefault>JavaSE-17</executionEnvironmentDefault>
+              <executionEnvironment>JavaSE-17</executionEnvironment>
             </configuration>
           </plugin>
         </plugins>
@@ -110,12 +110,12 @@
         <repository>
           <id>${idempiere.repo-id}</id>
           <url>${idempiere.repo}</url>
-          <layout>p2</layout>
+<!--          <layout>p2</layout>-->
         </repository>
 		<repository>
           <id>logilite-search</id>
           <url>${search.repo}</url>
-          <layout>p2</layout>
+<!--          <layout>p2</layout>-->
         </repository>
 <!--         <repository> -->
 <!--           <id>esignature</id> -->
