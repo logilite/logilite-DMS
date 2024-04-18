@@ -152,8 +152,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Rows					breadRows				= new Rows();
 	private Row						breadRow				= new Row();
 
-	private Searchbox				vsearchBox				= new Searchbox();
-
 	private Label					lblAdvanceSearch		= new Label(DMSConstant.MSG_ADVANCE_SEARCH);
 	private Label					lblDocumentName			= new Label(DMSConstant.MSG_NAME);
 	private Label					lblContentType			= new Label(DMSConstant.MSG_CONTENT_TYPE);
@@ -166,6 +164,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Label					lblDocumentView			= new Label(DMSConstant.MSG_DOCUMENT_VIEW);
 	private Label					lblPositionInfo			= new Label();
 	private Label					lblCountAndSelected		= new Label();
+	private Label 					lblGlobalSearch			= new Label(DMSConstant.MSG_GLOBAL_SEARCH);
 	private Label					lblShowBreadCrumb		= null;
 
 	private Datebox					dbCreatedTo				= new Datebox();
@@ -187,7 +186,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Textbox					txtDocumentName			= new Textbox();
 	private Textbox					txtDescription			= new Textbox();
-
+	private Textbox					vSearchText				= new Textbox();
+	
 	private Combobox				cobDocumentView			= null;
 
 	private WTableDirEditor			lstboxContentType		= null;
@@ -252,7 +252,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private boolean					isDMSAdmin				= false;
 	private boolean					isSearch				= false;
-	private boolean					isGenericSearch			= false;
 	private boolean					isWindowAccess			= true;
 	private boolean					isDocExplorerWindow		= false;
 	private boolean					isMountingBaseStructure	= false;
@@ -527,13 +526,11 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMS_ZK_Util.createCellUnderRow(row, 1, 3, div);
 
 		row = rowsSearch.newRow();
-		DMS_ZK_Util.createCellUnderRow(row, 1, 3, vsearchBox);
-
-		ZKUpdateUtil.setWidth(vsearchBox, "100%");
-		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search", DMSConstant.TTT_SEARCH, this);
-		vsearchBox.addEventListener(Events.ON_OK, this);
-		vsearchBox.getButton().setStyle("margin: 0px !important;");
-
+		row.appendCellChild(lblGlobalSearch);
+		vSearchText.setRows(2);
+		row.appendCellChild(vSearchText, 2);
+		ZkCssHelper.appendStyle(lblGlobalSearch, "font-weight: bold;");
+		
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblAdvanceSearch, 3);
 		ZkCssHelper.appendStyle(lblAdvanceSearch, DMSConstant.CSS_HIGHLIGHT_LABEL);
@@ -809,7 +806,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(btnCloseTab))
 		{
 			isSearch = false;
-			isGenericSearch = false;
 			isMountingBaseStructure = false;
 			breadRow.getChildren().clear();
 			addRootBreadCrumb();
@@ -1192,14 +1188,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			allowUserToCreateDir();
 		}
 
-		// Event for Searching content Simple or Advance level
-		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().equals(vsearchBox.getButton()))
+		if (event.getTarget().equals(btnSearch))
 		{
-			searchContents(false);
-		}
-		else if (event.getTarget().equals(btnSearch))
-		{
-			searchContents(true);
+			searchContents();
 		}
 
 	} // onEvent
@@ -1209,10 +1200,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * 
 	 * @param isAdvSearch
 	 */
-	public void searchContents(boolean isAdvSearch)
+	public void searchContents()
 	{
-		isSearch = isAdvSearch;
-		isGenericSearch = !isAdvSearch;
+		isSearch = true;
 
 		breadRow.getChildren().clear();
 		lblPositionInfo.setValue(null);
@@ -1302,20 +1292,22 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 
 			String documentView = cobDocumentView.getSelectedItem().getValue();
-			if (isSearch)
+			if(isSearch)
 			{
-				contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID, documentView);
-			}
-			else if (isGenericSearch)
-			{
-				String genericSearchText = vsearchBox.getTextbox().getValue();
-				contentsMap = dms.getGenericSearchedContent(genericSearchText, getQueryParams(), currDMSContent, tableID, recordID, documentView);
+				if (!Util.isEmpty(vSearchText.getText()))
+				{
+					String genericSearchText = vSearchText.getText();
+					contentsMap = dms.getGenericSearchedContent(genericSearchText, getQueryParams(), currDMSContent, tableID, recordID, documentView);
+				}
+				else
+				{
+					contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID, documentView);
+				}
 			}
 			else
 			{
 				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, documentView);
 			}
-
 			//
 			renderViewerWithContent(contentsMap);
 		}
@@ -1355,9 +1347,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public void clearComponents()
 	{
 		isSearch = false;
-		isGenericSearch = false;
 
-		vsearchBox.setText(null);
+		vSearchText.setText(null);
 
 		txtDocumentName.setValue(null);
 		txtDescription.setValue(null);
