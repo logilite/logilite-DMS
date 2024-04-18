@@ -13,6 +13,8 @@
 
 package com.logilite.dms.form;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -74,6 +76,7 @@ import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.util.DMSFactoryUtils;
+import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.Utils;
 
 public class WDMSAttributePanel extends Panel implements EventListener<Event>, ValueChangeListener
@@ -85,6 +88,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	private static final long	serialVersionUID		= 5200959427619624094L;
 	private static CLogger		log						= CLogger.getCLogger(WDMSAttributePanel.class);
 
+	private Panel				panelNavigation			= new Panel();
 	private Panel				panelAttribute			= new Panel();
 	private Panel				panelFooterButtons		= new Panel();
 	private Borderlayout		mainLayout				= new Borderlayout();
@@ -110,6 +114,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	private Button				btnEdit					= null;
 	private Button				btnSave					= null;
 	private Button				btnVersionUpload		= null;
+	private Button				btnBack					= null;
+	private Button				btnNext					= null;
 
 	private Label				lblStatus				= null;
 	private Label				lblName					= null;
@@ -128,8 +134,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	private ConfirmPanel		confirmPanel			= null;
 	private WDLoadASIPanel		ASIPanel				= null;
 
-	private int					tableId					= 0;
-	private int					recordId				= 0;
+	private int					tableID					= 0;
+	private int					recordID				= 0;
 	private int					contentTypeID			= 0;
 
 	private boolean				isWindowAccess			= true;
@@ -142,28 +148,33 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	private int					tabNo					= 0;
 
 	private boolean				isWrite					= true;
+	private Component			component				= null;
+	private Component			nextComponent			= null;
+	private Component			previousComponent		= null;
 
 	public WDMSAttributePanel(	DMS dms, I_DMS_Content content, Tabbox tabBox, int tableID, int recordID, boolean isWindowAccess, boolean isMountingBaseStructure,
-								boolean isLink, int windowNo,
-								int tabNo)
+								boolean isLink, int windowNo, int tabNo, Component component)
 	{
 		this.dms = dms;
 		this.tabBox = tabBox;
-		this.tableId = tableID;
-		this.recordId = recordID;
+		this.tableID = tableID;
+		this.recordID = recordID;
 		this.content = (MDMSContent) content;
 		this.isWindowAccess = isWindowAccess;
 		this.isMountingBaseStructure = isMountingBaseStructure;
 		this.isLink = isLink;
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
+		this.component = component;
 
 		isWrite = dms.isWritePermission(this.content);
 
 		try
 		{
 			init();
+
 			this.contentTypeID = content.getDMS_ContentType_ID();
+
 			refreshPanel();
 		}
 		catch (Exception e)
@@ -177,6 +188,10 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 	 */
 	private void init()
 	{
+		//
+		createNavigationButtons();
+
+		//
 		this.appendChild(grid);
 		grid.setHeight("100%");
 		grid.setWidth("100%");
@@ -192,7 +207,15 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		Column column = new Column();
 		columns.appendChild(column);
 
+		//
 		Row row = new Row();
+		row.appendChild(panelNavigation);
+		rows.appendChild(row);
+
+		/*
+		 * Attribute panel
+		 */
+		row = new Row();
 		row.appendChild(panelAttribute);
 		rows.appendChild(row);
 		grid.appendChild(columns);
@@ -282,6 +305,8 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnEdit.addEventListener(Events.ON_CLICK, this);
 		btnVersionUpload.addEventListener(Events.ON_CLICK, this);
+		btnBack.addEventListener(Events.ON_CLICK, this);
+		btnNext.addEventListener(Events.ON_CLICK, this);
 
 		South south = new South();
 		rows.appendChild(row);
@@ -291,15 +316,108 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		panelFooterButtons.appendChild(btnRequery);
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
+
 		panelFooterButtons.setStyle("display: inline-flex; padding-top: 5px;");
 
 		panelAttribute.appendChild(panelFooterButtons);
+
 		mainLayout.appendChild(south);
 
 		btnVersionUpload.setDisabled(!isWindowAccess || isMountingBaseStructure || content == null || !content.isActive() || !isWrite);
 		btnEdit.setDisabled(!isWindowAccess || isMountingBaseStructure || isLink || !isWrite);
 		btnDownload.setDisabled(!isWrite);
 	} // init
+
+	/**
+	 * 
+	 */
+	public void createNavigationButtons()
+	{
+		MDMSContent nextContent = null;
+		MDMSContent previousContent = null;
+
+		boolean isRead_Next = true;
+		boolean isRead_Previous = true;
+		boolean isNavigation_Next = true;
+		boolean isNavigation_Previous = true;
+
+		// Checking Next Sibling Content
+		nextComponent = component.getNextSibling();
+		if (nextComponent != null)
+		{
+			nextContent = (MDMSContent) nextComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+			if (DMSPermissionUtils.isPermissionAllowed())
+			{
+				isRead_Next = (boolean) nextComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
+				isNavigation_Next = (boolean) nextComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION);
+			}
+			while (nextContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory) || ((!isRead_Next && !isNavigation_Next)))
+			{
+				nextComponent = nextComponent.getNextSibling();
+				if (nextComponent != null)
+				{
+					nextContent = (MDMSContent) nextComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+					if (DMSPermissionUtils.isPermissionAllowed())
+					{
+						isRead_Next = (boolean) nextComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
+						isNavigation_Next = (boolean) nextComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION);
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+		//
+		previousComponent = component.getPreviousSibling();
+		if (previousComponent != null)
+		{
+			previousContent = (MDMSContent) previousComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+			if (DMSPermissionUtils.isPermissionAllowed())
+			{
+				isRead_Previous = (boolean) previousComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
+				isNavigation_Previous = (boolean) previousComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION);
+			}
+			while (previousContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory) || ((!isRead_Previous && !isNavigation_Previous)))
+			{
+				previousComponent = previousComponent.getPreviousSibling();
+				if (previousComponent != null)
+				{
+					previousContent = (MDMSContent) previousComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+					if (DMSPermissionUtils.isPermissionAllowed())
+					{
+						isRead_Previous = (boolean) previousComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISREAD);
+						isNavigation_Previous = (boolean) previousComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISNAVIGATION);
+					}
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+
+		/*
+		 * Navigation Control Buttons
+		 */
+		btnBack = new Button();
+		btnBack.setTooltiptext(DMSConstant.TTT_PREVIOUS_RECORD);
+		ZkCssHelper.appendStyle(btnNext, "float: right; ");
+		DMS_ZK_Util.setFontOrImageAsIcon("PreviousRecord", btnBack);
+		btnBack.setEnabled(	previousContent != null && previousContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content)
+							&& (isRead_Previous || isNavigation_Previous));
+
+		btnNext = new Button();
+		btnNext.setTooltiptext(DMSConstant.TTT_NEXT_RECORD);
+		DMS_ZK_Util.setFontOrImageAsIcon("NextRecord", btnNext);
+		btnNext.setEnabled(	nextContent != null && nextContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content)
+							&& (isRead_Next || isNavigation_Next));
+
+		panelNavigation.appendChild(btnBack);
+		panelNavigation.appendChild(btnNext);
+		panelNavigation.setStyle("padding-top: 5px;");
+	}
 
 	/**
 	 * initialize version history components
@@ -517,7 +635,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 			final Tab tab = (Tab) tabBox.getSelectedTab();
 			final WDMSAttributePanel panel = this;
 
-			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, content, true, tableId, recordId, windowNo, tabNo);
+			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, content, true, tableID, recordID, windowNo, tabNo);
 			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -542,16 +660,16 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		{
 			versionSelected = (MDMSVersion) event.getTarget().getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION);
 		}
-	} // onEvent
+		else if (event.getTarget().equals(btnBack))
+		{
+			loadNavigationalContent(previousComponent);
+		}
+		else if (event.getTarget().equals(btnNext))
+		{
+			loadNavigationalContent(nextComponent);
+		}
 
-	/**
-	 * 
-	 */
-	public void refreshPanel()
-	{
-		initAttributes(false);
-		initVersionHistory();
-	}
+	} // onEvent
 
 	@Override
 	public void valueChange(ValueChangeEvent event)
@@ -564,6 +682,33 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 				contentTypeID = 0;
 			initAttributes(true);
 		}
-	}
+	} // valueChange
+
+	/**
+	 * Refresh the Panel
+	 */
+	public void refreshPanel()
+	{
+		initAttributes(false);
+		initVersionHistory();
+	} // refreshPanel
+
+	public void loadNavigationalContent(Component currComponent) throws FileNotFoundException, IOException
+	{
+		MDMSVersion version = (MDMSVersion) currComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION);
+		MDMSContent selectedContent = (MDMSContent) currComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT);
+		MDMSAssociation selectedAssociation = (MDMSAssociation) currComponent.getAttribute(DMSConstant.COMP_ATTRIBUTE_ASSOCIATION);
+
+		Tab tab = (Tab) tabBox.getSelectedTab();
+		Tabpanel tabpanel = tabBox.getSelectedTabpanel();
+		Tabs tabs = (Tabs) tabBox.getTabs();
+		Tabpanels tabPanels = (Tabpanels) tabBox.getTabpanels();
+		//
+		tabPanels.removeChild(tabpanel);
+		tabs.removeChild(tab);
+
+		DMS_ZK_Util.openContentDocumentViewer(	dms, windowNo, tabNo, tableID, recordID, isMountingBaseStructure, isWindowAccess,
+												tabs, tabBox, tabPanels, currComponent, version, selectedContent, selectedAssociation, this);
+	} // loadNavigationalContent
 
 }

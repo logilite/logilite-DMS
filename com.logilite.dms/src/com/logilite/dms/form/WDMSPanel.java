@@ -13,7 +13,6 @@
 
 package com.logilite.dms.form;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -72,7 +71,6 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.FDialog;
-import org.apache.poi.ss.formula.CollaboratingWorkbooksEnvironment.WorkbookNotFoundException;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
@@ -124,10 +122,8 @@ import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
-import com.logilite.dms.model.MDMSMimeType;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.service.CreateZipArchive;
-import com.logilite.dms.util.DMSConvertToPDFUtils;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.DMSSearchUtils;
@@ -1093,8 +1089,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							};
 
 							// Want to un-Delete actual docs and associated its linkable documents ?
-							FDialog.ask(windowNo, mnu_undoDelete, "Want to un-Delete linkable references ?",
-										"Un-DeleteAssociatedLinkableDocuments?", warningMsg, callbackWarning);
+							FDialog.ask(windowNo, mnu_undoDelete, "Want to un-Delete linkable references ?", "Un-DeleteAssociatedLinkableDocuments?",
+										warningMsg, callbackWarning);
 						}
 						else
 						{
@@ -1428,63 +1424,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (selectedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
-			MDMSMimeType mimeType = (MDMSMimeType) selectedContent.getDMS_MimeType();
-			File documentToPreview = dms.getFileFromStorage(version);
-
-			if (documentToPreview != null)
-			{
-				String name = selectedContent.getName();
-
-				try
-				{
-					documentToPreview = DMSConvertToPDFUtils.convertDocToPDF(documentToPreview, mimeType);
-				}
-				catch (Exception e)
-				{
-					if (e.getCause() instanceof WorkbookNotFoundException)
-					{
-						// Do not throw error, some document having complex function used and
-						// implemented libs not enough to handle that things.
-					}
-					else
-					{
-						String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
-						log.log(Level.SEVERE, errorMsg, e);
-						FDialog.warn(windowID, errorMsg, "Document preview issue...");
-					}
-				}
-
-				if (DMSFactoryUtils.getContentEditor(mimeType.getMimeType()) != null)
-				{
-					boolean isContentActive = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
-
-					Tab tabData = new Tab(name);
-					tabData.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
-					tabData.setClosable(true);
-					tabs.appendChild(tabData);
-					tabBox.setSelectedTab(tabData);
-
-					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedContent, tableID, recordID, windowNo, tabNo);
-					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure, MDMSAssociationType.isLink(selectedAssociation));
-					tabPanels.appendChild(tabPanel);
-					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
-					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_RENAME_COMPLETE, this);
-
-					this.appendChild(tabBox);
-
-					// Fix for search --> download content --> back (which was
-					// navigate to home/root folder)
-					selectedDMSVersionStack.pop();
-				}
-				else
-				{
-					DMS_ZK_Util.downloadDocument(documentToPreview, currDMSContent);
-				}
-			}
-			else
-			{
-				FDialog.error(windowNo, this, "ContentNotFoundInStorage", dms.getPathFromContentManager(version), "Content Not Found In the Storage");
-			}
+			DMS_ZK_Util.openContentDocumentViewer(	dms, windowNo, tabNo, tableID, recordID, isMountingBaseStructure, isWindowAccess,
+													tabs, tabBox, tabPanels, component, version, selectedContent, selectedAssociation, this);
+			// Fix for search --> download content --> back (which was navigate to home/root folder)
+			selectedDMSVersionStack.pop();
 		}
 	} // openDirectoryORContent
 

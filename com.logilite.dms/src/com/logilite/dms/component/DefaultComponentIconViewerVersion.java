@@ -29,7 +29,7 @@ import org.zkoss.zul.Vbox;
 import com.logilite.dms.DMS_ZK_Util;
 import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.model.ContentDetail;
-import com.logilite.dms.model.I_DMS_Content;
+import com.logilite.dms.model.I_DMS_Version;
 
 /**
  * Default DMS Version Viewer Component
@@ -67,7 +67,7 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 	@Override
 	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage)
 	{
-		I_DMS_Content content = contentDetail.getContent();
+		I_DMS_Version version = contentDetail.getVersion();
 
 		Row row = rows.newRow();
 		row.setSclass("SB-ROW");
@@ -80,8 +80,9 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
 		Vbox vbox = new Vbox();
-		vbox.appendChild(new Label(DMSConstant.MSG_CREATED + ": " + content.getCreated()));
-		vbox.appendChild(new Label(DMSConstant.MSG_CREATEDBY + ": " + MUser.getNameOfUser(content.getCreatedBy())));
+		vbox.appendChild(new Label("Version: " + version.getSeqNo()));
+		vbox.appendChild(new Label(DMSConstant.MSG_CREATED + ": " + version.getCreated()));
+		vbox.appendChild(new Label(DMSConstant.MSG_CREATEDBY + ": " + MUser.getNameOfUser(version.getCreatedBy())));
 		vbox.appendChild(new Label(DMSConstant.MSG_FILESIZE + ": " + contentDetail.getSize()));
 
 		Hbox hbox = new Hbox();
