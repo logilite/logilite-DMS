@@ -503,7 +503,7 @@ public class DMS_ZK_Util
 				{
 					String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
 					log.log(Level.SEVERE, errorMsg, e);
-					FDialog.warn(windowNo, errorMsg, "Document preview issue...");
+					Dialog.warn(windowNo, errorMsg, "Document preview issue...");
 				}
 			}
 
@@ -529,13 +529,13 @@ public class DMS_ZK_Util
 			}
 			else
 			{
-				FDialog.warn(windowNo, "Not able to preview for this content, Please download it...", "Document preview issue...");
+				Dialog.warn(windowNo, "Not able to preview for this content, Please download it...", "Document preview issue...");
 				// downloadDocument(documentToPreview, selectedContent);
 			}
 		}
 		else
 		{
-			FDialog.error(windowNo, panelClass, "ContentNotFoundInStorage", dms.getPathFromContentManager(version), "Content Not Found In the Storage");
+			Dialog.error(windowNo, "ContentNotFoundInStorage", dms.getPathFromContentManager(version), "Content Not Found In the Storage");
 		}
 	} // openContentDocumentViewer
 
