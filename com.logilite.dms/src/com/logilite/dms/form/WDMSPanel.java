@@ -13,7 +13,6 @@
 
 package com.logilite.dms.form;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -52,7 +51,6 @@ import org.adempiere.webui.component.NumberBox;
 import org.adempiere.webui.component.Panel;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
-import org.adempiere.webui.component.Searchbox;
 import org.adempiere.webui.component.Tab;
 import org.adempiere.webui.component.Tabbox;
 import org.adempiere.webui.component.Tabpanel;
@@ -72,7 +70,6 @@ import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.FDialog;
-import org.apache.poi.ss.formula.CollaboratingWorkbooksEnvironment.WorkbookNotFoundException;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
@@ -124,10 +121,8 @@ import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
-import com.logilite.dms.model.MDMSMimeType;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.service.CreateZipArchive;
-import com.logilite.dms.util.DMSConvertToPDFUtils;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.DMSSearchUtils;
@@ -156,8 +151,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Rows					breadRows				= new Rows();
 	private Row						breadRow				= new Row();
 
-	private Searchbox				vsearchBox				= new Searchbox();
-
+	private Label					lblGlobalSearch			= new Label(DMSConstant.MSG_GLOBAL_SEARCH);
 	private Label					lblAdvanceSearch		= new Label(DMSConstant.MSG_ADVANCE_SEARCH);
 	private Label					lblDocumentName			= new Label(DMSConstant.MSG_NAME);
 	private Label					lblContentType			= new Label(DMSConstant.MSG_CONTENT_TYPE);
@@ -191,6 +185,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private Textbox					txtDocumentName			= new Textbox();
 	private Textbox					txtDescription			= new Textbox();
+	private Textbox					txtGlobalSearch			= new Textbox();
 
 	private Combobox				cobDocumentView			= null;
 
@@ -256,7 +251,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private boolean					isDMSAdmin				= false;
 	private boolean					isSearch				= false;
-	private boolean					isGenericSearch			= false;
 	private boolean					isWindowAccess			= true;
 	private boolean					isDocExplorerWindow		= false;
 	private boolean					isMountingBaseStructure	= false;
@@ -530,23 +524,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		DMS_ZK_Util.createCellUnderRow(row, 1, 3, div);
 
+		// Global Search
 		row = rowsSearch.newRow();
-		DMS_ZK_Util.createCellUnderRow(row, 1, 3, vsearchBox);
+		row.appendCellChild(lblGlobalSearch);
+		row.appendCellChild(txtGlobalSearch, 2);
+		ZkCssHelper.appendStyle(lblGlobalSearch, "font-weight: bold;");
+		txtGlobalSearch.setRows(2);
 
-		ZKUpdateUtil.setWidth(vsearchBox, "100%");
-		DMS_ZK_Util.setButtonData(vsearchBox.getButton(), "Search", DMSConstant.TTT_SEARCH, this);
-		vsearchBox.addEventListener(Events.ON_OK, this);
-		vsearchBox.getButton().setStyle("margin: 0px !important;");
-
+		// Advance Search
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblAdvanceSearch, 3);
 		ZkCssHelper.appendStyle(lblAdvanceSearch, DMSConstant.CSS_HIGHLIGHT_LABEL);
 
+		// Name
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblDocumentName);
 		row.appendCellChild(txtDocumentName, 2);
 		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
 
+		// Description
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblDescription);
 		row.appendCellChild(txtDescription, 2);
@@ -813,7 +809,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(btnCloseTab))
 		{
 			isSearch = false;
-			isGenericSearch = false;
 			isMountingBaseStructure = false;
 			breadRow.getChildren().clear();
 			addRootBreadCrumb();
@@ -1093,8 +1088,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							};
 
 							// Want to un-Delete actual docs and associated its linkable documents ?
-							FDialog.ask(windowNo, mnu_undoDelete, "Want to un-Delete linkable references ?",
-										"Un-DeleteAssociatedLinkableDocuments?", warningMsg, callbackWarning);
+							FDialog.ask(windowNo, mnu_undoDelete, "Want to un-Delete linkable references ?", "Un-DeleteAssociatedLinkableDocuments?",
+										warningMsg, callbackWarning);
 						}
 						else
 						{
@@ -1196,14 +1191,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			allowUserToCreateDir();
 		}
 
-		// Event for Searching content Simple or Advance level
-		if (Events.ON_CLICK.equals(event.getName()) && event.getTarget().equals(vsearchBox.getButton()))
+		if (event.getTarget().equals(btnSearch))
 		{
-			searchContents(false);
-		}
-		else if (event.getTarget().equals(btnSearch))
-		{
-			searchContents(true);
+			searchContents();
 		}
 
 	} // onEvent
@@ -1213,10 +1203,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 * 
 	 * @param isAdvSearch
 	 */
-	public void searchContents(boolean isAdvSearch)
+	public void searchContents()
 	{
-		isSearch = isAdvSearch;
-		isGenericSearch = !isAdvSearch;
+		isSearch = true;
 
 		breadRow.getChildren().clear();
 		lblPositionInfo.setValue(null);
@@ -1308,18 +1297,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			String documentView = cobDocumentView.getSelectedItem().getValue();
 			if (isSearch)
 			{
-				contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID, documentView);
-			}
-			else if (isGenericSearch)
-			{
-				String genericSearchText = vsearchBox.getTextbox().getValue();
-				contentsMap = dms.getGenericSearchedContent(genericSearchText, getQueryParams(), currDMSContent, tableID, recordID, documentView);
+				String genericSearch = txtGlobalSearch.getValue();
+				if (!Util.isEmpty(genericSearch))
+				{
+					contentsMap = dms.getGenericSearchedContent(genericSearch, getQueryParams(), currDMSContent, tableID, recordID, documentView);
+				}
+				else
+				{
+					contentsMap = dms.renderSearchedContent(getQueryParams(), currDMSContent, tableID, recordID, documentView);
+				}
 			}
 			else
 			{
 				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, documentView);
 			}
-
 			//
 			renderViewerWithContent(contentsMap);
 		}
@@ -1359,10 +1350,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public void clearComponents()
 	{
 		isSearch = false;
-		isGenericSearch = false;
 
-		vsearchBox.setText(null);
-
+		txtGlobalSearch.setValue(null);
 		txtDocumentName.setValue(null);
 		txtDescription.setValue(null);
 		lstboxContentType.setValue(null);
@@ -1428,63 +1417,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else if (selectedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Content))
 		{
-			MDMSMimeType mimeType = (MDMSMimeType) selectedContent.getDMS_MimeType();
-			File documentToPreview = dms.getFileFromStorage(version);
-
-			if (documentToPreview != null)
-			{
-				String name = selectedContent.getName();
-
-				try
-				{
-					documentToPreview = DMSConvertToPDFUtils.convertDocToPDF(documentToPreview, mimeType);
-				}
-				catch (Exception e)
-				{
-					if (e.getCause() instanceof WorkbookNotFoundException)
-					{
-						// Do not throw error, some document having complex function used and
-						// implemented libs not enough to handle that things.
-					}
-					else
-					{
-						String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
-						log.log(Level.SEVERE, errorMsg, e);
-						FDialog.warn(windowID, errorMsg, "Document preview issue...");
-					}
-				}
-
-				if (DMSFactoryUtils.getContentEditor(mimeType.getMimeType()) != null)
-				{
-					boolean isContentActive = (boolean) component.getAttribute(DMSConstant.COMP_ATTRIBUTE_ISACTIVE);
-
-					Tab tabData = new Tab(name);
-					tabData.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
-					tabData.setClosable(true);
-					tabs.appendChild(tabData);
-					tabBox.setSelectedTab(tabData);
-
-					WDocumentViewer documentViewer = new WDocumentViewer(dms, tabBox, documentToPreview, selectedContent, tableID, recordID, windowNo, tabNo);
-					Tabpanel tabPanel = documentViewer.initForm(isWindowAccess, isMountingBaseStructure, MDMSAssociationType.isLink(selectedAssociation));
-					tabPanels.appendChild(tabPanel);
-					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
-					documentViewer.getAttributePanel().addEventListener(DMSConstant.EVENT_ON_RENAME_COMPLETE, this);
-
-					this.appendChild(tabBox);
-
-					// Fix for search --> download content --> back (which was
-					// navigate to home/root folder)
-					selectedDMSVersionStack.pop();
-				}
-				else
-				{
-					DMS_ZK_Util.downloadDocument(documentToPreview, currDMSContent);
-				}
-			}
-			else
-			{
-				FDialog.error(windowNo, this, "ContentNotFoundInStorage", dms.getPathFromContentManager(version), "Content Not Found In the Storage");
-			}
+			DMS_ZK_Util.openContentDocumentViewer(	dms, windowNo, tabNo, tableID, recordID, isMountingBaseStructure, isWindowAccess,
+													tabs, tabBox, tabPanels, component, version, selectedContent, selectedAssociation, this);
+			// Fix for search --> download content --> back (which was navigate to home/root folder)
+			selectedDMSVersionStack.pop();
 		}
 	} // openDirectoryORContent
 
