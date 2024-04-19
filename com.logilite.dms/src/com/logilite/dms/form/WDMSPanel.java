@@ -489,6 +489,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox.appendChild(btnUploadContent);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 3, hbox);
 
+		//
+		Grid searchGridView = GridFactory.newGridLayout();
+		searchGridView.setVflex(true);
+		searchGridView.setStyle("max-height: 100%; width: 100%; height: calc( 100% - 90px); position: relative; overflow: auto;");
+
+		// Document View Row
+		Rows rowsSearch = searchGridView.newRows();
+
 		cobDocumentView = new Combobox();
 		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_ALL, DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
 		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_DELETED_ONLY, DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE);
@@ -497,20 +505,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (isDMSAdmin)
 		{
-			row = rowsBtn.newRow();
+			row = rowsSearch.newRow();
 			DMS_ZK_Util.createCellUnderRow(row, 1, 1, lblDocumentView);
 			DMS_ZK_Util.createCellUnderRow(row, 1, 2, cobDocumentView);
-			ZKUpdateUtil.setWidth(cobDocumentView, "99%");
+			cobDocumentView.setHflex("1");
 			cobDocumentView.addEventListener(Events.ON_SELECT, this);
 		}
 
-		//
-		Grid searchGridView = GridFactory.newGridLayout();
-		searchGridView.setVflex(true);
-		searchGridView.setStyle("max-height: 100%; width: 100%; height: calc( 100% - 90px); position: relative; overflow: auto;");
-
-		Rows rowsSearch = searchGridView.newRows();
-
+		// Content Upload Progress Meter status
 		uploadProgressMtr = new Progressmeter(0);
 		uploadProgressMtr.setClass("drop-progress-meter");
 		uploadProgressMtr.setVisible(false);
@@ -529,6 +531,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendCellChild(lblGlobalSearch);
 		row.appendCellChild(txtGlobalSearch, 2);
 		ZkCssHelper.appendStyle(lblGlobalSearch, "font-weight: bold;");
+		txtGlobalSearch.setHflex("1");
 		txtGlobalSearch.setRows(2);
 
 		// Advance Search
@@ -540,13 +543,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblDocumentName);
 		row.appendCellChild(txtDocumentName, 2);
+		txtDocumentName.setHflex("1");
 		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
 
 		// Description
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblDescription);
 		row.appendCellChild(txtDescription, 2);
+		txtDescription.setHflex("1");
 
+		// Created By
 		Language lang = Env.getLanguage(Env.getCtx());
 		int Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		MLookup lookup = null;
@@ -566,6 +572,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendCellChild(lstboxCreatedBy.getComponent(), 2);
 		lblCreatedBy.setStyle("float: left;");
 
+		// Updated By
 		Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		lookup = null;
 		try
@@ -584,25 +591,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendCellChild(lstboxUpdatedBy.getComponent(), 2);
 		lblUpdatedBy.setStyle("float: left;");
 
+		// Created/Updated Range
 		dbCreatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
 		dbUpdatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
 		dbCreatedTo.setStyle(DMSConstant.CSS_DATEBOX);
 		dbUpdatedTo.setStyle(DMSConstant.CSS_DATEBOX);
 
-		//
 		row = rowsSearch.newRow();
 		row.setSclass("SB-Grid-field");
 		row.appendCellChild(lblCreated);
 		row.appendCellChild(dbCreatedFrom);
 		row.appendCellChild(dbCreatedTo);
 
-		//
 		row = rowsSearch.newRow();
 		row.setSclass("SB-Grid-field");
 		row.appendCellChild(lblUpdated);
 		row.appendCellChild(dbUpdatedFrom);
 		row.appendCellChild(dbUpdatedTo);
 
+		// Content Type
 		Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
 		lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
 		lookup.refresh();
@@ -613,10 +620,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.setSclass("SB-Grid-field");
 		row.appendCellChild(lblContentType);
 		row.appendCellChild(lstboxContentType.getComponent(), 2);
-		lblContentType.setStyle("float: left;");
+		ZKUpdateUtil.setHflex(lstboxContentType.getComponent(), "1"); 
 		lstboxContentType.addValueChangeListener(this);
 
-		//
+		// Content Attributes MetaData
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblContentMeta, 3);
 		ZkCssHelper.appendStyle(lblContentMeta, DMSConstant.CSS_HIGHLIGHT_LABEL);
@@ -625,7 +632,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		DMS_ZK_Util.createCellUnderRow(row, 0, 3, panelAttribute);
 
-		//
+		// Content Operation Buttons
 		row = rowsSearch.newRow();
 
 		DMS_ZK_Util.setButtonData(btnClear, "Reset", "Clear", this);
