@@ -26,6 +26,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/tidy.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xmlbeans-3.1.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/xmlworker-5.4.1.1_LLP.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/jbig2.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
