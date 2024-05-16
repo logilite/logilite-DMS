@@ -2,7 +2,6 @@ package com.logilite.dms.tika.service;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.logging.Level;
 
@@ -47,43 +46,51 @@ public class FileContentExtract
 	{
 		this.file = file;
 		this.isParseHandler = isParseHandler;
+
 		try
 		{
 			parsedDocument();
-		}
-		catch (FileNotFoundException e)
-		{
-			log.log(Level.SEVERE, "File Not Found: ", e);
-			throw new AdempiereException("File Not Found: " + e.getLocalizedMessage(), e);
 		}
 		catch (IOException e)
 		{
 			log.log(Level.SEVERE, "Fail to read file: ", e);
 			throw new AdempiereException("Fail to read file: " + e.getLocalizedMessage(), e);
 		}
-		catch (SAXException e)
-		{
-			log.log(Level.SEVERE, "Fail to XML parser: ", e);
-			throw new AdempiereException("Fail to XML parser: " + e.getLocalizedMessage(), e);
-		}
-		catch (TikaException e)
-		{
-			log.log(Level.SEVERE, "Fail to parse file content: ", e);
-			throw new AdempiereException("Fail to parse file content: " + e.getLocalizedMessage(), e);
-		}
+
 	}// FileContentExtract
 
-	private void parsedDocument() throws FileNotFoundException, IOException, SAXException, TikaException
+	private void parsedDocument() throws IOException
 	{
 		metadata = new Metadata();
 		handler = isParseHandler ? new BodyContentHandler(-1) : null;
+
 		Parser parser = new AutoDetectParser();
 		TikaInputStream stream = TikaInputStream.get(new FileInputStream(file));
 		ParseContext context = new ParseContext();
 		// Configure the parser to only extract metadata
 		context.set(Parser.class, parser);
+
+		//
 		if (stream.getLength() > 0)
-			parser.parse(stream, handler, metadata, context);
+		{
+			try
+			{
+				parser.parse(stream, handler, metadata, context);
+			}
+			catch (IOException e)
+			{
+				log.log(Level.SEVERE, "IO exception while parsing document: " + file.getName() + " \nError: " + e.getLocalizedMessage(), e);
+			}
+			catch (SAXException e)
+			{
+				log.log(Level.SEVERE, "SAX exception while parsing document: " + file.getName() + " \nError: " + e.getLocalizedMessage(), e);
+			}
+			catch (TikaException e)
+			{
+				log.log(Level.SEVERE, "Tika exception while parsing document: " + file.getName() + " \nError: " + e.getLocalizedMessage(), e);
+			}
+		}
+
 		stream.close();
 	}// parsedDocument
 
