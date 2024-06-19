@@ -66,10 +66,12 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 	@Override
 	public void addThumbnail(I_DMS_Version version, File file, String size)
 	{
+		RandomAccessFile raf = null;
+		FileChannel fileChannel = null;
 		try
 		{
-			RandomAccessFile raf = new RandomAccessFile(file, "r");
-			FileChannel fileChannel = raf.getChannel();
+			raf = new RandomAccessFile(file, "r");
+			fileChannel = raf.getChannel();
 			MappedByteBuffer mbBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
 			PDFFile pFile = new PDFFile(mbBuffer);
 			PDFPage page = pFile.getPage(0);
@@ -84,35 +86,47 @@ public class PDFThumbnailGenerator implements IThumbnailGenerator
 			{
 				createThumbnail(version, size, page, rect);
 			}
-			// Window OS Issue - Rename of file is not working after immediate
-			// upload.
-			/*if (mbBuffer != null)
-			{
-				Cleaner cleaner = ((DirectBuffer) mbBuffer).cleaner();
-				cleaner.clean();
-			}*/
-			if (fileChannel != null)
-				fileChannel.close();
-			if (raf != null)
-				raf.close();
 		}
 		catch (Exception e)
 		{
 			log.log(Level.SEVERE, "PDF thumbnail creation failure:", e);
 		}
+		finally
+		{
+			try
+			{
+				if (fileChannel != null)
+					fileChannel.close();
+				if (raf != null)
+					raf.close();
+			}
+			catch (IOException e)
+			{
+				log.log(Level.INFO, "PDF thumbnail connection close error:" + e.getLocalizedMessage(), e);
+			}
+		}
 	} // addThumbnail
 
-	public void createThumbnail(I_DMS_Version version, String size, PDFPage page, Rectangle rect) throws IOException
+	public void createThumbnail(I_DMS_Version version, String size, PDFPage page, Rectangle rect)
 	{
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try
+		{
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		String path = dms.getThumbnailProvider().getThumbPath(version, size);
+			String path = dms.getThumbnailProvider().getThumbPath(version, size);
 
-		BufferedImage imagepx = Utils.toBufferedImage(page.getImage(Integer.parseInt(size), Integer.parseInt(size), rect, null, true, true));
+			//
+			BufferedImage imagepx = Utils.toBufferedImage(page.getImage(Integer.parseInt(size), Integer.parseInt(size), rect, null, true, true));
+			//
+			ImageIO.write(imagepx, "jpg", baos);
 
-		ImageIO.write(imagepx, "jpg", baos);
+			dms.getThumbnailStorageProvider().writeBLOB(path, baos.toByteArray());
+		}
+		catch (Exception e)
+		{
+			log.log(Level.WARNING, "Issue while preparing thumbnail from PDF, Error: " + e.getLocalizedMessage(), e);
+		}
 
-		dms.getThumbnailStorageProvider().writeBLOB(path, baos.toByteArray());
 	} // createThumbnail
 
 }
