@@ -18,7 +18,6 @@ import java.util.List;
 import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MClientInfo;
-import org.compiere.model.MTable;
 import org.compiere.util.CCache;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -45,7 +44,7 @@ import com.logilite.dms.factories.IThumbnailGeneratorFactory;
 import com.logilite.dms.factories.IThumbnailProvider;
 import com.logilite.dms.factories.IThumbnailProviderFactory;
 import com.logilite.dms.model.MDMSContent;
-import com.logilite.search.model.MIndexingConfig;
+import com.logilite.search.factory.IIndexSearcher;
 
 /**
  * Utils for Factory get
@@ -58,7 +57,7 @@ public class DMSFactoryUtils
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider		= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
 	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator	= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
 	static CCache<Integer, IContentManager>		cache_contentManager		= new CCache<Integer, IContentManager>("ContentManager", 2);
-	static CCache<Integer, IIndexQueryBuilder>	cache_idxQueryBuilder		= new CCache<Integer, IIndexQueryBuilder>("IndexQueryBuilder", 1);
+	static CCache<String, IIndexQueryBuilder>	cache_idxQueryBuilder		= new CCache<String, IIndexQueryBuilder>("IndexQueryBuilder", 2);
 
 	/**
 	 * Factory - Content Editor
@@ -299,49 +298,31 @@ public class DMSFactoryUtils
 	 * Get Index Query Builder
 	 * 
 	 * @param  AD_Client_ID
-	 * @return              {@link IIndexQueryBuilder}
+	 * @param  indexSearcher
+	 * @return               {@link IIndexQueryBuilder}
 	 */
-	public static IIndexQueryBuilder getIndexQueryBuilder(int AD_Client_ID)
+	public static IIndexQueryBuilder getIndexQueryBuilder(IIndexSearcher indexSearcher)
 	{
-		IIndexQueryBuilder idxQueryBuilder = cache_idxQueryBuilder.get(AD_Client_ID);
-
+		String key = indexSearcher.getIndexingType();
+		IIndexQueryBuilder idxQueryBuilder = cache_idxQueryBuilder.get(key);
 		if (idxQueryBuilder != null)
 		{
 			return idxQueryBuilder;
 		}
-
-		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID, null);
-		int indexingConf_ID = clientInfo.get_ValueAsInt("LTX_Indexing_Conf_ID");
 
 		// Factory call
 		List<IIndexQueryBuildFactory> factories = Service.locator().list(IIndexQueryBuildFactory.class).getServices();
 
 		for (IIndexQueryBuildFactory factory : factories)
 		{
-			if (indexingConf_ID > 0)
+			idxQueryBuilder = factory.get(indexSearcher.getIndexingType());
+			if (idxQueryBuilder != null)
 			{
-				MIndexingConfig indexingConfig = (MIndexingConfig) MTable	.get(Env.getCtx(), MIndexingConfig.Table_ID)
-																			.getPO(indexingConf_ID, null);
-
-				idxQueryBuilder = factory.get(indexingConfig.getLTX_Indexing_Type());
-
-				if (idxQueryBuilder != null)
-				{
-					cache_idxQueryBuilder.put(AD_Client_ID, idxQueryBuilder);
-					break;
-				}
-			}
-			else
-			{
-				// Default index searcher as SQLIndexSearcherFactory
-				// FIXME parameter
-				idxQueryBuilder = factory.get("GNR");
-				if (idxQueryBuilder != null)
-					break;
+				cache_idxQueryBuilder.put(key, idxQueryBuilder);
+				break;
 			}
 		}
 
 		return idxQueryBuilder;
 	} // getIndexQueryBuilder
-
 }

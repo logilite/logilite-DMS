@@ -1,8 +1,11 @@
 package com.logilite.dms.querybuildsql.factory;
 
+import org.compiere.util.Util;
+
 import com.logilite.dms.factories.IIndexQueryBuildFactory;
 import com.logilite.dms.factories.IIndexQueryBuilder;
 import com.logilite.dms.querybuildsql.service.SQLQueryBuilder;
+import com.logilite.search.factory.ServiceUtils;
 
 /**
  * SQL Query Build Factory as Default factory
@@ -19,7 +22,10 @@ public class SQLQueryBuildFactory implements IIndexQueryBuildFactory
 		 * Lowest priority
 		 * Work as default if no other one configured or down
 		 */
-		return new SQLQueryBuilder();
+		if (Util.isEmpty(indexingType, true) || indexingType.equals(ServiceUtils.INDEXING_TYPE_SQL))
+			return new SQLQueryBuilder();
+
+		return null;
 	}
 
 }

@@ -409,17 +409,19 @@ public final class DMSConstant
 																						+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
 
 	// Attribute Set Instance ID Filter from value and name pair
-	public static final String				SQL_GET_ATTRI_SET_INSTANCE_LIST			= "(SELECT M_AttributeSetInstance_ID FROM crosstab("
-																						+ "	  'SELECT ai.M_AttributeSetInstance_ID, a.Name as Name,      "
-																						+ "	COALESCE(Cast(valuenumber AS TEXT), Cast(valueint AS TEXT), Cast(valuedate AS TEXT),  Cast(valuetimestamp AS TEXT), Value ) as value"
-																						+ " FROM M_AttributeInstance ai INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID)"
-																						+ " ORDER BY  1, 2 ' "
-																						+ "	) AS ct( M_AttributesetInstance_id numeric ";
+	public static final String				SQL_GET_ATTRI_SET_INSTANCE_LIST			= "(SELECT M_AttributeSetInstance_ID FROM crosstab ( 														"
+																						+ "	  	'SELECT ai.M_AttributeSetInstance_ID, a.Name AS Name,     										"
+																						+ "			COALESCE(CAST(ValueNumber AS TEXT), CAST(ValueInt AS TEXT), CAST(ValueDate AS TEXT), CAST(ValueTimestamp AS TEXT), Value) AS Value"
+																						+ " 	FROM M_AttributeInstance ai INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID)	"
+																						+ " 	ORDER BY  1, 2 ' 																				"
+																						+ "	) AS ct( M_AttributeSetInstance_ID numeric 															";
 
 	// Get Content Type wise Attribute Name List
-	public static final String				SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID,NAME FROM M_Attribute "
-																						+ "WHERE M_Attribute_ID IN ( SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance  "
-																						+ "    WHERE M_AttributesetInstance_id IN ( "
-																						+ "        SELECT M_AttributesetInstance_id FROM DMS_Content WHERE DMS_Contenttype_ID = ? "
-																						+ "      ) ) Order by Name ";
+	public static final String				SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID, Name FROM M_Attribute 														"
+																						+ "	WHERE M_Attribute_ID IN ( 																		"
+																						+ "		(	SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance 								"
+																						+ "    		WHERE M_AttributeSetInstance_ID IN ( 													"
+																						+ "        			SELECT M_AttributeSetInstance_ID FROM DMS_Content WHERE DMS_ContentType_ID = ? )"
+																						+ "     )	 																						"
+																						+ "	ORDER BY Name 																					";
 }

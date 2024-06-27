@@ -694,4 +694,17 @@ public class Utils
 		return actualNames;
 	} // getMatchingContentList
 
+	/**
+	 * By SQL to update Version status for indexed or non-indexed
+	 * 
+	 * @param  versionID
+	 * @param  isIndexed
+	 * @param  trx
+	 * @return
+	 */
+	public static int updateVersionIndex(int versionID, String isIndexed, String trx)
+	{
+		return DB.executeUpdate("UPDATE DMS_Version SET IsIndexed = ? WHERE DMS_Version_ID = ? ", new Object[] { isIndexed, versionID }, true, trx);
+	}
+
 }

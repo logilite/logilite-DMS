@@ -54,6 +54,7 @@ import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.tika.service.FileContentExtract;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
+import com.logilite.search.model.MIndexingConfig;
 
 /**
  * Util for DMS generic / advance searching from index server or normal content
@@ -231,14 +232,13 @@ public class DMSSearchUtils
 	/**
 	 * Create Index Map for indexing server
 	 * 
-	 * @param  indexSearcher
 	 * @param  content
 	 * @param  association
 	 * @param  version
 	 * @param  file
-	 * @return               Map
+	 * @return             Map
 	 */
-	public static Map<String, Object> createIndexMap(	IIndexSearcher indexSearcher, I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
+	public static Map<String, Object> createIndexMap(	I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
 														File file)
 	{
 		Map<String, Object> indexMap = new HashMap<String, Object>();
@@ -331,7 +331,7 @@ public class DMSSearchUtils
 	public static IIndexSearcher getIndexSearcher(int AD_Client_ID)
 	{
 		IIndexSearcher idxSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
-		if (!isIndexingInitiated)
+		if (!isIndexingInitiated && idxSearcher.getIndexingType().equals(MIndexingConfig.LTX_INDEXING_TYPE_Solr))
 		{
 			// TODO Require to refactor for solr related things
 
@@ -421,9 +421,13 @@ public class DMSSearchUtils
 	public static void doIndexingInServer(	I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, String deleteIdxColumnName,
 											String deleteIdxColumnValue)
 	{
-		IIndexSearcher indexSearcher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
-		if (indexSearcher != null && indexSearcher.getClass().getName().equals("com.logilite.search.sql.service.SQLIndexSearcher"))
+		if (ServiceUtils.isSQLIndexSearcher(content.getAD_Client_ID()))
+		{
+			Utils.updateVersionIndex(version.getDMS_Version_ID(), "N", null);
+
+			// Ignore to do indexing as SQL based query building
 			return;
+		}
 
 		IFileStorageProvider fsProvider = FileStorageUtil.get(content.getAD_Client_ID(), false);
 		if (fsProvider == null)
@@ -433,19 +437,20 @@ public class DMSSearchUtils
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
+		IIndexSearcher indexSearcher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
 		// Delete existing index
 		if (!Util.isEmpty(deleteIdxColumnName, true))
 			indexSearcher.deleteIndexByField(deleteIdxColumnName, deleteIdxColumnValue);
 
 		// Create index
 		File file = fsProvider.getFile(contentManager.getPathByValue(content));
-		Map<String, Object> indexMap = createIndexMap(indexSearcher, content, association, version, file);
+		Map<String, Object> indexMap = createIndexMap(content, association, version, file);
 		indexSearcher.indexContent(indexMap);
 
 		// Update the value of IsIndexed flag in Content
 		if (!version.isIndexed())
 		{
-			DB.executeUpdate("UPDATE DMS_Version SET IsIndexed='Y' WHERE DMS_Version_ID = ? ", version.getDMS_Version_ID(), null);
+			Utils.updateVersionIndex(version.getDMS_Version_ID(), "Y", null);
 		}
 	} // doIndexing
 
