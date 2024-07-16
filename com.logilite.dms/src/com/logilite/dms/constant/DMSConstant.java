@@ -212,6 +212,7 @@ public final class DMSConstant
 	public static final String				TTT_PREVIOUS_RECORD						= "Previous Record";
 	public static final String				TTT_DISPLAYS_ITEMS_LAYOUT				= "Displays items Layout";
 	public static final String				TTT_CONTENT_SORTING						= "Content Sorting";
+	public static final String				TTT_USE_SELECTED_CONTENT				= "Use Selected Content";
 
 	// Contents Type
 	public static final String				CONTENT_FILE							= "File";

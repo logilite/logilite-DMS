@@ -23,6 +23,7 @@ import org.zkoss.zul.A;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Image;
 import org.zkoss.zul.Paging;
+import org.zkoss.zul.Vbox;
 import org.zkoss.zul.event.ZulEvents;
 
 import com.logilite.dms.DMS;
@@ -67,6 +68,8 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 
 	protected boolean							isSorted;
 	protected boolean							isSortedAsc;
+	protected boolean							isContentSelectable;
+
 	protected String							sortedColumn;
 
 	/***
@@ -264,6 +267,17 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 			removeSelection(prevComponent);
 			setSelection(event.getTarget());
 			prevComponent = event.getTarget();
+			if (isContentSelectable)
+			{
+				if (prevComponent.getFirstChild() instanceof Vbox
+					&& prevComponent.getFirstChild().getFirstChild() instanceof Checkbox)
+				{
+					Checkbox chk = (Checkbox) event.getTarget().getFirstChild().getFirstChild();
+					chk.setChecked(!chk.isChecked());
+					//
+					Events.sendEvent(new Event(DMSConstant.EVENT_ON_SELECTION_CHANGE, (Component) listener, chk));
+				}
+			}
 		}
 		else if (event.getName().equals(Events.ON_CHECK) && event.getTarget() instanceof Checkbox)
 		{
@@ -385,5 +399,10 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 				contentItems.sort(comparator.reversed());
 		}
 	} // doSorting
+
+	public void isContentSelectable(boolean isContentSelectable)
+	{
+		this.isContentSelectable = isContentSelectable;
+	}
 
 }
