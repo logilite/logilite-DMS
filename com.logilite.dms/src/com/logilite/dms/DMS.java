@@ -50,6 +50,7 @@ import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSOprUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.DMSSearchUtils;
+import com.logilite.dms.util.RelationUtils;
 import com.logilite.dms.util.Utils;
 import com.logilite.search.factory.IIndexSearcher;
 
@@ -423,8 +424,13 @@ public class DMS
 
 	public String createLink(MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
 	{
-		return contentManager.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
+		return RelationUtils.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
 	} // createLink
+
+	public void removeLink(String whereClause, int Record_ID, int AD_Table_ID, int associationTypeID, String trxName)
+	{
+		MDMSAssociation.removeLinkAssociations(trxName, validRecordID(Record_ID), validTableID(AD_Table_ID), trxName);
+	} // removeLink
 
 	/*
 	 * Content and Association related util methods
@@ -780,7 +786,7 @@ public class DMS
 	 */
 	public String hasLinkableDocs(I_DMS_Content content, I_DMS_Association association)
 	{
-		return contentManager.hasLinkableDocs(this, content, association);
+		return RelationUtils.hasLinkableDocs(this, content, association);
 	} // hasLinkableDocs
 
 	/**
