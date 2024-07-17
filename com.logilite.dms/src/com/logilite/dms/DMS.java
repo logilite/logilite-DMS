@@ -429,7 +429,7 @@ public class DMS
 
 	public void removeLink(String whereClause, int Record_ID, int AD_Table_ID, int associationTypeID, String trxName)
 	{
-		MDMSAssociation.removeLinkAssociations(trxName, validRecordID(Record_ID), validTableID(AD_Table_ID), trxName);
+		MDMSAssociation.removeLinkAssociations(whereClause, validRecordID(Record_ID), validTableID(AD_Table_ID), trxName);
 	} // removeLink
 
 	/*
