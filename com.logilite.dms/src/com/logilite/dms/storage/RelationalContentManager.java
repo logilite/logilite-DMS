@@ -876,11 +876,6 @@ public class RelationalContentManager implements IContentManager
 		}
 	} // undoDeleteContent
 
-	public String createLink(DMS dms, MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
-	{
-		return null;
-	}
-
 	/**
 	 * Check copy/cut content exists in same Hierarchy.
 	 * 
