@@ -427,7 +427,7 @@ public class DMS
 		return RelationUtils.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
 	} // createLink
 
-	public void removeLink(String whereClause, int Record_ID, int AD_Table_ID, int associationTypeID, String trxName)
+	public void removeLink(String whereClause, int Record_ID, int AD_Table_ID, String trxName)
 	{
 		MDMSAssociation.removeLinkAssociations(whereClause, validRecordID(Record_ID), validTableID(AD_Table_ID), trxName);
 	} // removeLink
