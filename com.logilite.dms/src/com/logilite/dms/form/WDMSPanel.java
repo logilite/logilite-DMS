@@ -182,6 +182,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Button					btnNext					= new Button();
 	private Button					btnToggleView			= new Button();
 	private Button					btnContentSort			= new Button();
+	private Button					btnSelectedContent		= new Button();
 
 	private Textbox					txtDocumentName			= new Textbox();
 	private Textbox					txtDescription			= new Textbox();
@@ -249,9 +250,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private int						windowNo				= 0;
 	private int						tabNo					= 0;
 
-	private boolean					isDMSAdmin				= false;
 	private boolean					isSearch				= false;
+	private boolean					isDMSAdmin				= false;
 	private boolean					isWindowAccess			= true;
+	private boolean					isContentSelectable		= false;
 	private boolean					isDocExplorerWindow		= false;
 	private boolean					isMountingBaseStructure	= false;
 
@@ -289,8 +291,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		initZK(Table_ID, Record_ID);
 
 		setCurrDMSContent(dms.getRootMountingContent(tableID, recordID));
-
-		renderViewer();
 	} // Constructor
 
 	public WDMSPanel(int Table_ID, int Record_ID, AbstractADWindowContent winContent)
@@ -424,6 +424,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public boolean isTabViewer()
 	{
 		return (tableID > 0 && recordID > 0);
+	}
+
+	/**
+	 * @return the isSelectable
+	 */
+	public boolean isContentSelectable()
+	{
+		return isContentSelectable;
+	}
+
+	/**
+	 * @param isSelectable the Content Selectable to set
+	 */
+	public void setContentSelectable(boolean isSelectable, EventListener<? extends Event> listener)
+	{
+		this.isContentSelectable = isSelectable;
+		btnSelectedContent.setVisible(isSelectable);
+		btnSelectedContent.removeEventListener(Events.ON_CLICK, this);
+		btnSelectedContent.addActionListener(listener);
 	}
 
 	/**
@@ -620,7 +639,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.setSclass("SB-Grid-field");
 		row.appendCellChild(lblContentType);
 		row.appendCellChild(lstboxContentType.getComponent(), 2);
-		ZKUpdateUtil.setHflex(lstboxContentType.getComponent(), "1"); 
+		ZKUpdateUtil.setHflex(lstboxContentType.getComponent(), "1");
 		lstboxContentType.addValueChangeListener(this);
 
 		// Content Attributes MetaData
@@ -640,6 +659,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMS_ZK_Util.setButtonData(btnCloseTab, "Home", "Clear all & Go to Home Directory", this);
 		DMS_ZK_Util.setButtonData(btnToggleView, "List", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
 		DMS_ZK_Util.setButtonData(btnContentSort, "Sorting", DMSConstant.TTT_CONTENT_SORTING, this);
+		DMS_ZK_Util.setButtonData(btnSelectedContent, "SelectedContent", DMSConstant.TTT_USE_SELECTED_CONTENT, this);
+		btnSelectedContent.setVisible(false);
 
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
 		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important; height: 45px; width: 45px;");
@@ -650,6 +671,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox.appendChild(btnClear);
 		hbox.appendChild(btnCloseTab);
 		hbox.appendChild(btnContentSort);
+		hbox.appendChild(btnSelectedContent);
 
 		Cell cell = DMS_ZK_Util.createCellUnderRow(row, 1, 3, hbox);
 		cell.setAlign("right");
@@ -1345,6 +1367,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// Component Viewer
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
+		viewerComponent.isContentSelectable(isContentSelectable());
 		viewerComponent.init(	dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList,
 								sortFieldName);
 
@@ -2316,6 +2339,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	public void setButtonCleanEnabled(boolean isEnabled)
 	{
 		btnClear.setEnabled(isEnabled);
+	}
+
+	public Set<I_DMS_Version> getSelectedContentList()
+	{
+		return downloadSet;
+	}
+
+	public Button getButtonSelectedContent()
+	{
+		return btnSelectedContent;
 	}
 
 	public void callDragAndDropAction()
