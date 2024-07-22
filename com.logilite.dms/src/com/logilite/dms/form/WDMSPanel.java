@@ -185,6 +185,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Button					btnNext					= new Button();
 	private Button					btnToggleView			= new Button();
 	private Button					btnContentSort			= new Button();
+	private Button					btnSelectedContent		= new Button();
 
 	private Textbox					txtDocumentName			= new Textbox();
 	private Textbox					txtDescription			= new Textbox();
@@ -252,9 +253,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private int						windowNo				= 0;
 	private int						tabNo					= 0;
 
-	private boolean					isDMSAdmin				= false;
 	private boolean					isSearch				= false;
+	private boolean					isDMSAdmin				= false;
 	private boolean					isWindowAccess			= true;
+	private boolean					isContentSelectable		= false;
 	private boolean					isDocExplorerWindow		= false;
 	private boolean					isMountingBaseStructure	= false;
 
@@ -292,8 +294,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		initZK(Table_ID, Record_ID);
 
 		setCurrDMSContent(dms.getRootMountingContent(tableID, recordID));
-
-		renderViewer();
 	} // Constructor
 
 	public WDMSPanel(int Table_ID, int Record_ID, AbstractADWindowContent winContent)
@@ -430,6 +430,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	}
 
 	/**
+	 * @return the isSelectable
+	 */
+	public boolean isContentSelectable()
+	{
+		return isContentSelectable;
+	}
+
+	/**
+	 * @param isSelectable the Content Selectable to set
+	 */
+	public void setContentSelectable(boolean isSelectable, EventListener<? extends Event> listener)
+	{
+		this.isContentSelectable = isSelectable;
+		btnSelectedContent.setVisible(isSelectable);
+		btnSelectedContent.removeEventListener(Events.ON_CLICK, this);
+		btnSelectedContent.addActionListener(listener);
+	}
+
+	/**
 	 * initialize components
 	 */
 	private void initForm()
@@ -493,6 +512,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox.appendChild(btnUploadContent);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 3, hbox);
 
+		//
+		Grid searchGridView = GridFactory.newGridLayout();
+		searchGridView.setVflex(true);
+		searchGridView.setStyle("max-height: 100%; width: 100%; height: calc( 100% - 90px); position: relative; overflow: auto;");
+
+		// Document View Row
+		Rows rowsSearch = searchGridView.newRows();
+
 		cobDocumentView = new Combobox();
 		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_ALL, DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
 		cobDocumentView.appendItem(DMSConstant.DOCUMENT_VIEW_DELETED_ONLY, DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE);
@@ -501,20 +528,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		if (isDMSAdmin)
 		{
-			row = rowsBtn.newRow();
+			row = rowsSearch.newRow();
 			DMS_ZK_Util.createCellUnderRow(row, 1, 1, lblDocumentView);
 			DMS_ZK_Util.createCellUnderRow(row, 1, 2, cobDocumentView);
-			ZKUpdateUtil.setWidth(cobDocumentView, "99%");
+			cobDocumentView.setHflex("1");
 			cobDocumentView.addEventListener(Events.ON_SELECT, this);
 		}
 
-		//
-		Grid searchGridView = GridFactory.newGridLayout();
-		searchGridView.setVflex(true);
-		searchGridView.setStyle("max-height: 100%; width: 100%; height: calc( 100% - 90px); position: relative; overflow: auto;");
-
-		Rows rowsSearch = searchGridView.newRows();
-
+		// Content Upload Progress Meter status
 		uploadProgressMtr = new Progressmeter(0);
 		uploadProgressMtr.setClass("drop-progress-meter");
 		uploadProgressMtr.setVisible(false);
@@ -533,6 +554,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendCellChild(lblGlobalSearch);
 		row.appendCellChild(txtGlobalSearch, 2);
 		ZkCssHelper.appendStyle(lblGlobalSearch, "font-weight: bold;");
+		txtGlobalSearch.setHflex("1");
 		txtGlobalSearch.setRows(2);
 
 		// Advance Search
@@ -544,13 +566,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblDocumentName);
 		row.appendCellChild(txtDocumentName, 2);
+		txtDocumentName.setHflex("1");
 		ZkCssHelper.appendStyle(lblDocumentName, "font-weight: bold;");
 
 		// Description
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblDescription);
 		row.appendCellChild(txtDescription, 2);
+		txtDescription.setHflex("1");
 
+		// Created By
 		Language lang = Env.getLanguage(Env.getCtx());
 		int Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		MLookup lookup = null;
@@ -570,6 +595,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendCellChild(lstboxCreatedBy.getComponent(), 2);
 		lblCreatedBy.setStyle("float: left;");
 
+		// Updated By
 		Column_ID = MColumn.getColumn_ID(MUser.Table_Name, MUser.COLUMNNAME_AD_User_ID);
 		lookup = null;
 		try
@@ -588,25 +614,25 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.appendCellChild(lstboxUpdatedBy.getComponent(), 2);
 		lblUpdatedBy.setStyle("float: left;");
 
+		// Created/Updated Range
 		dbCreatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
 		dbUpdatedFrom.setStyle(DMSConstant.CSS_DATEBOX);
 		dbCreatedTo.setStyle(DMSConstant.CSS_DATEBOX);
 		dbUpdatedTo.setStyle(DMSConstant.CSS_DATEBOX);
 
-		//
 		row = rowsSearch.newRow();
 		row.setSclass("SB-Grid-field");
 		row.appendCellChild(lblCreated);
 		row.appendCellChild(dbCreatedFrom);
 		row.appendCellChild(dbCreatedTo);
 
-		//
 		row = rowsSearch.newRow();
 		row.setSclass("SB-Grid-field");
 		row.appendCellChild(lblUpdated);
 		row.appendCellChild(dbUpdatedFrom);
 		row.appendCellChild(dbUpdatedTo);
 
+		// Content Type
 		Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
 		lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
 		lookup.refresh();
@@ -617,10 +643,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row.setSclass("SB-Grid-field");
 		row.appendCellChild(lblContentType);
 		row.appendCellChild(lstboxContentType.getComponent(), 2);
-		lblContentType.setStyle("float: left;");
+		ZKUpdateUtil.setHflex(lstboxContentType.getComponent(), "1");
 		lstboxContentType.addValueChangeListener(this);
 
-		//
+		// Content Attributes MetaData
 		row = rowsSearch.newRow();
 		row.appendCellChild(lblContentMeta, 3);
 		ZkCssHelper.appendStyle(lblContentMeta, DMSConstant.CSS_HIGHLIGHT_LABEL);
@@ -629,7 +655,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		row = rowsSearch.newRow();
 		DMS_ZK_Util.createCellUnderRow(row, 0, 3, panelAttribute);
 
-		//
+		// Content Operation Buttons
 		row = rowsSearch.newRow();
 
 		DMS_ZK_Util.setButtonData(btnClear, "Reset", "Clear", this);
@@ -637,6 +663,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMS_ZK_Util.setButtonData(btnCloseTab, "Home", "Clear all & Go to Home Directory", this);
 		DMS_ZK_Util.setButtonData(btnToggleView, "List", DMSConstant.TTT_DISPLAYS_ITEMS_LAYOUT, this);
 		DMS_ZK_Util.setButtonData(btnContentSort, "Sorting", DMSConstant.TTT_CONTENT_SORTING, this);
+		DMS_ZK_Util.setButtonData(btnSelectedContent, "SelectedContent", DMSConstant.TTT_USE_SELECTED_CONTENT, this);
+		btnSelectedContent.setVisible(false);
 
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
 		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important; height: 45px; width: 45px;");
@@ -647,6 +675,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		hbox.appendChild(btnClear);
 		hbox.appendChild(btnCloseTab);
 		hbox.appendChild(btnContentSort);
+		hbox.appendChild(btnSelectedContent);
 
 		Cell cell = DMS_ZK_Util.createCellUnderRow(row, 1, 3, hbox);
 		cell.setAlign("right");
@@ -1344,6 +1373,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		// Component Viewer
 		String[] eventsList = new String[] { Events.ON_RIGHT_CLICK, Events.ON_DOUBLE_CLICK };
 		AbstractComponentIconViewer viewerComponent = (AbstractComponentIconViewer) DMSFactoryUtils.getDMSComponentViewer(currThumbViewerAction);
+		viewerComponent.isContentSelectable(isContentSelectable());
 		viewerComponent.init(	dms, mapPerFiltered, grid, DMSConstant.CONTENT_LARGE_ICON_WIDTH, DMSConstant.CONTENT_LARGE_ICON_HEIGHT, this, eventsList,
 								sortFieldName);
 
@@ -2326,6 +2356,16 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
 
 		getParent().detach();
+	}
+
+	public Set<I_DMS_Version> getSelectedContentList()
+	{
+		return downloadSet;
+	}
+
+	public Button getButtonSelectedContent()
+	{
+		return btnSelectedContent;
 	}
 
 	public void callDragAndDropAction()

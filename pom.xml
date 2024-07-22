@@ -16,5 +16,6 @@
     <module>com.logilite.dms.tika</module>
     <module>com.logilite.dms.querybuildsolr</module>
     <module>com.logilite.dms.querybuildelastic</module>
+    <module>com.logilite.dms.fileuploader</module>
   </modules>
 </project>

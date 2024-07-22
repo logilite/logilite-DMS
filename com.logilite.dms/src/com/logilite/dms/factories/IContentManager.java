@@ -18,7 +18,6 @@ import java.util.Map;
 
 import com.logilite.dms.DMS;
 import com.logilite.dms.model.IFileStorageProvider;
-import com.logilite.dms.model.I_DMS_Association;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.I_DMS_Version;
 import com.logilite.dms.model.MDMSAssociation;
@@ -77,7 +76,8 @@ public interface IContentManager
 	 * 
 	 */
 
-	public void pasteCopyContent(DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID, boolean isCreatePermissionForPasteContent);
+	public void pasteCopyContent(	DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID,
+									boolean isCreatePermissionForPasteContent);
 
 	public void pasteCutContent(DMS dms, MDMSContent cutContent, MDMSContent destContent, int tableID, int recordID, boolean isDocExplorerWindow);
 
@@ -86,10 +86,6 @@ public interface IContentManager
 	public void renameContentOnly(DMS dms, MDMSContent content, String fileName, String description, boolean isDocExplorerWindow);
 
 	public void renameFile(DMS dms, MDMSContent content, String fileName, boolean isAddFileExtention);
-
-	public String createLink(DMS dms, MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID);
-
-	public String hasLinkableDocs(DMS dms, I_DMS_Content content, I_DMS_Association association);
 
 	public boolean isHierarchyContentExists(int destContentID, int sourceContentID);
 

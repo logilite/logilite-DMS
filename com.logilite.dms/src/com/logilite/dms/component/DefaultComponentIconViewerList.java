@@ -46,11 +46,11 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		Columns columns = new Columns();
 		columns.setSizable(true);
 		columns.appendChild(createColumnCheckBoxAllSelect("3%"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, DMSConstant.ATTRIB_NAME, "35%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, DMSConstant.ATTRIB_CONTENT_TYPE, "12%", "left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, DMSConstant.ATTRIB_SIZE, "10%", "Left"));
-		columns.appendChild(createColumn(DMSConstant.MSG_CREATED, DMSConstant.ATTRIB_CREATED, "15%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, DMSConstant.ATTRIB_UPDATED, "15%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, DMSConstant.ATTRIB_NAME, "30%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, DMSConstant.ATTRIB_CONTENT_TYPE, "10%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, DMSConstant.ATTRIB_SIZE, "7%", "Left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_CREATED, DMSConstant.ATTRIB_CREATED, "13%", "center"));
+		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, DMSConstant.ATTRIB_UPDATED, "13%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, DMSConstant.ATTRIB_FIELDTYPE, "10%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, DMSConstant.ATTRIB_MODIFIEDBY, "10%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_LINK, DMSConstant.ATTRIB_LINK, "5%", "center"));

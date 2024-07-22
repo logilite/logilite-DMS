@@ -18,10 +18,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MTable;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 public class MDMSAssociation extends X_DMS_Association
 {
@@ -86,6 +88,58 @@ public class MDMSAssociation extends X_DMS_Association
 							+ " RecordID=" + Record_ID);
 		return association.getDMS_Association_ID();
 	} // create
+
+	/**
+	 * Remove Link Associations
+	 * 
+	 * @param whereClause
+	 * @param Record_ID
+	 * @param AD_Table_ID
+	 * @param trxName
+	 */
+	public static void removeLinkAssociations(String whereClause, int Record_ID, int AD_Table_ID, String trxName)
+	{
+		if (AD_Table_ID <= 0 || Record_ID <= 0)
+		{
+			throw new AdempiereException("Table and Record reference must required for removing linkable associations.");
+		}
+
+		// AND DMS_Content_ID = ? AND DMS_Content_Related_ID = ?
+		String where = " DMS_AssociationType_ID = 1000003 AND AD_Table_ID = ? AND Record_ID = ? ";
+		String finalWhere = where + (Util.isEmpty(whereClause, true) ? "" : " AND " + whereClause);
+
+		List<MDMSAssociation> list = new Query(Env.getCtx(), Table_Name, finalWhere, trxName)
+																								.setOnlyActiveRecords(true)
+																								.setClient_ID()
+																								.setParameters(AD_Table_ID, Record_ID)
+																								.list();
+
+		if (list != null && list.size() > 0)
+		{
+			for (MDMSAssociation association : list)
+			{
+				removeAssociation(association);
+			}
+		}
+	} // removeLinkAssociations
+
+	/**
+	 * Remove Association
+	 * 
+	 * @param  association
+	 * @return             true if Deleted
+	 */
+	public static boolean removeAssociation(MDMSAssociation association)
+	{
+		String msg = " = Linkable association deleted. Association ID = "	+ association.getDMS_Association_ID()
+						+ ", Content ID =" + association.getDMS_Content_ID()
+						+ ", Content Related ID =" + association.getDMS_Content_Related_ID()
+						+ ", TableID=" + association.getAD_Table_ID()
+						+ ", RecordID=" + association.getRecord_ID();
+		boolean deleted = association.delete(true);
+		log.log(Level.WARNING, deleted + msg);
+		return deleted;
+	} // removeAssociation
 
 	/**
 	 * Get association from content ID with referring linkable association

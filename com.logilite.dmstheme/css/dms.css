@@ -80,6 +80,10 @@
 	content: "\f15b";
 }
 
+.z-icon-SelectedContent:before {
+	content: "\f103";	
+}
+
 .dms-breadcrumb > div {
 	display: table-cell;
 	vertical-align: middle;
@@ -119,4 +123,9 @@
 .dms_paging {
 	position: relative;
 	bottom:35px;
+}
+
+.SB-SelectionChkbx {
+	position: absolute;
+	left: 4px;
 }

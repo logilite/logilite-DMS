@@ -13,6 +13,7 @@
 
 package com.logilite.dms.component;
 
+import org.adempiere.webui.component.Checkbox;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
@@ -68,6 +69,14 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
 		Vbox vbox = new Vbox();
+		if (isContentSelectable)
+		{
+			Checkbox checkBox = new Checkbox();
+			checkBox.addActionListener(this);
+			checkBox.setSclass("SB-SelectionChkbx");
+			checkBox.setAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF, contentDetail.getVersion());
+			vbox.appendChild(checkBox);
+		}
 		vbox.appendChild(thumbImg);
 		vbox.appendChild(lblName);
 		vbox.setAlign("center");
