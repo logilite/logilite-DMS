@@ -107,7 +107,6 @@ public class UUIDMountingStrategy implements IMountingStrategy
 			String pValue = process.getValue();
 
 			int processContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CNT_PROCESS, AD_Client_ID, mountingContentID, pValue);
-
 			if (processContentID <= 0)
 			{
 				processContentID = MDMSContent.create(pValue, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + archiveBase, true);
@@ -165,7 +164,7 @@ public class UUIDMountingStrategy implements IMountingStrategy
 	 * @param Record_ID
 	 * @param AD_Table_ID
 	 */
-	public void initiateMountingContent(String mountingBaseName, String table_Name, int Record_ID, int AD_Table_ID)
+	public void initiateMountingContent(String mountingBaseName, String table_Name, int Record_ID, int AD_Table_ID, String trxName)
 	{
 		int AD_Client_ID = Env.getAD_Client_ID(Env.getCtx());
 
@@ -176,7 +175,7 @@ public class UUIDMountingStrategy implements IMountingStrategy
 		String baseDir = fileStorageProvider.getBaseDirectory(null);
 		File file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName);
 
-		int mountingContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_ROOT_MOUNTING_BASE_CONTENT, mountingBaseName, AD_Client_ID);
+		int mountingContentID = DB.getSQLValue(trxName, DMSConstant.SQL_GET_ROOT_MOUNTING_BASE_CONTENT, mountingBaseName, AD_Client_ID);
 
 		if (!file.exists())
 		{
@@ -187,9 +186,9 @@ public class UUIDMountingStrategy implements IMountingStrategy
 		// something happen to prevent to create another content for same
 		if (mountingContentID <= 0)
 		{
-			mountingContentID = MDMSContent.create(mountingBaseName, MDMSContent.CONTENTBASETYPE_Directory, null, true);
-			MDMSAssociation.create(mountingContentID, 0, 0, 0, 0, null);
-			MDMSVersion.create(mountingContentID, mountingBaseName, 0, file, null);
+			mountingContentID = MDMSContent.create(mountingBaseName, MDMSContent.CONTENTBASETYPE_Directory, null, true, trxName);
+			MDMSAssociation.create(mountingContentID, 0, 0, 0, 0, trxName);
+			MDMSVersion.create(mountingContentID, mountingBaseName, 0, file, trxName);
 		}
 
 		/**
@@ -200,7 +199,8 @@ public class UUIDMountingStrategy implements IMountingStrategy
 		{
 			file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name);
 
-			tableNameContentID = DB.getSQLValue(null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID, AD_Table_ID, table_Name);
+			tableNameContentID = DB.getSQLValue(trxName, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT, AD_Client_ID, mountingContentID,
+												AD_Table_ID, table_Name);
 			if (!file.exists())
 			{
 				file.mkdirs();
@@ -209,9 +209,10 @@ public class UUIDMountingStrategy implements IMountingStrategy
 			// Check if already DMS content created for Table
 			if (tableNameContentID <= 0)
 			{
-				tableNameContentID = MDMSContent.create(table_Name, MDMSContent.CONTENTBASETYPE_Directory, DMSConstant.FILE_SEPARATOR + mountingBaseName, true);
-				MDMSAssociation.create(tableNameContentID, mountingContentID, 0, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
-				MDMSVersion.create(tableNameContentID, table_Name, 0, file, null);
+				tableNameContentID = MDMSContent.create(table_Name, MDMSContent.CONTENTBASETYPE_Directory,
+														DMSConstant.FILE_SEPARATOR + mountingBaseName, true, trxName);
+				MDMSAssociation.create(tableNameContentID, mountingContentID, 0, AD_Table_ID, MDMSAssociationType.PARENT_ID, trxName);
+				MDMSVersion.create(tableNameContentID, table_Name, 0, file, trxName);
 			}
 		}
 
@@ -221,23 +222,24 @@ public class UUIDMountingStrategy implements IMountingStrategy
 		if (tableNameContentID > 0 && Record_ID > 0)
 		{
 			// Check if already DMS content created for Record
-			int recordContentID = DB.getSQLValue(	null, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT + " AND a.Record_ID = ?", AD_Client_ID, tableNameContentID,
-													AD_Table_ID, String.valueOf(Record_ID), Record_ID);
+			int recordContentID = DB.getSQLValue(	trxName, DMSConstant.SQL_GET_SUB_MOUNTING_BASE_CONTENT + " AND a.Record_ID = ?", AD_Client_ID,
+													tableNameContentID, AD_Table_ID, String.valueOf(Record_ID), Record_ID);
 			if (recordContentID <= 0)
 			{
 				String uuid = UUID.randomUUID().toString();
 
-				file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name + DMSConstant.FILE_SEPARATOR
-								+ uuid);
+				file = new File(baseDir + DMSConstant.FILE_SEPARATOR + mountingBaseName
+								+ DMSConstant.FILE_SEPARATOR + table_Name
+								+ DMSConstant.FILE_SEPARATOR + uuid);
 
 				if (!file.exists())
 				{
 					file.mkdirs();
 				}
 				String parentURL = DMSConstant.FILE_SEPARATOR + mountingBaseName + DMSConstant.FILE_SEPARATOR + table_Name;
-				recordContentID = MDMSContent.create(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, parentURL, true);
-				MDMSAssociation.create(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, MDMSAssociationType.PARENT_ID, null);
-				UtilsUUID.createVersionUU(uuid, recordContentID, 0, file, null);
+				recordContentID = MDMSContent.create(String.valueOf(Record_ID), MDMSContent.CONTENTBASETYPE_Directory, parentURL, true, trxName);
+				MDMSAssociation.create(recordContentID, tableNameContentID, Record_ID, AD_Table_ID, MDMSAssociationType.PARENT_ID, trxName);
+				UtilsUUID.createVersionUU(uuid, recordContentID, 0, file, trxName);
 			}
 		}
 	} // initiateMountingContent
