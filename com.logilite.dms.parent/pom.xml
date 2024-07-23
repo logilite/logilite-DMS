@@ -5,7 +5,7 @@
   <version>${revision}</version>
   <packaging>pom</packaging>
   <properties>
-  	<revision>7.3.0-SNAPSHOT</revision>
+  	<revision>7.4.0-SNAPSHOT</revision>
     <local.maven>${user.home}/.m2</local.maven>
     <tycho.version>1.5.0</tycho.version>
     <tycho.extras.version>${tycho.version}</tycho.extras.version>
@@ -25,10 +25,10 @@
   	<jenkins.search>http://id-build.logilite.com/logilite-search/7.2.0/LATEST/repository/</jenkins.search>
   	<search.repo>${local.search.sb}</search.repo>
 
-<!-- 	<local.esignature>jar:file:///${local.maven}/repository/com/logilite/esignature/com.logilite.esignature.p2/7.1.0-SNAPSHOT/com.logilite.esignature.p2-7.1.0-SNAPSHOT.zip!/</local.esignature> -->
-<!-- 	<local.esignature.sb>file:///C:/Sachin/Work/Modules/esignature.topaz-7.1/com.logilite.esignature.p2/target/repository</local.esignature.sb> -->
-<!--   	<jenkins.esignature>http://id-build.logilite.com/esignature/7.1.0/LATEST/repository/</jenkins.esignature> -->
-<!--   	<esignature.repo>${jenkins.esignature}</esignature.repo> -->
+<!--	<local.esignature>jar:file:///${local.maven}/repository/com/logilite/esignature/com.logilite.esignature.p2/7.1.0-SNAPSHOT/com.logilite.esignature.p2-7.1.0-SNAPSHOT.zip!/</local.esignature> -->
+<!--	<local.esignature.sb>file:///D:/Sachin/Work/Modules/esignature.topaz-7.1/com.logilite.esignature.p2/target/repository</local.esignature.sb> -->
+<!--  	<jenkins.esignature>http://id-build.logilite.com/esignature/7.1.0/LATEST/repository/</jenkins.esignature> -->
+<!--  	<esignature.repo>${local.esignature.sb}</esignature.repo> -->
 
   </properties>
   <build>
