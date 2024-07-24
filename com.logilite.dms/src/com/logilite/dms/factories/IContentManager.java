@@ -87,7 +87,7 @@ public interface IContentManager
 
 	public void renameFile(DMS dms, MDMSContent content, String fileName, boolean isAddFileExtention);
 
-	public boolean isHierarchyContentExists(int destContentID, int sourceContentID);
+	public boolean isHierarchyContentExists(int destContentID, int sourceContentID, String trxName);
 
 	public void deleteContent(DMS dms, MDMSContent dmsContent, MDMSAssociation dmsAssociation, Boolean isDeleteLinkableRefs);
 

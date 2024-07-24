@@ -1102,20 +1102,20 @@ public class RelationUtils
 	 * @param  recordID
 	 * @return                  Error message if any
 	 */
-	public static String createLink(DMS dms, MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
+	public static String createLink(DMS dms, MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID, String trxName)
 	{
 		if (clipboardContent == null)
 			return "";
 
 		int linkableContentID = clipboardContent.getDMS_Content_ID();
 
-		if (contentParent != null && dms.isHierarchyContentExists(contentParent.getDMS_Content_ID(), linkableContentID))
+		if (contentParent != null && dms.isHierarchyContentExists(contentParent.getDMS_Content_ID(), linkableContentID, trxName))
 		{
 			// You can't create link of parent content into itself or its children content
 			return "Can'tCreateLinkOfParentContentInItself";
 		}
 
-		boolean isDocPresent = DMSOprUtils.isDocumentPresent(contentParent, clipboardContent, isDir);
+		boolean isDocPresent = DMSOprUtils.isDocumentPresent(contentParent, clipboardContent, isDir, trxName);
 		if (isDocPresent)
 		{
 			// Document already exists at same position
@@ -1133,14 +1133,14 @@ public class RelationUtils
 		if (tableID > 0 && recordID > 0)
 		{
 			associationID = dms.createAssociation(	linkableContentID, contentRelatedID, dms.getSubstituteTableInfo().getOriginRecord_ID(),
-													dms.getSubstituteTableInfo().getOriginTable_ID(), MDMSAssociationType.LINK_ID, null);
-			MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, null);
+													dms.getSubstituteTableInfo().getOriginTable_ID(), MDMSAssociationType.LINK_ID, trxName);
+			MDMSAssociation association = new MDMSAssociation(Env.getCtx(), associationID, trxName);
 			contentID = association.getDMS_Content_Related_ID();
 			if (contentID <= 0)
 				contentID = association.getDMS_Content_ID();
 			else
 			{
-				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), contentID, null);
+				MDMSContent dmsContent = new MDMSContent(Env.getCtx(), contentID, trxName);
 
 				if (dmsContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 					contentID = association.getDMS_Content_ID();
@@ -1151,7 +1151,7 @@ public class RelationUtils
 		else
 		{
 			contentID = linkableContentID;
-			associationID = dms.createAssociation(linkableContentID, contentRelatedID, 0, 0, MDMSAssociationType.LINK_ID, null);
+			associationID = dms.createAssociation(linkableContentID, contentRelatedID, 0, 0, MDMSAssociationType.LINK_ID, trxName);
 		}
 
 		return null;

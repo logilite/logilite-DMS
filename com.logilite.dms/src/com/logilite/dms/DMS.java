@@ -421,10 +421,9 @@ public class DMS
 		return contentManager.createContent(name, contentBaseType, parentURL, desc, file, contentTypeID, asiID, isMounting, trxName);
 	} // createDMSContent
 
-	public int createAssociation(int dms_Content_ID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, String trxName)
+	public int createAssociation(int contentID, int contentRelatedID, int Record_ID, int AD_Table_ID, int associationTypeID, String trxName)
 	{
-		return contentManager.createAssociation(dms_Content_ID, contentRelatedID, validRecordID(Record_ID), validTableID(AD_Table_ID), associationTypeID,
-												trxName);
+		return contentManager.createAssociation(contentID, contentRelatedID, validRecordID(Record_ID), validTableID(AD_Table_ID), associationTypeID, trxName);
 	} // createAssociation
 
 	public MDMSVersion createVersion(String value, int contentID, int seqNo, File file, String trxName)
@@ -434,7 +433,12 @@ public class DMS
 
 	public String createLink(MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID)
 	{
-		return RelationUtils.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID));
+		return createLink(contentParent, clipboardContent, isDir, tableID, recordID, null);
+	} // createLink
+
+	public String createLink(MDMSContent contentParent, MDMSContent clipboardContent, boolean isDir, int tableID, int recordID, String trxName)
+	{
+		return RelationUtils.createLink(this, contentParent, clipboardContent, isDir, validTableID(tableID), validRecordID(recordID), trxName);
 	} // createLink
 
 	public void removeLink(String whereClause, int Record_ID, int AD_Table_ID, String trxName)
@@ -806,9 +810,9 @@ public class DMS
 	 * @param  sourceContentID
 	 * @return                 true if copy/cut content exists in same Hierarchy.
 	 */
-	public boolean isHierarchyContentExists(int destContentID, int sourceContentID)
+	public boolean isHierarchyContentExists(int destContentID, int sourceContentID, String trxName)
 	{
-		return contentManager.isHierarchyContentExists(destContentID, sourceContentID);
+		return contentManager.isHierarchyContentExists(destContentID, sourceContentID, trxName);
 	} // isHierarchyContentExists
 
 	/**
