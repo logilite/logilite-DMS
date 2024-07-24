@@ -390,15 +390,25 @@ public class DMS
 	 */
 	public void initiateMountingContent(String tableName, int recordID, int tableID)
 	{
-		this.initiateMountingContent(Utils.getDMSMountingBase(AD_Client_ID), tableName, recordID, tableID);
+		initiateMountingContent(tableName, recordID, tableID, null);
+	} // initiateMountingContent
+
+	public void initiateMountingContent(String tableName, int recordID, int tableID, String trxName)
+	{
+		initiateMountingContent(Utils.getDMSMountingBase(AD_Client_ID), tableName, recordID, tableID, trxName);
 	} // initiateMountingContent
 
 	public void initiateMountingContent(String mountingBaseName, String tableName, int recordID, int tableID)
 	{
+		initiateMountingContent(mountingBaseName, tableName, recordID, tableID, null);
+	} // initiateMountingContent
+
+	public void initiateMountingContent(String mountingBaseName, String tableName, int recordID, int tableID, String trxName)
+	{
 		synchronized (o)
 		{
 			this.ssTableInfo.updateRecord(recordID);
-			getMountingStrategy().initiateMountingContent(mountingBaseName, validTableName(tableName), validRecordID(recordID), validTableID(tableID));
+			getMountingStrategy().initiateMountingContent(mountingBaseName, validTableName(tableName), validRecordID(recordID), validTableID(tableID), trxName);
 		}
 	} // initiateMountingContent
 
