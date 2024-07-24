@@ -884,9 +884,9 @@ public class RelationalContentManager implements IContentManager
 	 * @return                 true if copy/cut content exists in same Hierarchy.
 	 */
 	@Override
-	public boolean isHierarchyContentExists(int destContentID, int sourceContentID)
+	public boolean isHierarchyContentExists(int destContentID, int sourceContentID, String trxName)
 	{
-		int contentID = DB.getSQLValue(	null, DMSConstant.SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY, Env.getAD_Client_ID(Env.getCtx()), destContentID,
+		int contentID = DB.getSQLValue(	trxName, DMSConstant.SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY, Env.getAD_Client_ID(Env.getCtx()), destContentID,
 										sourceContentID);
 		return contentID > 0;
 	} // isHierarchyContentExists
