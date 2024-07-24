@@ -111,12 +111,12 @@ public class DMSOprUtils
 	 * @param  isDir         - is Directory
 	 * @return               True if Document exists in same level
 	 */
-	public static boolean isDocumentPresent(MDMSContent currContent, MDMSContent copiedContent, boolean isDir)
+	public static boolean isDocumentPresent(MDMSContent currContent, MDMSContent copiedContent, boolean isDir, String trxName)
 	{
 		String sql = "	SELECT COUNT(DMS_Content_ID) FROM DMS_Association WHERE DMS_Content_ID=? AND DMS_Content_Related_ID "
 						+ (((currContent == null || currContent.getDMS_Content_ID() <= 0) && !isDir) ? "IS NULL" : " = " + currContent.getDMS_Content_ID());
 
-		return DB.getSQLValue(null, sql.toString(), copiedContent.getDMS_Content_ID()) > 0 ? true : false;
+		return DB.getSQLValue(trxName, sql.toString(), copiedContent.getDMS_Content_ID()) > 0 ? true : false;
 	} // isDocumentPresent
 
 	public static void setContentAndAssociation(MDMSContent content, MDMSAssociation association, boolean isActive, String trxName)

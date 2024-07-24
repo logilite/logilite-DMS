@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -39,7 +38,6 @@ import com.logilite.dms.model.MDMSContentType;
 import com.logilite.dms.model.MDMSPermission;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.util.DMSFactoryUtils;
-import com.logilite.dms.util.DMSOprUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.Utils;
 import com.logilite.dms.uuid.util.RelationalUUIDUtils;
@@ -892,9 +890,9 @@ public class UUIDContentManager implements IContentManager
 	 * @return                 true if copy/cut content exists in same Hierarchy.
 	 */
 	@Override
-	public boolean isHierarchyContentExists(int destContentID, int sourceContentID)
+	public boolean isHierarchyContentExists(int destContentID, int sourceContentID, String trxName)
 	{
-		int contentID = DB.getSQLValue(	null, DMSConstant.SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY, Env.getAD_Client_ID(Env.getCtx()), destContentID,
+		int contentID = DB.getSQLValue(	trxName, DMSConstant.SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY, Env.getAD_Client_ID(Env.getCtx()), destContentID,
 										sourceContentID);
 		return contentID > 0;
 	} // isHierarchyContentExists

@@ -961,7 +961,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (sourceContent != null)
 			{
 				if (destPasteContent != null)
-					isContentIDExists = dms.isHierarchyContentExists(destPasteContent.get_ID(), sourceContent.get_ID());
+					isContentIDExists = dms.isHierarchyContentExists(destPasteContent.get_ID(), sourceContent.get_ID(), null);
 
 				if (destPasteContent != null && sourceContent.get_ID() == destPasteContent.get_ID() || isContentIDExists)
 				{
