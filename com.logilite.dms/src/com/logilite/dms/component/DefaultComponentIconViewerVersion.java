@@ -71,7 +71,7 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 
 		Row row = rows.newRow();
 		row.setSclass("SB-ROW");
-		row.setWidgetAttribute("cellspacing", "15");
+		row.setClientAttribute("cellspacing", "15");
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
