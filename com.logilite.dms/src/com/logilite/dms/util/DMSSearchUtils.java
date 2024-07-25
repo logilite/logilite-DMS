@@ -505,6 +505,9 @@ public class DMSSearchUtils
 		if (associationTypeID > 0)
 			sql.append(" AND c.DMS_AssociationType_ID = ").append(associationTypeID);
 
+		sql.append(" ORDER BY c.Created DESC ");
+
+		//
 		ArrayList<I_DMS_Content> arrContents = new ArrayList<I_DMS_Content>();
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
