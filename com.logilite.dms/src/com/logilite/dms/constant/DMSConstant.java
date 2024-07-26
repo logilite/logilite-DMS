@@ -343,7 +343,7 @@ public final class DMSConstant
 
 	public static final String				SQL_GET_CONTENT_DIR_LEVEL_WISE			= " WITH ContentAssociation AS ( 																										"
 																						+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, a.DMS_AssociationType_ID, c.DMS_ContentType_ID	"
-																						+ "				c.Created																											"
+																						+ "				, c.Created																											"
 //																						+ " 			, c.ContentBasetype, a.AD_Table_ID, a.Record_ID 																	"
 																						+ " 	FROM 	DMS_Association a 																									"
 																						+ " 	JOIN 	DMS_Content c 			ON ( c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) 										"
