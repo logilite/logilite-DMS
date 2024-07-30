@@ -4,7 +4,7 @@ Bundle-Name: DMSTheme
 Bundle-SymbolicName: com.logilite.dmstheme
 Bundle-Version: 11.3.0.qualifier
 Fragment-Host: org.adempiere.ui.zk
-Bundle-RequiredExecutionEnvironment: JavaSE-11
+Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-ClassPath: .,
  js/,
  css/,

@@ -18,11 +18,12 @@
 
     <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_9/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
     <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/9.0.0-SNAPSHOT/org.idempiere.p2-9.0.0-SNAPSHOT.zip!/</local.idempiere>
-    <local.idempiere.sb>file:///D:/Sachin/Work/iDempiere/Core-Master/org.idempiere.p2/target/repository/</local.idempiere.sb>
+<!--    <local.idempiere.sb>file:///D:/Sachin/Work/iDempiere/Core-Master/org.idempiere.p2/target/repository/</local.idempiere.sb>-->
+    <local.idempiere.sb>file:///D:/Sachin/Work/iDempiere/LT_11/org.idempiere.p2/target/repository/</local.idempiere.sb>
     <idempiere.repo>${local.idempiere.sb}</idempiere.repo>
 	
     <local.search>jar:file:///${local.maven}/repository/com/logilite/search/com.logilite.search.p2/9.0.0-SNAPSHOT/com.logilite.search.p2-9.0.0-SNAPSHOT.zip!/</local.search>
-    <local.search.sb>file:///D:/Sachin/Work/Modules/index/index-9/com.logilite.search.p2/target/repository/</local.search.sb>
+    <local.search.sb>file:///D:/Sachin/Work/Modules/index/index-Master/com.logilite.search.p2/target/repository/</local.search.sb>
     <jenkins.search>http://id-build.logilite.com/logilite-search/9.0.0/LATEST/repository/</jenkins.search>
     <search.repo>${local.search.sb}</search.repo>
 
