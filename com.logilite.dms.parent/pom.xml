@@ -12,7 +12,7 @@
     <maven.dependency.version>3.1.1</maven.dependency.version>
 
     <download.maven.version>1.4.1</download.maven.version>
-    <idempiere.repo-id>iDempiere9</idempiere.repo-id>
+    <idempiere.repo-id>iDempiere11</idempiere.repo-id>
     <maven-clean-plugin.version>maven-clean-plugin.version</maven-clean-plugin.version>
     <lifecycle.mapping.version>1.0.0</lifecycle.mapping.version>
 
@@ -111,13 +111,14 @@
         <repository>
           <id>${idempiere.repo-id}</id>
           <url>${idempiere.repo}</url>
-<!--          <layout>p2</layout>-->
+         <layout>p2</layout>
         </repository>
 		<repository>
           <id>logilite-search</id>
           <url>${search.repo}</url>
-<!--          <layout>p2</layout>-->
+          <layout>p2</layout>
         </repository>
+		
 <!--         <repository> -->
 <!--           <id>esignature</id> -->
 <!--           <url>${esignature.repo}</url> -->
