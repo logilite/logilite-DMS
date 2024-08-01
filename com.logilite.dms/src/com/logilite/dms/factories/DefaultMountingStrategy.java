@@ -59,6 +59,17 @@ public class DefaultMountingStrategy implements IMountingStrategy
 		return getMountingParent(MTable.get(Env.getCtx(), Table_Name).getAD_Table_ID(), Record_ID);
 	}
 
+	/**
+	 * Method to get Mounting parent with transaction
+	 */
+	@Override
+	public MDMSContent getMountingParent(String Table_Name, int Record_ID, String trxName)
+	{
+		if (Util.isEmpty(Table_Name, true))
+			return null;
+		return getMountingParent(MTable.get(Env.getCtx(), Table_Name).getAD_Table_ID(), Record_ID, trxName);
+	}
+
 	@Override
 	public MDMSContent getMountingParent(int AD_Table_ID, int Record_ID)
 	{
@@ -73,6 +84,23 @@ public class DefaultMountingStrategy implements IMountingStrategy
 		{
 			MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 			mountingParentCache.put(key, content);
+			return content;
+		}
+		return null;
+	} // getMountingParent
+	
+	/**
+	 * Method to get Mounting parent with transaction
+	 */
+	@Override
+	public MDMSContent getMountingParent(int AD_Table_ID, int Record_ID, String trxName)
+	{
+		int DMS_Content_ID = DB.getSQLValue(trxName, DMSConstant.SQL_GET_MOUNTING_CONTENT_FOR_TABLE,
+				Utils.getDMSMountingBase(Env.getAD_Client_ID(Env.getCtx())), AD_Table_ID, Record_ID);
+
+		if (DMS_Content_ID > 0)
+		{
+			MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, trxName);
 			return content;
 		}
 		return null;
