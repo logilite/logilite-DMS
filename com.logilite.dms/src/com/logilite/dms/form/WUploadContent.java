@@ -50,6 +50,7 @@ import com.logilite.dms.DMS;
 import com.logilite.dms.DMS_Context_Util;
 import com.logilite.dms.DMS_ZK_Util;
 import com.logilite.dms.constant.DMSConstant;
+import com.logilite.dms.exception.DMSException;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSContent;
@@ -367,6 +368,15 @@ public class WUploadContent extends AbstractUploadContent
 			{
 				log.log(Level.SEVERE, "Fail to convert Media to File for " + txtName.getValue(), e);
 				throw new WrongValueException(txtName, "Fail to convert Media to File: " + e.getLocalizedMessage(), e);
+			}
+			catch (DMSException e)
+			{
+				String exceptionMsg = e.getException().getMessage();
+				if (Util.isEmpty(exceptionMsg, true))
+				{
+					exceptionMsg = e.getLocalizedMessage();
+				}
+				throw new WrongValueException(txtName, exceptionMsg, e);
 			}
 			catch (Exception e)
 			{

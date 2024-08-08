@@ -231,6 +231,22 @@ public class DMS
 		return getMountingStrategy().getMountingParent(validTableName(Table_Name), validRecordID(Record_ID));
 	}
 
+	// with trx
+	public MDMSContent getRootMountingContent(int AD_Table_ID, int Record_ID, String trxName)
+	{
+		return getDMSMountingParent(AD_Table_ID, Record_ID, trxName);
+	}
+
+	public MDMSContent getDMSMountingParent(int AD_Table_ID, int Record_ID, String trxName)
+	{
+		return getMountingStrategy().getMountingParent(validTableID(AD_Table_ID), validRecordID(Record_ID), trxName);
+	}
+
+	public MDMSContent getDMSMountingParent(String Table_Name, int Record_ID, String trxName)
+	{
+		return getMountingStrategy().getMountingParent(validTableName(Table_Name), validRecordID(Record_ID), trxName);
+	}
+
 	public MDMSContent getDMSMountingParent(PO po)
 	{
 		return getDMSMountingParent(po.get_Table_ID(), po.get_ID());
