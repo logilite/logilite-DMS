@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MTable;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
@@ -85,14 +84,14 @@ public final class DMSUtils
 		DMS dms = new DMS(clientID, tableName);
 		dms.initiateMountingContent(tableName, recordID, tableID);
 		I_DMS_Content[] contents = dms.selectContent(tableID, recordID, 0, ctID);
+
+		ArrayList<File> list = new ArrayList<File>();
 		if (contents.length <= 0)
 		{
-			throw new AdempiereException(	"No DMS document found for the Table = "	+ tableName
-											+ ", Record ID = " + recordID + (ctID > 0 ? ", Content Type = " + contentType : ""));
+			return list;
 		}
 
 		//
-		ArrayList<File> list = new ArrayList<File>();
 		if (isFetchFirstFileOnly)
 		{
 			list.add(dms.getFileFromStorageLatestVersionOnly(contents[0]));
