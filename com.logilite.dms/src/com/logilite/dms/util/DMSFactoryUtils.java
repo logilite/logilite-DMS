@@ -13,10 +13,12 @@
 
 package com.logilite.dms.util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.component.Menupopup;
 import org.compiere.model.MClientInfo;
 import org.compiere.util.CCache;
 import org.compiere.util.Env;
@@ -29,6 +31,8 @@ import com.logilite.dms.factories.IContentManager;
 import com.logilite.dms.factories.IContentManagerProvider;
 import com.logilite.dms.factories.IContentTypeAccess;
 import com.logilite.dms.factories.IContentTypeAccessFactory;
+import com.logilite.dms.factories.IDMSExplorerContextMenuFactory;
+import com.logilite.dms.factories.IDMSExplorerMenuitem;
 import com.logilite.dms.factories.IDMSUploadContent;
 import com.logilite.dms.factories.IDMSUploadContentFactory;
 import com.logilite.dms.factories.IDMSViewer;
@@ -339,4 +343,27 @@ public class DMSFactoryUtils
 		return idxQueryBuilder;
 	} // getIndexQueryBuilder
 
+	/**
+	 * Factory call for Add DMS Explorer Customized Context Menu popup items
+	 * 
+	 * @param  dms         DMS
+	 * @param  currContent Current Selected Content
+	 * @param  copyContent Copied Content
+	 * @param  menupopup   Menu Popup object
+	 * @return
+	 */
+	public static ArrayList<IDMSExplorerMenuitem> addDMSCustomCtxMenu(Menupopup menupopup)
+	{
+		// Factory call
+		ArrayList<IDMSExplorerMenuitem> list = new ArrayList<>();
+		List<IDMSExplorerContextMenuFactory> factories = Service.locator().list(IDMSExplorerContextMenuFactory.class).getServices();
+
+		for (IDMSExplorerContextMenuFactory factory : factories)
+		{
+			List<IDMSExplorerMenuitem> items = factory.addMenuitems(menupopup);
+			if (items != null)
+				list.addAll(items);
+		}
+		return list;
+	} // addDMSCustomCtxMenu
 }
