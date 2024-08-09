@@ -84,6 +84,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
@@ -811,6 +812,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (event.getTarget() instanceof Cell || event.getTarget() instanceof Row))
 		{
+			if (isContentSelectable())
+			{
+				// Prevent to Navigation if wrong value in Content Type
+				try
+				{
+					lstboxContentType.getValue();
+				}
+				catch (WrongValueException e)
+				{
+					lstboxContentType.getComponent().focus();
+					return;
+				}
+			}
+			//
 			openDirectoryORContent(event.getTarget());
 		}
 		else if (event.getTarget().equals(btnCreateDir))
@@ -1252,6 +1267,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		// Paging - Move to 1st page
 		grid.setAttribute(DMSConstant.ATTRIB_PAGING_MOVE_TO_FIRST_PAGE, true);
+
+		if (isContentSelectable && isDocExplorerWindow && lstboxContentType.getValue() == null)
+		{
+			throw new WrongValueException(lstboxContentType.getComponent(), Msg.translate(Env.getCtx(), "FillMandatory"));
+		}
+
 		//
 		renderViewer();
 	} // searchContents
