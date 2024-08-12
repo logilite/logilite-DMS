@@ -84,6 +84,10 @@
 	content: "\f103";	
 }
 
+.z-icon-DocumentExplorer:before {
+	content: "\f15b";
+}
+
 .dms-breadcrumb > div {
 	display: table-cell;
 	vertical-align: middle;
