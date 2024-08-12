@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for DMS_Association
  *  @author iDempiere (generated) 
- *  @version Release 7.1
+ *  @version Release 11
  */
 @SuppressWarnings("all")
 public interface I_DMS_Association 
@@ -32,7 +32,7 @@ public interface I_DMS_Association
     /** TableName=DMS_Association */
     public static final String Table_Name = "DMS_Association";
 
-    /** AD_Table_ID=1000036 */
+    /** AD_Table_ID=1000029 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -46,8 +46,8 @@ public interface I_DMS_Association
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -55,12 +55,12 @@ public interface I_DMS_Association
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -95,15 +95,6 @@ public interface I_DMS_Association
 	  */
 	public int getCreatedBy();
 
-    /** Column name DMS_Association_ID */
-    public static final String COLUMNNAME_DMS_Association_ID = "DMS_Association_ID";
-
-	/** Set DMS Association ID	  */
-	public void setDMS_Association_ID (int DMS_Association_ID);
-
-	/** Get DMS Association ID	  */
-	public int getDMS_Association_ID();
-
     /** Column name DMS_AssociationType_ID */
     public static final String COLUMNNAME_DMS_AssociationType_ID = "DMS_AssociationType_ID";
 
@@ -114,6 +105,15 @@ public interface I_DMS_Association
 	public int getDMS_AssociationType_ID();
 
 	public com.logilite.dms.model.I_DMS_AssociationType getDMS_AssociationType() throws RuntimeException;
+
+    /** Column name DMS_Association_ID */
+    public static final String COLUMNNAME_DMS_Association_ID = "DMS_Association_ID";
+
+	/** Set DMS Association ID	  */
+	public void setDMS_Association_ID (int DMS_Association_ID);
+
+	/** Get DMS Association ID	  */
+	public int getDMS_Association_ID();
 
     /** Column name DMS_Content_ID */
     public static final String COLUMNNAME_DMS_Content_ID = "DMS_Content_ID";

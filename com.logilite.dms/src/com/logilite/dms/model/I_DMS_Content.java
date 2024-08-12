@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for DMS_Content
  *  @author iDempiere (generated) 
- *  @version Release 7.1
+ *  @version Release 11
  */
 @SuppressWarnings("all")
 public interface I_DMS_Content 
@@ -32,7 +32,7 @@ public interface I_DMS_Content
     /** TableName=DMS_Content */
     public static final String Table_Name = "DMS_Content";
 
-    /** AD_Table_ID=1000000 */
+    /** AD_Table_ID=1000024 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -46,8 +46,8 @@ public interface I_DMS_Content
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -55,12 +55,12 @@ public interface I_DMS_Content
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -89,18 +89,20 @@ public interface I_DMS_Content
 	  */
 	public int getCreatedBy();
 
-    /** Column name Description */
-    public static final String COLUMNNAME_Description = "Description";
+    /** Column name DMS_ContentType_ID */
+    public static final String COLUMNNAME_DMS_ContentType_ID = "DMS_ContentType_ID";
 
-	/** Set Description.
-	  * Optional short description of the record
+	/** Set DMS Content Type.
+	  * DMS Content Type of document like pdf, MS Word, Excel etc.
 	  */
-	public void setDescription (String Description);
+	public void setDMS_ContentType_ID (int DMS_ContentType_ID);
 
-	/** Get Description.
-	  * Optional short description of the record
+	/** Get DMS Content Type.
+	  * DMS Content Type of document like pdf, MS Word, Excel etc.
 	  */
-	public String getDescription();
+	public int getDMS_ContentType_ID();
+
+	public com.logilite.dms.model.I_DMS_ContentType getDMS_ContentType() throws RuntimeException;
 
     /** Column name DMS_Content_ID */
     public static final String COLUMNNAME_DMS_Content_ID = "DMS_Content_ID";
@@ -119,21 +121,6 @@ public interface I_DMS_Content
 
 	/** Get DMS_Content_UU	  */
 	public String getDMS_Content_UU();
-
-    /** Column name DMS_ContentType_ID */
-    public static final String COLUMNNAME_DMS_ContentType_ID = "DMS_ContentType_ID";
-
-	/** Set DMS Content Type.
-	  * DMS Content Type of document like pdf, MS Word, Excel etc.
-	  */
-	public void setDMS_ContentType_ID (int DMS_ContentType_ID);
-
-	/** Get DMS Content Type.
-	  * DMS Content Type of document like pdf, MS Word, Excel etc.
-	  */
-	public int getDMS_ContentType_ID();
-
-	public com.logilite.dms.model.I_DMS_ContentType getDMS_ContentType() throws RuntimeException;
 
     /** Column name DMS_MimeType_ID */
     public static final String COLUMNNAME_DMS_MimeType_ID = "DMS_MimeType_ID";
@@ -175,6 +162,19 @@ public interface I_DMS_Content
 	public int getDMS_Status_ID();
 
 	public com.logilite.dms.model.I_DMS_Status getDMS_Status() throws RuntimeException;
+
+    /** Column name Description */
+    public static final String COLUMNNAME_Description = "Description";
+
+	/** Set Description.
+	  * Optional short description of the record
+	  */
+	public void setDescription (String Description);
+
+	/** Get Description.
+	  * Optional short description of the record
+	  */
+	public String getDescription();
 
     /** Column name IsActive */
     public static final String COLUMNNAME_IsActive = "IsActive";
@@ -289,17 +289,4 @@ public interface I_DMS_Content
 	  * DMS Conent validity To Date
 	  */
 	public Timestamp getValidToDate();
-
-    /** Column name Value */
-    public static final String COLUMNNAME_Value = "Value";
-
-	/** Set Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public void setValue (String Value);
-
-	/** Get Search Key.
-	  * Search key for the record in the format required - must be unique
-	  */
-	public String getValue();
 }

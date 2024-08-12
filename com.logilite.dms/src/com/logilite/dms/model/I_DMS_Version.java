@@ -23,7 +23,7 @@ import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for DMS_Version
  *  @author iDempiere (generated) 
- *  @version Release 7.1
+ *  @version Release 11
  */
 @SuppressWarnings("all")
 public interface I_DMS_Version 
@@ -32,7 +32,7 @@ public interface I_DMS_Version
     /** TableName=DMS_Version */
     public static final String Table_Name = "DMS_Version";
 
-    /** AD_Table_ID=1000041 */
+    /** AD_Table_ID=1000066 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -46,8 +46,8 @@ public interface I_DMS_Version
     /** Column name AD_Client_ID */
     public static final String COLUMNNAME_AD_Client_ID = "AD_Client_ID";
 
-	/** Get Client.
-	  * Client/Tenant for this installation.
+	/** Get Tenant.
+	  * Tenant for this installation.
 	  */
 	public int getAD_Client_ID();
 
@@ -55,12 +55,12 @@ public interface I_DMS_Version
     public static final String COLUMNNAME_AD_Org_ID = "AD_Org_ID";
 
 	/** Set Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public void setAD_Org_ID (int AD_Org_ID);
 
 	/** Get Organization.
-	  * Organizational entity within client
+	  * Organizational entity within tenant
 	  */
 	public int getAD_Org_ID();
 
@@ -112,10 +112,10 @@ public interface I_DMS_Version
     /** Column name DMS_Version_UU */
     public static final String COLUMNNAME_DMS_Version_UU = "DMS_Version_UU";
 
-	/** Set Version UU	  */
+	/** Set DMS_Version_UU	  */
 	public void setDMS_Version_UU (String DMS_Version_UU);
 
-	/** Get Version UU	  */
+	/** Get DMS_Version_UU	  */
 	public String getDMS_Version_UU();
 
     /** Column name IsActive */

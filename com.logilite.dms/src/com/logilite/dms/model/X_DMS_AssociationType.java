@@ -22,21 +22,52 @@ import java.util.Properties;
 import org.compiere.model.*;
 
 /** Generated Model for DMS_AssociationType
- *  @author iDempiere (generated) 
- *  @version Release 5.1 - $Id$ */
-public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="DMS_AssociationType")
+public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20210105L;
+	private static final long serialVersionUID = 20240812L;
 
     /** Standard Constructor */
     public X_DMS_AssociationType (Properties ctx, int DMS_AssociationType_ID, String trxName)
     {
       super (ctx, DMS_AssociationType_ID, trxName);
       /** if (DMS_AssociationType_ID == 0)
+        {
+			setDMS_AssociationType_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_DMS_AssociationType (Properties ctx, int DMS_AssociationType_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, DMS_AssociationType_ID, trxName, virtualColumns);
+      /** if (DMS_AssociationType_ID == 0)
+        {
+			setDMS_AssociationType_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_DMS_AssociationType (Properties ctx, String DMS_AssociationType_UU, String trxName)
+    {
+      super (ctx, DMS_AssociationType_UU, trxName);
+      /** if (DMS_AssociationType_UU == null)
+        {
+			setDMS_AssociationType_ID (0);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_DMS_AssociationType (Properties ctx, String DMS_AssociationType_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, DMS_AssociationType_UU, trxName, virtualColumns);
+      /** if (DMS_AssociationType_UU == null)
         {
 			setDMS_AssociationType_ID (0);
         } */
@@ -49,7 +80,7 @@ public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, 
     }
 
     /** AccessLevel
-      * @return 3 - Client - Org 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -65,24 +96,25 @@ public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, 
 
     public String toString()
     {
-      StringBuffer sb = new StringBuffer ("X_DMS_AssociationType[")
-        .append(get_ID()).append("]");
+      StringBuilder sb = new StringBuilder ("X_DMS_AssociationType[")
+        .append(get_ID()).append(",Name=").append(getName()).append("]");
       return sb.toString();
     }
 
 	/** Set DMS AssociationType ID.
-		@param DMS_AssociationType_ID DMS AssociationType ID	  */
+		@param DMS_AssociationType_ID DMS AssociationType ID
+	*/
 	public void setDMS_AssociationType_ID (int DMS_AssociationType_ID)
 	{
-		if (DMS_AssociationType_ID < 1) 
+		if (DMS_AssociationType_ID < 1)
 			set_ValueNoCheck (COLUMNNAME_DMS_AssociationType_ID, null);
-		else 
+		else
 			set_ValueNoCheck (COLUMNNAME_DMS_AssociationType_ID, Integer.valueOf(DMS_AssociationType_ID));
 	}
 
 	/** Get DMS AssociationType ID.
 		@return DMS AssociationType ID	  */
-	public int getDMS_AssociationType_ID () 
+	public int getDMS_AssociationType_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_DMS_AssociationType_ID);
 		if (ii == null)
@@ -91,7 +123,8 @@ public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, 
 	}
 
 	/** Set DMS_AssociationType_UU.
-		@param DMS_AssociationType_UU DMS_AssociationType_UU	  */
+		@param DMS_AssociationType_UU DMS_AssociationType_UU
+	*/
 	public void setDMS_AssociationType_UU (String DMS_AssociationType_UU)
 	{
 		set_Value (COLUMNNAME_DMS_AssociationType_UU, DMS_AssociationType_UU);
@@ -99,7 +132,7 @@ public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, 
 
 	/** Get DMS_AssociationType_UU.
 		@return DMS_AssociationType_UU	  */
-	public String getDMS_AssociationType_UU () 
+	public String getDMS_AssociationType_UU()
 	{
 		return (String)get_Value(COLUMNNAME_DMS_AssociationType_UU);
 	}
@@ -107,9 +140,8 @@ public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, 
 	/** EntityType AD_Reference_ID=389 */
 	public static final int ENTITYTYPE_AD_Reference_ID=389;
 	/** Set Entity Type.
-		@param EntityType 
-		Dictionary Entity Type; Determines ownership and synchronization
-	  */
+		@param EntityType Dictionary Entity Type; Determines ownership and synchronization
+	*/
 	public void setEntityType (String EntityType)
 	{
 
@@ -119,15 +151,14 @@ public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, 
 	/** Get Entity Type.
 		@return Dictionary Entity Type; Determines ownership and synchronization
 	  */
-	public String getEntityType () 
+	public String getEntityType()
 	{
 		return (String)get_Value(COLUMNNAME_EntityType);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -136,15 +167,14 @@ public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, 
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
 
 	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
+		@param Value Search key for the record in the format required - must be unique
+	*/
 	public void setValue (String Value)
 	{
 		set_Value (COLUMNNAME_Value, Value);
@@ -153,7 +183,7 @@ public class X_DMS_AssociationType extends PO implements I_DMS_AssociationType, 
 	/** Get Search Key.
 		@return Search key for the record in the format required - must be unique
 	  */
-	public String getValue () 
+	public String getValue()
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}

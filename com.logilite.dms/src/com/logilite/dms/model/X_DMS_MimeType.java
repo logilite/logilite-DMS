@@ -1,16 +1,20 @@
 /******************************************************************************
- * Copyright (C) 2016 Logilite Technologies LLP								  *
- * This program is free software; you can redistribute it and/or modify it    *
+ * Product: iDempiere ERP & CRM Smart Business Solution                       *
+ * Copyright (C) 1999-2012 ComPiere, Inc. All Rights Reserved.                *
+ * This program is free software, you can redistribute it and/or modify it    *
  * under the terms version 2 of the GNU General Public License as published   *
  * by the Free Software Foundation. This program is distributed in the hope   *
- * that it will be useful, but WITHOUT ANY WARRANTY; without even the implied *
+ * that it will be useful, but WITHOUT ANY WARRANTY, without even the implied *
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.           *
  * See the GNU General Public License for more details.                       *
  * You should have received a copy of the GNU General Public License along    *
- * with this program; if not, write to the Free Software Foundation, Inc.,    *
+ * with this program, if not, write to the Free Software Foundation, Inc.,    *
  * 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.                     *
+ * For the text or an alternative of this public license, you may reach us    *
+ * ComPiere, Inc., 2620 Augustine Dr. #245, Santa Clara, CA 95054, USA        *
+ * or via info@compiere.org or http://www.compiere.org/license.html           *
  *****************************************************************************/
-
+/** Generated Model - DO NOT CHANGE */
 package com.logilite.dms.model;
 
 import java.sql.ResultSet;
@@ -18,21 +22,67 @@ import java.util.Properties;
 import org.compiere.model.*;
 
 /** Generated Model for DMS_MimeType
- *  @author iDempiere (generated) 
- *  @version Release 3.1 - $Id$ */
-public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent 
+ *  @author iDempiere (generated)
+ *  @version Release 11 - $Id$ */
+@org.adempiere.base.Model(table="DMS_MimeType")
+public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 {
 
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20151201L;
+	private static final long serialVersionUID = 20240812L;
 
     /** Standard Constructor */
     public X_DMS_MimeType (Properties ctx, int DMS_MimeType_ID, String trxName)
     {
       super (ctx, DMS_MimeType_ID, trxName);
       /** if (DMS_MimeType_ID == 0)
+        {
+			setDMS_MimeType_ID (0);
+			setFileExtension (null);
+			setIsDefault (false);
+			setMimeType (null);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_DMS_MimeType (Properties ctx, int DMS_MimeType_ID, String trxName, String ... virtualColumns)
+    {
+      super (ctx, DMS_MimeType_ID, trxName, virtualColumns);
+      /** if (DMS_MimeType_ID == 0)
+        {
+			setDMS_MimeType_ID (0);
+			setFileExtension (null);
+			setIsDefault (false);
+			setMimeType (null);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_DMS_MimeType (Properties ctx, String DMS_MimeType_UU, String trxName)
+    {
+      super (ctx, DMS_MimeType_UU, trxName);
+      /** if (DMS_MimeType_UU == null)
+        {
+			setDMS_MimeType_ID (0);
+			setFileExtension (null);
+			setIsDefault (false);
+			setMimeType (null);
+			setName (null);
+			setValue (null);
+        } */
+    }
+
+    /** Standard Constructor */
+    public X_DMS_MimeType (Properties ctx, String DMS_MimeType_UU, String trxName, String ... virtualColumns)
+    {
+      super (ctx, DMS_MimeType_UU, trxName, virtualColumns);
+      /** if (DMS_MimeType_UU == null)
         {
 			setDMS_MimeType_ID (0);
 			setFileExtension (null);
@@ -50,7 +100,7 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
     }
 
     /** AccessLevel
-      * @return 6 - System - Client 
+      * @return 6 - System - Client
       */
     protected int get_AccessLevel()
     {
@@ -66,15 +116,51 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 
     public String toString()
     {
-      StringBuffer sb = new StringBuffer ("X_DMS_MimeType[")
-        .append(get_ID()).append("]");
+      StringBuilder sb = new StringBuilder ("X_DMS_MimeType[")
+        .append(get_ID()).append(",Name=").append(getName()).append("]");
       return sb.toString();
     }
 
-	/** Set Description.
-		@param Description 
-		Optional short description of the record
+	/** Set Mime Type.
+		@param DMS_MimeType_ID Mime Type of the uploaded file
+	*/
+	public void setDMS_MimeType_ID (int DMS_MimeType_ID)
+	{
+		if (DMS_MimeType_ID < 1)
+			set_ValueNoCheck (COLUMNNAME_DMS_MimeType_ID, null);
+		else
+			set_ValueNoCheck (COLUMNNAME_DMS_MimeType_ID, Integer.valueOf(DMS_MimeType_ID));
+	}
+
+	/** Get Mime Type.
+		@return Mime Type of the uploaded file
 	  */
+	public int getDMS_MimeType_ID()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_DMS_MimeType_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	/** Set DMS_MimeType_UU.
+		@param DMS_MimeType_UU DMS_MimeType_UU
+	*/
+	public void setDMS_MimeType_UU (String DMS_MimeType_UU)
+	{
+		set_Value (COLUMNNAME_DMS_MimeType_UU, DMS_MimeType_UU);
+	}
+
+	/** Get DMS_MimeType_UU.
+		@return DMS_MimeType_UU	  */
+	public String getDMS_MimeType_UU()
+	{
+		return (String)get_Value(COLUMNNAME_DMS_MimeType_UU);
+	}
+
+	/** Set Description.
+		@param Description Optional short description of the record
+	*/
 	public void setDescription (String Description)
 	{
 		set_Value (COLUMNNAME_Description, Description);
@@ -83,38 +169,14 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 	/** Get Description.
 		@return Optional short description of the record
 	  */
-	public String getDescription () 
+	public String getDescription()
 	{
 		return (String)get_Value(COLUMNNAME_Description);
 	}
 
-	/** Set Mime Type.
-		@param DMS_MimeType_ID 
-		Mime Type of the uploaded file
-	  */
-	public void setDMS_MimeType_ID (int DMS_MimeType_ID)
-	{
-		if (DMS_MimeType_ID < 1) 
-			set_ValueNoCheck (COLUMNNAME_DMS_MimeType_ID, null);
-		else 
-			set_ValueNoCheck (COLUMNNAME_DMS_MimeType_ID, Integer.valueOf(DMS_MimeType_ID));
-	}
-
-	/** Get Mime Type.
-		@return Mime Type of the uploaded file
-	  */
-	public int getDMS_MimeType_ID () 
-	{
-		Integer ii = (Integer)get_Value(COLUMNNAME_DMS_MimeType_ID);
-		if (ii == null)
-			 return 0;
-		return ii.intValue();
-	}
-
 	/** Set File Extension.
-		@param FileExtension 
-		Extension of the uploaded file
-	  */
+		@param FileExtension Extension of the uploaded file
+	*/
 	public void setFileExtension (String FileExtension)
 	{
 		set_ValueNoCheck (COLUMNNAME_FileExtension, FileExtension);
@@ -123,44 +185,25 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 	/** Get File Extension.
 		@return Extension of the uploaded file
 	  */
-	public String getFileExtension () 
+	public String getFileExtension()
 	{
 		return (String)get_Value(COLUMNNAME_FileExtension);
 	}
 
-	/** Set Icon.
-		@param Icon_ID Icon	  */
-	public void setIcon_ID (int Icon_ID)
-	{
-		if (Icon_ID < 1) 
-			set_Value (COLUMNNAME_Icon_ID, null);
-		else 
-			set_Value (COLUMNNAME_Icon_ID, Integer.valueOf(Icon_ID));
-	}
-
-	/** Get Icon.
-		@return Icon	  */
-	public int getIcon_ID () 
-	{
-		Integer ii = (Integer)get_Value(COLUMNNAME_Icon_ID);
-		if (ii == null)
-			 return 0;
-		return ii.intValue();
-	}
-
 	/** Set Icon 300px.
-		@param Icon300_ID Icon 300px	  */
+		@param Icon300_ID Icon 300px
+	*/
 	public void setIcon300_ID (int Icon300_ID)
 	{
-		if (Icon300_ID < 1) 
+		if (Icon300_ID < 1)
 			set_Value (COLUMNNAME_Icon300_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_Icon300_ID, Integer.valueOf(Icon300_ID));
 	}
 
 	/** Get Icon 300px.
 		@return Icon 300px	  */
-	public int getIcon300_ID () 
+	public int getIcon300_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Icon300_ID);
 		if (ii == null)
@@ -169,18 +212,19 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 	}
 
 	/** Set Icon 500px.
-		@param Icon500_ID Icon 500px	  */
+		@param Icon500_ID Icon 500px
+	*/
 	public void setIcon500_ID (int Icon500_ID)
 	{
-		if (Icon500_ID < 1) 
+		if (Icon500_ID < 1)
 			set_Value (COLUMNNAME_Icon500_ID, null);
-		else 
+		else
 			set_Value (COLUMNNAME_Icon500_ID, Integer.valueOf(Icon500_ID));
 	}
 
 	/** Get Icon 500px.
 		@return Icon 500px	  */
-	public int getIcon500_ID () 
+	public int getIcon500_ID()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_Icon500_ID);
 		if (ii == null)
@@ -188,10 +232,30 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 		return ii.intValue();
 	}
 
+	/** Set Icon.
+		@param Icon_ID Icon
+	*/
+	public void setIcon_ID (int Icon_ID)
+	{
+		if (Icon_ID < 1)
+			set_Value (COLUMNNAME_Icon_ID, null);
+		else
+			set_Value (COLUMNNAME_Icon_ID, Integer.valueOf(Icon_ID));
+	}
+
+	/** Get Icon.
+		@return Icon	  */
+	public int getIcon_ID()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_Icon_ID);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
 	/** Set Default.
-		@param IsDefault 
-		Default value
-	  */
+		@param IsDefault Default value
+	*/
 	public void setIsDefault (boolean IsDefault)
 	{
 		set_Value (COLUMNNAME_IsDefault, Boolean.valueOf(IsDefault));
@@ -200,22 +264,21 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 	/** Get Default.
 		@return Default value
 	  */
-	public boolean isDefault () 
+	public boolean isDefault()
 	{
 		Object oo = get_Value(COLUMNNAME_IsDefault);
-		if (oo != null) 
+		if (oo != null)
 		{
-			 if (oo instanceof Boolean) 
-				 return ((Boolean)oo).booleanValue(); 
+			 if (oo instanceof Boolean)
+				 return ((Boolean)oo).booleanValue();
 			return "Y".equals(oo);
 		}
 		return false;
 	}
 
 	/** Set Mime Type.
-		@param MimeType 
-		Mime Type of the uploaded file
-	  */
+		@param MimeType Mime Type of the uploaded file
+	*/
 	public void setMimeType (String MimeType)
 	{
 		set_ValueNoCheck (COLUMNNAME_MimeType, MimeType);
@@ -224,15 +287,14 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 	/** Get Mime Type.
 		@return Mime Type of the uploaded file
 	  */
-	public String getMimeType () 
+	public String getMimeType()
 	{
 		return (String)get_Value(COLUMNNAME_MimeType);
 	}
 
 	/** Set Name.
-		@param Name 
-		Alphanumeric identifier of the entity
-	  */
+		@param Name Alphanumeric identifier of the entity
+	*/
 	public void setName (String Name)
 	{
 		set_Value (COLUMNNAME_Name, Name);
@@ -241,15 +303,14 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 	/** Get Name.
 		@return Alphanumeric identifier of the entity
 	  */
-	public String getName () 
+	public String getName()
 	{
 		return (String)get_Value(COLUMNNAME_Name);
 	}
 
 	/** Set Search Key.
-		@param Value 
-		Search key for the record in the format required - must be unique
-	  */
+		@param Value Search key for the record in the format required - must be unique
+	*/
 	public void setValue (String Value)
 	{
 		set_Value (COLUMNNAME_Value, Value);
@@ -258,7 +319,7 @@ public class X_DMS_MimeType extends PO implements I_DMS_MimeType, I_Persistent
 	/** Get Search Key.
 		@return Search key for the record in the format required - must be unique
 	  */
-	public String getValue () 
+	public String getValue()
 	{
 		return (String)get_Value(COLUMNNAME_Value);
 	}
