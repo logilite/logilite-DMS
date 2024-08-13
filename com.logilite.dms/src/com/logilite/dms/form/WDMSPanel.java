@@ -85,6 +85,7 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
+import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
@@ -114,6 +115,7 @@ import com.logilite.dms.component.AbstractComponentIconViewer;
 import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.factories.DMSClipboard;
 import com.logilite.dms.factories.IContentTypeAccess;
+import com.logilite.dms.factories.IDMSExplorerMenuitem;
 import com.logilite.dms.factories.IDMSUploadContent;
 import com.logilite.dms.factories.IPermissionManager;
 import com.logilite.dms.model.I_DMS_Association;
@@ -130,13 +132,13 @@ import com.logilite.dms.util.DMSSearchUtils;
 
 public class WDMSPanel extends Panel implements EventListener<Event>, ValueChangeListener
 {
-	private static final long		serialVersionUID		= -6813481516566180243L;
-	private static CLogger			log						= CLogger.getCLogger(WDMSPanel.class);
+	private static final long			serialVersionUID		= -6813481516566180243L;
+	private static CLogger				log						= CLogger.getCLogger(WDMSPanel.class);
 
-	private static final String		ATTRIBUTE_TOGGLE		= "Toggle";
+	private static final String			ATTRIBUTE_TOGGLE		= "Toggle";
 
-	private static int				TOOLBAR_BTN_ID_DIR		= 0;
-	private static int				TOOLBAR_BTN_ID_UPLOAD	= 0;
+	private static int					TOOLBAR_BTN_ID_DIR		= 0;
+	private static int					TOOLBAR_BTN_ID_UPLOAD	= 0;
 
 	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
 	private boolean					isUseEscForTabClosing	= MSysConfig.getBooleanValue(	MSysConfig.USE_ESC_FOR_TAB_CLOSING, false,
@@ -144,136 +146,139 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
 
-	private Tabbox					tabBox					= new Tabbox();
-	private Tabs					tabs					= new Tabs();
-	public Tabpanels				tabPanels				= new Tabpanels();
+	private Tabbox						tabBox					= new Tabbox();
+	private Tabs						tabs					= new Tabs();
+	public Tabpanels					tabPanels				= new Tabpanels();
 
-	private Grid					grid					= GridFactory.newGridLayout();
-	private Grid					gridBreadCrumb			= GridFactory.newGridLayout();
+	private Grid						grid					= GridFactory.newGridLayout();
+	private Grid						gridBreadCrumb			= GridFactory.newGridLayout();
 
-	private BreadCrumbLink			breadCrumbEvent			= null;
+	private BreadCrumbLink				breadCrumbEvent			= null;
 
-	private Rows					breadRows				= new Rows();
-	private Row						breadRow				= new Row();
+	private Rows						breadRows				= new Rows();
+	private Row							breadRow				= new Row();
 
-	private Label					lblGlobalSearch			= new Label(DMSConstant.MSG_GLOBAL_SEARCH);
-	private Label					lblAdvanceSearch		= new Label(DMSConstant.MSG_ADVANCE_SEARCH);
-	private Label					lblDocumentName			= new Label(DMSConstant.MSG_NAME);
-	private Label					lblContentType			= new Label(DMSConstant.MSG_CONTENT_TYPE);
-	private Label					lblCreated				= new Label(DMSConstant.MSG_CREATED);
-	private Label					lblUpdated				= new Label(DMSConstant.MSG_UPDATED);
-	private Label					lblContentMeta			= new Label(DMSConstant.MSG_CONTENT_META);
-	private Label					lblDescription			= new Label(DMSConstant.MSG_DESCRIPTION);
-	private Label					lblCreatedBy			= new Label(DMSConstant.MSG_CREATEDBY);
-	private Label					lblUpdatedBy			= new Label(DMSConstant.MSG_UPDATEDBY);
-	private Label					lblDocumentView			= new Label(DMSConstant.MSG_DOCUMENT_VIEW);
-	private Label					lblPositionInfo			= new Label();
-	private Label					lblCountAndSelected		= new Label();
-	private Label					lblShowBreadCrumb		= null;
+	private Label						lblGlobalSearch			= new Label(DMSConstant.MSG_GLOBAL_SEARCH);
+	private Label						lblAdvanceSearch		= new Label(DMSConstant.MSG_ADVANCE_SEARCH);
+	private Label						lblDocumentName			= new Label(DMSConstant.MSG_NAME);
+	private Label						lblContentType			= new Label(DMSConstant.MSG_CONTENT_TYPE);
+	private Label						lblCreated				= new Label(DMSConstant.MSG_CREATED);
+	private Label						lblUpdated				= new Label(DMSConstant.MSG_UPDATED);
+	private Label						lblContentMeta			= new Label(DMSConstant.MSG_CONTENT_META);
+	private Label						lblDescription			= new Label(DMSConstant.MSG_DESCRIPTION);
+	private Label						lblCreatedBy			= new Label(DMSConstant.MSG_CREATEDBY);
+	private Label						lblUpdatedBy			= new Label(DMSConstant.MSG_UPDATEDBY);
+	private Label						lblDocumentView			= new Label(DMSConstant.MSG_DOCUMENT_VIEW);
+	private Label						lblPositionInfo			= new Label();
+	private Label						lblCountAndSelected		= new Label();
+	private Label						lblShowBreadCrumb		= null;
 
-	private Datebox					dbCreatedTo				= new Datebox();
-	private Datebox					dbCreatedFrom			= new Datebox();
-	private Datebox					dbUpdatedTo				= new Datebox();
-	private Datebox					dbUpdatedFrom			= new Datebox();
+	private Datebox						dbCreatedTo				= new Datebox();
+	private Datebox						dbCreatedFrom			= new Datebox();
+	private Datebox						dbUpdatedTo				= new Datebox();
+	private Datebox						dbUpdatedFrom			= new Datebox();
 
-	private ConfirmPanel			confirmPanel			= new ConfirmPanel();
+	private ConfirmPanel				confirmPanel			= new ConfirmPanel();
 
-	private Button					btnClear				= confirmPanel.createButton(ConfirmPanel.A_RESET);
-	private Button					btnCloseTab				= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
-	private Button					btnSearch				= new Button();
-	private Button					btnCreateDir			= new Button();
-	private Button					btnUploadContent		= new Button();
-	private Button					btnBack					= new Button();
-	private Button					btnNext					= new Button();
-	private Button					btnToggleView			= new Button();
-	private Button					btnContentSort			= new Button();
-	private Button					btnSelectedContent		= new Button();
+	private Button						btnClear				= confirmPanel.createButton(ConfirmPanel.A_RESET);
+	private Button						btnCloseTab				= confirmPanel.createButton(ConfirmPanel.A_CANCEL);
+	private Button						btnSearch				= new Button();
+	private Button						btnCreateDir			= new Button();
+	private Button						btnUploadContent		= new Button();
+	private Button						btnBack					= new Button();
+	private Button						btnNext					= new Button();
+	private Button						btnToggleView			= new Button();
+	private Button						btnContentSort			= new Button();
+	private Button						btnSelectedContent		= new Button();
 
-	private Textbox					txtDocumentName			= new Textbox();
-	private Textbox					txtDescription			= new Textbox();
-	private Textbox					txtGlobalSearch			= new Textbox();
+	private Textbox						txtDocumentName			= new Textbox();
+	private Textbox						txtDescription			= new Textbox();
+	private Textbox						txtGlobalSearch			= new Textbox();
 
-	private Combobox				cobDocumentView			= null;
+	private Combobox					cobDocumentView			= null;
 
-	private WTableDirEditor			lstboxContentType		= null;
-	private WSearchEditor			lstboxCreatedBy			= null;
-	private WSearchEditor			lstboxUpdatedBy			= null;
+	private WTableDirEditor				lstboxContentType		= null;
+	private WSearchEditor				lstboxCreatedBy			= null;
+	private WSearchEditor				lstboxUpdatedBy			= null;
 
-	private DMS						dms						= null;
-	private MDMSContent				currDMSContent			= null;
-	private MDMSContent				nextDMSContent			= null;
-	private MDMSContent				copyDMSContent			= null;
-	private MDMSContent				dirContent				= null;
+	private DMS							dms						= null;
+	private MDMSContent					currDMSContent			= null;
+	private MDMSContent					nextDMSContent			= null;
+	private MDMSContent					copyDMSContent			= null;
+	private MDMSContent					dirContent				= null;
 
-	private Stack<MDMSVersion>		selectedDMSVersionStack	= new Stack<MDMSVersion>();
+	private Stack<MDMSVersion>			selectedDMSVersionStack	= new Stack<MDMSVersion>();
 
 	//
-	private Component				compCellRowViewer		= null;
-	private IDMSUploadContent		uploadContent			= null;
-	private WCreateDirectoryForm	createDirectoryForm		= null;
-	private WDLoadASIPanel			asiPanel				= null;
+	private Component					compCellRowViewer		= null;
+	private IDMSUploadContent			uploadContent			= null;
+	private WCreateDirectoryForm		createDirectoryForm		= null;
+	private WDLoadASIPanel				asiPanel				= null;
 
-	private Panel					panelAttribute			= new Panel();
+	private Panel						panelAttribute			= new Panel();
 
-	private Menupopup				ctxMenuContent			= new Menupopup();
-	private Menupopup				ctxMenuCanvas			= new Menupopup();
-	private Menupopup				ctxMenuSort				= new Menupopup();
+	private Menupopup					ctxMenuContent			= new Menupopup();
+	private Menupopup					ctxMenuCanvas			= new Menupopup();
+	private Menupopup					ctxMenuSort				= new Menupopup();
 
 	// Content Options
-	private Menuitem				mnu_cut					= null;
-	private Menuitem				mnu_copy				= null;
-	private Menuitem				mnu_paste				= null;
-	private Menuitem				mnu_rename				= null;
-	private Menuitem				mnu_delete				= null;
-	private Menuitem				mnu_download			= null;
-	private Menuitem				mnu_associate			= null;
-	private Menuitem				mnu_createLink			= null;
-	private Menuitem				mnu_permission			= null;
-	private Menuitem				mnu_undoDelete			= null;
-	private Menuitem				mnu_versionList			= null;
-	private Menuitem				mnu_uploadVersion		= null;
-	private Menuitem				mnu_zoomContentWin		= null;
-	private Menuitem				mnu_owner				= null;
+	private Menuitem					mnu_cut					= null;
+	private Menuitem					mnu_copy				= null;
+	private Menuitem					mnu_paste				= null;
+	private Menuitem					mnu_rename				= null;
+	private Menuitem					mnu_delete				= null;
+	private Menuitem					mnu_download			= null;
+	private Menuitem					mnu_associate			= null;
+	private Menuitem					mnu_createLink			= null;
+	private Menuitem					mnu_permission			= null;
+	private Menuitem					mnu_undoDelete			= null;
+	private Menuitem					mnu_versionList			= null;
+	private Menuitem					mnu_uploadVersion		= null;
+	private Menuitem					mnu_zoomContentWin		= null;
+	private Menuitem					mnu_owner				= null;
 
 	// Non content selected/Canvas Options
-	private Menuitem				mnu_canvasPaste			= null;
-	private Menuitem				mnu_canvasCreateLink	= null;
+	private Menuitem					mnu_canvasPaste			= null;
+	private Menuitem					mnu_canvasCreateLink	= null;
 
 	// For Sort Options
-	private Menuitem				mnu_sort_name			= null;
-	private Menuitem				mnu_sort_link			= null;
-	private Menuitem				mnu_sort_created		= null;
-	private Menuitem				mnu_sort_updated		= null;
-	private Menuitem				mnu_sort_fileType		= null;
-	private Menuitem				mnu_sort_contentType	= null;
+	private Menuitem					mnu_sort_name			= null;
+	private Menuitem					mnu_sort_link			= null;
+	private Menuitem					mnu_sort_created		= null;
+	private Menuitem					mnu_sort_updated		= null;
+	private Menuitem					mnu_sort_fileType		= null;
+	private Menuitem					mnu_sort_contentType	= null;
 
-	private int						recordID				= 0;
-	private int						tableID					= 0;
-	private int						windowID				= 0;
-	private int						tabID					= 0;
+	private int							recordID				= 0;
+	private int							tableID					= 0;
+	private int							windowID				= 0;
+	private int							tabID					= 0;
 
-	private int						windowNo				= 0;
-	private int						tabNo					= 0;
+	private int							windowNo				= 0;
+	private int							tabNo					= 0;
 
-	private boolean					isSearch				= false;
-	private boolean					isDMSAdmin				= false;
-	private boolean					isWindowAccess			= true;
-	private boolean					isContentSelectable		= false;
-	private boolean					isDocExplorerWindow		= false;
-	private boolean					isMountingBaseStructure	= false;
+	private boolean						isSearch				= false;
+	private boolean						isDMSAdmin				= false;
+	private boolean						isWindowAccess			= true;
+	private boolean						isContentSelectable		= false;
+	private boolean						isDocExplorerWindow		= false;
+	private boolean						isMountingBaseStructure	= false;
 
-	private ArrayList<WEditor>		m_editors				= new ArrayList<WEditor>();
+	// Fetch customized menu items if any through the factory
+	private List<IDMSExplorerMenuitem>	mnu_customizedList		= null;
 
-	private Map<String, WEditor>	ASI_Value				= new HashMap<String, WEditor>();
+	private ArrayList<WEditor>			m_editors				= new ArrayList<WEditor>();
 
-	protected Set<I_DMS_Version>	downloadSet				= new HashSet<I_DMS_Version>();
+	private Map<String, WEditor>		ASI_Value				= new HashMap<String, WEditor>();
 
-	private AbstractADWindowContent	winContent;
+	protected Set<I_DMS_Version>		downloadSet				= new HashSet<I_DMS_Version>();
 
-	private Progressmeter			uploadProgressMtr;
-	private Label					lblUploadSize;
+	private AbstractADWindowContent		winContent;
 
-	private String					sortFieldName			= null;
+	private Progressmeter				uploadProgressMtr;
+	private Label						lblUploadSize;
+
+	private String						sortFieldName			= null;
 
 	/**
 	 * Constructor initialize
@@ -783,6 +788,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_uploadVersion = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_UPLOADVERSION, "UploadVersion", this);
 		mnu_zoomContentWin = DMS_ZK_Util.createMenuItem(ctxMenuContent, DMSConstant.MENUITEM_ZOOMCONTENTWIN, "Zoom", this);
 
+		// Factory call to fetch any customized context menu items
+		mnu_customizedList = DMSFactoryUtils.addDMSCustomCtxMenu(ctxMenuContent);
+
 		// Context Menu item for Right click on Canvas area
 		mnu_canvasPaste = DMS_ZK_Util.createMenuItem(ctxMenuCanvas, DMSConstant.MENUITEM_PASTE, "Paste", this);
 		mnu_canvasCreateLink = DMS_ZK_Util.createMenuItem(ctxMenuCanvas, DMSConstant.MENUITEM_CREATELINK, "Link", this);
@@ -810,6 +818,20 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		if (Events.ON_DOUBLE_CLICK.equals(event.getName()) && (event.getTarget() instanceof Cell || event.getTarget() instanceof Row))
 		{
+			if (isContentSelectable())
+			{
+				// Prevent to Navigation if wrong value in Content Type
+				try
+				{
+					lstboxContentType.getValue();
+				}
+				catch (WrongValueException e)
+				{
+					lstboxContentType.getComponent().focus();
+					return;
+				}
+			}
+			//
 			openDirectoryORContent(event.getTarget());
 		}
 		else if (event.getTarget().equals(btnCreateDir))
@@ -1254,6 +1276,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 		// Paging - Move to 1st page
 		grid.setAttribute(DMSConstant.ATTRIB_PAGING_MOVE_TO_FIRST_PAGE, true);
+
+		if (isContentSelectable && isDocExplorerWindow && lstboxContentType.getValue() == null)
+		{
+			throw new WrongValueException(lstboxContentType.getComponent(), Msg.translate(Env.getCtx(), "FillMandatory"));
+		}
+
 		//
 		renderViewer();
 	} // searchContents
@@ -1716,6 +1744,12 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 
 		mnu_copy.setDisabled(false);
+
+		// Action apply in customized menu items if any
+		for (IDMSExplorerMenuitem mnuItem : mnu_customizedList)
+		{
+			mnuItem.openContentContextMenuAction(dms, dirContent, copyDMSContent);
+		}
 
 		((XulElement) compCellRowViewer).setContext(ctxMenuContent);
 		ctxMenuContent.open(this, "at_pointer");

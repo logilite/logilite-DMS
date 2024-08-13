@@ -295,13 +295,15 @@ public class DMS_ZK_Util
 
 	public static AImage getImage(String name)
 	{
-		IResourceFinder rf = null;
-		URL url = null;
 		AImage image = null;
 		try
 		{
-			rf = Core.getResourceFinder();
-			url = rf.getResource("/dmsimages/" + name);
+			IResourceFinder rf = Core.getResourceFinder();
+			URL url = rf.getResource("/dmsimages/" + name);
+			if (url == null)
+				url = rf.getResource("/" + name);
+			if (url == null)
+				return null;
 			image = new AImage(url);
 		}
 		catch (IOException e)
