@@ -137,8 +137,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 	private static int				TOOLBAR_BTN_ID_DIR		= 0;
 	private static int				TOOLBAR_BTN_ID_UPLOAD	= 0;
+
 	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
-	private boolean isUseEscForTabClosing 					= MSysConfig.getBooleanValue(MSysConfig.USE_ESC_FOR_TAB_CLOSING, false, Env.getAD_Client_ID(Env.getCtx()));
+	private boolean					isUseEscForTabClosing	= MSysConfig.getBooleanValue(	MSysConfig.USE_ESC_FOR_TAB_CLOSING, false,
+																							Env.getAD_Client_ID(Env.getCtx()));
 
 	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
 
@@ -988,7 +990,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							};
 
 							// Grant same permission of 'Parent Content' to 'paste content'?
-							Dialog.ask("Grant permission to the paste content ?", windowNo,
+							Dialog.ask(	"Grant permission to the paste content ?", windowNo,
 										"GrantPermissionToPasteContent?", callbackConfirmation);
 						}
 						else
@@ -1072,7 +1074,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 							};
 
 							// Want to delete actual docs and associated its linkable documents ?
-							Dialog.ask("Want to Delete linkable references ?", windowNo, 
+							Dialog.ask(	"Want to Delete linkable references ?", windowNo,
 										"DeleteAssociatedLinkableDocuments?", warningMsg, callbackWarning);
 						}
 						else
@@ -1088,7 +1090,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			};
 
-			Dialog.ask("Delete Content", windowNo, "DeleteContent?", callback,
+			Dialog.ask(	"Delete Content", windowNo, "DeleteContent?", callback,
 						((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName());
 
 		}
@@ -1136,7 +1138,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 				}
 			};
 
-			Dialog.ask("Un-Delete Content", windowNo, "Un-DeleteContent?", callback,
+			Dialog.ask(	"Un-Delete Content", windowNo, "Un-DeleteContent?", callback,
 						((MDMSContent) compCellRowViewer.getAttribute(DMSConstant.COMP_ATTRIBUTE_CONTENT)).getName());
 		}
 		else if (event.getTarget().equals(mnu_associate))
@@ -1227,7 +1229,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			searchContents();
 		}
-		else if (event.getName().equals(Events.ON_CANCEL)) {
+		else if (event.getName().equals(Events.ON_CANCEL))
+		{
 			onCancel();
 		}
 
@@ -2350,9 +2353,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	/**
 	 * cancel form
 	 */
-	public void onCancel() {
+	public void onCancel()
+	{
 		// do not allow to close tab for Events.ON_CTRL_KEY event
-		if(isUseEscForTabClosing)
+		if (isUseEscForTabClosing)
 			SessionManager.getAppDesktop().setCloseTabWithShortcut(false);
 
 		getParent().detach();
@@ -2380,7 +2384,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			String desktopID = this.getPage().getDesktop().getId();
 			String sessionID = ((HttpSession) Executions.getCurrent().getSession().getNativeSession()).getId();
-			Clients.evalJavaScript(	"dropToAttachFiles.init('"	+ this.getUuid() + "','"
+			Clients.evalJavaScript(	"idempiere.dropToAttachFiles('" + this.getUuid() + "','"
 									+ grid.getUuid() + "','" + desktopID + "','"
 									+ uploadProgressMtr.getUuid() + "','" + lblUploadSize.getUuid() + "','"
 									+ maxUploadSize + "','" + sessionID + "');");
