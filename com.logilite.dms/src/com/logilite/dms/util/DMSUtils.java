@@ -10,6 +10,7 @@ import org.compiere.util.Util;
 
 import com.logilite.dms.DMS;
 import com.logilite.dms.model.I_DMS_Content;
+import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
 
 /**
@@ -61,6 +62,46 @@ public final class DMSUtils
 		dms.initiateMountingContent(tableName, recordID, tableID);
 		return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID);
 	} // addFileToDMS
+
+	/**
+	 * Create Link
+	 * 
+	 * @param  clientID
+	 * @param  tableID
+	 * @param  recordID
+	 * @param  content
+	 * @return
+	 */
+	public static String createLink(int clientID, int tableID, int recordID, MDMSContent content)
+	{
+		return createLink(clientID, tableID, recordID, content, null);
+	} // createLink
+
+	/**
+	 * Create Link
+	 * 
+	 * @param  clientID
+	 * @param  tableID
+	 * @param  recordID
+	 * @param  content
+	 * @param  parentContent
+	 * @return
+	 */
+	public static String createLink(int clientID, int tableID, int recordID, MDMSContent content, MDMSContent parentContent)
+	{
+		if (tableID > 0 && recordID > 0)
+		{
+			String tableName = MTable.getTableName(Env.getCtx(), tableID);
+			//
+			DMS dms = new DMS(clientID, tableName);
+			dms.initiateMountingContent(tableName, recordID, tableID);
+
+			if (parentContent == null)
+				parentContent = dms.getRootMountingContent(tableID, recordID);
+			return dms.createLink(parentContent, content, false, tableID, recordID);
+		}
+		return null;
+	} // createLink
 
 	/**
 	 * Fetch content files from the DMS with latest version file, if content has multiple versions
