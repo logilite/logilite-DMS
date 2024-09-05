@@ -34,9 +34,9 @@ public final class DMSUtils
 	 * @return              Content ID
 	 */
 	public static int addFileToDMS(	int clientID, int tableID, int recordID, String contentType, HashMap<String, String> attributeMap,
-									String fileName, File file)
+									String fileName, File file, String trxName)
 	{
-		return addFileToDMS(clientID, tableID, recordID, contentType, attributeMap, null, fileName, null, file);
+		return addFileToDMS(clientID, tableID, recordID, contentType, attributeMap, null, fileName, null, file, trxName);
 	} // addFileToDMS
 
 	/**
@@ -54,12 +54,12 @@ public final class DMSUtils
 	 * @return              Content ID
 	 */
 	public static int addFileToDMS(	int clientID, int tableID, int recordID, String contentType, HashMap<String, String> attributeMap,
-									String dirPath, String fileName, String description, File file)
+									String dirPath, String fileName, String description, File file, String trxName)
 	{
 		String tableName = MTable.getTableName(Env.getCtx(), tableID);
 		//
 		DMS dms = new DMS(clientID, tableName);
-		dms.initiateMountingContent(tableName, recordID, tableID);
+		dms.initiateMountingContent(tableName, recordID, tableID, trxName);
 		return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID);
 	} // addFileToDMS
 
@@ -95,13 +95,59 @@ public final class DMSUtils
 			//
 			DMS dms = new DMS(clientID, tableName);
 			dms.initiateMountingContent(tableName, recordID, tableID);
-
+			//
 			if (parentContent == null)
 				parentContent = dms.getRootMountingContent(tableID, recordID);
-			return dms.createLink(parentContent, content, false, tableID, recordID);
+			//
+			return dms.createLink(parentContent, content, false, tableID, recordID, content.get_TrxName());
 		}
 		return null;
 	} // createLink
+
+	/**
+	 * Remove Link
+	 *
+	 * @param clientID
+	 * @param tableID
+	 * @param recordID
+	 * @param content
+	 * @param trxName
+	 */
+	public static void removeLink(int clientID, int tableID, int recordID, int content_ID, String trxName)
+	{
+		if (tableID > 0 && recordID > 0)
+		{
+			String tableName = MTable.getTableName(Env.getCtx(), tableID);
+			//
+			DMS dms = new DMS(clientID, tableName);
+			dms.initiateMountingContent(tableName, recordID, tableID, trxName);
+			dms.removeLink("DMS_Content_ID = " + content_ID, recordID, tableID, trxName);
+		}
+	} // removeLink
+
+	/**
+	 * @param  clientID
+	 * @param  tableID
+	 * @param  recordID
+	 * @param  contentType
+	 * @param  trxName
+	 * @return
+	 */
+	public static I_DMS_Content[] getContentFromDMS(int clientID, int tableID, int recordID, String contentType, String trxName)
+	{
+		int ctID = 0;
+		if (!Util.isEmpty(contentType, true))
+			ctID = MDMSContentType.getContentTypeIDFromName(contentType, clientID);
+
+		//
+		String tableName = MTable.getTableName(Env.getCtx(), tableID);
+		//
+		DMS dms = new DMS(clientID, tableName);
+		dms.initiateMountingContent(tableName, recordID, tableID, trxName);
+		I_DMS_Content[] contents = dms.selectContent(dms.getRootMountingContent(tableID, recordID, trxName), 0, ctID);
+
+		return contents;
+	}
 
 	/**
 	 * Fetch content files from the DMS with latest version file, if content has multiple versions
@@ -110,10 +156,30 @@ public final class DMSUtils
 	 * @param  tableID
 	 * @param  recordID
 	 * @param  contentType
-	 * @param  isFetchFirstFileOnly
-	 * @return                      List of Files
+	 * @param  isFetchFirstFileOnly - If True then fetch latest 1st file
+	 * @param  trxName
+	 * @return                      List of File(s)
 	 */
-	public static ArrayList<File> getContentFilesFromDMS(int clientID, int tableID, int recordID, String contentType, boolean isFetchFirstFileOnly)
+	public static ArrayList<File> getContentFilesFromDMS(	int clientID, int tableID, int recordID, String contentType, boolean isFetchFirstFileOnly,
+															String trxName)
+	{
+		HashMap<I_DMS_Content, File> map = getContentWithFilesFromDMS(clientID, tableID, recordID, contentType, isFetchFirstFileOnly, trxName);
+		return (ArrayList<File>) map.values();
+	} // getContentFilesFromDMS
+
+	/**
+	 * Fetch map of content with files from the DMS with latest version against content
+	 * 
+	 * @param  clientID
+	 * @param  tableID
+	 * @param  recordID
+	 * @param  contentType
+	 * @param  isFetchFirstFileOnly - If True then fetch latest 1st file
+	 * @param  trxName
+	 * @return                      List of File(s)
+	 */
+	public static HashMap<I_DMS_Content, File> getContentWithFilesFromDMS(	int clientID, int tableID, int recordID, String contentType,
+																			boolean isFetchFirstFileOnly, String trxName)
 	{
 		int ctID = 0;
 		if (!Util.isEmpty(contentType, true))
@@ -124,26 +190,26 @@ public final class DMSUtils
 		//
 		DMS dms = new DMS(clientID, tableName);
 		dms.initiateMountingContent(tableName, recordID, tableID);
-		I_DMS_Content[] contents = dms.selectContent(tableID, recordID, 0, ctID);
+		I_DMS_Content[] contents = dms.selectContent(dms.getRootMountingContent(tableID, recordID, trxName), 0, ctID);
 
-		ArrayList<File> list = new ArrayList<File>();
+		HashMap<I_DMS_Content, File> map = new HashMap<I_DMS_Content, File>();
 		if (contents.length <= 0)
 		{
-			return list;
+			return map;
 		}
 
 		//
 		if (isFetchFirstFileOnly)
 		{
-			list.add(dms.getFileFromStorageLatestVersionOnly(contents[0]));
+			map.put(contents[0], dms.getFileFromStorageLatestVersionOnly(contents[0]));
 		}
 		else
 		{
 			for (I_DMS_Content content : contents)
 			{
-				list.add(dms.getFileFromStorageLatestVersionOnly(content));
+				map.put(content, dms.getFileFromStorageLatestVersionOnly(content));
 			}
 		}
-		return list;
-	} // getContentFilesFromDMS
+		return map;
+	} // getContentWithFilesFromDMS
 }
