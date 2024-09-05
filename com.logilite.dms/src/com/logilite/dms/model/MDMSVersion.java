@@ -8,6 +8,7 @@ import java.util.logging.Level;
 
 import org.apache.commons.io.FileUtils;
 import org.compiere.model.MTable;
+import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.Env;
@@ -113,7 +114,7 @@ public class MDMSVersion extends X_DMS_Version
 		if (content == null)
 			return null;
 
-		Query query = new Query(Env.getCtx(), Table_Name, " DMS_Content_ID=? " + (seqNo >= 0 ? " AND SeqNo=? " : ""), null);
+		Query query = new Query(Env.getCtx(), Table_Name, " DMS_Content_ID=? " + (seqNo >= 0 ? " AND SeqNo=? " : ""), ((PO) content).get_TrxName());
 		if (seqNo >= 0)
 			query.setParameters(content.getDMS_Content_ID(), seqNo);
 		else

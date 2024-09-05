@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAttributeInstance;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.PO;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -490,14 +491,19 @@ public class DMSSearchUtils
 	 * 
 	 * @param  parentContent     - Parent Content
 	 * @param  associationTypeID - Association Type ID [ optional ]
+	 * @param  contentTypeID     - Content Type ID [ optional ]
 	 * @param  fileName          - FileName [ optional ]
 	 * @return                   Array of Contents
 	 */
 	public static I_DMS_Content[] selectContentActiveOnly(I_DMS_Content parentContent, int associationTypeID, int contentTypeID, String fileName)
 	{
 		int contentID = 0;
+		String trxName = null;
 		if (parentContent != null)
+		{
 			contentID = parentContent.getDMS_Content_ID();
+			trxName = ((PO) parentContent).get_TrxName();
+		}
 
 		StringBuffer sql = new StringBuffer(DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE, contentID));
 		if (contentTypeID > 0)
@@ -514,7 +520,7 @@ public class DMSSearchUtils
 		try
 		{
 			int i = 1;
-			pstmt = DB.prepareStatement(sql.toString(), null);
+			pstmt = DB.prepareStatement(sql.toString(), trxName);
 			pstmt.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(i++, contentID);
 			pstmt.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
@@ -524,7 +530,7 @@ public class DMSSearchUtils
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
-				MDMSContent childContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), null);
+				MDMSContent childContent = new MDMSContent(Env.getCtx(), rs.getInt("DMS_Content_ID"), trxName);
 				if (!Util.isEmpty(fileName, true))
 				{
 					MDMSVersion version = (MDMSVersion) MDMSVersion.getLatestVersion(childContent, true, 0);
