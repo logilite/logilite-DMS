@@ -16,8 +16,8 @@
     <maven-clean-plugin.version>maven-clean-plugin.version</maven-clean-plugin.version>
     <lifecycle.mapping.version>1.0.0</lifecycle.mapping.version>
 
-    <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_9/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
-    <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/9.0.0-SNAPSHOT/org.idempiere.p2-9.0.0-SNAPSHOT.zip!/</local.idempiere>
+    <jenkins.idempiere>http://jenkins.logilite.com/job/logiliteERP_11/ws/org.idempiere.p2/target/repository/</jenkins.idempiere>
+    <local.idempiere>jar:file:///${local.maven}/repository/org/idempiere/org.idempiere.p2/11.0.0-SNAPSHOT/org.idempiere.p2-11.0.0-SNAPSHOT.zip!/</local.idempiere>
 <!--    <local.idempiere.sb>file:///D:/Sachin/Work/iDempiere/Core-Master/org.idempiere.p2/target/repository/</local.idempiere.sb>-->
     <local.idempiere.sb>file:///D:/Sachin/Work/iDempiere/LT_11/org.idempiere.p2/target/repository/</local.idempiere.sb>
     <idempiere.repo>${local.idempiere.sb}</idempiere.repo>
@@ -113,7 +113,7 @@
           <url>${idempiere.repo}</url>
          <layout>p2</layout>
         </repository>
-		<repository>
+	<repository>
           <id>logilite-search</id>
           <url>${search.repo}</url>
           <layout>p2</layout>
