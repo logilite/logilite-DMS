@@ -9,6 +9,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Util;
 
 import com.logilite.dms.DMS;
+import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
@@ -64,6 +65,54 @@ public final class DMSUtils
 	} // addFileToDMS
 
 	/**
+	 * Add file to DMS as Content, if same name/value content found then create Version
+	 *
+	 * @param  clientID
+	 * @param  tableID
+	 * @param  recordID
+	 * @param  contentType
+	 * @param  attributeMap
+	 * @param  dirPath
+	 * @param  fileName
+	 * @param  description
+	 * @param  file
+	 * @param  trxName
+	 * @return              Content ID
+	 */
+	public static int addFileToDMSOrVersionIfContentExists(	int clientID, int tableID, int recordID, String contentType, HashMap<String, String> attributeMap,
+															String dirPath, String fileName, String description, File file, String trxName)
+	{
+		String tableName = MTable.getTableName(Env.getCtx(), tableID);
+		//
+		DMS dms = new DMS(clientID, tableName);
+		dms.initiateMountingContent(tableName, recordID, tableID, trxName);
+
+		// get the Root Content to check for the existing file
+		MDMSContent parentContent = dms.getRootMountingContent(tableID, recordID, trxName);
+
+		// Create Directory folder hierarchy OR get leaf DMS-Content
+		if (!Util.isEmpty(dirPath, true) && !dirPath.equals(DMSConstant.FILE_SEPARATOR))
+		{
+			parentContent = dms.createDirHierarchy(	dirPath, parentContent, dms.getSubstituteTableInfo().getOriginTable_ID(),
+													dms.getSubstituteTableInfo().getOriginRecord_ID(), trxName);
+		}
+		//
+		String URL = dms.getPathFromContentManager(parentContent);
+
+		// check for file with Content name
+		int contentID = RelationUtils.checkDMSContentExists(URL, fileName, true, true);
+		// check for file with version name
+		if (contentID < 0)
+			contentID = RelationUtils.checkDMSContentExists(URL, fileName, true, false);
+
+		// if content with match name not found then add the file else update file version
+		if (contentID < 0)
+			return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID);
+		else
+			return dms.addFileVersion(contentID, file);
+	} // addFileToDMSOrVersionIfContentExists
+
+	/**
 	 * Create Link
 	 * 
 	 * @param  clientID
@@ -94,12 +143,14 @@ public final class DMSUtils
 			String tableName = MTable.getTableName(Env.getCtx(), tableID);
 			//
 			DMS dms = new DMS(clientID, tableName);
-			dms.initiateMountingContent(tableName, recordID, tableID);
+			dms.initiateMountingContent(tableName, recordID, tableID, content.get_TrxName());
 			//
 			if (parentContent == null)
-				parentContent = dms.getRootMountingContent(tableID, recordID);
+				parentContent = dms.getRootMountingContent(tableID, recordID, content.get_TrxName());
 			//
-			return dms.createLink(parentContent, content, false, tableID, recordID, content.get_TrxName());
+			boolean isLinkPresent = DMSOprUtils.isDocumentPresent(parentContent, content, false, content.get_TrxName());
+			if (!isLinkPresent)
+				return dms.createLink(parentContent, content, false, tableID, recordID, content.get_TrxName());
 		}
 		return null;
 	} // createLink
@@ -189,7 +240,8 @@ public final class DMSUtils
 		String tableName = MTable.getTableName(Env.getCtx(), tableID);
 		//
 		DMS dms = new DMS(clientID, tableName);
-		dms.initiateMountingContent(tableName, recordID, tableID);
+		dms.initiateMountingContent(tableName, recordID, tableID, trxName);
+		// TODO Need to check Trx based select the content
 		I_DMS_Content[] contents = dms.selectContent(dms.getRootMountingContent(tableID, recordID, trxName), 0, ctID);
 
 		HashMap<I_DMS_Content, File> map = new HashMap<I_DMS_Content, File>();
