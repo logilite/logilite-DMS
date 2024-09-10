@@ -102,14 +102,14 @@ public final class DMSUtils
 		// check for file with Content name
 		int contentID = RelationUtils.checkDMSContentExists(URL, fileName, true, true);
 		// check for file with version name
-		if (contentID < 0)
+		if (contentID <= 0)
 			contentID = RelationUtils.checkDMSContentExists(URL, fileName, true, false);
 
 		// if content with match name not found then add the file else update file version
-		if (contentID < 0)
-			return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID);
-		else
+		if (contentID > 0)
 			return dms.addFileVersion(contentID, file);
+		else
+			return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID);
 	} // addFileToDMSOrVersionIfContentExists
 
 	/**
