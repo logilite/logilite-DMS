@@ -61,7 +61,7 @@ public final class DMSUtils
 		//
 		DMS dms = new DMS(clientID, tableName);
 		dms.initiateMountingContent(tableName, recordID, tableID, trxName);
-		return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID);
+		return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID, trxName);
 	} // addFileToDMS
 
 	/**
@@ -107,9 +107,12 @@ public final class DMSUtils
 
 		// if content with match name not found then add the file else update file version
 		if (contentID > 0)
-			return dms.addFileVersion(contentID, file);
+		{
+			MDMSContent prntContent = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(contentID, trxName);
+			return dms.addFileVersion(prntContent, file, description, tableID, recordID, trxName);
+		}
 		else
-			return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID);
+			return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID, trxName);
 	} // addFileToDMSOrVersionIfContentExists
 
 	/**
