@@ -62,10 +62,10 @@ public interface IContentManager
 										boolean isCreateAssociation, String trxName);
 
 	public int addFile(	DMS dms, MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID, int AD_Table_ID,
-						int Record_ID, boolean isVersion);
+						int Record_ID, boolean isVersion, String trxName);
 
 	public int addFile(	DMS dms, String dirPath, File file, String fileName, String desc, String contentType, Map<String, String> attributeMap, int AD_Table_ID,
-						int Record_ID, boolean isVersion);
+						int Record_ID, boolean isVersion, String trxName);
 
 	public int createContentAssociationFileStoreAndThumnail(DMS dms, MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID,
 															int asiID, int AD_Table_ID, int Record_ID, boolean isVersion, String trxName);

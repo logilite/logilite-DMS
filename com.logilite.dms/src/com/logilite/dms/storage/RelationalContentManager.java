@@ -208,16 +208,18 @@ public class RelationalContentManager implements IContentManager
 	 */
 	@Override
 	public int addFile(	DMS dms, String dirPath, File file, String fileName, String desc, String contentType, Map<String, String> attributeMap,
-						int AD_Table_ID, int Record_ID, boolean isVersion)
+						int AD_Table_ID, int Record_ID, boolean isVersion, String trxName)
 	{
 		int asiID = 0;
 		int contentTypeID = 0;
-		MDMSContent dirContent = dms.getMountingStrategy().getMountingParent(AD_Table_ID, Record_ID);
+		MDMSContent dirContent = dms.getMountingStrategy().getMountingParent(AD_Table_ID, Record_ID, trxName);
 
 		fileName = Utils.validateFileName(dirContent, file, fileName, isVersion);
 
-		String trxName = Trx.createTrxName("DMSAdd_");
-		Trx trx = Trx.get(trxName, true);
+		boolean isNewTrx = Util.isEmpty(trxName, true);
+		if (isNewTrx)
+			trxName = Trx.createTrxName("DMSAdd_");
+		Trx trx = Trx.get(trxName, isNewTrx);
 
 		try
 		{
@@ -237,6 +239,7 @@ public class RelationalContentManager implements IContentManager
 					asiID = Utils.createOrUpdateASI(attributeMap, 0, cType.getM_AttributeSet_ID(), trx.getTrxName());
 			}
 
+			if (isNewTrx)
 			trx.commit(true);
 		}
 		catch (SQLException e)
@@ -246,11 +249,11 @@ public class RelationalContentManager implements IContentManager
 		}
 		finally
 		{
-			if (trx != null)
+			if (isNewTrx && trx != null)
 				trx.close();
 		}
 		//
-		return addFile(dms, dirContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion);
+		return addFile(dms, dirContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, isVersion, (isNewTrx ? null : trxName));
 
 	}// addFile
 
@@ -271,12 +274,14 @@ public class RelationalContentManager implements IContentManager
 	 */
 	@Override
 	public int addFile(	DMS dms, MDMSContent parentContent, File file, String fileName, String desc, int contentTypeID, int asiID, int AD_Table_ID,
-						int Record_ID, boolean isVersion)
+						int Record_ID, boolean isVersion, String trxName)
 	{
 		fileName = Utils.validateFileName(parentContent, file, fileName, isVersion);
 
-		String trxName = Trx.createTrxName("DMSUpload_");
-		Trx trx = Trx.get(trxName, true);
+		boolean isNewTrx = Util.isEmpty(trxName, true);
+		if (isNewTrx)
+			trxName = Trx.createTrxName("DMSUpload_");
+		Trx trx = Trx.get(trxName, isNewTrx);
 
 		// Create Content, Association, Store File & Thumbnail generate
 		int contentID = 0;
@@ -284,6 +289,7 @@ public class RelationalContentManager implements IContentManager
 		{
 			contentID = createContentAssociationFileStoreAndThumnail(	dms, parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID,
 																		isVersion, trx.getTrxName());
+			if (isNewTrx)
 			trx.commit();
 		}
 		catch (IndexException | DMSContentExistException e)
@@ -296,12 +302,13 @@ public class RelationalContentManager implements IContentManager
 		}
 		catch (Exception e)
 		{
+			if (isNewTrx)
 			trx.rollback();
 			throw new AdempiereException("Upload Content Failure:\n" + e.getLocalizedMessage(), e);
 		}
 		finally
 		{
-			if (trx != null)
+			if (isNewTrx && trx != null)
 				trx.close();
 		}
 		return contentID;
