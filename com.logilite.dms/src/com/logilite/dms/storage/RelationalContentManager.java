@@ -240,7 +240,7 @@ public class RelationalContentManager implements IContentManager
 			}
 
 			if (isNewTrx)
-			trx.commit(true);
+				trx.commit(true);
 		}
 		catch (SQLException e)
 		{
@@ -290,7 +290,7 @@ public class RelationalContentManager implements IContentManager
 			contentID = createContentAssociationFileStoreAndThumnail(	dms, parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID,
 																		isVersion, trx.getTrxName());
 			if (isNewTrx)
-			trx.commit();
+				trx.commit();
 		}
 		catch (IndexException | DMSContentExistException e)
 		{
@@ -303,7 +303,7 @@ public class RelationalContentManager implements IContentManager
 		catch (Exception e)
 		{
 			if (isNewTrx)
-			trx.rollback();
+				trx.rollback();
 			throw new AdempiereException("Upload Content Failure:\n" + e.getLocalizedMessage(), e);
 		}
 		finally
