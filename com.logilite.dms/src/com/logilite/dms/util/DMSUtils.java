@@ -36,6 +36,7 @@ public final class DMSUtils
 	 * @param  attributeMap
 	 * @param  fileName
 	 * @param  file
+	 * @param  trxName
 	 * @return              Content ID
 	 */
 	public static int addFileToDMS(	int clientID, int tableID, int recordID, String contentType, HashMap<String, String> attributeMap,

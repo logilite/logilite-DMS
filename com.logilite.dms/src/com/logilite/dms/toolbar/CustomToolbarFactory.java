@@ -21,11 +21,13 @@ import org.adempiere.webui.action.IAction;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.adwindow.IADTabpanel;
+import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.session.SessionManager;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.zkoss.zk.ui.Desktop;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zul.Toolbarbutton;
@@ -85,12 +87,27 @@ public class CustomToolbarFactory implements IAction
 			@Override
 			public void onEvent(Event arg) throws Exception
 			{
-				int associateRecords = DB.getSQLValue(	null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association WHERE AD_Table_ID = ? AND Record_ID = ? "
-																+ " AND DMS_AssociationType_ID NOT IN (1000000,1000001,1000002,1000003) AND DMS_AssociationType_ID IS NOT NULL",
-														winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
-														winContent.getADTab().getSelectedGridTab().getRecord_ID());
+				Desktop envDesktop = AEnv.getDesktop();
+				Desktop compDesktop = winContent.getComponent().getDesktop();
+				log.log(Level.FINE, "\n\tAEnv Desktop = " + envDesktop + "\n\tComp Desktop = " + compDesktop);
+				if (envDesktop != null && compDesktop != null)
+				{
+					if (envDesktop.getExecution().equals(compDesktop.getExecution()))
+					{
+						int associateRecords = DB.getSQLValue(	null, "SELECT COUNT(DMS_Association_ID) FROM DMS_Association a"
+																		+ " INNER JOIN DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID AND c.IsMounting = 'N') "
+																		+ " WHERE AD_Table_ID = ? AND Record_ID = ? ",
+																winContent.getADTab().getSelectedGridTab().getAD_Table_ID(),
+																winContent.getADTab().getSelectedGridTab().getRecord_ID());
 
-				winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed((associateRecords > 0));
+						winContent.getToolbar().getButton(DMSConstant.TOOLBAR_BUTTON_DOCUMENT_EXPLORER).setPressed((associateRecords > 0));
+					}
+					else
+					{
+						log.log(Level.WARNING, "\nBoth Execution Matched = False \nEnv = "	+ envDesktop.getExecution()
+												+ ", Comp = " + compDesktop.getExecution());
+					}
+				}
 			}
 		});
 
@@ -113,7 +130,8 @@ public class CustomToolbarFactory implements IAction
 	}
 
 	@Override
-	public String getIconSclass() {
+	public String getIconSclass()
+	{
 		return "z-icon-DocumentExplorer";
 	}
 }

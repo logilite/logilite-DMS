@@ -22,7 +22,7 @@ import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
 import org.adempiere.webui.factory.ButtonFactory;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
@@ -477,7 +477,7 @@ public class WDMSBulkUploadForm extends AbstractUploadContent
 		}
 
 		//
-		FDialog.info(this.windowNo, this, "", "Total: " + contentIDs.size() + " Documents Uploaded", "Bulk Content Upload");
+		Dialog.info(this.windowNo, "", "Total: " + contentIDs.size() + " Documents Uploaded", "Bulk Content Upload");
 
 		//
 		for (Entry<Integer, Timestamp> map : contentCreateMap.entrySet())

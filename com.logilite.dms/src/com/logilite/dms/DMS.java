@@ -123,7 +123,8 @@ public class DMS
 			ssTableInfo = new DMSSubstituteTableInfo(0);
 
 			//
-			permissionManager = DMSFactoryUtils.getPermissionFactory();
+			if (DMSPermissionUtils.isPermissionAllowed())
+				permissionManager = DMSFactoryUtils.getPermissionFactory();
 		}
 
 		//
@@ -230,7 +231,7 @@ public class DMS
 	{
 		return getMountingStrategy().getMountingParent(validTableName(Table_Name), validRecordID(Record_ID));
 	}
-	
+
 	// with trx
 	public MDMSContent getRootMountingContent(int AD_Table_ID, int Record_ID, String trxName)
 	{
@@ -551,6 +552,7 @@ public class DMS
 	{
 		return addFile(dirPath, file, fileName, description, contentType, attributeMap, AD_Table_ID, Record_ID, null);
 	} // addFile
+
 	public int addFile(	String dirPath, File file, String fileName, String description, String contentType,
 						Map<String, String> attributeMap, int AD_Table_ID, int Record_ID, String trxName)
 	{
@@ -567,6 +569,7 @@ public class DMS
 	{
 		return addFile(parentContent, file, name, desc, contentTypeID, asiID, AD_Table_ID, Record_ID, null);
 	} // addFile
+
 	public int addFile(	MDMSContent parentContent, File file, String name, String desc, int contentTypeID, int asiID,
 						int AD_Table_ID, int Record_ID, String trxName)
 	{
@@ -597,6 +600,7 @@ public class DMS
 	{
 		return addFile(parentContent, file, null, desc, 0, 0, AD_Table_ID, Record_ID, null);
 	} // addFileVersion
+
 	public int addFileVersion(MDMSContent parentContent, File file, String desc, int AD_Table_ID, int Record_ID, String trxName)
 	{
 		return contentManager.addFile(this, parentContent, file, null, desc, 0, 0, validTableID(AD_Table_ID), validRecordID(Record_ID), true, trxName);
@@ -898,7 +902,10 @@ public class DMS
 
 	public IPermissionManager getPermissionManager()
 	{
-		return permissionManager;
+		if (DMSPermissionUtils.isPermissionAllowed())
+			return permissionManager;
+		else
+			return null;
 	} // getPermissionManager
 
 	public void grantChildPermissionFromParentContent(MDMSContent content, MDMSContent parentContent)
