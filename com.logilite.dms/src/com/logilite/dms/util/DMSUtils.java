@@ -3,8 +3,10 @@ package com.logilite.dms.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
 
 import org.compiere.model.MTable;
+import org.compiere.util.CLogger;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
@@ -22,6 +24,8 @@ import com.logilite.dms.model.MDMSContentType;
 public final class DMSUtils
 {
 
+	private static CLogger log = CLogger.getCLogger(DMSUtils.class);
+
 	/**
 	 * Add content to DMS
 	 * 
@@ -32,6 +36,7 @@ public final class DMSUtils
 	 * @param  attributeMap
 	 * @param  fileName
 	 * @param  file
+	 * @param  trxName
 	 * @return              Content ID
 	 */
 	public static int addFileToDMS(	int clientID, int tableID, int recordID, String contentType, HashMap<String, String> attributeMap,
@@ -99,6 +104,8 @@ public final class DMSUtils
 		//
 		String URL = dms.getPathFromContentManager(parentContent);
 
+		log.log(Level.WARNING, "Fetch Parent Content : " + parentContent + ", URL=" + URL + " Trx=" + trxName);
+
 		// check for file with Content name
 		int contentID = RelationUtils.checkDMSContentExists(URL, fileName, true, true);
 		// check for file with version name
@@ -108,11 +115,16 @@ public final class DMSUtils
 		// if content with match name not found then add the file else update file version
 		if (contentID > 0)
 		{
+			log.log(Level.WARNING, "Add Version, Content Exists contentID: " + contentID + ", Table=" + tableID + ", Record=" + recordID + ", Trx=" + trxName);
 			MDMSContent prntContent = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_ID).getPO(contentID, trxName);
 			return dms.addFileVersion(prntContent, file, description, tableID, recordID, trxName);
 		}
 		else
+		{
+			log.log(Level.WARNING, "Add File, dirPath: "	+ dirPath + ", FileName=" + fileName + ", Table=" + tableID + ", Record=" + recordID + ", Trx="
+									+ trxName);
 			return dms.addFile(dirPath, file, fileName, description, contentType, attributeMap, tableID, recordID, trxName);
+		}
 	} // addFileToDMSOrVersionIfContentExists
 
 	/**
@@ -218,7 +230,7 @@ public final class DMSUtils
 															String trxName)
 	{
 		HashMap<I_DMS_Content, File> map = getContentWithFilesFromDMS(clientID, tableID, recordID, contentType, isFetchFirstFileOnly, trxName);
-		return (ArrayList<File>) map.values();
+		return new ArrayList<>(map.values());
 	} // getContentFilesFromDMS
 
 	/**

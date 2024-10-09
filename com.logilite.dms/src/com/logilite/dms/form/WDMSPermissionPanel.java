@@ -334,7 +334,6 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 															false,
 															"p");
 		permissionTbl.setMultiSelection(false);
-		permissionTbl.autoSize();
 		permissionTbl.getModel().addTableModelListener(this);
 	} // configurePermissionTable
 
