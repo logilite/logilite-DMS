@@ -149,14 +149,20 @@ public class DMSOprUtils
 	{
 		for (MDMSVersion version : content.getAllVersions())
 		{
-			File document = dms.getFileFromStorage(version);
-			if (document.exists())
-				document.delete();
+			try
+			{
+				File document = dms.getFileFromStorage(version);
+				if (document != null && document.exists())
+					document.delete();
 
-			File thumbnails = new File(dms.getThumbnailURL(version, null));
-
-			if (thumbnails.exists())
-				FileUtils.deleteDirectory(thumbnails);
+				File thumbnails = new File(dms.getThumbnailURL(version, null));
+				if (thumbnails != null && thumbnails.exists())
+					FileUtils.deleteDirectory(thumbnails.getParentFile());
+			}
+			catch (Exception e)
+			{
+				DMS.log.log(Level.WARNING, "Document or Thumbnail deletion related issue, Error: " + e.getLocalizedMessage(), e);
+			}
 		}
 
 		int no = DB.executeUpdate("DELETE FROM DMS_Association 	WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
@@ -168,7 +174,7 @@ public class DMSOprUtils
 		no = DB.executeUpdate("DELETE FROM DMS_Content 			WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
 		DMS.log.log(Level.INFO, no + " content deleted.");
 
-		// TODO Need code for remove linkable docs
+		// TODO Need code for remove indexing
 	} // deleteContentWithPhysicalDocument
 
 	/**
