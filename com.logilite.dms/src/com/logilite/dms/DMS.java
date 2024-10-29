@@ -598,7 +598,7 @@ public class DMS
 
 	public int addFileVersion(MDMSContent parentContent, File file, String desc, int AD_Table_ID, int Record_ID)
 	{
-		return addFile(parentContent, file, null, desc, 0, 0, AD_Table_ID, Record_ID, null);
+		return addFileVersion(parentContent, file, desc, AD_Table_ID, Record_ID, null);
 	} // addFileVersion
 
 	public int addFileVersion(MDMSContent parentContent, File file, String desc, int AD_Table_ID, int Record_ID, String trxName)
