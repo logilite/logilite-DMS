@@ -240,11 +240,12 @@ public class RelationalContentManager implements IContentManager
 			}
 
 			if (isNewTrx)
-			trx.commit(true);
+				trx.commit(true);
 		}
 		catch (SQLException e)
 		{
-			trx.rollback();
+			if (isNewTrx)
+				trx.rollback();
 			throw new AdempiereException("Error while committing transaction:" + e.getLocalizedMessage(), e);
 		}
 		finally
@@ -290,10 +291,12 @@ public class RelationalContentManager implements IContentManager
 			contentID = createContentAssociationFileStoreAndThumnail(	dms, parentContent, file, fileName, desc, contentTypeID, asiID, AD_Table_ID, Record_ID,
 																		isVersion, trx.getTrxName());
 			if (isNewTrx)
-			trx.commit();
+				trx.commit();
 		}
 		catch (IndexException | DMSContentExistException e)
 		{
+			if (isNewTrx)
+				trx.rollback();
 			DMSException dmsExc = new DMSException();
 			dmsExc.setException(e);
 			if (e instanceof IndexException)
@@ -303,7 +306,7 @@ public class RelationalContentManager implements IContentManager
 		catch (Exception e)
 		{
 			if (isNewTrx)
-			trx.rollback();
+				trx.rollback();
 			throw new AdempiereException("Upload Content Failure:\n" + e.getLocalizedMessage(), e);
 		}
 		finally
@@ -443,7 +446,7 @@ public class RelationalContentManager implements IContentManager
 		}
 		catch (IOException e)
 		{
-			throw new AdempiereException("Error while reading file:" + version.getValue(), e);
+			throw new AdempiereException("Error while reading file:" + version.toString(), e);
 		}
 
 		IFileStorageProvider fsProvider = dms.getFileStorageProvider();

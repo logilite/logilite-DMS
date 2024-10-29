@@ -248,7 +248,8 @@ public class UUIDContentManager implements IContentManager
 		}
 		catch (SQLException e)
 		{
-			trx.rollback();
+			if (isNewTrx)
+				trx.rollback();
 			throw new AdempiereException("Error while committing transaction:" + e.getLocalizedMessage(), e);
 		}
 		finally
@@ -298,6 +299,8 @@ public class UUIDContentManager implements IContentManager
 		}
 		catch (IndexException | DMSContentExistException e)
 		{
+			if (isNewTrx)
+				trx.rollback();
 			DMSException dmsExc = new DMSException();
 			dmsExc.setException(e);
 			if (e instanceof IndexException)
