@@ -9,7 +9,7 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.desktop.IDesktop;
 import org.adempiere.webui.session.SessionManager;
-import org.adempiere.webui.window.FDialog;
+import org.adempiere.webui.window.Dialog;
 import org.apache.poi.ss.formula.CollaboratingWorkbooksEnvironment.WorkbookNotFoundException;
 import org.compiere.model.MTable;
 import org.compiere.util.CLogger;
@@ -139,7 +139,7 @@ public class DMSContentBox extends Hbox implements EventListener<Event>
 				{
 					String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
 					log.log(Level.SEVERE, errorMsg, e);
-					FDialog.warn(windowNo, errorMsg, "Document preview issue...");
+					Dialog.warn(windowNo, errorMsg, "Document preview issue...");
 					return;
 				}
 			}
@@ -174,13 +174,13 @@ public class DMSContentBox extends Hbox implements EventListener<Event>
 			}
 			else
 			{
-				FDialog.warn(	windowNo, "Not able to preview for this content, Please download it...",
-								"Document preview issue...");
+				Dialog.warn(windowNo, "Not able to preview for this content, Please download it...",
+							"Document preview issue...");
 			}
 		}
 		else
 		{
-			FDialog.error(	windowNo, this, "ContentNotFoundInStorage", dms.getPathFromContentManager(version),
+			Dialog.error(	windowNo, "ContentNotFoundInStorage", dms.getPathFromContentManager(version),
 							"Content Not Found In the Storage");
 		}
 	} // openContentViewer
