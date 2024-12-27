@@ -171,8 +171,9 @@ public class MDMSContent extends X_DMS_Content
 
 	public String getToolTipTextMsg()
 	{
-		StringBuffer msg = new StringBuffer(getName());
-		msg.append("\nOwner: ").append( getDMS_Owner().getName());
+		StringBuffer msg = new StringBuffer("");
+		msg.append(getName());
+		msg.append("\nOwner: ").append(getDMS_Owner().getName());
 
 		if (getDMS_ContentType_ID() > 0)
 		{
@@ -180,7 +181,7 @@ public class MDMSContent extends X_DMS_Content
 		}
 
 		msg.append("\nItem Type: ");
-		if (getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
+		if (MDMSContent.CONTENTBASETYPE_Directory.equals(getContentBaseType()))
 		{
 			msg.append(DMSConstant.DIRECTORY);
 		}

@@ -107,7 +107,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 
 	private Row					contentTypeRow			= null;
 
-	private Button				btnDelete				= null;
 	private Button				btnRequery				= null;
 	private Button				btnClose				= null;
 	private Button				btnDownload				= null;
@@ -274,9 +273,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		columns.appendChild(column);
 
 		confirmPanel = new ConfirmPanel();
-		btnDelete = confirmPanel.createButton(ConfirmPanel.A_DELETE);
-		btnDelete.setEnabled(false);
-
 		btnDownload = confirmPanel.createButton(ConfirmPanel.A_EXPORT);
 		btnDownload.setTooltiptext(DMSConstant.TTT_DOWNLOAD);
 
@@ -299,7 +295,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		DMS_ZK_Util.setFontOrImageAsIcon("Save", btnSave);
 
 		btnSave.addEventListener(Events.ON_CLICK, this);
-		btnDelete.addEventListener(Events.ON_CLICK, this);
 		btnDownload.addEventListener(Events.ON_CLICK, this);
 		btnRequery.addEventListener(Events.ON_CLICK, this);
 		btnClose.addEventListener(Events.ON_CLICK, this);
@@ -312,7 +307,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		rows.appendChild(row);
 
 		panelFooterButtons.appendChild(btnVersionUpload);
-		panelFooterButtons.appendChild(btnDelete);
 		panelFooterButtons.appendChild(btnRequery);
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
@@ -623,12 +617,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 				DMS_ZK_Util.downloadDocument(dms, versionSelected);
 			else
 				DMS_ZK_Util.downloadDocument(dms, MDMSVersion.getLatestVersion(content));
-		}
-		else if (event.getTarget().getId().equals(ConfirmPanel.A_DELETE))
-		{
-			dms.deleteContentWithPhysicalDocument(content);
-
-			tabBox.getSelectedTab().close();
 		}
 		else if (event.getTarget().equals(btnVersionUpload))
 		{
