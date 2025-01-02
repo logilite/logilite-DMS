@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: DMSTestForm
+Bundle-SymbolicName: com.logilite.dms.test;singleton:=true
+Bundle-Version: 7.1.0.qualifier
+Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
+Bundle-Vendor: LOGILITE
+Bundle-RequiredExecutionEnvironment: JavaSE-11
+Automatic-Module-Name: com.logilite.dms.test
+Require-Bundle: org.adempiere.base,
+ org.adempiere.ui.zk,
+ org.adempiere.plugin.utils,
+ zk,
+ zul,
+ com.logilite.dms
+Bundle-ActivationPolicy: lazy
+Service-Component: OSGI-INF/*.xml
