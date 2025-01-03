@@ -1,0 +1,11 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+  	<groupId>com.logilite.dms</groupId>
+  	<artifactId>com.logilite.dms.parent</artifactId>
+  	<version>${revision}</version>
+  	<relativePath>../com.logilite.dms.parent/pom.xml</relativePath>
+  </parent>
+  <artifactId>com.logilite.dms.test</artifactId>
+  <packaging>eclipse-plugin</packaging>
+</project>

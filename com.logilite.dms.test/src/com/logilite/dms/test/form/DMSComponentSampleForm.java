@@ -165,11 +165,11 @@ public class DMSComponentSampleForm extends ADForm
 		Map<Integer, List<Map.Entry<Integer, Integer>>> records = new HashMap<>();
 
 		String sql_For_Get_Contents = "SELECT 114 AS AD_Table_ID, u.AD_User_ID AS Record_ID, c.DMS_Content_ID "
-										+ "FROM AD_User u "
-										+ "INNER JOIN DMS_Content c ON (c.DMS_Content_ID IN (SELECT DISTINCT DMS_Content_ID FROM DMS_Association a "
+										+ " FROM AD_User u "
+										+ " INNER JOIN DMS_Content c ON (c.DMS_Content_ID IN (SELECT DISTINCT DMS_Content_ID FROM DMS_Association a 		"
 										+ "													WHERE (a.AD_Table_ID = 114 AND a.Record_ID = u.AD_User_ID)) "
 										+ "								AND c.ContentBaseType ='CNT' AND c.IsMounting ='N') "
-										+ "WHERE AD_User_ID IN (100) ";
+										+ " WHERE AD_User_ID IN (100) ";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try

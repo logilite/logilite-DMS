@@ -13,7 +13,7 @@ public class DMSComponentFormFactory implements IFormFactory
 	@Override
 	public ADForm newFormInstance(String formName)
 	{
-		if (formName.equals("com.logilite.dms.test.form.DMSComponentSampleForm"))
+		if (DMSComponentSampleForm.class.getName().equals(formName))
 			return new DMSComponentSampleForm();
 		return null;
 	}
