@@ -802,6 +802,17 @@ public class DMS
 	} // deleteContentWithPhysicalDocument
 
 	/**
+	 * Permanently delete the physical document, its entire hierarchical structure, any linked
+	 * references to other locations, and the associated indexing data.
+	 * 
+	 * @param association
+	 */
+	public void deletePhysicalContentsAndHierarchy(MDMSAssociation association)
+	{
+		DMSOprUtils.deletePhysicalContentsAndHierarchy(this, association);
+	} // deletePhysicalContentsAndHierarchy
+
+	/**
 	 * This will be a soft deletion. System will only inactive the files.
 	 * 
 	 * @param dmsContent

@@ -14,13 +14,13 @@
 package com.logilite.dms.util;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -37,6 +37,7 @@ import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.model.I_DMS_Association;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.MDMSAssociation;
+import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
 import com.logilite.dms.model.MDMSVersion;
@@ -143,9 +144,8 @@ public class DMSOprUtils
 	 * 
 	 * @param  dms
 	 * @param  content
-	 * @throws IOException
 	 */
-	public static void deleteContentWithPhysicalDocument(DMS dms, MDMSContent content) throws IOException
+	public static void deleteContentWithPhysicalDocument(DMS dms, MDMSContent content)
 	{
 		for (MDMSVersion version : content.getAllVersions())
 		{
@@ -155,9 +155,13 @@ public class DMSOprUtils
 				if (document != null && document.exists())
 					document.delete();
 
-				File thumbnails = new File(dms.getThumbnailURL(version, null));
-				if (thumbnails != null && thumbnails.exists())
-					FileUtils.deleteDirectory(thumbnails.getParentFile());
+				String thumbnailsURL = dms.getThumbnailURL(version, null);
+				if (!Util.isEmpty(thumbnailsURL, true))
+				{
+					File thumbnails = new File(thumbnailsURL);
+					if (thumbnails != null && thumbnails.exists())
+						FileUtils.deleteDirectory(thumbnails.getParentFile());
+				}
 			}
 			catch (Exception e)
 			{
@@ -165,16 +169,22 @@ public class DMSOprUtils
 			}
 		}
 
-		int no = DB.executeUpdate("DELETE FROM DMS_Association 	WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
-		DMS.log.log(Level.INFO, no + " association deleted.");
+		int contentID = content.getDMS_Content_ID();
 
-		no = DB.executeUpdate("DELETE FROM DMS_Version			WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
-		DMS.log.log(Level.INFO, no + " version deleted.");
+		if (content != null && MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType()))
+		{
+			// Delete existing index
+			dms.getIndexSearcher().deleteIndexByField(DMSConstant.DMS_CONTENT_ID, "" + contentID);
+		}
 
-		no = DB.executeUpdate("DELETE FROM DMS_Content 			WHERE DMS_Content_ID = ?", content.getDMS_Content_ID(), null);
-		DMS.log.log(Level.INFO, no + " content deleted.");
+		int no = DB.executeUpdate("DELETE FROM DMS_Association 	WHERE DMS_Content_ID = ?", contentID, content.get_TrxName());
+		DMS.log.log(Level.INFO, no + " association(s) deleted for Content #" + contentID);
 
-		// TODO Need code for remove indexing
+		no = DB.executeUpdate("DELETE FROM DMS_Version			WHERE DMS_Content_ID = ?", contentID, content.get_TrxName());
+		DMS.log.log(Level.INFO, no + " version(s) deleted for Content #" + contentID);
+
+		no = DB.executeUpdate("DELETE FROM DMS_Content 			WHERE DMS_Content_ID = ?", contentID, content.get_TrxName());
+		DMS.log.log(Level.INFO, no + " content deleted for Content #" + contentID);
 	} // deleteContentWithPhysicalDocument
 
 	/**
@@ -236,4 +246,51 @@ public class DMSOprUtils
 		return (File[]) files.toArray();
 	} // getFileFromStorageAllVersion
 
+	/**
+	 * Permanently delete the physical document, its entire hierarchical structure, any linked
+	 * references to other locations, and the associated indexing data.
+	 * 
+	 * @param dms         DMS Object
+	 * @param association Association
+	 */
+	public static void deletePhysicalContentsAndHierarchy(DMS dms, MDMSAssociation association)
+	{
+		if (association == null)
+			return;
+
+		int associationID = association.get_ID();
+		int contentID = association.getDMS_Content_ID();
+		MDMSContent content = (MDMSContent) association.getDMS_Content();
+
+		String infoMessage = "Table ID #"	+ association.getAD_Table_ID() + ", Record ID #" + association.getRecord_ID() + ", Content #" + contentID
+								+ ", Association #" + associationID + ", Type [ " + content.getContentBaseType() + " ], Path: " + content.getParentURL()
+								+ ", [ " + content.getName() + " ]" + ((MDMSAssociationType.isLink(association)) ? ", [ Linkable ]" : " ");
+		// Check Link
+		if (MDMSAssociationType.isLink(association))
+		{
+			dms.getIndexSearcher().deleteIndexByField(DMSConstant.DMS_ASSOCIATION_ID, "" + associationID);
+			MDMSAssociation.removeAssociation(association);
+		}
+
+		// Check Directory type Content and delete it's child
+		else if (MDMSContent.CONTENTBASETYPE_Directory.equalsIgnoreCase(content.getContentBaseType()))
+		{
+			// Checks the directory to ensure no content remains.
+			List<MDMSAssociation> childAssociations = MDMSAssociation.getChildAssociationFromContent(contentID, association.get_TrxName());
+			for (MDMSAssociation childAssociation : childAssociations)
+			{
+				deletePhysicalContentsAndHierarchy(dms, childAssociation);
+			}
+
+			// Delete a physical Document and Content related things
+			deleteContentWithPhysicalDocument(dms, content);
+		}
+		else
+		{
+			// Delete a physical Document and Content related things
+			deleteContentWithPhysicalDocument(dms, content);
+		}
+
+		DMS.log.log(Level.WARNING, infoMessage);
+	} // deletePhysicalContentsAndHierarchy
 }

@@ -380,6 +380,27 @@ public final class DMSConstant
 	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace(	"#IsActive#",
 																																"AND c.IsActive='N' AND a.IsActive='N'");
 
+	public final static String				SQL_GET_CONTENT_TREE_HIERARCHY			= " WITH RECURSIVE SupplyTree AS																							"
+																						+ " (		SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, c.ContentBaseType, 1 AS LEVEL,	"
+																						+ "					a.DMS_AssociationType_ID, ''||c.name AS Path														"
+																						+ "			FROM DMS_Content c																							"
+																						+ "        	INNER JOIN DMS_Association a ON (a.DMS_Content_ID = c.DMS_Content_ID) 										"
+																						+ "        	WHERE NVL(ParentURL, '') LIKE ?																				"
+																						+ "               	AND c.AD_Client_ID = ?																				"
+																						+ "					AND	NVL(a.Record_ID, 0) = ?																			"
+																						+ "					AND NVL(a.AD_Table_ID, 0) = ?																		"
+																						+ " 	UNION ALL																										"
+																						+ "        	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, c.ContentBaseType, LEVEL + 1, 	"
+																						+ "					a.DMS_AssociationType_ID, st.Path || '/' || c.name AS Path		 									"
+																						+ " 		FROM  DMS_Association a																						"
+																						+ "        	INNER JOIN SupplyTree st ON (st.DMS_Content_ID = a.DMS_Content_Related_ID 									"
+																						+ "										AND CASE WHEN st.ContentBaseType='DIR' AND st.DMS_AssociationType_ID = 1000003	"
+																						+ "											THEN FALSE ELSE TRUE END)													"
+																						+ "        	INNER JOIN DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID) )											"
+																						+ " SELECT s.* 																											"
+																						+ " FROM SupplyTree AS s 																								"
+																						+ " ORDER BY Level DESC, DMS_AssociationType_ID, Path;																	";
+
 	/**
 	 * Improve Performance of Content ID search
 	 * If Content ID is more than zero replace Coalesce of a.DMS_Content_Related_ID of Filter
@@ -437,5 +458,14 @@ public final class DMSConstant
 																			+ "								 			AND COALESCE(a.DMS_AssociationType_ID, 0) IN (0, 1000001))				"
 																			+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N') 		"
 																			+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
+
+	// Retrieve the Mounting Association ID for Record.
+	public static final String	SQL_GET_RECORD_MOUNTING_ASSOCIATION		= " SELECT a.DMS_Association_ID 	FROM DMS_content c							"
+																			+ " INNER JOIN DMS_association a ON (a.DMS_Content_ID = c.DMS_Content_ID) 	"
+																			+ " WHERE c.AD_Client_ID = ? 												"
+																			+ "		AND NVL(ParentURL,'') LIKE ?										"
+																			+ "		AND	NVL(a.Record_ID, 0) = ? 										"
+																			+ "		AND NVL(a.AD_Table_ID, 0) = ? 										"
+																			+ "		AND c.IsMounting = 'Y' 												";
 
 }

@@ -171,6 +171,8 @@ public class MDMSAssociation extends X_DMS_Association
 
 	/**
 	 * Get association from content ID with/without referring linkable association
+	 * When the Association Type ID is passed (< 0), retrieve all associations for the given
+	 * content.
 	 * 
 	 * @param  contentID         - DMS Content ID
 	 * @param  associationTypeID - Association Type ID
@@ -180,11 +182,16 @@ public class MDMSAssociation extends X_DMS_Association
 	 */
 	public static List<MDMSAssociation> getAssociationFromContent(int contentID, int associationTypeID, boolean isActiveOnly, String trxName)
 	{
-		String whereClause = " DMS_Content_ID=? AND NVL(DMS_AssociationType_ID, 0) "
-								+ (associationTypeID == MDMSAssociationType.PARENT_ID ? " IN (0, ?)" : " = ? ");
+		String whereClause = " DMS_Content_ID = ? ";
+		if (associationTypeID >= 0)
+			whereClause += " AND NVL(DMS_AssociationType_ID, 0) "	+
+							(associationTypeID == MDMSAssociationType.PARENT_ID ? " IN (0, ?)" : " = ? ");
 		Query query = new Query(Env.getCtx(), MDMSAssociation.Table_Name, whereClause, trxName);
 		query.setClient_ID();
-		query.setParameters(contentID, associationTypeID);
+		if (associationTypeID >= 0)
+			query.setParameters(contentID, associationTypeID);
+		else
+			query.setParameters(contentID);
 		query.setOnlyActiveRecords(isActiveOnly);
 		List<MDMSAssociation> associationList = query.list();
 		return associationList;
@@ -214,4 +221,20 @@ public class MDMSAssociation extends X_DMS_Association
 		query.setOnlyActiveRecords(isActiveOnly);
 		return query.first();
 	} // getAssociationFromContentParentType
+
+	/**
+	 * Get All Child Association of Content
+	 * 
+	 * @param  contentID DMS Content ID
+	 * @param  trxName   Transaction Name
+	 * @return           List of Child Association
+	 */
+	public static List<MDMSAssociation> getChildAssociationFromContent(int contentID, String trxName)
+	{
+		Query query = new Query(Env.getCtx(), MDMSAssociation.Table_Name, " DMS_Content_Related_ID = ? ", trxName);
+		query.setClient_ID();
+		query.setParameters(contentID);
+		List<MDMSAssociation> associations = query.list();
+		return associations;
+	} // getChildAssociationFromContent
 }
