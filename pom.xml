@@ -18,5 +18,6 @@
     <module>com.logilite.dms.querybuildelastic</module>
     <module>com.logilite.dms.fileuploader</module>
     <module>com.logilite.dms.test</module>
+    <module>com.logilite.dms.dmscleanuponrecorddelete</module>
   </modules>
 </project>

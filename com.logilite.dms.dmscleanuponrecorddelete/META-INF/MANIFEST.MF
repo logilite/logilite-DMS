@@ -2,11 +2,11 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DMSCleanupOnRecordDelete
 Bundle-SymbolicName: com.logilite.dms.dmscleanuponrecorddelete;singleton:=true
-Bundle-Version: 7.1.0.qualifier
+Bundle-Version: 7.4.0.qualifier
 Require-Bundle: org.adempiere.base;bundle-version="7.1.0",
  org.adempiere.plugin.utils;bundle-version="7.1.0",
  com.logilite.dms;bundle-version="7.4.0"
-Service-Component: OSGI-INF/DMSCleanupModelValidatorFactory.xml
+Service-Component: OSGI-INF/*.xml
 Bundle-Vendor: LOGILITE
 Automatic-Module-Name: com.logilite.dms.DMSCleanupOnRecordDelete
 Bundle-ActivationPolicy: lazy
