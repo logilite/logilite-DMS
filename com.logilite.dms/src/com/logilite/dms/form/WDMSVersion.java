@@ -14,7 +14,7 @@
 package com.logilite.dms.form;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -96,11 +96,14 @@ public class WDMSVersion extends Window implements EventListener<Event>
 			this.setHeight("50%");
 		}
 
+		this.setSizable(true);
 		this.setClosable(true);
+		this.setMaximizable(true);
 		this.appendChild(gridView);
 		this.setTitle(DMSConstant.MSG_DMS_VERSION_LIST);
 
-		gridView.setStyle("width: 100%; height: 95%; max-height: 100%; position: relative; overflow: auto;");
+		gridView.setSclass("SB-Grid");
+		gridView.setStyle("height: 100%; position: relative; overflow: auto;");
 	} // init
 
 	public String renderDMSVersion(MDMSContent DMS_Content) throws IOException
@@ -113,7 +116,7 @@ public class WDMSVersion extends Window implements EventListener<Event>
 			return DMSConstant.MSG_NO_VERSION_DOC_EXISTS;
 		}
 
-		HashMap<I_DMS_Version, I_DMS_Association> contentMap = new HashMap<I_DMS_Version, I_DMS_Association>();
+		LinkedHashMap<I_DMS_Version, I_DMS_Association> contentMap = new LinkedHashMap<I_DMS_Version, I_DMS_Association>();
 		for (int i = 0; i < versionList.size(); i++)
 			contentMap.put(versionList.get(i), association);
 

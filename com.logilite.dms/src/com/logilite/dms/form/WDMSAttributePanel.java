@@ -15,7 +15,7 @@ package com.logilite.dms.form;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -422,16 +422,17 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		Grid versionGrid = new Grid();
 		versionGrid.setHeight("100%");
 		versionGrid.setWidth("100%");
-		versionGrid.setStyle("position:relative; float: right; overflow-y: auto;");
+		versionGrid.setSclass("SB-Grid");
+		versionGrid.setStyle("position: relative; overflow-y: auto;");
 
 		this.setZclass("none");
-		this.setStyle("position:relative; float: right; height: 100%; overflow: auto;");
+		this.setStyle("position: relative; float: right; height: 100%; overflow: auto;");
 
 		tabpanelVersionHitory.appendChild(versionGrid);
 
 		MDMSAssociation dmsAssociation = dms.getParentAssociationFromContent(content.getDMS_Content_ID(), content.isActive());
 
-		HashMap<I_DMS_Version, I_DMS_Association> contentsMap = new HashMap<I_DMS_Version, I_DMS_Association>();
+		LinkedHashMap<I_DMS_Version, I_DMS_Association> contentsMap = new LinkedHashMap<I_DMS_Version, I_DMS_Association>();
 		List<MDMSVersion> contentVersions = MDMSVersion.getVersionHistory(content);
 		for (MDMSVersion contentVersion : contentVersions)
 		{
