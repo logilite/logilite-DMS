@@ -621,17 +621,20 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		}
 		else if (event.getTarget().equals(btnVersionUpload))
 		{
-			final Tab tab = (Tab) tabBox.getSelectedTab();
-			final WDMSAttributePanel panel = this;
-
 			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, content, true, tableID, recordID, windowNo, tabNo);
 			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event arg0) throws Exception
 				{
-					Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, panel));
-					tabBox.setSelectedTab(tab);
+					if (!uploadContent.isCancel())
+					{
+						//
+						refreshPanel();
+						// Replace latest uploaded version on current component
+						component.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, (MDMSVersion) MDMSVersion.getLatestVersion(content));
+						loadNavigationalContent(component);
+					}
 				}
 			});
 			((Component) uploadContent).addEventListener(Events.ON_CLOSE, this);
