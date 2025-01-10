@@ -1,5 +1,6 @@
 package com.logilite.dms.querybuildsql.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -189,7 +190,7 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 	}
 
 	@Override
-	public String appendCriteria(String query, int ad_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	public ArrayList<String> addCommonCriteria(String query, int ad_Client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		// AD_Client_id append for search client wise
 		if (!Util.isEmpty(query))
@@ -197,11 +198,13 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 
 		query += commonSearch(ad_Client_ID, content, tableID, recordID, documentView);
 
-		return query;
+		ArrayList<String> qList = new ArrayList<>();
+		qList.add(query);
+		return qList;
 	}
 
 	@Override
-	public String getGenericSearchedContentQuery(String searchText, int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	public String getGenericSearchContentQuery(String searchText, int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
 		if (!Util.isEmpty(searchText, true))
