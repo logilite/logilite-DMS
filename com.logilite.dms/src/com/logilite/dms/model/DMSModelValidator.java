@@ -21,6 +21,7 @@ import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSPermissionUtils;
 import com.logilite.dms.util.DMSSearchUtils;
 import com.logilite.dms.util.Utils;
+import com.logilite.search.factory.ServiceUtils;
 
 public class DMSModelValidator implements ModelValidator
 {
@@ -108,6 +109,19 @@ public class DMSModelValidator implements ModelValidator
 					@Override
 					public void afterCommit(Trx trx, boolean success)
 					{
+						if (MDMSContent.CONTENTBASETYPE_Directory.equals(content.getContentBaseType()))
+						{
+							return;
+						}
+
+						if (ServiceUtils.isSQLIndexSearcher(content.getAD_Client_ID()))
+						{
+							Utils.updateVersionIndex(version.getDMS_Version_ID(), "N", null);
+
+							// Ignore to do indexing as SQL based query building
+							return;
+						}
+
 						if (success && !content.getDMS_ContentType().isIndexCreationDisabled() && Utils.isAllowAutoCreateIndex())
 						{
 							// Prevent to fire multiple time event for the same document indexing

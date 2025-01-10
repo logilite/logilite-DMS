@@ -703,4 +703,17 @@ public class Utils
 		return MSysConfig.getBooleanValue(DMSConstant.DMS_ALLOW_AUTO_CREATE_INDEX, true, Env.getAD_Client_ID(Env.getCtx()));
 	} // isAllowAutoCreateIndex
 
+	/**
+	 * By SQL to update Version status for indexed or non-indexed
+	 * 
+	 * @param  versionID
+	 * @param  isIndexed
+	 * @param  trx
+	 * @return
+	 */
+	public static int updateVersionIndex(int versionID, String isIndexed, String trx)
+	{
+		return DB.executeUpdate("UPDATE DMS_Version SET IsIndexed = ? WHERE DMS_Version_ID = ? ", new Object[] { isIndexed, versionID }, true, trx);
+	}
+
 }

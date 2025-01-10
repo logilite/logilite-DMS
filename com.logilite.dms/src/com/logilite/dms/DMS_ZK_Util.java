@@ -454,9 +454,9 @@ public class DMS_ZK_Util
 	public static String getIndexibleColumnName(WEditor editor, int dt)
 	{
 		if (dt == DisplayType.Search || dt == DisplayType.Table || dt == DisplayType.List)
-			return "ASI_" + DMSSearchUtils.getIndexFieldName(editor.getColumnName());
+			return DMSConstant.PREFIX_SEARCH_ATTRIB_ASI + DMSSearchUtils.getIndexFieldName(editor.getColumnName());
 		else
-			return "ASI_" + DMSSearchUtils.getIndexFieldName(editor.getLabel().getValue());
+			return DMSConstant.PREFIX_SEARCH_ATTRIB_ASI + DMSSearchUtils.getIndexFieldName(editor.getLabel().getValue());
 	} // getIndexibleColumnName
 
 	/**

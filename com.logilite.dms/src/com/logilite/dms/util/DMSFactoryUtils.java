@@ -48,7 +48,7 @@ import com.logilite.dms.factories.IThumbnailGeneratorFactory;
 import com.logilite.dms.factories.IThumbnailProvider;
 import com.logilite.dms.factories.IThumbnailProviderFactory;
 import com.logilite.dms.model.MDMSContent;
-import com.logilite.search.model.MIndexingConfig;
+import com.logilite.search.factory.IIndexSearcher;
 
 /**
  * Utils for Factory get
@@ -61,7 +61,7 @@ public class DMSFactoryUtils
 	static CCache<Integer, IThumbnailProvider>	cache_thumbnailProvider		= new CCache<Integer, IThumbnailProvider>("ThumbnailProvider", 2);
 	static CCache<String, IThumbnailGenerator>	cache_thumbnailGenerator	= new CCache<String, IThumbnailGenerator>("ThumbnailGenerator", 2);
 	static CCache<Integer, IContentManager>		cache_contentManager		= new CCache<Integer, IContentManager>("ContentManager", 2);
-	static CCache<Integer, IIndexQueryBuilder>	cache_idxQueryBuilder		= new CCache<Integer, IIndexQueryBuilder>("IndexQueryBuilder", 1);
+	static CCache<String, IIndexQueryBuilder>	cache_idxQueryBuilder		= new CCache<String, IIndexQueryBuilder>("IndexQueryBuilder", 2);
 
 	/**
 	 * Factory - Content Editor
@@ -302,28 +302,16 @@ public class DMSFactoryUtils
 	 * Get Index Query Builder
 	 * 
 	 * @param  AD_Client_ID
-	 * @return              {@link IIndexQueryBuilder}
+	 * @param  indexSearcher
+	 * @return               {@link IIndexQueryBuilder}
 	 */
-	public static IIndexQueryBuilder getIndexQueryBuilder(int AD_Client_ID)
+	public static IIndexQueryBuilder getIndexQueryBuilder(IIndexSearcher indexSearcher)
 	{
-		IIndexQueryBuilder idxQueryBuilder = cache_idxQueryBuilder.get(AD_Client_ID);
-
+		String key = indexSearcher.getIndexingType();
+		IIndexQueryBuilder idxQueryBuilder = cache_idxQueryBuilder.get(key);
 		if (idxQueryBuilder != null)
 		{
 			return idxQueryBuilder;
-		}
-
-		MClientInfo clientInfo = MClientInfo.get(Env.getCtx(), AD_Client_ID, null);
-		int indexingConf_ID = clientInfo.get_ValueAsInt("LTX_Indexing_Conf_ID");
-		MIndexingConfig indexingConfig = null;
-
-		if (indexingConf_ID > 0)
-		{
-			indexingConfig = new MIndexingConfig(Env.getCtx(), indexingConf_ID, null);
-		}
-		else
-		{
-			throw new AdempiereException("Missing to configure Index Server in Client Info");
 		}
 
 		// Factory call
@@ -331,11 +319,10 @@ public class DMSFactoryUtils
 
 		for (IIndexQueryBuildFactory factory : factories)
 		{
-			idxQueryBuilder = factory.get(indexingConfig.getLTX_Indexing_Type());
-
+			idxQueryBuilder = factory.get(indexSearcher.getIndexingType());
 			if (idxQueryBuilder != null)
 			{
-				cache_idxQueryBuilder.put(AD_Client_ID, idxQueryBuilder);
+				cache_idxQueryBuilder.put(key, idxQueryBuilder);
 				break;
 			}
 		}

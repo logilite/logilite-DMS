@@ -78,6 +78,8 @@ public final class DMSConstant
 	public static final String				ATTRIB_CONTENT_TYPE						= "ATTR_CONTENT_TYPE";
 
 	public static final String				ATTRIB_PAGING_MOVE_TO_FIRST_PAGE		= "PagingMoveToFirstPage";
+	//
+	public static final String				PREFIX_SEARCH_ATTRIB_ASI				= "ASI_";
 
 	// View thumbnail toggle action
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
@@ -158,6 +160,8 @@ public final class DMSConstant
 	public static final String				DMS_ASSOCIATION_ID						= "DMS_Association_ID";
 	public static final String				VERSION_SEQ_NO							= "Version_Seq_No";
 	public static final String				FILE_CONTENT							= "File_Content";
+	public static final String				DMS_CONTENTTYPE_ID						= "DMS_ContentType_id";
+	public static final String				M_ATTRIBUTESETINSTANCE_ID				= "M_AttributeSetInstance_ID";
 
 	// Msg translate
 	public static final String				MSG_NAME								= Msg.translate(Env.getCtx(), "Name");
@@ -468,4 +472,20 @@ public final class DMSConstant
 																			+ "		AND NVL(a.AD_Table_ID, 0) = ? 										"
 																			+ "		AND c.IsMounting = 'Y' 												";
 
+	// Attribute Set Instance ID Filter from value and name pair
+	public static final String				SQL_GET_ATTRI_SET_INSTANCE_LIST			= "(SELECT M_AttributeSetInstance_ID FROM crosstab ( 														"
+																						+ "	  	'SELECT ai.M_AttributeSetInstance_ID, a.Name AS Name,     										"
+																						+ "			COALESCE(CAST(ValueNumber AS TEXT), CAST(ValueInt AS TEXT), CAST(ValueDate AS TEXT), CAST(ValueTimestamp AS TEXT), Value) AS Value"
+																						+ " 	FROM M_AttributeInstance ai INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID)	"
+																						+ " 	ORDER BY  1, 2 ' 																				"
+																						+ "	) AS ct( M_AttributeSetInstance_ID numeric 															";
+
+	// Get Content Type wise Attribute Name List
+	public static final String				SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID, Name FROM M_Attribute 														"
+																						+ "	WHERE M_Attribute_ID IN ( 																		"
+																						+ "		(	SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance 								"
+																						+ "    		WHERE M_AttributeSetInstance_ID IN ( 													"
+																						+ "        			SELECT M_AttributeSetInstance_ID FROM DMS_Content WHERE DMS_ContentType_ID = ? )"
+																						+ "     )	 																						"
+																						+ "	ORDER BY Name 																					";
 }

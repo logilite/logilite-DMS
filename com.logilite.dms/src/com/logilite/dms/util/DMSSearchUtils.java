@@ -55,9 +55,9 @@ import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.tika.service.FileContentExtract;
-import com.logilite.search.exception.IndexException;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
+import com.logilite.search.model.MIndexingConfig;
 
 /**
  * Util for DMS generic / advance searching from index server or normal content
@@ -261,14 +261,13 @@ public class DMSSearchUtils
 	/**
 	 * Create Index Map for indexing server
 	 * 
-	 * @param  indexSearcher
 	 * @param  content
 	 * @param  association
 	 * @param  version
 	 * @param  file
-	 * @return               Map
+	 * @return             Map
 	 */
-	public static Map<String, Object> createIndexMap(	IIndexSearcher indexSearcher, I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
+	public static Map<String, Object> createIndexMap(	I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
 														File file)
 	{
 		if (content.getDMS_ContentType().isIndexCreationDisabled())
@@ -316,7 +315,7 @@ public class DMSSearchUtils
 				{
 					while (rs.next())
 					{
-						String fieldName = getIndexFieldName("ASI_" + rs.getString("Name"));
+						String fieldName = getIndexFieldName(DMSConstant.PREFIX_SEARCH_ATTRIB_ASI + rs.getString("Name"));
 
 						if (rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate) != null)
 							indexMap.put(fieldName, rs.getTimestamp(MAttributeInstance.COLUMNNAME_ValueDate));
@@ -368,7 +367,7 @@ public class DMSSearchUtils
 	public static IIndexSearcher getIndexSearcher(int AD_Client_ID)
 	{
 		IIndexSearcher idxSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
-		if (!isIndexingInitiated && idxSearcher.getClass().toString().contains("SolrIndexSearcher"))
+		if (!isIndexingInitiated && MIndexingConfig.LTX_INDEXING_TYPE_Solr.equals(idxSearcher.getIndexingType()))
 		{
 			// TODO Require to refactor for solr related things
 
@@ -458,9 +457,13 @@ public class DMSSearchUtils
 	public static void doIndexingInServer(	I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, String deleteIdxColumnName,
 											String deleteIdxColumnValue)
 	{
-		IIndexSearcher indexSearcher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
-		if (indexSearcher == null)
-			throw new IndexException("Index Server not found");
+		if (ServiceUtils.isSQLIndexSearcher(content.getAD_Client_ID()))
+		{
+			Utils.updateVersionIndex(version.getDMS_Version_ID(), "N", null);
+
+			// Ignore to do indexing as SQL based query building
+			return;
+		}
 
 		IFileStorageProvider fsProvider = FileStorageUtil.get(content.getAD_Client_ID(), false);
 		if (fsProvider == null)
@@ -470,19 +473,20 @@ public class DMSSearchUtils
 		if (contentManager == null)
 			throw new AdempiereException("Content manager is not found.");
 
+		IIndexSearcher indexSearcher = ServiceUtils.getIndexSearcher(content.getAD_Client_ID());
 		// Delete existing index
 		if (!Util.isEmpty(deleteIdxColumnName, true))
 			indexSearcher.deleteIndexByField(deleteIdxColumnName, deleteIdxColumnValue);
 
 		// Create index
 		File file = fsProvider.getFile(contentManager.getPathByValue(content));
-		Map<String, Object> indexMap = createIndexMap(indexSearcher, content, association, version, file);
+		Map<String, Object> indexMap = createIndexMap(content, association, version, file);
 		indexSearcher.indexContent(indexMap);
 
 		// Update the value of IsIndexed flag in Content
 		if (!version.isIndexed())
 		{
-			DB.executeUpdate("UPDATE DMS_Version SET IsIndexed='Y' WHERE DMS_Version_ID = ? ", version.getDMS_Version_ID(), null);
+			Utils.updateVersionIndex(version.getDMS_Version_ID(), "Y", null);
 		}
 	} // doIndexing
 

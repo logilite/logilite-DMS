@@ -14,6 +14,7 @@
     <module>com.logilite.dms.p2</module>
     <module>com.logilite.dms.uuid</module>
     <module>com.logilite.dms.tika</module>
+    <module>com.logilite.dms.querybuildsql</module>
     <module>com.logilite.dms.querybuildsolr</module>
     <module>com.logilite.dms.querybuildelastic</module>
     <module>com.logilite.dms.fileuploader</module>
