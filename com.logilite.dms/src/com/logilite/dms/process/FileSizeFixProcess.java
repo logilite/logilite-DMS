@@ -24,6 +24,7 @@ import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.model.X_DMS_Content;
 
 // TODO NEED TO CORRECT - Didn't make compatible with versioning implementation
+// FIXME Not compatible with latest code [ Menu in-activated ]
 public class FileSizeFixProcess extends SvrProcess
 {
 

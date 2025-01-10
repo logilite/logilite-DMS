@@ -2,7 +2,6 @@
   <modelVersion>4.0.0</modelVersion>
   <artifactId>com.logilite.dms.dmscleanuponrecorddelete</artifactId>
   <packaging>eclipse-plugin</packaging>
-  <name>DMS Cleanup On Record Delete</name>
   <parent>
   	<groupId>com.logilite.dms</groupId>
   	<artifactId>com.logilite.dms.parent</artifactId>
