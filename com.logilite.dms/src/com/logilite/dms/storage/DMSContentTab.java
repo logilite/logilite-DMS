@@ -35,6 +35,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Button;
 import org.zkoss.zul.Toolbar;
 
+import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.form.WDMSPanel;
 
 public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListener
@@ -139,6 +140,8 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 			docDMSPanel.getDMS().initiateMountingContent(tableName, recordID, tableID);
 			//
 			reload();
+			// Fire event for drag and drop functionality in DMS tab as Detail tab
+			Events.postEvent(DMSConstant.EVENT_ON_LOAD_DRAGNDROP, docDMSPanel, null);
 		}
 		else
 		{
@@ -335,7 +338,6 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		try
 		{
 			docDMSPanel.renderViewer();
-			docDMSPanel.callDragAndDropAction();
 		}
 		catch (Exception e)
 		{
@@ -371,12 +373,12 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	@Override
 	public void updateToolbar(ADWindowToolbar toolbar)
 	{
-		
+
 	}
 
 	@Override
 	public void updateDetailToolbar(Toolbar toolbar)
 	{
-		
+
 	}
 }
