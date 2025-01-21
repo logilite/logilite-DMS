@@ -90,13 +90,13 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 					{
 						if (Util.isEmpty((String) value.get(0), true))
 						{
-							queryMain.append(" AND ").append(key + " LIKE '%'");
+							queryMain.append(" AND ").append(key + " ILIKE '%'");
 						}
 						else if (DMSConstant.DESCRIPTION.equals(key))
 						{
 							String description = (String) value.get(0);
 							description = description.replace('*', '%');
-							queryMain.append(" AND ").append(key + " LIKE '" + description + "'");
+							queryMain.append(" AND ").append(key + " ILIKE '" + description + "'");
 						}
 						else
 						{
