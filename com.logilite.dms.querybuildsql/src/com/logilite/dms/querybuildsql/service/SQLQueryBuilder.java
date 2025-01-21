@@ -64,9 +64,9 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 					}
 					else if (value.get(0) instanceof String || value.get(1) instanceof String)
 					{
-						if (value.get(0).equals("*"))
+						if (value.get(0).equals("*") && !value.get(1).equals("*"))
 							queryMain.append(" AND (").append(key + " <= '" + value.get(1) + "') ");
-						else if (value.get(1).equals("*"))
+						else if (value.get(1).equals("*") && !value.get(0).equals("*"))
 							queryMain.append(" AND (").append(key + " >= '" + value.get(0) + "') ");
 						else
 							queryMain.append(" AND (").append(key + " BETWEEN '" + value.get(0) + "' AND '" + value.get(1) + "') ");
