@@ -142,8 +142,8 @@ public class DMSOprUtils
 	/**
 	 * Delete Content With Physical Document
 	 * 
-	 * @param  dms
-	 * @param  content
+	 * @param dms
+	 * @param content
 	 */
 	public static void deleteContentWithPhysicalDocument(DMS dms, MDMSContent content)
 	{
@@ -165,7 +165,7 @@ public class DMSOprUtils
 			}
 			catch (Exception e)
 			{
-				DMS.log.log(Level.WARNING, "Document or Thumbnail deletion related issue, Error: " + e.getLocalizedMessage(), e);
+				DMS.log.log(Level.SEVERE, "Document or Thumbnail deletion related issue, Error: " + e.getLocalizedMessage(), e);
 			}
 		}
 
