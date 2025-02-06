@@ -15,6 +15,7 @@ package com.logilite.dms.storage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -25,11 +26,13 @@ import org.adempiere.webui.adwindow.DetailPane;
 import org.adempiere.webui.adwindow.GridView;
 import org.adempiere.webui.adwindow.IADTabpanel;
 import org.adempiere.webui.component.Panel;
+import org.adempiere.webui.component.ToolBarButton;
 import org.compiere.model.DataStatusEvent;
 import org.compiere.model.DataStatusListener;
 import org.compiere.model.GridTab;
 import org.compiere.model.GridWindow;
 import org.compiere.util.CLogger;
+import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Button;
@@ -46,6 +49,21 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 	private static final long		serialVersionUID	= -2839735607533233505L;
 
 	private static CLogger			log					= CLogger.getCLogger(DMSContentTab.class);
+
+	// Set of button IDs to disable for the DMS Window
+	public Set<String>				toolbarButtonSet	= Set.of(	"BtnFind",
+																	"BtnNew",
+																	"BtnCopy",
+																	"BtnSave",
+																	"BtnDelete",
+																	"BtnAttachment",
+																	"BtnZoomAcross",
+																	"BtnReport",
+																	"BtnProcess",
+																	"BtnEdit",
+																	"BtnQuickForm",
+																	"BtnCustomize",
+																	"BtnRefresh");
 
 	private GridTab					gridTab				= null;
 	private GridView				listPanel			= new GridView();
@@ -370,15 +388,43 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		return false;
 	}
 
+	/*
+	 * Updates the toolbar buttons for DMS SubTab as Main panel
+	 */
 	@Override
 	public void updateToolbar(ADWindowToolbar toolbar)
 	{
-
+		enableDisableToolbarButton(toolbar, true);
 	}
 
+	/*
+	 * Updates the detail panel toolbar buttons
+	 */
 	@Override
 	public void updateDetailToolbar(Toolbar toolbar)
 	{
-
+		enableDisableToolbarButton(toolbar, true);
 	}
+
+	/**
+	 * Enable/Disable Toolbar Buttons
+	 * 
+	 * @param toolbar   Toolbar object
+	 * @param isDisable True = Disabling, False = Enabling
+	 */
+	private void enableDisableToolbarButton(Toolbar toolbar, boolean isDisable)
+	{
+		for (Component c : toolbar.getChildren())
+		{
+			if (c instanceof ToolBarButton)
+			{
+				ToolBarButton btn = (ToolBarButton) c;
+				if (toolbarButtonSet.contains(btn.getId()))
+				{
+					btn.setDisabled(isDisable);
+				}
+			}
+		}
+	} // enableDisableToolbarButton
+
 }
