@@ -67,13 +67,15 @@ public final class DMSConstant
 	public static final String				COMP_ATTRIBUTE_ISALLPERMISSION			= "ATTR_ISALLPERMISSION";
 	public static final String				COMP_ATTRIBUTE_DMS_VERSION_REF			= "ATTR_DMS_VERSION_REF";
 
-	//
+	// Sorting attributes
+	public static final String				DESC_SORT_SYMBOL						= "^";
+
 	public static final String				ATTRIB_NAME								= "ATTR_NAME";
 	public static final String				ATTRIB_SIZE								= "ATTR_SIZE";
 	public static final String				ATTRIB_LINK								= "ATTR_LINK";
 	public static final String				ATTRIB_CREATED							= "ATTR_CREATED";
 	public static final String				ATTRIB_UPDATED							= "ATTR_UPDATED";
-	public static final String				ATTRIB_FIELDTYPE						= "ATTR_FIELDTYPE";
+	public static final String				ATTRIB_FILETYPE							= "ATTR_FILETYPE";
 	public static final String				ATTRIB_MODIFIEDBY						= "ATTR_MODIFIEDBY";
 	public static final String				ATTRIB_CONTENT_TYPE						= "ATTR_CONTENT_TYPE";
 
@@ -348,20 +350,17 @@ public final class DMSConstant
 	public static final String				SQL_GET_CONTENT_DIR_LEVEL_WISE			= " WITH ContentAssociation AS ( 																										"
 																						+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, a.DMS_AssociationType_ID, c.DMS_ContentType_ID	"
 																						+ "				, c.Created																											"
-//																						+ " 			, c.ContentBasetype, a.AD_Table_ID, a.Record_ID 																	"
 																						+ " 	FROM 	DMS_Association a 																									"
 																						+ " 	JOIN 	DMS_Content c 			ON ( c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) 										"
 																						+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.DMS_Content_Related_ID, 0) = ? 														"
 																						+ " ), 																																"
 																						+ " VersionList AS ( 																												"
 																						+ " 	SELECT 	vr.DMS_Content_ID, a.DMS_Content_Related_ID, MAX(vr.SeqNo) AS SeqNo													"
-//																						+ "				, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0) AS AD_Table_ID, NVL(a.Record_ID, 0) AS Record_ID					"
 																						+ " 	FROM 	DMS_Association a 																									"
 																						+ "		JOIN 	ContentAssociation ca 	ON ( ca.DMS_Content_ID = a.DMS_Content_Related_ID OR ca.DMS_Content_Related_ID = a.DMS_Content_Related_ID ) "
 																						+ "		JOIN 	DMS_Version vr 			ON ( vr.DMS_Content_ID = ca.DMS_Content_ID AND vr.IsActive='Y' )							"
 																						+ " 	WHERE 	a.AD_Client_ID=? AND NVL(a.DMS_Content_Related_ID, 0) = ? AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001, 1000002, 1000003)	"
 																						+ " 	GROUP BY vr.DMS_Content_ID, a.DMS_Content_Related_ID																		"
-//																						+ "				, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0), NVL(a.Record_ID, 0) 												"
 																						+ " ) 																																"
 																						+ " SELECT  DISTINCT																												"
 																						+ "			NVL(a.DMS_Content_ID, 			c.DMS_Content_ID) 			AS DMS_Content_ID, 											"
@@ -473,19 +472,19 @@ public final class DMSConstant
 																			+ "		AND c.IsMounting = 'Y' 												";
 
 	// Attribute Set Instance ID Filter from value and name pair
-	public static final String				SQL_GET_ATTRI_SET_INSTANCE_LIST			= "(SELECT M_AttributeSetInstance_ID FROM crosstab ( 														"
-																						+ "	  	'SELECT ai.M_AttributeSetInstance_ID, a.Name AS Name,     										"
-																						+ "			COALESCE(CAST(ValueNumber AS TEXT), CAST(ValueInt AS TEXT), CAST(ValueDate AS TEXT), CAST(ValueTimestamp AS TEXT), Value) AS Value"
-																						+ " 	FROM M_AttributeInstance ai INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID)	"
-																						+ " 	ORDER BY  1, 2 ' 																				"
-																						+ "	) AS ct( M_AttributeSetInstance_ID numeric 															";
+	public static final String	SQL_GET_ATTRI_SET_INSTANCE_LIST			= "(SELECT M_AttributeSetInstance_ID FROM crosstab ( 														"
+																			+ "	  	'SELECT ai.M_AttributeSetInstance_ID, a.Name AS Name,     										"
+																			+ "			COALESCE(CAST(ValueNumber AS TEXT), CAST(ValueInt AS TEXT), CAST(ValueDate AS TEXT), CAST(ValueTimestamp AS TEXT), Value) AS Value"
+																			+ " 	FROM M_AttributeInstance ai INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID)	"
+																			+ " 	ORDER BY  1, 2 ' 																				"
+																			+ "	) AS ct( M_AttributeSetInstance_ID numeric 															";
 
 	// Get Content Type wise Attribute Name List
-	public static final String				SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID, Name FROM M_Attribute 														"
-																						+ "	WHERE M_Attribute_ID IN ( 																		"
-																						+ "		(	SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance 								"
-																						+ "    		WHERE M_AttributeSetInstance_ID IN ( 													"
-																						+ "        			SELECT M_AttributeSetInstance_ID FROM DMS_Content WHERE DMS_ContentType_ID = ? )"
-																						+ "     )	 																						"
-																						+ "	ORDER BY Name 																					";
+	public static final String	SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID, Name FROM M_Attribute 														"
+																			+ "	WHERE M_Attribute_ID IN ( 																		"
+																			+ "		(	SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance 								"
+																			+ "    		WHERE M_AttributeSetInstance_ID IN ( 													"
+																			+ "        			SELECT M_AttributeSetInstance_ID FROM DMS_Content WHERE DMS_ContentType_ID = ? )"
+																			+ "     )	 																						"
+																			+ "	ORDER BY Name 																					";
 }

@@ -274,6 +274,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private Label						lblUploadSize;
 
 	private String						sortFieldName			= null;
+	private String						prevSortFieldName		= null;
 
 	/**
 	 * Constructor initialize
@@ -801,7 +802,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		mnu_sort_link.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_LINK);
 		mnu_sort_created.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_CREATED);
 		mnu_sort_updated.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_UPDATED);
-		mnu_sort_fileType.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_FIELDTYPE);
+		mnu_sort_fileType.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_FILETYPE);
 		mnu_sort_contentType.setAttribute(DMSConstant.ATTRIB_NAME, DMSConstant.ATTRIB_CONTENT_TYPE);
 
 		addRootBreadCrumb();
@@ -936,6 +937,13 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 					|| event.getTarget().equals(mnu_sort_contentType))
 		{
 			sortFieldName = (String) ((Menuitem) event.getTarget()).getAttribute(DMSConstant.ATTRIB_NAME);
+			if (!Util.isEmpty(prevSortFieldName, true) && prevSortFieldName.equals(sortFieldName))
+			{
+				// For Descending order append suffix symbol
+				sortFieldName = sortFieldName.concat(DMSConstant.DESC_SORT_SYMBOL);
+			}
+			prevSortFieldName = sortFieldName;
+			//
 			renderViewer();
 		}
 		else if (event.getTarget().equals(mnu_versionList))

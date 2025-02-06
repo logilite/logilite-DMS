@@ -139,10 +139,13 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		{
 			sortFieldName = DMSConstant.ATTRIB_NAME;
 		}
-		// If click on sort button then sort it with the desired name
-		else if (contentItems != null && !Util.isEmpty(sortFieldName))
+		// Determine sorting order based on field with/without descending symbol
+		boolean isDescending = sortFieldName.endsWith(DMSConstant.DESC_SORT_SYMBOL);
+		if (contentItems != null)
 		{
-			doSorting(sortFieldName, true);
+			// Remove descending symbol on the field for sorting
+			sortFieldName = sortFieldName.replace(DMSConstant.DESC_SORT_SYMBOL, "");
+			doSorting(sortFieldName, !isDescending);
 		}
 
 		//
@@ -364,7 +367,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 		switch (sortingColumn)
 		{
 			case DMSConstant.ATTRIB_NAME:
-				comparator = Comparator.comparing(ContentDetail::getName);
+				comparator = Comparator.comparing(ContentDetail::getNameUpperCase);
 				break;
 			case DMSConstant.ATTRIB_CONTENT_TYPE:
 				comparator = Comparator.comparing(ContentDetail::getContentTypeName);
@@ -378,7 +381,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 			case DMSConstant.ATTRIB_UPDATED:
 				comparator = Comparator.comparing(ContentDetail::getUpdated);
 				break;
-			case DMSConstant.ATTRIB_FIELDTYPE:
+			case DMSConstant.ATTRIB_FILETYPE:
 				comparator = Comparator.comparing(ContentDetail::getFileType);
 				break;
 			case DMSConstant.ATTRIB_MODIFIEDBY:

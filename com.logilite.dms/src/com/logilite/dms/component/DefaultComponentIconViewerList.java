@@ -51,7 +51,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, DMSConstant.ATTRIB_SIZE, "7%", "Left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_CREATED, DMSConstant.ATTRIB_CREATED, "13%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, DMSConstant.ATTRIB_UPDATED, "13%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, DMSConstant.ATTRIB_FIELDTYPE, "10%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, DMSConstant.ATTRIB_FILETYPE, "10%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, DMSConstant.ATTRIB_MODIFIEDBY, "10%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_LINK, DMSConstant.ATTRIB_LINK, "5%", "center"));
 
