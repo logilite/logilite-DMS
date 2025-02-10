@@ -481,7 +481,7 @@ public final class DMSConstant
 
 	// Get Content Type wise Attribute Name List
 	public static final String	SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID, Name FROM M_Attribute 														"
-																			+ "	WHERE M_Attribute_ID IN ( 																		"
+																			+ "	WHERE M_Attribute_ID IN 																		"
 																			+ "		(	SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance 								"
 																			+ "    		WHERE M_AttributeSetInstance_ID IN ( 													"
 																			+ "        			SELECT M_AttributeSetInstance_ID FROM DMS_Content WHERE DMS_ContentType_ID = ? )"

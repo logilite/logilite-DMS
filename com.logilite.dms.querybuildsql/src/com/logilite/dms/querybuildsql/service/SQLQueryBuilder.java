@@ -21,9 +21,6 @@ import com.logilite.dms.util.DMSSearchUtils;
  */
 public class SQLQueryBuilder implements IIndexQueryBuilder
 {
-	// TODO Should be move in DMSConstant class
-	private String	isActive	= "IsActive";
-	private String	parentURL	= "ParentURL";
 
 	@Override
 	public String buildSearchQueryFromMap(HashMap<String, List<Object>> params)
@@ -100,12 +97,12 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 						}
 						else
 						{
-							queryMain.append(" AND ").append(key + " LIKE '%" + value.get(0) + "%'");
+							queryMain.append(" AND ").append(key + " ILIKE '%" + value.get(0) + "%'");
 						}
 					}
 					else
 					{
-						queryMain.append(" AND ").append(key + "=" + value.get(0) + "");
+						queryMain.append(" AND ").append(key + " = " + value.get(0) + "");
 					}
 				}
 			}
@@ -132,8 +129,6 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 
 		if (queryMain.length() > 0)
 			queryMain.delete(0, 5);
-		// else
-		// query.append("*:*");
 
 		return queryMain.toString();
 	}
@@ -215,10 +210,8 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 		}
 		if (!Util.isEmpty(searchText, true))
 		{
-			query.append(" ) AND ");
+			query.append(" ) ");
 		}
-
-		query.append(commonSearch(ad_client_ID, content, tableID, recordID, documentView));
 
 		return query.toString();
 	}
@@ -226,7 +219,7 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 	private String commonSearch(int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
-		query.append(" ").append(DMSConstant.AD_CLIENT_ID + " =" + ad_client_ID);
+		query.append(" ").append(DMSConstant.AD_CLIENT_ID + " = " + ad_client_ID);
 
 		//
 		StringBuffer hirachicalContent = new StringBuffer("");
@@ -237,7 +230,7 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 			{
 				if (association.getAD_Table_ID() > 0)
 				{
-					hirachicalContent.append(" AND ").append(DMSConstant.AD_TABLE_ID + " =").append(association.getAD_Table_ID());
+					hirachicalContent.append(" AND ").append(DMSConstant.AD_TABLE_ID + " = ").append(association.getAD_Table_ID());
 				}
 			}
 			else
@@ -252,14 +245,17 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 		}
 
 		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-			query.append(" AND ").append(isActive).append("= 'N'");
+			query.append(" AND IsActive = 'N'");
 		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
-			query.append(" AND ").append(isActive).append("= 'Y'");
+			query.append(" AND IsActive = 'Y'");
 
-		if (recordID > 0)
-			query.append(" AND ").append(parentURL).append(" Like '%").append(recordID + "'");
-
-		// TODO FIXME Table And Record ID reference check
+		String existQuery = " AND EXISTS (SELECT DMS_Content_ID FROM DMS_Association WHERE ";
+		if (tableID > 0 && recordID > 0)
+			query.append(existQuery).append(" AD_Table_ID = " + tableID + " AND Record_ID = " + recordID + " ) ");
+		else if (tableID > 0)
+			query.append(existQuery).append(" AD_Table_ID = " + tableID + " ) ");
+		else if (recordID > 0)
+			query.append(existQuery).append(" Record_ID = " + recordID + " ) ");
 
 		return query.toString();
 	}
