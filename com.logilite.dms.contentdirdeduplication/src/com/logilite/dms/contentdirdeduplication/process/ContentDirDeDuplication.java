@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
@@ -20,6 +19,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 
+import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
@@ -55,15 +55,15 @@ public class ContentDirDeDuplication extends SvrProcess
 
 	// SQL
 	public static final String	SQL_DUPLICATE_DIR_SQL_BASE											= "SELECT ParentURL, Name, COUNT(DISTINCT c.DMS_Content_ID) AS content_count, "
-			+ " ARRAY_AGG(c.DMS_Content_ID || ' -- ' || COALESCE(achild.child_count, 0) || ' -- ' || c.IsActive || ' -- ' || c.Created ORDER BY c.IsActive DESC, "
-			+ " COALESCE(achild.child_count, 0) DESC, c.Created) AS duplicateContentInfo ,"
-			+ " ARRAY_AGG(c.DMS_Content_ID ORDER BY c.IsActive DESC, COALESCE(achild.child_count, 0) DESC, c.Created) AS DMS_Content_IDs ,"
-			+ " ARRAY_AGG(COALESCE(achild.child_count, 0) ORDER BY c.IsActive DESC, COALESCE(achild.child_count, 0) DESC, c.Created) AS child_counts ,"
-			+ " ARRAY_AGG(c.IsActive ORDER BY c.IsActive DESC, COALESCE(achild.child_count, 0) DESC, c.Created) AS IsActives "
-			+ " FROM DMS_Content c LEFT JOIN ( SELECT DMS_Content_Related_ID, COALESCE(COUNT(DMS_Association_ID), 0) AS child_count "
-			+ " FROM DMS_Association WHERE COALESCE(DMS_AssociationType_ID, 1000001) = 1000001 GROUP BY DMS_Content_Related_ID ) achild "
-			+ " ON achild.DMS_Content_Related_ID = c.DMS_Content_ID WHERE ContentBaseType = 'DIR' AND IsMounting = 'Y' AND AD_Client_ID = ? DMS_DIR_DEDUP_LEVEL_WHERE_CLAUSE "
-			+ " GROUP BY ParentURL, Name HAVING COUNT(1) > 1 ORDER BY COUNT(1) desc, ParentURL, Name";
+																										+ " ARRAY_AGG(c.DMS_Content_ID || ' -- ' || COALESCE(achild.child_count, 0) || ' -- ' || c.IsActive || ' -- ' || c.Created ORDER BY c.IsActive DESC, "
+																										+ " COALESCE(achild.child_count, 0) DESC, c.Created) AS duplicateContentInfo ,"
+																										+ " ARRAY_AGG(c.DMS_Content_ID ORDER BY c.IsActive DESC, COALESCE(achild.child_count, 0) DESC, c.Created) AS DMS_Content_IDs ,"
+																										+ " ARRAY_AGG(COALESCE(achild.child_count, 0) ORDER BY c.IsActive DESC, COALESCE(achild.child_count, 0) DESC, c.Created) AS child_counts ,"
+																										+ " ARRAY_AGG(c.IsActive ORDER BY c.IsActive DESC, COALESCE(achild.child_count, 0) DESC, c.Created) AS IsActives "
+																										+ " FROM DMS_Content c LEFT JOIN ( SELECT DMS_Content_Related_ID, COALESCE(COUNT(DMS_Association_ID), 0) AS child_count "
+																										+ " FROM DMS_Association WHERE COALESCE(DMS_AssociationType_ID, 1000001) = 1000001 GROUP BY DMS_Content_Related_ID ) achild "
+																										+ " ON achild.DMS_Content_Related_ID = c.DMS_Content_ID WHERE ContentBaseType = 'DIR' AND IsMounting = 'Y' AND AD_Client_ID = ? DMS_DIR_DEDUP_LEVEL_WHERE_CLAUSE "
+																										+ " GROUP BY ParentURL, Name HAVING COUNT(1) > 1 ORDER BY COUNT(1) desc, ParentURL, Name";
 
 	// level wise where clause
 	public static final String	SQL_DUPLICATE_DIR_SQL_LEVEL_ROOT_LEVEL_DIRECTORY_WHERE_CLAUSE		= " AND ParentURL IS NULL ";
@@ -71,18 +71,16 @@ public class ContentDirDeDuplication extends SvrProcess
 	public static final String	SQL_DUPLICATE_DIR_SQL_LEVEL_RECORD_LEVEL_DIRECTORY_WHERE_CLAUSE		= " AND ParentURL IS NOT NULL AND ParentURL!='/Attachment' ";
 
 	public static final String	SQL_CREATE_DMS_TEMPORARY_DATA_TABLE									= "CREATE TABLE IF NOT EXISTS T_DMS_Duplicate_Clearance "
-			+ " (PInstanceID integer,ParentURL character varying,OriginalContentID numeric,DeletableContentID numeric,DeletableContentChildCount bigint)";
+																										+ " (PInstanceID integer,ParentURL character varying,OriginalContentID numeric,DeletableContentID numeric,DeletableContentChildCount bigint)";
 
 	public static final String	SQL_GET_DATA_FROM_TEMPORARY_TABLE									= "SELECT PInstanceID,ParentURL, OriginalContentID,DeletableContentID,DeletableContentChildCount FROM T_DMS_Duplicate_Clearance "
-			+ " WHERE PInstanceID = ? ORDER BY OriginalContentID, DeletableContentChildCount DESC";
+																										+ " WHERE PInstanceID = ? ORDER BY OriginalContentID, DeletableContentChildCount DESC";
 
 	public static final String	SQL_CONTENT_CHILD_ASSOCIATION_RECORDS								= "SELECT DMS_Association_ID FROM DMS_Association WHERE DMS_Content_Related_ID = ?;";
 
 	// trx
 	String						trxName;
 	Trx							customTrx;
-	private SimpleDateFormat	dateFormat_MMDDYY_HHMMSS											= new SimpleDateFormat(
-			"YYYYMMdd_HHmmss");
 
 	// counters
 	int							totalChildAssociaionMoved											= 0;
@@ -114,9 +112,12 @@ public class ContentDirDeDuplication extends SvrProcess
 	protected String doIt() throws Exception
 	{
 		long starttime = System.currentTimeMillis();
-		addLog(0, new Timestamp(System.currentTimeMillis()), null,
-				"Process Started : DMS Content Directory DeDuplication", getTable_ID(), getRecord_ID());
+		addLog(0, new Timestamp(System.currentTimeMillis()), null, "Process Started : DMS Content Directory DeDuplication", getTable_ID(), getRecord_ID());
+
+		//
 		correctContentDirDeDuplication();
+
+		//
 		if (p_isDeleteDuplicateContent)
 		{
 			addLog("Total Duplicate DMS Content Records Deleted:" + toalDMSCotnentUpdated);
@@ -125,10 +126,11 @@ public class ContentDirDeDuplication extends SvrProcess
 		{
 			addLog("Total Duplicate DMS Content Records Updated:" + toalDMSCotnentUpdated);
 		}
+
 		addLog("Total Duplicate DMS Content Child Records Updated:" + totalChildAssociaionMoved);
 		addLog("Total Execution Time = " + getTimeDiff(starttime) + " minutes");
-		addLog(0, new Timestamp(System.currentTimeMillis()), null, "Process End : DMS Content Directory DeDuplication",
-				getTable_ID(), getRecord_ID());
+		addLog(0, new Timestamp(System.currentTimeMillis()), null, "Process End : DMS Content Directory DeDuplication", getTable_ID(), getRecord_ID());
+
 		return "@OK@";
 	}
 
@@ -189,8 +191,7 @@ public class ContentDirDeDuplication extends SvrProcess
 	 */
 	private void correctDMSDeDuplciateDir()
 	{
-		List<List<Object>> duplicateDirDataList = DB.getSQLArrayObjectsEx(trxName, SQL_GET_DATA_FROM_TEMPORARY_TABLE,
-				getAD_PInstance_ID());
+		List<List<Object>> duplicateDirDataList = DB.getSQLArrayObjectsEx(trxName, SQL_GET_DATA_FROM_TEMPORARY_TABLE, getAD_PInstance_ID());
 		int totalSize = duplicateDirDataList.size();
 
 		String msg = "Total " + totalSize + " DMS records  are found for correction.";
@@ -200,7 +201,6 @@ public class ContentDirDeDuplication extends SvrProcess
 		MDMSAssociation association = null;
 		for (List<Object> duplicateDirData : duplicateDirDataList)
 		{
-
 			int OriginalContentID = ((BigDecimal) duplicateDirData.get(2)).intValue();
 			int deletableContentID = ((BigDecimal) duplicateDirData.get(3)).intValue();
 
@@ -214,8 +214,7 @@ public class ContentDirDeDuplication extends SvrProcess
 			if (OriginalContentID == deletableContentID)
 				continue;
 
-			MDMSContent deletableContent = (MDMSContent) MTable.get(getCtx(), MDMSContent.Table_ID)
-					.getPO(deletableContentID, trxName);
+			MDMSContent deletableContent = (MDMSContent) MTable.get(getCtx(), MDMSContent.Table_ID).getPO(deletableContentID, trxName);
 			statusUpdate("Remaing Records Count- " + totalSize + " - processing " + deletableContent);
 
 			if (p_isMoveDuplicateChildContentToCorrectOne)
@@ -243,14 +242,12 @@ public class ContentDirDeDuplication extends SvrProcess
 				}
 
 				// get child association and update them content related id
-				int[] childAssociationIDs = DB.getIDsEx(trxName, SQL_CONTENT_CHILD_ASSOCIATION_RECORDS,
-						deletableContentID);
+				int[] childAssociationIDs = DB.getIDsEx(trxName, SQL_CONTENT_CHILD_ASSOCIATION_RECORDS, deletableContentID);
 
 				for (int childID : childAssociationIDs)
 				{
 					MDMSAssociation childAssociation = new MDMSAssociation(getCtx(), childID, trxName);
-					statusUpdate("Remaing Records Count- " + totalSize + " - processing " + deletableContent + "-->"
-							+ childAssociation);
+					statusUpdate("Remaing Records Count- " + totalSize + " - processing " + deletableContent + "-->" + childAssociation);
 
 					if (MDMSAssociationType.LINK_ID == childAssociation.getDMS_AssociationType_ID())
 					{
@@ -266,7 +263,6 @@ public class ContentDirDeDuplication extends SvrProcess
 					if (totalChildAssociaionMoved % 100 == 0)
 					{
 						customTrx.commit();
-
 					}
 				}
 
@@ -275,18 +271,14 @@ public class ContentDirDeDuplication extends SvrProcess
 			{
 				log.log(Level.WARNING, deletableContentID + " content deleted.");
 
-				log.warning(
-						"Delete Soft       : " + deletableContent.toString() + " " + deletableContent.getParentURL());
-				int no = DB.executeUpdate("DELETE FROM DMS_Association 	WHERE DMS_Content_ID = ?",
-						deletableContent.getDMS_Content_ID(), trxName);
+				log.warning("Delete Soft       : " + deletableContent.toString() + " " + deletableContent.getParentURL());
+				int no = DB.executeUpdate("DELETE FROM DMS_Association 	WHERE DMS_Content_ID = ?", deletableContent.getDMS_Content_ID(), trxName);
 				log.log(Level.WARNING, no + " association deleted.");
 
-				no = DB.executeUpdate("DELETE FROM DMS_Version			WHERE DMS_Content_ID = ?",
-						deletableContent.getDMS_Content_ID(), trxName);
+				no = DB.executeUpdate("DELETE FROM DMS_Version			WHERE DMS_Content_ID = ?", deletableContent.getDMS_Content_ID(), trxName);
 				log.log(Level.WARNING, no + " version deleted.");
 
-				no = DB.executeUpdate("DELETE FROM DMS_Content 			WHERE DMS_Content_ID = ?",
-						deletableContent.getDMS_Content_ID(), trxName);
+				no = DB.executeUpdate("DELETE FROM DMS_Content 			WHERE DMS_Content_ID = ?", deletableContent.getDMS_Content_ID(), trxName);
 				log.log(Level.WARNING, no + " content deleted.");
 
 			}
@@ -295,7 +287,7 @@ public class ContentDirDeDuplication extends SvrProcess
 			if (p_isInActiveContentAndSetDescription)
 			{
 				deletableContent.setDescription("[DIRdeDUPL- Content Inactivate as this is Duplicate] "
-						+ deletableContent.getDescription() != null ? deletableContent.getDescription() : "");
+												+ deletableContent.getDescription() != null ? deletableContent.getDescription() : "");
 				deletableContent.setIsActive(false);
 				deletableContent.saveEx(trxName);
 			}
@@ -303,26 +295,22 @@ public class ContentDirDeDuplication extends SvrProcess
 			if (toalDMSCotnentUpdated % 100 == 0)
 			{
 				customTrx.commit();
-
 			}
 
 			totalSize--;
 			toalDMSCotnentUpdated++;
-
 		}
-
 	} // correctDMSDeDuplciateDir
 
 	/**
 	 * method to export data into the CSV
 	 * 
-	 * @param finalSQL
+	 * @param  finalSQL
 	 * @throws IOException
 	 */
 	private void exportDataIntoCSV(String finalSQL)
 	{
-		List<List<Object>> duplicateDirContentsDataList = DB.getSQLArrayObjectsEx(trxName,
-				SQL_GET_DATA_FROM_TEMPORARY_TABLE, getAD_PInstance_ID());
+		List<List<Object>> duplicateDirContentsDataList = DB.getSQLArrayObjectsEx(trxName, SQL_GET_DATA_FROM_TEMPORARY_TABLE, getAD_PInstance_ID());
 
 		// if null the return
 		if (duplicateDirContentsDataList == null || duplicateDirContentsDataList.size() <= 0)
@@ -333,8 +321,8 @@ public class ContentDirDeDuplication extends SvrProcess
 			return;
 		}
 
-		String fileName = System.getProperty("java.io.tmpdir") + File.separator + "DMS_Dir_Duplication_"
-				+ dateFormat_MMDDYY_HHMMSS.format(new Timestamp(System.currentTimeMillis())) + ".csv";
+		String fileName = System.getProperty("java.io.tmpdir")	+ File.separator + "DMS_Dir_Duplication_"
+							+ DMSConstant.SDF_NO_SPACE.format(new Timestamp(System.currentTimeMillis())) + ".csv";
 		// time stamp
 		File dataFile = new File(fileName);
 		try (PrintWriter writer = new PrintWriter(new FileWriter(fileName)))
@@ -350,8 +338,8 @@ public class ContentDirDeDuplication extends SvrProcess
 				int DeletableContentID = (Integer.valueOf(duplicateDir.get(3).toString())).intValue();
 				int DeletableContentChildCount = (Integer.valueOf(duplicateDir.get(4).toString())).intValue();
 
-				writer.println(PInstanceID + "," + ParentUrl + "," + OriginalContentID + "," + DeletableContentID + ","
-						+ DeletableContentChildCount);
+				writer.println(	PInstanceID + "," + ParentUrl + "," + OriginalContentID + "," + DeletableContentID + ","
+								+ DeletableContentChildCount);
 			}
 			log.log(Level.INFO, "Temporary file Created: " + fileName);
 
@@ -382,17 +370,17 @@ public class ContentDirDeDuplication extends SvrProcess
 			DB.executeUpdateEx(SQL_CREATE_DMS_TEMPORARY_DATA_TABLE, trxName);
 
 			// insert data into table
-			String insertSQL = "WITH Duplicate_Dir_Data AS (" + sql + ") INSERT INTO T_DMS_Duplicate_Clearance "
-					+ " (PInstanceID,ParentURL, OriginalContentID,DeletableContentID,DeletableContentChildCount) SELECT "
-					+ getAD_PInstance_ID()
-					+ " AS PInstanceID,ParentURL, DMS_Content_IDs[1] AS OriginalContentID, UNNEST(DMS_Content_IDs) AS DeletableContentID, "
-					+ " UNNEST(Child_Counts) as DeletableContentChildCount FROM Duplicate_Dir_Data ";
+			String insertSQL = "WITH Duplicate_Dir_Data AS ("	+ sql + ") INSERT INTO T_DMS_Duplicate_Clearance "
+								+ " (PInstanceID,ParentURL, OriginalContentID,DeletableContentID,DeletableContentChildCount) SELECT "
+								+ getAD_PInstance_ID()
+								+ " AS PInstanceID,ParentURL, DMS_Content_IDs[1] AS OriginalContentID, UNNEST(DMS_Content_IDs) AS DeletableContentID, "
+								+ " UNNEST(Child_Counts) as DeletableContentChildCount FROM Duplicate_Dir_Data ";
 
 			int insertRecordCount = DB.executeUpdate(insertSQL, getAD_Client_ID(), trxName);
 
-			String msg = "Total " + insertRecordCount
-					+ " Records are inserted into the temporary table and the time to insert data in table:"
-					+ getTimeDiff(insertStartTime) + " minutes";
+			String msg = "Total "	+ insertRecordCount
+							+ " Records are inserted into the temporary table and the time to insert data in table:"
+							+ getTimeDiff(insertStartTime) + " minutes";
 
 			addLog(msg);
 			log.log(Level.INFO, msg);
@@ -420,30 +408,29 @@ public class ContentDirDeDuplication extends SvrProcess
 		 * should be any action select from export report, move content or mark
 		 * records in-active and set desc
 		 */
-		if ((!p_isMoveDuplicateChildContentToCorrectOne) && (!p_isGenerateReportOnly)
-				&& (!p_isInActiveContentAndSetDescription))
+		if ((!p_isMoveDuplicateChildContentToCorrectOne)	&& (!p_isGenerateReportOnly)
+			&& (!p_isInActiveContentAndSetDescription))
 		{
 			addLog(0, null, null, "Please select a valid action from the parameters", getTable_ID(), getRecord_ID());
 			return false;
-
 		}
-
 		return true;
 	}// validateAction
 
 	/**
 	 * Get Association from content
 	 * 
-	 * @param contentID
-	 * @param trxName
-	 * @return{@code Iterator<PO>}
+	 * @param        contentID
+	 * @param        trxName
+	 * @return{@code           Iterator<PO>}
 	 */
 	public Iterator<PO> getAssociationFromContent(int contentID, String trxName)
 	{
 		String whereClause = "DMS_Content_ID = ?";
 
-		Query query = new Query(Env.getCtx(), MDMSAssociation.Table_Name, whereClause, trxName).setParameters(contentID)
-				.setOnlyActiveRecords(true).setOrderBy(MDMSAssociation.COLUMNNAME_DMS_Association_ID);
+		Query query = new Query(Env.getCtx(), MDMSAssociation.Table_Name, whereClause, trxName)	.setParameters(contentID)
+																								.setOnlyActiveRecords(true)
+																								.setOrderBy(MDMSAssociation.COLUMNNAME_DMS_Association_ID);
 
 		int count = query.count();
 
@@ -464,24 +451,24 @@ public class ContentDirDeDuplication extends SvrProcess
 		String sql;
 		if (REFERENCE_LIST_DMS_LEVEL_FOR_ROOT_LEVEL_DIRECTORY.equalsIgnoreCase(p_DMS_Level_For))
 		{
-			sql = SQL_DUPLICATE_DIR_SQL_BASE.replace(CONST_SQL_LEVEL_WHERE_CLAUSE_VARIABLE,
-					SQL_DUPLICATE_DIR_SQL_LEVEL_ROOT_LEVEL_DIRECTORY_WHERE_CLAUSE);
+			sql = SQL_DUPLICATE_DIR_SQL_BASE.replace(	CONST_SQL_LEVEL_WHERE_CLAUSE_VARIABLE,
+														SQL_DUPLICATE_DIR_SQL_LEVEL_ROOT_LEVEL_DIRECTORY_WHERE_CLAUSE);
 		}
 		else if (REFERENCE_LIST_DMS_LEVEL_FOR_TABLE_MOUNTING_DIRECTORY.equalsIgnoreCase(p_DMS_Level_For))
 		{
-			sql = SQL_DUPLICATE_DIR_SQL_BASE.replace(CONST_SQL_LEVEL_WHERE_CLAUSE_VARIABLE,
-					SQL_DUPLICATE_DIR_SQL_LEVEL_TABLE_LEVEL_DIRECTORY_WHERE_CLAUSE);
+			sql = SQL_DUPLICATE_DIR_SQL_BASE.replace(	CONST_SQL_LEVEL_WHERE_CLAUSE_VARIABLE,
+														SQL_DUPLICATE_DIR_SQL_LEVEL_TABLE_LEVEL_DIRECTORY_WHERE_CLAUSE);
 		}
 		else
 		{
-			sql = SQL_DUPLICATE_DIR_SQL_BASE.replace(CONST_SQL_LEVEL_WHERE_CLAUSE_VARIABLE,
-					SQL_DUPLICATE_DIR_SQL_LEVEL_RECORD_LEVEL_DIRECTORY_WHERE_CLAUSE);
+			sql = SQL_DUPLICATE_DIR_SQL_BASE.replace(	CONST_SQL_LEVEL_WHERE_CLAUSE_VARIABLE,
+														SQL_DUPLICATE_DIR_SQL_LEVEL_RECORD_LEVEL_DIRECTORY_WHERE_CLAUSE);
 		}
 		return sql;
 	} // getSQL
 
 	/**
-	 * @param startTime
+	 * @param  startTime
 	 * @return
 	 */
 	private int getTimeDiff(long startTime)

@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Contentdirdeduplication
-Bundle-SymbolicName: com.logilite.dms.contentdirdeduplication
-Bundle-Version: 7.0.0.qualifier
+Bundle-Name: ContentDirDeDuplication
+Bundle-SymbolicName: com.logilite.dms.contentdirdeduplication;singleton:=true
+Bundle-Version: 7.4.0.qualifier
 Bundle-Activator: org.adempiere.plugin.utils.Incremental2PackActivator
 Bundle-Vendor: LOGILITE
 Bundle-RequiredExecutionEnvironment: JavaSE-11
@@ -12,4 +12,4 @@ Bundle-ActivationPolicy: lazy
 Require-Bundle: org.adempiere.base;bundle-version="7.1.0",
  org.adempiere.plugin.utils;bundle-version="7.1.0",
  com.logilite.dms
-Service-Component: OSGI-INF/ContentDirDeDuplicationComponent.xml
+Service-Component: OSGI-INF/*.xml
