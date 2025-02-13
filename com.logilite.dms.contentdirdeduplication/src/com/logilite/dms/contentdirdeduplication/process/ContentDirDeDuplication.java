@@ -330,7 +330,7 @@ public class ContentDirDeDuplication extends SvrProcess
 			for (List<Object> duplicateDir : duplicateDirContentsDataList)
 			{
 				int PInstanceID = (Integer.valueOf(duplicateDir.get(0).toString())).intValue();
-				String ParentUrl = (Util.isEmpty("" + duplicateDir.get(1), true) ? "" : duplicateDir.get(1).toString());
+				String ParentUrl = (duplicateDir.get(1) == null ? "" : duplicateDir.get(1).toString());
 				int OriginalContentID = (Integer.valueOf(duplicateDir.get(2).toString())).intValue();
 				int DeletableContentID = (Integer.valueOf(duplicateDir.get(3).toString())).intValue();
 				int DeletableContentChildCount = (Integer.valueOf(duplicateDir.get(4).toString())).intValue();
