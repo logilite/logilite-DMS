@@ -20,5 +20,6 @@
     <module>com.logilite.dms.fileuploader</module>
     <module>com.logilite.dms.test</module>
     <module>com.logilite.dms.dmscleanuponrecorddelete</module>
+    <module>com.logilite.dms.contentdirdeduplication</module>
   </modules>
 </project>
