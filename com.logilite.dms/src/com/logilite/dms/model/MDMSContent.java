@@ -56,6 +56,22 @@ public class MDMSContent extends X_DMS_Content
 		super(ctx, rs, trxName);
 	}
 
+	@Override
+	public String toString()
+	{
+		StringBuffer sb = new StringBuffer("MDMSContent[")
+															.append(get_ID()).append(" - ").append(getName())
+															.append(", BaseType = ").append(getContentBaseType())
+															.append(", Mounting = ").append(isMounting());
+		if (getDMS_ContentType_ID() > 0)
+		{
+			sb	.append(", ContentType = ").append(getDMS_ContentType_ID())
+				.append(", ASI = ").append(getM_AttributeSetInstance_ID());
+		}
+		sb.append("]");
+		return sb.toString();
+	} // toString
+
 	/**
 	 * Create DMS Content
 	 * 
