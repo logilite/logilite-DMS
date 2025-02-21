@@ -67,12 +67,15 @@ import com.logilite.search.model.MIndexingConfig;
 public class DMSSearchUtils
 {
 
-	static CLogger				log							= CLogger.getCLogger(DMSSearchUtils.class);
+	static CLogger				log						= CLogger.getCLogger(DMSSearchUtils.class);
 
-	public static final String	SOLR_FIELDTYPE_TLONGS		= "tlongs";
-	public static final String	SOLR_FIELDTYPE_TEXT_GENERAL	= "text_general";
+	public static final String	FIELDTYPE_LONG_SOLR		= "tlongs";
+	public static final String	FIELDTYPE_TEXT_SOLR		= "text_general";
 
-	public static boolean		isIndexingInitiated			= false;
+	public static final String	FIELDTYPE_LONG_ELASTIC	= "long";
+	public static final String	FIELDTYPE_TEXT_ELASTIC	= "text";
+
+	public static boolean		isIndexingInitiated		= false;
 
 	/**
 	 * Get DMS Contents for rendering for specific level wise.
@@ -267,8 +270,7 @@ public class DMSSearchUtils
 	 * @param  file
 	 * @return             Map
 	 */
-	public static Map<String, Object> createIndexMap(	I_DMS_Content content, I_DMS_Association association, I_DMS_Version version,
-														File file)
+	public static Map<String, Object> createIndexMap(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version, File file)
 	{
 		if (content.getDMS_ContentType().isIndexCreationDisabled())
 		{
@@ -340,7 +342,6 @@ public class DMSSearchUtils
 		}
 
 		return indexMap;
-
 	} // createIndexMap
 
 	public static String getIndexFieldName(String columnName)
@@ -367,17 +368,19 @@ public class DMSSearchUtils
 	public static IIndexSearcher getIndexSearcher(int AD_Client_ID)
 	{
 		IIndexSearcher idxSearcher = ServiceUtils.getIndexSearcher(AD_Client_ID);
+
+		/**
+		 * For Solr Attributes
+		 */
 		if (!isIndexingInitiated && MIndexingConfig.LTX_INDEXING_TYPE_Solr.equals(idxSearcher.getIndexingType()))
 		{
-			// TODO Require to refactor for solr related things
-
 			/*
 			 * Create Fields Type in schema if not exists
 			 */
 			Map<String, Object> mapAttribute = new HashMap<String, Object>();
-			if (!idxSearcher.getFieldTypeSet().contains(SOLR_FIELDTYPE_TLONGS))
+			if (!idxSearcher.getFieldTypeSet().contains(FIELDTYPE_LONG_SOLR))
 			{
-				mapAttribute.put("name", SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("name", FIELDTYPE_LONG_SOLR);
 				mapAttribute.put("class", "solr.TrieLongField");
 				mapAttribute.put("precisionStep", "8");
 				mapAttribute.put("multiValued", "true");
@@ -394,7 +397,7 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.FILE_CONTENT);
-				mapAttribute.put("type", SOLR_FIELDTYPE_TEXT_GENERAL);
+				mapAttribute.put("type", FIELDTYPE_TEXT_SOLR);
 				mapAttribute.put("indexed", true);
 				mapAttribute.put("stored", false);
 				mapAttribute.put("multiValued", true);
@@ -407,7 +410,7 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.DMS_CONTENT_ID);
-				mapAttribute.put("type", SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("type", FIELDTYPE_LONG_SOLR);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
@@ -417,7 +420,7 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.DMS_VERSION_ID);
-				mapAttribute.put("type", SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("type", FIELDTYPE_LONG_SOLR);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
@@ -427,7 +430,7 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.DMS_ASSOCIATION_ID);
-				mapAttribute.put("type", SOLR_FIELDTYPE_TLONGS);
+				mapAttribute.put("type", FIELDTYPE_LONG_SOLR);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
@@ -436,15 +439,73 @@ public class DMSSearchUtils
 			{
 				mapAttribute.clear();
 				mapAttribute.put("name", DMSConstant.DESCRIPTION);
-				mapAttribute.put("type", SOLR_FIELDTYPE_TEXT_GENERAL);
+				mapAttribute.put("type", FIELDTYPE_TEXT_SOLR);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+			//
+			isIndexingInitiated = true;
+		}
+
+		/**
+		 * For Elastic Attributes
+		 */
+		else if (!isIndexingInitiated && MIndexingConfig.LTX_INDEXING_TYPE_Elastic.equals(idxSearcher.getIndexingType()))
+		{
+			Map<String, Object> mapAttribute = new HashMap<String, Object>();
+
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.FILE_CONTENT))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.FILE_CONTENT);
+				mapAttribute.put("type", FIELDTYPE_TEXT_ELASTIC);
 				//
 				idxSearcher.createFieldsInIndexSchema(mapAttribute);
 			}
 
+			// Create fields in index schema DMS_Content_ID
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.DMS_CONTENT_ID))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.DMS_CONTENT_ID);
+				mapAttribute.put("type", FIELDTYPE_LONG_ELASTIC);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+
+			// Create fields in index schema DMS_Version_ID
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.DMS_VERSION_ID))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.DMS_VERSION_ID);
+				mapAttribute.put("type", FIELDTYPE_LONG_ELASTIC);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+
+			// Create fields in index schema DMS_Association_ID
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.DMS_ASSOCIATION_ID))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.DMS_ASSOCIATION_ID);
+				mapAttribute.put("type", FIELDTYPE_LONG_ELASTIC);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+
+			if (!idxSearcher.getFieldSet().contains(DMSConstant.DESCRIPTION))
+			{
+				mapAttribute.clear();
+				mapAttribute.put("name", DMSConstant.DESCRIPTION);
+				mapAttribute.put("type", FIELDTYPE_TEXT_ELASTIC);
+				//
+				idxSearcher.createFieldsInIndexSchema(mapAttribute);
+			}
+			//
 			isIndexingInitiated = true;
 		}
 		return idxSearcher;
-	}
+	} // getIndexSearcher
 
 	/**
 	 * Create indexing in index server
