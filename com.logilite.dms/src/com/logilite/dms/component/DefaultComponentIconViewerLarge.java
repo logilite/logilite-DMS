@@ -26,7 +26,9 @@ import org.zkoss.zul.Vbox;
 
 import com.logilite.dms.DMS_ZK_Util;
 import com.logilite.dms.constant.DMSConstant;
-import com.logilite.dms.model.ContentDetail;
+import com.logilite.dms.model.I_DMS_Association;
+import com.logilite.dms.model.I_DMS_Version;
+import com.logilite.dms.model.MDMSAssociationType;
 
 /**
  * Default DMS Large Icon Viewer Component
@@ -48,7 +50,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage)
+	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight, boolean isFirstPage)
 	{
 		if (row == null || isFirstPage)
 		{
@@ -58,13 +60,13 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		}
 
 		// Content Label
-		Label lblName = new Label(contentDetail.getName());
+		Label lblName = new Label(getRenderContentName(version));
 		lblName.setStyle(	"text-overflow: ellipsis; white-space: nowrap; overflow: hidden; text-align: center; height: 20px; width: "
 							+ (compWidth - 10) + "px; display: inline-block;" + (isContentActive ? " " : "color: red;"));
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
-		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, contentDetail.getVersion(), "150"));
+		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
 		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + (compHeight - 35) + "px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
@@ -74,7 +76,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 			Checkbox checkBox = new Checkbox();
 			checkBox.addActionListener(this);
 			checkBox.setSclass("SB-SelectionChkbx");
-			checkBox.setAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF, contentDetail.getVersion());
+			checkBox.setAttribute(DMSConstant.COMP_ATTRIBUTE_DMS_VERSION_REF, version);
 			vbox.appendChild(checkBox);
 		}
 		vbox.appendChild(thumbImg);
@@ -90,7 +92,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		row.appendChild(cell);
 
 		//
-		setAttributesInRow(cell, contentDetail);
+		setAttributesInRow(cell, version, association);
 
 		// Listener for component selection
 		cell.addEventListener(Events.ON_CLICK, this);
@@ -99,9 +101,9 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		for (int i = 0; i < eventsList.length; i++)
 			cell.addEventListener(eventsList[i], listener);
 
-		if (contentDetail.isLink())
+		if (MDMSAssociationType.isLink(association))
 		{
-			Component icon = getLinkIconComponent(contentDetail);
+			Component icon = getLinkIconComponent(true);
 
 			Div mimeIcon = new Div();
 			mimeIcon.appendChild(icon);
@@ -110,7 +112,7 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		}
 
 		// set tooltip text
-		cell.setTooltiptext(contentDetail.getTooltipText());
+		cell.setTooltiptext(getTooltipText(version, association));
 	} // createComponent
 
 	@Override

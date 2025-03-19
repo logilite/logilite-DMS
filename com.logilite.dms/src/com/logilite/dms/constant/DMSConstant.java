@@ -317,7 +317,7 @@ public final class DMSConstant
 
 	public static final String				SQL_GET_MATCHING_CONTENT_BY_VALUE		= "SELECT v.Value FROM DMS_Content c																										"
 																						+ " JOIN DMS_Version v  ON (v.DMS_Content_ID = c.DMS_Content_ID) 																		"
-																						+ " WHERE v.AD_Client_ID=? AND (v.Value LIKE ? OR v.Value LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?)) ";
+																						+ " WHERE c.AD_Client_ID = ? AND (v.Value LIKE ? OR v.Value LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?)) ";
 
 	public static final String				SQL_GET_CONTENT_TYPE					= "SELECT at.Value FROM DMS_Content c 																										"
 																						+ "	INNER JOIN DMS_Association 		a	ON a.DMS_Content_ID = c.DMS_Content_ID 															"
@@ -347,33 +347,27 @@ public final class DMSConstant
 																						+ " WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ? OR DMS_Content_ID = ? AND DMS_AssociationType_ID != ?"
 																						+ " ORDER BY DMS_Association_ID													";
 
-	public static final String				SQL_GET_CONTENT_DIR_LEVEL_WISE			= " WITH ContentAssociation AS ( 																										"
-																						+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, a.DMS_AssociationType_ID, c.DMS_ContentType_ID	"
-																						+ "				, c.Created																											"
-																						+ " 	FROM 	DMS_Association a 																									"
-																						+ " 	JOIN 	DMS_Content c 			ON ( c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) 										"
-																						+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.DMS_Content_Related_ID, 0) = ? 														"
-																						+ " ), 																																"
-																						+ " VersionList AS ( 																												"
-																						+ " 	SELECT 	vr.DMS_Content_ID, a.DMS_Content_Related_ID, MAX(vr.SeqNo) AS SeqNo													"
-																						+ " 	FROM 	DMS_Association a 																									"
-																						+ "		JOIN 	ContentAssociation ca 	ON ( ca.DMS_Content_ID = a.DMS_Content_Related_ID OR ca.DMS_Content_Related_ID = a.DMS_Content_Related_ID ) "
-																						+ "		JOIN 	DMS_Version vr 			ON ( vr.DMS_Content_ID = ca.DMS_Content_ID AND vr.IsActive='Y' )							"
-																						+ " 	WHERE 	a.AD_Client_ID=? AND NVL(a.DMS_Content_Related_ID, 0) = ? AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001, 1000002, 1000003)	"
-																						+ " 	GROUP BY vr.DMS_Content_ID, a.DMS_Content_Related_ID																		"
-																						+ " ) 																																"
-																						+ " SELECT  DISTINCT																												"
-																						+ "			NVL(a.DMS_Content_ID, 			c.DMS_Content_ID) 			AS DMS_Content_ID, 											"
-																						+ " 		NVL(a.DMS_Content_Related_ID, 	c.DMS_Content_Related_ID) 	AS DMS_Content_Related_ID,									"
-																						+ " 		NVL(a.DMS_Association_ID, 		c.DMS_Association_ID) 		AS DMS_Association_ID, 										"
-																						+ " 		NVL(a.DMS_AssociationType_ID, 	c.DMS_AssociationType_ID)	AS DMS_AssociationType_ID, 									"
-																						+ " 		vrs.DMS_Version_ID, vrs.SeqNo,  c.DMS_ContentType_ID, c.Created															"
-																						+ " FROM 		ContentAssociation c 																								"
-																						+ " LEFT JOIN 	VersionList v		ON (v.DMS_Content_ID = c.DMS_Content_ID) 														"
-																						+ " LEFT JOIN 	DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID = c.DMS_Content_Related_ID "
-																						+ "										AND NVL(a.DMS_AssociationType_ID, 0) = NVL(c.DMS_AssociationType_ID, 0))					"
-																						+ " LEFT JOIN 	DMS_Version vrs 	ON (vrs.DMS_Content_ID = c.DMS_Content_ID AND vrs.SeqNo = NVL(v.SeqNo, 0))  					"
-																						+ " WHERE 		NVL(c.DMS_Content_Related_ID, 0) = ? 																				";
+	public static final String				SQL_GET_CONTENT_DIR_LEVEL_WISE			= "SELECT 	a.DMS_Content_ID,														"
+																						+ "     a.DMS_Association_ID,													"
+																						+ "		NVL(a.DMS_Content_Related_ID, 0) AS DMS_Content_Related_ID,				"
+																						+ "		NVL(a.DMS_AssociationType_ID, 0) AS DMS_AssociationType_ID,				"
+																						+ "		v.DMS_Version_ID,														"
+																						+ "		Name,																	"
+																						+ "		DMS_ContentType_ID,														"
+																						+ "		DMS_MimeType_ID,														"
+																						+ "		c.Created,																"
+																						+ "		v.Updated																"
+																						+ "	FROM DMS_Association a														"
+																						+ " JOIN DMS_Content c ON ( c.DMS_Content_ID = a.DMS_Content_ID )				"
+																						+ " JOIN LATERAL ( 	SELECT DISTINCT ON (V.DMS_CONTENT_ID)						"
+																						+ "					v.DMS_Version_ID, v.Updated 								"
+																						+ "    				FROM DMS_Version v 											"
+																						+ "    				WHERE v.DMS_Content_ID = c.DMS_Content_ID 					"
+																						+ "    				ORDER BY v.DMS_Content_ID, v.SeqNO DESC 					"
+																						+ " 			) v ON TRUE			  											"
+																						+ " WHERE c.AD_Client_ID = ? #IsActive#	 										"
+																						+ "		AND NVL(a.DMS_Content_Related_ID, 0) = ? 								"
+																						+ " 	AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001, 1000002, 1000003)	";
 
 	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL		= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "");
 

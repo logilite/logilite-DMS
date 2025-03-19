@@ -1374,7 +1374,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			}
 			else
 			{
-				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, documentView);
+				contentsMap = dms.getDMSContentsWithAssociation(currDMSContent, dms.AD_Client_ID, documentView, sortFieldName);
 			}
 			//
 			renderViewerWithContent(contentsMap);

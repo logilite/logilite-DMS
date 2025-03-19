@@ -28,7 +28,7 @@ import org.zkoss.zul.Vbox;
 
 import com.logilite.dms.DMS_ZK_Util;
 import com.logilite.dms.constant.DMSConstant;
-import com.logilite.dms.model.ContentDetail;
+import com.logilite.dms.model.I_DMS_Association;
 import com.logilite.dms.model.I_DMS_Version;
 
 /**
@@ -65,17 +65,15 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage)
+	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight, boolean isFirstPage)
 	{
-		I_DMS_Version version = contentDetail.getVersion();
-
 		Row row = rows.newRow();
 		row.setSclass("SB-ROW");
 		row.setWidgetAttribute("cellspacing", "15");
 
 		// Content Thumbnail
 		Image thumbImg = new Image();
-		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, contentDetail.getVersion(), "150"));
+		thumbImg.setContent(DMS_ZK_Util.getThumbImageForVersion(dms, version, "150"));
 		thumbImg.setStyle("width: 100%; max-width: " + compWidth + "px; max-height: " + compHeight + "px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
@@ -83,7 +81,7 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 		vbox.appendChild(new Label("Version: " + version.getSeqNo()));
 		vbox.appendChild(new Label(DMSConstant.MSG_CREATED + ": " + version.getCreated()));
 		vbox.appendChild(new Label(DMSConstant.MSG_CREATEDBY + ": " + MUser.getNameOfUser(version.getCreatedBy())));
-		vbox.appendChild(new Label(DMSConstant.MSG_FILESIZE + ": " + contentDetail.getSize()));
+		vbox.appendChild(new Label(DMSConstant.MSG_FILESIZE + ": " + version.getDMS_FileSize()));
 
 		Hbox hbox = new Hbox();
 		hbox.appendChild(thumbImg);
@@ -101,7 +99,7 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 		row.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL);
 
 		//
-		setAttributesInRow(row, contentDetail);
+		setAttributesInRow(row, version, association);
 
 		// Listener for component selection
 		row.addEventListener(Events.ON_CLICK, this);
@@ -110,7 +108,7 @@ public class DefaultComponentIconViewerVersion extends AbstractComponentIconView
 			row.addEventListener(eventsList[i], listener);
 
 		// set tooltip text
-		row.setTooltiptext(contentDetail.getTooltipText());
+		row.setTooltiptext(getTooltipText(version, association));
 	} // createComponent
 
 	@Override

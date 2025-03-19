@@ -156,7 +156,7 @@ public class DMSGalleryBox extends Hbox implements EventListener<Event>
 			contentsMap = dms.renderSearchedContent(queryFilterParamas, content, tableID, recordID);
 		}
 		else
-			contentsMap = dms.getDMSContentsWithAssociation(content, dms.AD_Client_ID, DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE);
+			contentsMap = dms.getDMSContentsWithAssociation(content, dms.AD_Client_ID, DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE, null);
 
 		// Content Type wise access restriction
 		IContentTypeAccess contentTypeAccess = DMSFactoryUtils.getContentTypeAccessFactory();

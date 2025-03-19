@@ -83,9 +83,11 @@ public class DMSSearchUtils
 	 * @param  content
 	 * @param  AD_Client_ID
 	 * @param  documentView
+	 * @param sortFieldName 
 	 * @return              map of DMS content and association
 	 */
-	public static HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView)
+	public static HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(	I_DMS_Content content, int AD_Client_ID, String documentView,
+																							String sortFieldName)
 	{
 		int contentID = 0;
 		if (content != null)
@@ -100,18 +102,17 @@ public class DMSSearchUtils
 			String sql = "";
 
 			if (DMSConstant.DOCUMENT_VIEW_ALL_VALUE.equalsIgnoreCase(documentView))
-				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL, contentID);
+				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL;
 			else if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE, contentID);
+				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE;
 			else
-				sql = DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE, contentID);
+				sql = DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE;
+
+			sql = sql + " " + getOrderByClause(sortFieldName);
 
 			int i = 1;
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(i++, AD_Client_ID);
-			pstmt.setInt(i++, contentID);
-			pstmt.setInt(i++, AD_Client_ID);
-			pstmt.setInt(i++, contentID);
 			pstmt.setInt(i++, contentID);
 
 			rs = pstmt.executeQuery();
@@ -219,7 +220,7 @@ public class DMSSearchUtils
 	{
 		MDMSContent content = new MDMSContent(Env.getCtx(), DMS_Content_ID, null);
 		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(	content, AD_Client_ID,
-																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
+																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE, null);
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
 			MDMSVersion version = (MDMSVersion) mapEntry.getKey();
@@ -684,7 +685,7 @@ public class DMSSearchUtils
 	public static I_DMS_Version[] getChildContentFiltered(	DMS dms, I_DMS_Content parentContent, boolean isApplyContentTypeAccessFilter,
 															boolean isApplyPermissionFilter)
 	{
-		HashMap<I_DMS_Version, I_DMS_Association> contentsMap = dms.getDMSContentsWithAssociation(parentContent, dms.AD_Client_ID, null);
+		HashMap<I_DMS_Version, I_DMS_Association> contentsMap = dms.getDMSContentsWithAssociation(parentContent, dms.AD_Client_ID, null, null);
 
 		// Content Type Access
 		if (isApplyContentTypeAccessFilter)
@@ -772,4 +773,35 @@ public class DMSSearchUtils
 		}
 	} // applyFilterContentIDCheckIfMoreSize
 
+	/**
+	 * Create Order by clause based on sort Field Name
+	 * 
+	 * @param  sortFieldName Sorting Field Name
+	 * @return
+	 */
+	private static String getOrderByClause(String sortFieldName)
+	{
+		if (sortFieldName == null)
+		{
+			return "ORDER BY c.Created";
+		}
+
+		boolean isDescending = sortFieldName.endsWith("^");
+		if (isDescending)
+		{
+			sortFieldName = sortFieldName.replace("^", "");
+		}
+
+		// Mapping sortFieldName to DB column
+		Map<String, String> sortFields = Map.of(
+												DMSConstant.ATTRIB_NAME, "Name",
+												DMSConstant.ATTRIB_LINK, "DMS_AssociationType_ID",
+												DMSConstant.ATTRIB_CREATED, "c.Created",
+												DMSConstant.ATTRIB_UPDATED, "v.Updated",
+												DMSConstant.ATTRIB_CONTENT_TYPE, "DMS_ContentType_ID",
+												DMSConstant.ATTRIB_FILETYPE, "DMS_MimeType_ID");
+
+		String dbColumn = sortFields.getOrDefault(sortFieldName, "c.Created");
+		return "ORDER BY " + dbColumn + (isDescending ? " DESC" : "");
+	} // getOrderByClause
 }

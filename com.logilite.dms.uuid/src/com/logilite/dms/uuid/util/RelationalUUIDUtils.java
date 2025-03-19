@@ -780,7 +780,7 @@ public class RelationalUUIDUtils
 	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID, boolean isDocExplorerWindow)
 	{
 		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(	content, content.getAD_Client_ID(),
-																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
+																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE, null);
 
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{

@@ -507,12 +507,12 @@ public class DMS
 	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, boolean isActiveOnly)
 	{
 		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, (isActiveOnly	? DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE
-																									: DMSConstant.DOCUMENT_VIEW_ALL_VALUE));
+																									: DMSConstant.DOCUMENT_VIEW_ALL_VALUE), null);
 	} // getDMSContentsWithAssociation
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView)
+	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView, String sortFieldName)
 	{
-		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, documentView);
+		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, documentView, sortFieldName);
 	} // getDMSContentsWithAssociation
 
 	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(I_DMS_Content content)
