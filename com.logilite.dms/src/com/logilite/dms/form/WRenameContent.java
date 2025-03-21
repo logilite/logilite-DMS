@@ -175,8 +175,23 @@ public class WRenameContent extends Window implements EventListener<Event>
 
 		ValidateName();
 
-		dms.renameContentOnly(content, txtName.getValue(), description);
-
+		/**
+		 * Physical Rename
+		 * If the top hierarchy is renamed, all content and sub-content should be renamed along with
+		 * their paths.
+		 * The following code performs a direct name update.
+		 */
+		dms.renameContent(txtName.getValue(), content);
+		if (!Util.isEmpty(description, true))
+		{
+			content.setDescription(description);
+			content.saveEx();
+		}
+		/**
+		 * Soft Rename
+		 * Here only change content name not update child content
+		 * dms.renameContentOnly(content, txtName.getValue(), description);
+		 */
 		this.detach();
 	} // renameContent
 

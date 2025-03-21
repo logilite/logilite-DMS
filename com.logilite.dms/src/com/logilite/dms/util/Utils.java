@@ -65,6 +65,7 @@ import org.compiere.util.KeyNamePair;
 import org.compiere.util.Util;
 
 import com.logilite.dms.constant.DMSConstant;
+import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSMimeType;
 
@@ -623,24 +624,43 @@ public class Utils
 		return fileName;
 	} // validateFileName
 
-	public static List<String> getExtistingFileNamesFromCopiedFile(String parentURL, String fileName, String extention)
+	public static List<String> getExtistingFileNamesFromCopiedFileName(String parentURL, String fileName, String extention)
 	{
-		return getMatchingContentList(parentURL, fileName + "." + extention, fileName + " - copy%" + "." + extention, false);
+		return getMatchingContentList(parentURL, fileName + DMSConstant.REG_EXP_PERIOD + extention, fileName	+ DMSConstant.REG_EXP_UNDERSCORE_COPY
+																									+ DMSConstant.REG_EXP_LIKE_STR + DMSConstant.REG_EXP_PERIOD
+																									+ extention, true);
+	}
+
+	public static List<String> getExtistingFileNamesFromCopiedFileValue(String parentURL, String fileName, String extention)
+	{
+		return getMatchingContentList(parentURL, fileName + DMSConstant.REG_EXP_PERIOD + extention, fileName	+ DMSConstant.REG_EXP_UNDERSCORE_COPY
+																									+ DMSConstant.REG_EXP_LIKE_STR + DMSConstant.REG_EXP_PERIOD
+																									+ extention, false);
 	}
 
 	public static List<String> getMatchingActualNames(String parentUrl, String fileName, String regExp, String extention)
 	{
+		return getMatchingContentList(parentUrl, fileName + extention, fileName + regExp + extention, true);
+	}
+
+	public static List<String> getMatchingActualValue(String parentUrl, String fileName, String regExp, String extention)
+	{
 		return getMatchingContentList(parentUrl, fileName + extention, fileName + regExp + extention, false);
 	}
 
-	public static List<String> getActualDirNameForCopiedDir(String ParentUrl, String dirName)
+	public static List<String> getActualDirNameForCopiedDirName(String ParentUrl, String dirName)
 	{
-		return getMatchingContentList(ParentUrl, dirName, dirName + " %", false);
+		return getMatchingContentList(ParentUrl, dirName, dirName + DMSConstant.REG_EXP_LIKE_STR, true);
+	}
+
+	public static List<String> getActualDirNameForCopiedDirValue(String ParentUrl, String dirName)
+	{
+		return getMatchingContentList(ParentUrl, dirName, dirName + DMSConstant.REG_EXP_LIKE_STR, false);
 	}
 
 	public static List<String> getMatchingDirContentNames(String parentUrl, String dirName)
 	{
-		return getMatchingContentList(parentUrl, dirName, dirName + " %", true);
+		return getMatchingContentList(parentUrl, dirName, dirName + DMSConstant.REG_EXP_LIKE_STR, true);
 	}
 
 	/**
@@ -693,10 +713,12 @@ public class Utils
 
 		return actualNames;
 	} // getMatchingContentList
+
 	/**
 	 * To check is create index allow or not
 	 * 
-	 * @return if it's false then it will not create index automatically, user need to run reset indexing process to create index 
+	 * @return if it's false then it will not create index automatically, user need to run reset
+	 *         indexing process to create index
 	 */
 	public static boolean isAllowAutoCreateIndex()
 	{
@@ -716,4 +738,32 @@ public class Utils
 		return DB.executeUpdate("UPDATE DMS_Version SET IsIndexed = ? WHERE DMS_Version_ID = ? ", new Object[] { isIndexed, versionID }, true, trx);
 	}
 
+	/**
+	 * @param  fileName Name of File
+	 * @param  type
+	 * @return          Upgraded Name with Version
+	 */
+	public static int upgradeVersionNo(String fileName, String type)
+	{
+		String count;
+		if (MDMSAssociationType.TYPE_PARENT.equals(type))
+			count = fileName.substring(fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR) + 1, fileName.length());
+		else
+			count = fileName.substring(fileName.lastIndexOf("(") + 1, fileName.lastIndexOf(")"));
+		int versionCount = Integer.parseInt(count);
+		return ++versionCount;
+	} // upgradeVersionNo
+
+	public static String getUpdatedFilePath(String absolutePath, String fileOldName, String fileName)
+	{
+		int index = absolutePath.lastIndexOf(fileOldName);
+		if (index == -1)
+		{
+			log.severe("File path is provided is not Correct: " + absolutePath);
+			return absolutePath; // fileOldName not found
+		}
+		return absolutePath.substring(0, index)
+				+ fileName
+				+ absolutePath.substring(index + fileOldName.length());
+	}
 }

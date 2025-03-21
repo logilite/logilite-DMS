@@ -99,6 +99,8 @@ public final class DMSConstant
 	public static final String				REG_EXP_PERIOD							= ".";
 	public static final String				REG_EXP_UNDERSCORE_LIKE_STR				= "__%";
 	public static final String				REG_EXP_UNDERSCORE_STR					= "_";
+	public static final String				REG_EXP_UNDERSCORE_COPY					= "_copy";
+	public static final String				REG_EXP_UNDERSCORE_COPY_UNDERSCORE		= "_copy_";
 
 	// Pattern
 	public static final Pattern				PATTERN_WINDOWS_DIRNAME_ISVALID			= Pattern.compile(REG_EXP_WINDOWS_DIRNAME_VALIDATE);
@@ -313,11 +315,13 @@ public final class DMSConstant
 																						+ " WHERE c.DMS_Content_ID = ? 																										";
 
 	public static final String				SQL_GET_MATCHING_CONTENT_BY_NAME		= "SELECT Name  FROM DMS_Content c																											"
-																						+ " WHERE c.AD_Client_ID=? AND (c.Name  LIKE ? OR c.Name  LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?))	";
+																						+ " WHERE c.AD_Client_ID=? AND (c.Name  LIKE ? OR c.Name  LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?))	"
+																						+ " ORDER BY 1 ";
 
 	public static final String				SQL_GET_MATCHING_CONTENT_BY_VALUE		= "SELECT v.Value FROM DMS_Content c																										"
 																						+ " JOIN DMS_Version v  ON (v.DMS_Content_ID = c.DMS_Content_ID) 																		"
-																						+ " WHERE c.AD_Client_ID = ? AND (v.Value LIKE ? OR v.Value LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?)) ";
+																						+ " WHERE c.AD_Client_ID = ? AND (v.Value LIKE ? OR v.Value LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?)) "
+																						+ " ORDER BY 1 ";
 
 	public static final String				SQL_GET_CONTENT_TYPE					= "SELECT at.Value FROM DMS_Content c 																										"
 																						+ "	INNER JOIN DMS_Association 		a	ON a.DMS_Content_ID = c.DMS_Content_ID 															"
