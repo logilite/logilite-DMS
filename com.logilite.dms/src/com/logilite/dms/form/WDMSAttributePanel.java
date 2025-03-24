@@ -171,9 +171,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		try
 		{
 			init();
-
 			this.contentTypeID = content.getDMS_ContentType_ID();
-
 			refreshPanel();
 		}
 		catch (Exception e)
@@ -206,7 +204,6 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		Column column = new Column();
 		columns.appendChild(column);
 
-		//
 		Row row = new Row();
 		row.appendChild(panelNavigation);
 		rows.appendChild(row);
@@ -310,11 +307,9 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		panelFooterButtons.appendChild(btnRequery);
 		panelFooterButtons.appendChild(btnDownload);
 		panelFooterButtons.appendChild(btnClose);
-
 		panelFooterButtons.setStyle("display: inline-flex; padding-top: 5px;");
 
 		panelAttribute.appendChild(panelFooterButtons);
-
 		mainLayout.appendChild(south);
 
 		btnVersionUpload.setDisabled(!isWindowAccess || isMountingBaseStructure || content == null || !content.isActive() || !isWrite);
@@ -621,20 +616,17 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 		}
 		else if (event.getTarget().equals(btnVersionUpload))
 		{
-			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, content, true, tableID, recordID, windowNo, tabNo);
+			final Tab tab = (Tab) tabBox.getSelectedTab();
+			final WDMSAttributePanel panel = this;
+
+			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, content, true, tableID, recordID, windowNo, tabNo, null);
 			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
 				public void onEvent(Event arg0) throws Exception
 				{
-					if (!uploadContent.isCancel())
-					{
-						//
-						refreshPanel();
-						// Replace latest uploaded version on current component
-						component.setAttribute(DMSConstant.COMP_ATTRIBUTE_VERSION, (MDMSVersion) MDMSVersion.getLatestVersion(content));
-						loadNavigationalContent(component);
-					}
+					Events.sendEvent(new Event(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, panel));
+					tabBox.setSelectedTab(tab);
 				}
 			});
 			((Component) uploadContent).addEventListener(Events.ON_CLOSE, this);

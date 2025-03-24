@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.component.Menupopup;
 import org.compiere.model.MClientInfo;
 import org.compiere.util.CCache;
@@ -280,14 +281,15 @@ public class DMSFactoryUtils
 	 * @param  tabNo
 	 * @return           {@link IDMSUploadContent}
 	 */
-	public static IDMSUploadContent getUploadContenFactory(DMS dms, MDMSContent content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo)
+	public static IDMSUploadContent getUploadContenFactory(	DMS dms, MDMSContent content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo,
+															AbstractADWindowContent wincontent)
 	{
 		List<IDMSUploadContentFactory> factoryies = Service.locator().list(IDMSUploadContentFactory.class).getServices();
 		if (factoryies != null)
 		{
 			for (IDMSUploadContentFactory factory : factoryies)
 			{
-				IDMSUploadContent uploadContent = factory.getUploadForm(dms, content, isVersion, tableID, recordID, windowNo, tabNo);
+				IDMSUploadContent uploadContent = factory.getUploadForm(dms, content, isVersion, tableID, recordID, windowNo, tabNo, wincontent);
 
 				if (uploadContent != null)
 				{
@@ -301,7 +303,6 @@ public class DMSFactoryUtils
 	/**
 	 * Get Index Query Builder
 	 * 
-	 * @param  AD_Client_ID
 	 * @param  indexSearcher
 	 * @return               {@link IIndexQueryBuilder}
 	 */

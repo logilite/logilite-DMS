@@ -953,7 +953,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getTarget().equals(mnu_uploadVersion))
 		{
 			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(	dms, dirContent, true, this.getTable_ID(), this.getRecord_ID(), windowNo,
-																						tabNo);
+																						tabNo, winContent);
 			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
@@ -1634,7 +1634,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	 */
 	private void uploadContent(Event event)
 	{
-		uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, currDMSContent, false, tableID, recordID, windowNo, tabNo);
+		uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, currDMSContent, false, tableID, recordID, windowNo, tabNo, winContent);
 
 		if (event != null && event instanceof UploadEvent)
 			Events.postEvent((Component) uploadContent, event);

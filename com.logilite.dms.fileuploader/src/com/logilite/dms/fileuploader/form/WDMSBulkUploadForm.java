@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.LayoutUtils;
+import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
 import org.adempiere.webui.component.Label;
@@ -87,7 +88,7 @@ public class WDMSBulkUploadForm extends AbstractUploadContent
 
 	public WDMSBulkUploadForm()
 	{
-		this(null, null, false, -1, -1, 0, 0);
+		this(null, null, false, -1, -1, 0, 0, null);
 	}
 
 	/**
@@ -101,9 +102,10 @@ public class WDMSBulkUploadForm extends AbstractUploadContent
 	 * @param windowNo
 	 * @param tabNo
 	 */
-	public WDMSBulkUploadForm(DMS dms, I_DMS_Content content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo)
+	public WDMSBulkUploadForm(	DMS dms, I_DMS_Content content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo,
+								AbstractADWindowContent wincontent)
 	{
-		super(dms, content, isVersion, tableID, recordID, windowNo, tabNo);
+		super(dms, content, isVersion, tableID, recordID, windowNo, tabNo, wincontent);
 		this.dms = new DMS(Env.getAD_Client_ID(Env.getCtx()));
 	}
 
