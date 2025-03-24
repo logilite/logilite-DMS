@@ -1,7 +1,5 @@
 package com.logilite.dms.factories;
 
-import org.adempiere.webui.adwindow.AbstractADWindowContent;
-
 import com.logilite.dms.DMS;
 import com.logilite.dms.model.I_DMS_Content;
 
@@ -13,7 +11,6 @@ import com.logilite.dms.model.I_DMS_Content;
 public interface IDMSUploadContentFactory
 {
 
-	IDMSUploadContent getUploadForm(DMS dms, I_DMS_Content content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo,
-									AbstractADWindowContent wincontent);
+	IDMSUploadContent getUploadForm(DMS dms, I_DMS_Content content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo);
 
 }

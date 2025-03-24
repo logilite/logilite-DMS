@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.adempiere.webui.adwindow.AbstractADWindowContent;
 import org.adempiere.webui.component.Borderlayout;
 import org.adempiere.webui.component.Button;
 import org.adempiere.webui.component.ConfirmPanel;
@@ -55,7 +54,6 @@ public abstract class AbstractUploadContent extends Window implements EventListe
 
 	protected DMS									dms;
 	protected MDMSContent							content						= null;
-	protected AbstractADWindowContent				wincontent;
 
 	protected boolean								isVersion					= false;
 	protected boolean								isCancel					= false;
@@ -108,8 +106,7 @@ public abstract class AbstractUploadContent extends Window implements EventListe
 	 * @param windowNo
 	 * @param tabNo
 	 */
-	public AbstractUploadContent(	DMS dms, I_DMS_Content content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo,
-									AbstractADWindowContent wincontent)
+	public AbstractUploadContent(DMS dms, I_DMS_Content content, boolean isVersion, int tableID, int recordID, int windowNo, int tabNo)
 	{
 		this.dms = dms;
 		this.content = (MDMSContent) content;
@@ -118,7 +115,6 @@ public abstract class AbstractUploadContent extends Window implements EventListe
 		this.recordID = recordID;
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
-		this.wincontent = wincontent;
 
 		//
 		init();

@@ -1,7 +1,9 @@
 package com.logilite.dms.model;
 
 import java.sql.ResultSet;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 
 import org.compiere.util.CCache;
 import org.compiere.util.DB;
@@ -30,17 +32,17 @@ public class MDMSContentTypeFilter extends X_DMS_ContentType_Filter
 		super(ctx, rs, trxName);
 	}
 
-	public static CCache<Integer, MDMSContentTypeFilter> getMDMSContentTypeFilterList(int tableID)
+	public static Set<Entry<Integer, MDMSContentTypeFilter>> getMDMSContentTypeFilterList(int tableID)
 	{
 		int[] ids = DB.getIDsEx(null, "SELECT DMS_ContentType_Filter_ID FROM DMS_ContentType_Filter WHERE AD_Table_ID = ? AND IsActive = 'Y'", tableID);
 		for (int i = 0; i < ids.length; i++)
 		{
-			if (s_caCache.get(ids[i]) == null)
+			if (!s_caCache.containsKey(ids[i]))
 			{
 				MDMSContentTypeFilter dmsFilter = new MDMSContentTypeFilter(Env.getCtx(), ids[i], null);
 				s_caCache.put(dmsFilter.get_ID(), dmsFilter);
 			}
 		}
-		return s_caCache;
+		return s_caCache.entrySet();
 	} // getMDMSContentTypeFilterList
 }

@@ -619,7 +619,7 @@ public class WDMSAttributePanel extends Panel implements EventListener<Event>, V
 			final Tab tab = (Tab) tabBox.getSelectedTab();
 			final WDMSAttributePanel panel = this;
 
-			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, content, true, tableID, recordID, windowNo, tabNo, null);
+			IDMSUploadContent uploadContent = DMSFactoryUtils.getUploadContenFactory(dms, content, true, tableID, recordID, windowNo, tabNo);
 			((Component) uploadContent).addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 				@Override
