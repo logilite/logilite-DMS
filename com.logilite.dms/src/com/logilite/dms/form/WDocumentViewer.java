@@ -51,6 +51,8 @@ public class WDocumentViewer extends Window
 	private MDMSContent			mDMSContent			= null;
 	private MDMSMimeType		mimeType			= null;
 	private WDMSAttributePanel	attributePanel		= null;
+	private Component			component			= null;
+
 
 	private int					tableID				= 0;
 	private int					recordID			= 0;
@@ -69,6 +71,8 @@ public class WDocumentViewer extends Window
 		this.recordID = recordID;
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
+		this.component = component;
+
 	}
 
 	public WDMSAttributePanel getAttributePanel()
@@ -102,9 +106,8 @@ public class WDocumentViewer extends Window
 		// Content attribute view
 		Cell cellCPreview = new Cell();
 		cellCPreview.setWidth("30%");
-		// TODO
 		attributePanel = new WDMSAttributePanel(dms, mDMSContent, tabBox, tableID, recordID, isWindowAccess, isMountingBaseStructure, isLink, windowNo, tabNo,
-												null);
+												component);
 		cellCPreview.appendChild(attributePanel);
 
 		if (ClientInfo.isMobile())

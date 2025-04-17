@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
@@ -31,12 +30,8 @@ import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.factory.ButtonFactory;
 import org.apache.commons.io.FilenameUtils;
-import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
-import org.compiere.model.MLookupFactory;
-import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
-import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.util.media.Media;
@@ -55,9 +50,7 @@ import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.exception.DMSException;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.MDMSAssociation;
-import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
-import com.logilite.dms.model.MDMSContentTypeFilter;
 import com.logilite.dms.util.Utils;
 
 /**
@@ -133,71 +126,7 @@ public class WUploadContent extends AbstractUploadContent
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
-
-		// TODO: Add Attribute enhancement in future
-		String attribute = "";
-		// String attribute = MAttributeSet.get(Env.getCtx());
-
-		String accessValidationCode = " DMS_ContentType.DMS_ContentType_ID IN ( SELECT DMS_ContentType_ID FROM DMS_ContentType_Access "
-										+ " WHERE AD_Role_ID=@AD_Role_ID@) OR DMS_ContentType_ID NOT IN ( SELECT DISTINCT DMS_ContentType_ID "
-										+ " FROM DMS_ContentType_Access) AND DMS_ContentType.AD_Client_ID IN (@#AD_Client_ID@, 0))";
-
-		String filterValidationCode = " (DMS_ContentType.DMS_ContentType_ID NOT IN ( "
-										+ " SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Filter) ";
-
-		Set<Entry<Integer, MDMSContentTypeFilter>> dmsCntFilters = MDMSContentTypeFilter.getMDMSContentTypeFilterList(tableID);
-		String contentTypeID = "";
-		boolean found = false;
-
-		if (!Util.isEmpty(attribute) && attribute.equalsIgnoreCase("Exclude"))
-		{
-			accessValidationCode = "(" + accessValidationCode + " AND " + filterValidationCode + ")";
-		}
-		else
-		{
-			for (Entry<Integer, MDMSContentTypeFilter> dmsFilter : dmsCntFilters)
-			{
-				MDMSContentTypeFilter filter = dmsFilter.getValue();
-				if (filter.getAD_Table_ID() == tableID && !Util.isEmpty(filter.getFilterClause()))
-				{
-					found = true;
-					Env.parseContext(Env.getCtx(), windowNo, tabNo, filter.getFilterClause(), found);
-					{
-						contentTypeID += filter.getDMS_ContentType_ID() + " ,";
-					}
-				}
-			}
-			if (!Util.isEmpty(contentTypeID))
-			{
-				accessValidationCode = "("	+ accessValidationCode + "AND (DMS_ContentType.DMS_ContentType_ID  IN( "
-										+ contentTypeID.substring(0, contentTypeID.length() - 1) + ") OR " + filterValidationCode + "))";
-			}
-			else if (found)
-			{
-				accessValidationCode = "(" + accessValidationCode + " AND " + filterValidationCode + ")";
-			}
-			// if filter clause is empty
-			else if (tableID > 0)
-			{
-				accessValidationCode = "("	+ accessValidationCode + " AND (DMS_ContentType.DMS_ContentType_ID  IN( SELECT DMS_ContentType_ID FROM "
-										+ " DMS_ContentType_Filter where ad_table_id=" + tableID + ") OR" + filterValidationCode + "))";
-			}
-		}
-		MLookup lookup;
-		Language lang = Language.getLanguage("en-US");
-		try
-		{
-			lookup = MLookupFactory.get(Env.getCtx(), windowNo, Column_ID, DisplayType.TableDir, lang,
-										MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, false, accessValidationCode);
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, e.getMessage());
-			lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
-		}
-
-		lookup.refresh();
+		MLookup lookup = Utils.getCntTypeLookup(windowNo, tabNo, tableID, recordID);
 		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 
 		// Load value from context if available for Content Type field
@@ -453,8 +382,6 @@ public class WUploadContent extends AbstractUploadContent
 					tmpFile.delete();
 			}
 		}
-
 		this.detach();
-
 	} // saveUploadedDocument
 }

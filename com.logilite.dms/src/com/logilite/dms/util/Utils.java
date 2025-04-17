@@ -41,6 +41,8 @@ import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 
 import org.adempiere.exceptions.AdempiereException;
+import org.adempiere.webui.adwindow.ADWindow;
+import org.adempiere.webui.adwindow.IADTabpanel;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.Adempiere;
 import org.compiere.model.I_AD_StorageProvider;
@@ -50,10 +52,14 @@ import org.compiere.model.MAttributeSet;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MAttributeValue;
 import org.compiere.model.MClientInfo;
+import org.compiere.model.MColumn;
 import org.compiere.model.MImage;
+import org.compiere.model.MLookup;
+import org.compiere.model.MLookupFactory;
 import org.compiere.model.MStorageProvider;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
+import org.compiere.model.MTableAttribute;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.CCache;
@@ -61,12 +67,15 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
+import org.compiere.util.Evaluator;
 import org.compiere.util.KeyNamePair;
 import org.compiere.util.Util;
 
 import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
+import com.logilite.dms.model.MDMSContentType;
+import com.logilite.dms.model.MDMSContentTypeFilter;
 import com.logilite.dms.model.MDMSMimeType;
 
 /**
@@ -765,5 +774,177 @@ public class Utils
 		return absolutePath.substring(0, index)
 				+ fileName
 				+ absolutePath.substring(index + fileOldName.length());
-	}
+	} // getUpdatedFilePath
+
+	public static String getCTQueryByFilterAndAccess(int windowNo, int tabNo, int tableID, int recordID)
+	{
+		// Common Content SQL with Access condition
+		String whereClause = DMSConstant.SQL_GET_CT_ACCESS + " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + ")";
+		if (windowNo == 0 && tableID == 0)
+		{
+			return whereClause;
+		}
+
+		// TODO: Refactor with Latest core change
+		MTableAttribute tAttribute = new Query(	Env.getCtx(), MTableAttribute.Table_Name, MTableAttribute.COLUMNNAME_Record_ID + " = ?",
+												null).setParameters(tableID).firstOnly();
+
+		String tableAttribute;
+
+		// If the table attribute is null, the default value is set to 'Include'
+		if (tAttribute == null)
+			tableAttribute = DMSConstant.ATTR_SET_TSCTF_INCLUDE;
+		else
+			tableAttribute = tAttribute.getM_AttributeValue().getValue();
+
+		// If the attribute is empty, no additional check clause is required
+		if (DMSConstant.ATTR_SET_TSCTF_EMPTY.equals(tableAttribute))
+		{
+			return whereClause;
+		}
+
+		boolean found = false;
+		StringBuilder filteredCT = new StringBuilder();
+		List<MDMSContentTypeFilter> dmsCntFilters = MDMSContentTypeFilter.getAllContentTypeFilterList();
+
+		for (MDMSContentTypeFilter filter : dmsCntFilters)
+		{
+			// Process filters with a matching table ID and a defined filter clause
+			if (filter.getAD_Table_ID() == tableID)
+			{
+				// Check a Filter Clause based on Current Table and Record
+				if (!Util.isEmpty(filter.getFilterClause(), true))
+				{
+					found = true;
+					boolean isValid = false;
+					if (filter.getFilterClause().startsWith("@SQL="))
+					{
+						isValid = Evaluator.parseSQLLogic(filter.getFilterClause(), Env.getCtx(), windowNo, tabNo, null);
+					}
+					else
+					{
+						PO po = MTable.get(Env.getCtx(), tableID).getPO(recordID, null);
+						String str = Env.parseVariable(filter.getFilterClause(), po, null, false);
+
+						ADWindow adwindow = ADWindow.get(windowNo);
+						if (adwindow != null)
+						{
+							IADTabpanel adTabpanel = adwindow.getADWindowContent().getADTab().getSelectedTabpanel();
+							if (adTabpanel != null)
+								isValid = Evaluator.evaluateLogic(adTabpanel, filter.getFilterClause()) && !Util.isEmpty(str, true);
+						}
+						else
+						{
+							isValid = Evaluator.evaluateLogic(po, filter.getFilterClause()) && !Util.isEmpty(str, true);
+						}
+					}
+
+					// Append contentTypeID based on valid clause and table attributes
+					if ((isValid && (DMSConstant.ATTR_SET_TSCTF_INCLUDE.equals(tableAttribute)
+										|| DMSConstant.ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY.equals(tableAttribute)))
+						|| (!isValid && (DMSConstant.ATTR_SET_TSCTF_EXCLUDE.equals(tableAttribute)
+											|| DMSConstant.ATTR_SET_TSCTF_EXCLUDE_TABLE_ONLY.equals(tableAttribute))))
+					{
+						filteredCT.append(filter.getDMS_ContentType_ID()).append(", ");
+					}
+				}
+				// Filter clause empty, Attribute is include OR include Table Only
+				// Add contentTypeID
+				else if (DMSConstant.ATTR_SET_TSCTF_INCLUDE.equals(tableAttribute)
+							|| DMSConstant.ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY.equals(tableAttribute))
+				{
+					found = true;
+					filteredCT.append(filter.getDMS_ContentType_ID()).append(", ");
+				}
+			}
+			else if (DMSConstant.ATTR_SET_TSCTF_EXCLUDE.equals(tableAttribute))
+			{
+				filteredCT.append(filter.getDMS_ContentType_ID()).append(", ");
+			}
+		}
+
+		String strFilteredCT = filteredCT.length() > 0 ? filteredCT.substring(0, filteredCT.length() - 2) : "";
+		String filterCTSQL = DMSConstant.SQL_GET_CT_ACCESS + " AND DMS_ContentType.DMS_ContentType_ID IN (" + strFilteredCT + ")";
+		// Construct the final SQL query based on table attribute
+		switch (tableAttribute)
+		{
+			case DMSConstant.ATTR_SET_TSCTF_INCLUDE:
+				if (!Util.isEmpty(strFilteredCT, true))
+				{
+					return filterCTSQL + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + "))";
+				}
+				else
+				{
+					return whereClause;
+				}
+			case DMSConstant.ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY:
+				if (!Util.isEmpty(strFilteredCT, true))
+				{
+					return filterCTSQL + ")";
+				}
+				else if (found)
+				{
+					return DMSConstant.SQL_GET_CT_ACCESS;
+				}
+				else
+				{
+					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + " ) AND "
+							+ DMSConstant.SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE;
+				}
+			case DMSConstant.ATTR_SET_TSCTF_EXCLUDE:
+				if (!Util.isEmpty(strFilteredCT, true))
+				{
+					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND (DMS_ContentType.DMS_ContentType_ID IN (" + strFilteredCT
+							+ ") OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + "))";
+				}
+				else
+				{
+					return DMSConstant.SQL_GET_CT_ACCESS + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + ")";
+				}
+			case DMSConstant.ATTR_SET_TSCTF_EXCLUDE_TABLE_ONLY:
+				if (!Util.isEmpty(strFilteredCT, true))
+				{
+					return filterCTSQL + ")";
+				}
+				else
+				{
+					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS
+							+ " ) AND " + DMSConstant.SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE;
+				}
+			default:
+				return DMSConstant.SQL_GET_CT_ACCESS;
+		}
+	} // getCTQueryByFilterAndAccess
+
+	/**
+	 * Returns an MLookup for DMS Content Type using a custom query with access control.
+	 * Falls back to default lookup creation if the query-based one fails.
+	 *
+	 * @param  windowNo the window number in the UI context
+	 * @param  tabNo    the tab number in the UI context
+	 * @param  tableID  the table ID to filter content
+	 * @param  recordID the specific record ID to filter
+	 * @return          an instance of MLookup for DMS_ContentType_ID
+	 */
+	public static MLookup getCntTypeLookup(int windowNo, int tabNo, int tableID, int recordID)
+	{
+		String query = Utils.getCTQueryByFilterAndAccess(windowNo, tabNo, tableID, recordID);
+
+		MLookup lookupCT;
+		try
+		{
+			// Try to create a lookup with a custom query using MLookupFactory
+			lookupCT = MLookupFactory.get(	Env.getCtx(), windowNo, MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID),
+											DisplayType.TableDir, null, MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, false, query);
+		}
+		catch (Exception e)
+		{
+			// In case of failure, log the error and fallback to default lookup creation
+			log.log(Level.SEVERE, e.getMessage());
+			lookupCT = MLookupFactory.get(	Env.getCtx(), windowNo, tabNo,
+											MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID),
+											DisplayType.TableDir);
+		}
+		return lookupCT;
+	} // getCntTypeEditor
 }

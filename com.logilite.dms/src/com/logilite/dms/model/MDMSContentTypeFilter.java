@@ -1,12 +1,11 @@
 package com.logilite.dms.model;
 
 import java.sql.ResultSet;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 
-import org.compiere.util.CCache;
-import org.compiere.util.DB;
+import org.compiere.model.MTable;
+import org.compiere.model.Query;
 import org.compiere.util.Env;
 
 /**
@@ -18,9 +17,7 @@ import org.compiere.util.Env;
 public class MDMSContentTypeFilter extends X_DMS_ContentType_Filter
 {
 
-	private static final long								serialVersionUID	= 5218105347767574761L;
-
-	private static CCache<Integer, MDMSContentTypeFilter>	s_caCache			= new CCache<>(Table_Name, 10, 5);
+	private static final long serialVersionUID = 5218105347767574761L;
 
 	public MDMSContentTypeFilter(Properties ctx, int DMS_ContentType_Filter_ID, String trxName)
 	{
@@ -32,17 +29,17 @@ public class MDMSContentTypeFilter extends X_DMS_ContentType_Filter
 		super(ctx, rs, trxName);
 	}
 
-	public static Set<Entry<Integer, MDMSContentTypeFilter>> getMDMSContentTypeFilterList(int tableID)
+	/**
+	 * Get active content type filters for system and current client.
+	 *
+	 * @return List of content type filters
+	 */
+	public static List<MDMSContentTypeFilter> getAllContentTypeFilterList()
 	{
-		int[] ids = DB.getIDsEx(null, "SELECT DMS_ContentType_Filter_ID FROM DMS_ContentType_Filter WHERE AD_Table_ID = ? AND IsActive = 'Y'", tableID);
-		for (int i = 0; i < ids.length; i++)
-		{
-			if (!s_caCache.containsKey(ids[i]))
-			{
-				MDMSContentTypeFilter dmsFilter = new MDMSContentTypeFilter(Env.getCtx(), ids[i], null);
-				s_caCache.put(dmsFilter.get_ID(), dmsFilter);
-			}
-		}
-		return s_caCache.entrySet();
-	} // getMDMSContentTypeFilterList
+		Query query = new Query(Env.getCtx(), MTable.get(Env.getCtx(), Table_ID), "AD_Client_ID IN (0, ?)", null);
+		return query.setParameters(Env.getAD_Client_ID(Env.getCtx()))
+					.setOnlyActiveRecords(true)
+					.list();
+	} // getAllContentTypeFilterList
+
 }

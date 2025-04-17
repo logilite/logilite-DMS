@@ -239,6 +239,14 @@ public final class DMSConstant
 	public static final String				DOCUMENT_VIEW_NON_DELETED				= "Non-Deleted";
 	public static final String				DOCUMENT_VIEW_NON_DELETED_VALUE			= "ND";
 
+	// Table Attribute = TableSpecificContentTypeFilter
+	// Its value list items
+	public static final String				ATTR_SET_TSCTF_INCLUDE					= "IN";
+	public static final String				ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY		= "IO";
+	public static final String				ATTR_SET_TSCTF_EXCLUDE					= "EX";
+	public static final String				ATTR_SET_TSCTF_EXCLUDE_TABLE_ONLY		= "EO";
+	public static final String				ATTR_SET_TSCTF_EMPTY					= "MT";
+
 	/*
 	 * Date Format
 	 */
@@ -401,6 +409,19 @@ public final class DMSConstant
 																						+ " SELECT s.* 																											"
 																						+ " FROM SupplyTree AS s 																								"
 																						+ " ORDER BY Level DESC, DMS_AssociationType_ID, Path;																	";
+
+	public static final String				SQL_GET_CT_ACCESS						= "  (	DMS_ContentType.DMS_ContentType_ID 	   IN (	SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Access 		"
+																						+ "												WHERE AD_Role_ID=@AD_Role_ID@ ) 									"
+																						+ " OR  																											"
+																						+ "	DMS_ContentType.DMS_ContentType_ID NOT IN (	SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Access) )	"
+																						+ " AND DMS_ContentType.AD_Client_ID IN (@#AD_Client_ID@, 0) 														";
+
+	public static final String				SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE		= " DMS_ContentType.DMS_ContentType_ID IN ( 							"
+																						+ " SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Filter 	"
+																						+ "	WHERE FilterClause IS NULL ) 									";
+
+	public static final String				SQL_GET_CT_WITHOUT_FILTER_RECORDS		= " (DMS_ContentType.DMS_ContentType_ID NOT IN ( 						"
+																						+ " SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Filter) ";
 
 	/**
 	 * Improve Performance of Content ID search
