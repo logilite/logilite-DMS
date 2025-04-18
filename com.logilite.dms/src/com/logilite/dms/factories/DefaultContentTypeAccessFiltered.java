@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -38,7 +39,7 @@ public class DefaultContentTypeAccessFiltered implements IContentTypeAccess
 		List<Integer> contentIDList = getAccessedContentsRoleWise(Env.getAD_Role_ID(Env.getCtx()), whereClause);
 
 		//
-		HashMap<I_DMS_Version, I_DMS_Association> contentsMapFiltered = new HashMap<I_DMS_Version, I_DMS_Association>();
+		HashMap<I_DMS_Version, I_DMS_Association> contentsMapFiltered = new LinkedHashMap<I_DMS_Version, I_DMS_Association>();
 
 		Iterator<Entry<I_DMS_Version, I_DMS_Association>> it = contentMap.entrySet().iterator();
 		while (it.hasNext())

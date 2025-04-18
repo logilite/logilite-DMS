@@ -91,6 +91,7 @@ public class DMS
 		{
 			this.AD_Client_ID = AD_Client_ID;
 
+			// File Storage
 			fileStorageProvider = FileStorageUtil.get(AD_Client_ID, false);
 			if (fileStorageProvider == null)
 				throw new AdempiereException("Storage provider is not found.");
@@ -107,22 +108,18 @@ public class DMS
 					throw new AdempiereException("Thumbnail provider is not found.");
 			}
 
+			// Content Manager
 			contentManager = DMSFactoryUtils.getContentManager(AD_Client_ID);
 			if (contentManager == null)
 				throw new AdempiereException("Content manager is not found.");
 
-			indexSearcher = DMSSearchUtils.getIndexSearcher(AD_Client_ID);
-			if (indexSearcher == null)
-				throw new AdempiereException("Index server is not found.");
-
-			indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(AD_Client_ID);
-			if (indexQueryBuilder == null)
-				throw new AdempiereException("Index query builder artifact not deployed.");
+			//
+			checkIndexSearcher();
 
 			// When open Document Explorer
 			ssTableInfo = new DMSSubstituteTableInfo(0);
 
-			//
+			// Permission Manager
 			if (DMSPermissionUtils.isPermissionAllowed())
 				permissionManager = DMSFactoryUtils.getPermissionFactory();
 		}
@@ -130,6 +127,20 @@ public class DMS
 		//
 		DMSConstant.SDF_UTC_DATE_FORMAT_WITH_TIME.setTimeZone(TimeZone.getTimeZone("UTC"));
 	} // Constructor
+
+	/**
+	 * Check Index Searcher [ Initiate or Server Down ]
+	 */
+	public void checkIndexSearcher()
+	{
+		if (indexSearcher == null || !indexSearcher.checkServerIsUp())
+		{
+			// Index Searcher
+			indexSearcher = DMSSearchUtils.getIndexSearcher(AD_Client_ID);
+			// Index Query Builder
+			indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(indexSearcher);
+		}
+	}
 
 	/**
 	 * Constructor for initialize provider
@@ -365,6 +376,7 @@ public class DMS
 
 	public HashSet<Integer> searchIndex(String query)
 	{
+		checkIndexSearcher();
 		return indexSearcher.searchIndex(query, DMSConstant.DMS_CONTENT_ID);
 	} // searchIndex
 
@@ -381,7 +393,7 @@ public class DMS
 	public void createIndexContent(I_DMS_Content content, I_DMS_Association association, I_DMS_Version version)
 	{
 		File file = getFileFromStorage(version);
-		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(indexSearcher, content, association, version, file));
+		indexSearcher.indexContent(DMSSearchUtils.createIndexMap(content, association, version, file));
 	} // createIndexContent
 
 	public HashMap<I_DMS_Version, I_DMS_Association> getGenericSearchedContent(	String searchText, HashMap<String, List<Object>> queryParamas,
@@ -495,12 +507,12 @@ public class DMS
 	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, boolean isActiveOnly)
 	{
 		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, (isActiveOnly	? DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE
-																									: DMSConstant.DOCUMENT_VIEW_ALL_VALUE));
+																									: DMSConstant.DOCUMENT_VIEW_ALL_VALUE), null);
 	} // getDMSContentsWithAssociation
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView)
+	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView, String sortFieldName)
 	{
-		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, documentView);
+		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, documentView, sortFieldName);
 	} // getDMSContentsWithAssociation
 
 	public HashMap<I_DMS_Association, I_DMS_Content> getLinkableAssociationWithContentRelated(I_DMS_Content content)
@@ -800,6 +812,17 @@ public class DMS
 	{
 		DMSOprUtils.deleteContentWithPhysicalDocument(this, content);
 	} // deleteContentWithPhysicalDocument
+
+	/**
+	 * Permanently delete the physical document, its entire hierarchical structure, any linked
+	 * references to other locations, and the associated indexing data.
+	 * 
+	 * @param association
+	 */
+	public void deletePhysicalContentsAndHierarchy(MDMSAssociation association)
+	{
+		DMSOprUtils.deletePhysicalContentsAndHierarchy(this, association);
+	} // deletePhysicalContentsAndHierarchy
 
 	/**
 	 * This will be a soft deletion. System will only inactive the files.

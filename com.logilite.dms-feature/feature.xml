@@ -2,7 +2,7 @@
 <feature
       id="com.logilite.dms.feature"
       label="dms-feature"
-      version="9.3.0.qualifier"
+      version="9.5.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
@@ -82,6 +82,14 @@
          version="0.0.0"
          unpack="false"/>
 
+
+   <plugin
+         id="com.logilite.dms.querybuildsql"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
    <plugin
          id="com.logilite.search"
          download-size="0"
@@ -98,6 +106,13 @@
 
    <plugin
          id="com.logilite.search.solrlib"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+    <plugin
+         id="com.logilite.dms.querybuildsolr"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -125,18 +140,33 @@
          unpack="false"/>
 
    <plugin
-         id="com.logilite.dms.querybuildsolr"
+         id="com.logilite.dms.fileuploader"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="com.logilite.dms.fileuploader"
+         id="com.logilite.dms.test"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+
+   <plugin
+         id="com.logilite.dms.dmscleanuponrecorddelete"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.dms.contentdirdeduplication"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 <!--
    <plugin
          id="com.logilite.esignature.topaz"

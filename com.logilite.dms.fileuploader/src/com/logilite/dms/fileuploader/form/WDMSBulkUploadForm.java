@@ -138,9 +138,7 @@ public class WDMSBulkUploadForm extends AbstractUploadContent
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int columnIDCT = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
-		MLookup lookupCT = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, columnIDCT, DisplayType.TableDir);
-		lookupCT.refresh();
+		MLookup lookupCT = Utils.getCntTypeLookup(windowNo, tabNo, tableID, recordID);
 		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookupCT);
 
 		// Load value from context if available for Content Type field
@@ -552,6 +550,8 @@ public class WDMSBulkUploadForm extends AbstractUploadContent
 			else
 			{
 				tableID = 0;
+				recordID = 0;
+				editorRecord.setValue(null);
 				Components.removeAllChildren(rowRecord);
 				rowRecord.setVisible(false);
 			}
@@ -560,6 +560,18 @@ public class WDMSBulkUploadForm extends AbstractUploadContent
 		else if (event.getSource().equals(editorRecord))
 		{
 			recordID = event.getNewValue() == null ? 0 : (int) event.getNewValue();
+			MLookup lookupCT;
+			// Default behavior is General Content Type
+			if (tableID > 0 && recordID > 0)
+				lookupCT = Utils.getCntTypeLookup(windowNo, tabNo, tableID, recordID);
+			else
+				lookupCT = Utils.getCntTypeLookup(windowNo, tabNo, 0, 0);
+			editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookupCT);
+
+			Components.removeAllChildren(contentTypeRow);
+			contentTypeRow.appendCellChild(lblContentType, 2);
+			editorContentType.fillHorizontal();
+			contentTypeRow.appendCellChild(editorContentType.getComponent(), 3);
 		}
 		else
 		{
