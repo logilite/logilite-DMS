@@ -2,7 +2,7 @@
 <feature
       id="com.logilite.dms.feature"
       label="dms-feature"
-      version="7.4.0.qualifier"
+      version="7.5.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
