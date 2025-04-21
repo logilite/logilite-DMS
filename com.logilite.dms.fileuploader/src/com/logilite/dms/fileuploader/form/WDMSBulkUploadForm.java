@@ -138,7 +138,7 @@ public class WDMSBulkUploadForm extends AbstractUploadContent
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		MLookup lookupCT = Utils.getCntTypeLookup(windowNo, tabNo, tableID, recordID);
+		MLookup lookupCT = Utils.getContentTypeEditorLookup(windowNo, tabNo, tableID, recordID);
 		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookupCT);
 
 		// Load value from context if available for Content Type field
@@ -563,9 +563,9 @@ public class WDMSBulkUploadForm extends AbstractUploadContent
 			MLookup lookupCT;
 			// Default behavior is General Content Type
 			if (tableID > 0 && recordID > 0)
-				lookupCT = Utils.getCntTypeLookup(windowNo, tabNo, tableID, recordID);
+				lookupCT = Utils.getContentTypeEditorLookup(windowNo, tabNo, tableID, recordID);
 			else
-				lookupCT = Utils.getCntTypeLookup(windowNo, tabNo, 0, 0);
+				lookupCT = Utils.getContentTypeEditorLookup(windowNo, tabNo, 0, 0);
 			editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookupCT);
 
 			Components.removeAllChildren(contentTypeRow);

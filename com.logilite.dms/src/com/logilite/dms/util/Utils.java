@@ -776,6 +776,16 @@ public class Utils
 				+ absolutePath.substring(index + fileOldName.length());
 	} // getUpdatedFilePath
 
+	/**
+	 * Content Type list based on Access and Filter condition based on table specific configured
+	 * attribute value [ TableSpecificContentTypeFilter ]
+	 * 
+	 * @param  windowNo
+	 * @param  tabNo
+	 * @param  tableID
+	 * @param  recordID
+	 * @return          whereclause for Content Type
+	 */
 	public static String getCTQueryByFilterAndAccess(int windowNo, int tabNo, int tableID, int recordID)
 	{
 		// Common Content SQL with Access condition
@@ -786,11 +796,11 @@ public class Utils
 		}
 
 		// TODO: Refactor with Latest core change
-		MTableAttribute tAttribute = new Query(	Env.getCtx(), MTableAttribute.Table_Name, MTableAttribute.COLUMNNAME_Record_ID + " = ?",
-												null).setParameters(tableID).firstOnly();
+		MTableAttribute tAttribute = new Query(Env.getCtx(), MTableAttribute.Table_Name, "Record_ID = ?", null)
+																												.setParameters(tableID)
+																												.firstOnly();
 
 		String tableAttribute;
-
 		// If the table attribute is null, the default value is set to 'Include'
 		if (tAttribute == null)
 			tableAttribute = DMSConstant.ATTR_SET_TSCTF_INCLUDE;
@@ -863,6 +873,7 @@ public class Utils
 			}
 		}
 
+		//
 		String strFilteredCT = filteredCT.length() > 0 ? filteredCT.substring(0, filteredCT.length() - 2) : "";
 		String filterCTSQL = DMSConstant.SQL_GET_CT_ACCESS + " AND DMS_ContentType.DMS_ContentType_ID IN (" + strFilteredCT + ")";
 		// Construct the final SQL query based on table attribute
@@ -926,11 +937,11 @@ public class Utils
 	 * @param  recordID the specific record ID to filter
 	 * @return          an instance of MLookup for DMS_ContentType_ID
 	 */
-	public static MLookup getCntTypeLookup(int windowNo, int tabNo, int tableID, int recordID)
+	public static MLookup getContentTypeEditorLookup(int windowNo, int tabNo, int tableID, int recordID)
 	{
 		String query = Utils.getCTQueryByFilterAndAccess(windowNo, tabNo, tableID, recordID);
 
-		MLookup lookupCT;
+		MLookup lookupCT = null;
 		try
 		{
 			// Try to create a lookup with a custom query using MLookupFactory
@@ -939,12 +950,8 @@ public class Utils
 		}
 		catch (Exception e)
 		{
-			// In case of failure, log the error and fallback to default lookup creation
-			log.log(Level.SEVERE, e.getMessage());
-			lookupCT = MLookupFactory.get(	Env.getCtx(), windowNo, tabNo,
-											MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID),
-											DisplayType.TableDir);
+			log.log(Level.SEVERE, "Failed to prepare lookup for ContentType editor, Error: " + e.getLocalizedMessage(), e);
 		}
 		return lookupCT;
-	} // getCntTypeEditor
+	} // getContentTypeEditorLookup
 }
