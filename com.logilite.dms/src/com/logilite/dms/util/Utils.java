@@ -789,35 +789,35 @@ public class Utils
 	public static String getCTQueryByFilterAndAccess(int windowNo, int tabNo, int tableID, int recordID)
 	{
 		// Common Content SQL with Access condition
-		String whereClause = DMSConstant.SQL_GET_CT_ACCESS + " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS;
+		String defaultWhereClause = DMSConstant.SQL_GET_CT_ACCESS + " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS;
 		if (windowNo == 0 && tableID == 0)
 		{
-			return whereClause;
+			return defaultWhereClause;
 		}
 
 		// TODO: Refactor with Latest core change
-		MTableAttribute tAttribute = new Query(Env.getCtx(), MTableAttribute.Table_Name, "Record_ID = ?", null)
+		MTableAttribute tableAttrib = new Query(Env.getCtx(), MTableAttribute.Table_Name, "Record_ID = ?", null)
 																												.setParameters(tableID)
 																												.firstOnly();
 
-		String tableAttribute;
+		String valueTA;
 		// If the table attribute is null, the default value is set to 'Include'
-		if (tAttribute == null)
-			tableAttribute = DMSConstant.ATTR_SET_TSCTF_INCLUDE;
+		if (tableAttrib == null)
+			valueTA = DMSConstant.ATTR_SET_TSCTF_INCLUDE;
 		else
-			tableAttribute = tAttribute.getM_AttributeValue().getValue();
+			valueTA = tableAttrib.getM_AttributeValue().getValue();
 
 		// If the attribute is empty, no additional check clause is required
-		if (DMSConstant.ATTR_SET_TSCTF_EMPTY.equals(tableAttribute))
+		if (DMSConstant.ATTR_SET_TSCTF_EMPTY.equals(valueTA))
 		{
-			return whereClause;
+			return defaultWhereClause;
 		}
 
 		boolean found = false;
 		StringBuilder filteredCT = new StringBuilder();
-		List<MDMSContentTypeFilter> dmsCntFilters = MDMSContentTypeFilter.getAllContentTypeFilterList();
+		List<MDMSContentTypeFilter> contentFilterList = MDMSContentTypeFilter.getAllContentTypeFilterList();
 
-		for (MDMSContentTypeFilter filter : dmsCntFilters)
+		for (MDMSContentTypeFilter filter : contentFilterList)
 		{
 			// Process filters with a matching table ID and a defined filter clause
 			if (filter.getAD_Table_ID() == tableID)
@@ -850,24 +850,22 @@ public class Utils
 					}
 
 					// Append contentTypeID based on valid clause and table attributes
-					if ((isValid && (DMSConstant.ATTR_SET_TSCTF_INCLUDE.equals(tableAttribute)
-										|| DMSConstant.ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY.equals(tableAttribute)))
-						|| (!isValid && (DMSConstant.ATTR_SET_TSCTF_EXCLUDE.equals(tableAttribute)
-											|| DMSConstant.ATTR_SET_TSCTF_EXCLUDE_TABLE_ONLY.equals(tableAttribute))))
+					if ((isValid && (DMSConstant.ATTR_SET_TSCTF_INCLUDE.equals(valueTA) || DMSConstant.ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY.equals(valueTA)))
+						||
+						(!isValid && (DMSConstant.ATTR_SET_TSCTF_EXCLUDE.equals(valueTA) || DMSConstant.ATTR_SET_TSCTF_EXCLUDE_TABLE_ONLY.equals(valueTA))))
 					{
 						filteredCT.append(filter.getDMS_ContentType_ID()).append(", ");
 					}
 				}
-				// Filter clause empty, Attribute is include OR include Table Only
-				// Add contentTypeID
-				else if (DMSConstant.ATTR_SET_TSCTF_INCLUDE.equals(tableAttribute)
-							|| DMSConstant.ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY.equals(tableAttribute))
+				// Filter clause empty, Attribute is include OR include Table Only then add
+				// contentTypeID
+				else if (DMSConstant.ATTR_SET_TSCTF_INCLUDE.equals(valueTA) || DMSConstant.ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY.equals(valueTA))
 				{
 					found = true;
 					filteredCT.append(filter.getDMS_ContentType_ID()).append(", ");
 				}
 			}
-			else if (DMSConstant.ATTR_SET_TSCTF_EXCLUDE.equals(tableAttribute))
+			else if (DMSConstant.ATTR_SET_TSCTF_EXCLUDE.equals(valueTA))
 			{
 				filteredCT.append(filter.getDMS_ContentType_ID()).append(", ");
 			}
@@ -877,21 +875,23 @@ public class Utils
 		String strFilteredCT = filteredCT.length() > 0 ? filteredCT.substring(0, filteredCT.length() - 2) : "";
 		String filterCTSQL = DMSConstant.SQL_GET_CT_ACCESS + " AND DMS_ContentType.DMS_ContentType_ID IN (" + strFilteredCT + ")";
 		// Construct the final SQL query based on table attribute
-		switch (tableAttribute)
+		switch (valueTA)
 		{
+			// Include
 			case DMSConstant.ATTR_SET_TSCTF_INCLUDE:
 				if (!Util.isEmpty(strFilteredCT, true))
 				{
-					return filterCTSQL + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + ")";
+					return filterCTSQL + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS;
 				}
 				else
 				{
-					return whereClause;
+					return defaultWhereClause;
 				}
+				// Include Table Only
 			case DMSConstant.ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY:
 				if (!Util.isEmpty(strFilteredCT, true))
 				{
-					return filterCTSQL + ")";
+					return filterCTSQL;
 				}
 				else if (found)
 				{
@@ -899,54 +899,63 @@ public class Utils
 				}
 				else
 				{
-					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + " AND "
-							+ DMSConstant.SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE;
+					return DMSConstant.SQL_GET_CT_ACCESS
+							+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS
+							+ " AND " + DMSConstant.SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE;
 				}
+				// Exclude
 			case DMSConstant.ATTR_SET_TSCTF_EXCLUDE:
 				if (!Util.isEmpty(strFilteredCT, true))
 				{
-					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND (DMS_ContentType.DMS_ContentType_ID IN (" + strFilteredCT
-							+ ") OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + ")";
+					return DMSConstant.SQL_GET_CT_ACCESS
+							+ " AND (	DMS_ContentType.DMS_ContentType_ID IN (" + strFilteredCT + ")"
+							+ " 		OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS
+							+ "		) ";
 				}
 				else
 				{
-					return DMSConstant.SQL_GET_CT_ACCESS + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS;
+					return DMSConstant.SQL_GET_CT_ACCESS
+							+ " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS;
 				}
+				// Exclude Table Only
 			case DMSConstant.ATTR_SET_TSCTF_EXCLUDE_TABLE_ONLY:
 				if (!Util.isEmpty(strFilteredCT, true))
 				{
-					return filterCTSQL + ")";
+					return filterCTSQL;
 				}
 				else
 				{
-					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS
+					return DMSConstant.SQL_GET_CT_ACCESS
+							+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS
 							+ " AND " + DMSConstant.SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE;
 				}
+				// Default
 			default:
-				return DMSConstant.SQL_GET_CT_ACCESS;
+				return defaultWhereClause;
 		}
 	} // getCTQueryByFilterAndAccess
 
 	/**
 	 * Returns an MLookup for DMS Content Type using a custom query with access control.
-	 * Falls back to default lookup creation if the query-based one fails.
 	 *
 	 * @param  windowNo the window number in the UI context
 	 * @param  tabNo    the tab number in the UI context
 	 * @param  tableID  the table ID to filter content
 	 * @param  recordID the specific record ID to filter
-	 * @return          an instance of MLookup for DMS_ContentType_ID
+	 * @return          {@link MLookup} instance for DMS_ContentType_ID
 	 */
 	public static MLookup getContentTypeEditorLookup(int windowNo, int tabNo, int tableID, int recordID)
 	{
 		String query = Utils.getCTQueryByFilterAndAccess(windowNo, tabNo, tableID, recordID);
 
+		//
 		MLookup lookupCT = null;
 		try
 		{
 			// Try to create a lookup with a custom query using MLookupFactory
 			lookupCT = MLookupFactory.get(	Env.getCtx(), windowNo, MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID),
-											DisplayType.TableDir, null, MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, false, query);
+											DisplayType.TableDir, Env.getLanguage(Env.getCtx()), MDMSContentType.COLUMNNAME_DMS_ContentType_ID, 0, false,
+											query);
 		}
 		catch (Exception e)
 		{
