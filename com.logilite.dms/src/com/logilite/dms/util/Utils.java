@@ -779,7 +779,7 @@ public class Utils
 	public static String getCTQueryByFilterAndAccess(int windowNo, int tabNo, int tableID, int recordID)
 	{
 		// Common Content SQL with Access condition
-		String whereClause = DMSConstant.SQL_GET_CT_ACCESS + " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + ")";
+		String whereClause = DMSConstant.SQL_GET_CT_ACCESS + " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS;
 		if (windowNo == 0 && tableID == 0)
 		{
 			return whereClause;
@@ -871,7 +871,7 @@ public class Utils
 			case DMSConstant.ATTR_SET_TSCTF_INCLUDE:
 				if (!Util.isEmpty(strFilteredCT, true))
 				{
-					return filterCTSQL + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + "))";
+					return filterCTSQL + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + ")";
 				}
 				else
 				{
@@ -888,18 +888,18 @@ public class Utils
 				}
 				else
 				{
-					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + " ) AND "
+					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + " AND "
 							+ DMSConstant.SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE;
 				}
 			case DMSConstant.ATTR_SET_TSCTF_EXCLUDE:
 				if (!Util.isEmpty(strFilteredCT, true))
 				{
 					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND (DMS_ContentType.DMS_ContentType_ID IN (" + strFilteredCT
-							+ ") OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + "))";
+							+ ") OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + ")";
 				}
 				else
 				{
-					return DMSConstant.SQL_GET_CT_ACCESS + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS + ")";
+					return DMSConstant.SQL_GET_CT_ACCESS + " OR " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS;
 				}
 			case DMSConstant.ATTR_SET_TSCTF_EXCLUDE_TABLE_ONLY:
 				if (!Util.isEmpty(strFilteredCT, true))
@@ -909,7 +909,7 @@ public class Utils
 				else
 				{
 					return DMSConstant.SQL_GET_CT_ACCESS	+ " AND " + DMSConstant.SQL_GET_CT_WITHOUT_FILTER_RECORDS
-							+ " ) AND " + DMSConstant.SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE;
+							+ " AND " + DMSConstant.SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE;
 				}
 			default:
 				return DMSConstant.SQL_GET_CT_ACCESS;

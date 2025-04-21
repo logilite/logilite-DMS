@@ -421,7 +421,7 @@ public final class DMSConstant
 																						+ "	WHERE FilterClause IS NULL ) 									";
 
 	public static final String				SQL_GET_CT_WITHOUT_FILTER_RECORDS		= " (DMS_ContentType.DMS_ContentType_ID NOT IN ( 						"
-																						+ " SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Filter) ";
+																						+ " SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Filter) ) ";
 
 	/**
 	 * Improve Performance of Content ID search
