@@ -800,12 +800,12 @@ public class Utils
 																												.setParameters(tableID)
 																												.firstOnly();
 
-		String valueTA;
+		String valueTA = null;
 		// If the table attribute is null, the default value is set to 'Include'
-		if (tableAttrib == null)
-			valueTA = DMSConstant.ATTR_SET_TSCTF_INCLUDE;
-		else
+		if (tableAttrib != null)
 			valueTA = tableAttrib.getM_AttributeValue().getValue();
+		if (tableAttrib == null | valueTA == null)
+			valueTA = DMSConstant.ATTR_SET_TSCTF_INCLUDE;
 
 		// If the attribute is empty, no additional check clause is required
 		if (DMSConstant.ATTR_SET_TSCTF_EMPTY.equals(valueTA))
