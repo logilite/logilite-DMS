@@ -126,7 +126,7 @@ public class WUploadContent extends AbstractUploadContent
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		MLookup lookup = Utils.getCntTypeLookup(windowNo, tabNo, tableID, recordID);
+		MLookup lookup = Utils.getContentTypeEditorLookup(windowNo, tabNo, tableID, recordID);
 		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 
 		// Load value from context if available for Content Type field
