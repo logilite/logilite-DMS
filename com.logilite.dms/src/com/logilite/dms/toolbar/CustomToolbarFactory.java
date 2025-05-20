@@ -42,11 +42,11 @@ import com.logilite.dms.form.WDMSPanel;
 public class CustomToolbarFactory implements IAction
 {
 
-	private static CLogger			log			= CLogger.getCLogger(CustomToolbarFactory.class);
+	protected static CLogger			log			= CLogger.getCLogger(CustomToolbarFactory.class);
 
-	private AbstractADWindowContent	winContent	= null;
-	private WDMSPanel				dmsPanel	= null;
-	private Window					dmsWindow	= null;
+	protected AbstractADWindowContent	winContent	= null;
+	protected WDMSPanel					dmsPanel	= null;
+	protected Window					dmsWindow	= null;
 
 	public CustomToolbarFactory()
 	{
