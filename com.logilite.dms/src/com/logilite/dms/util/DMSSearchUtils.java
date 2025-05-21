@@ -589,9 +589,6 @@ public class DMSSearchUtils
 			pstmt = DB.prepareStatement(sql.toString(), trxName);
 			pstmt.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(i++, contentID);
-			pstmt.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setInt(i++, contentID);
-			pstmt.setInt(i++, contentID);
 
 			rs = pstmt.executeQuery();
 			while (rs.next())
