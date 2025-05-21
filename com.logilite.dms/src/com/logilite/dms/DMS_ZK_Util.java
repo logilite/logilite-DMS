@@ -146,7 +146,9 @@ public class DMS_ZK_Util
 		}
 		catch (IOException e)
 		{
-			throw new AdempiereException("ERROR: unable to get thumbnail image due to exception " + e, e);
+			String errMsg = "Unable to get thumbnail image due to exception, ERROR: " + e.getLocalizedMessage();
+			log.log(Level.WARNING, errMsg);
+			throw new AdempiereException(errMsg, e);
 		}
 
 		return image;
@@ -454,9 +456,9 @@ public class DMS_ZK_Util
 	public static String getIndexibleColumnName(WEditor editor, int dt)
 	{
 		if (dt == DisplayType.Search || dt == DisplayType.Table || dt == DisplayType.List)
-			return "ASI_" + DMSSearchUtils.getIndexFieldName(editor.getColumnName());
+			return DMSConstant.PREFIX_SEARCH_ATTRIB_ASI + DMSSearchUtils.getIndexFieldName(editor.getColumnName());
 		else
-			return "ASI_" + DMSSearchUtils.getIndexFieldName(editor.getLabel().getValue());
+			return DMSConstant.PREFIX_SEARCH_ATTRIB_ASI + DMSSearchUtils.getIndexFieldName(editor.getLabel().getValue());
 	} // getIndexibleColumnName
 
 	/**
@@ -503,7 +505,9 @@ public class DMS_ZK_Util
 				}
 				else
 				{
-					String errorMsg = "Whoops! There was a problem previewing this document. \n Due to exception: " + e.getLocalizedMessage();
+					String errorMsg = "Whoops! There was a problem previewing document: "
+										+ selectedContent.getName() + " [ " + selectedContent.getDMS_Content_ID()
+										+ "].\nDue to exception: " + e.getLocalizedMessage();
 					log.log(Level.SEVERE, errorMsg, e);
 					Dialog.warn(windowNo, errorMsg, "Document preview issue...");
 				}

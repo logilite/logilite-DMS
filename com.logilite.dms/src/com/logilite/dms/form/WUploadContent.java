@@ -30,10 +30,7 @@ import org.adempiere.webui.component.Textbox;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.factory.ButtonFactory;
 import org.apache.commons.io.FilenameUtils;
-import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
-import org.compiere.model.MLookupFactory;
-import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 import org.zkoss.util.media.AMedia;
@@ -53,7 +50,6 @@ import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.exception.DMSException;
 import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.MDMSAssociation;
-import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
 import com.logilite.dms.util.Utils;
 
@@ -130,9 +126,7 @@ public class WUploadContent extends AbstractUploadContent
 		gridView.setWidth("100%");
 		gridView.setHeight("100%");
 
-		int Column_ID = MColumn.getColumn_ID(MDMSContent.Table_Name, MDMSContent.COLUMNNAME_DMS_ContentType_ID);
-		MLookup lookup = MLookupFactory.get(Env.getCtx(), windowNo, tabNo, Column_ID, DisplayType.TableDir);
-		lookup.refresh();
+		MLookup lookup = Utils.getContentTypeEditorLookup(windowNo, tabNo, tableID, recordID);
 		editorContentType = new WTableDirEditor(MDMSContentType.COLUMNNAME_DMS_ContentType_ID, false, false, true, lookup);
 
 		// Load value from context if available for Content Type field
@@ -388,8 +382,6 @@ public class WUploadContent extends AbstractUploadContent
 					tmpFile.delete();
 			}
 		}
-
 		this.detach();
-
 	} // saveUploadedDocument
 }

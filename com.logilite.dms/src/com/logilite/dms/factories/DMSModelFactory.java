@@ -23,6 +23,7 @@ import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSAssociationType;
 import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSContentType;
+import com.logilite.dms.model.MDMSContentTypeFilter;
 import com.logilite.dms.model.MDMSMimeType;
 import com.logilite.dms.model.MDMSPermission;
 import com.logilite.dms.model.MDMSStatus;
@@ -53,6 +54,8 @@ public class DMSModelFactory implements IModelFactory
 			return MDMSVersion.class;
 		else if (tableName.equals(MDMSPermission.Table_Name))
 			return MDMSPermission.class;
+		else if (tableName.equals(MDMSContentTypeFilter.Table_Name))
+			return MDMSContentTypeFilter.class;
 
 		return null;
 	}
@@ -78,7 +81,8 @@ public class DMSModelFactory implements IModelFactory
 			return new MDMSVersion(Env.getCtx(), Record_ID, trxName);
 		else if (tableName.equals(MDMSPermission.Table_Name))
 			return new MDMSPermission(Env.getCtx(), Record_ID, trxName);
-
+		else if (tableName.equals(MDMSContentTypeFilter.Table_Name))
+			return new MDMSContentTypeFilter(Env.getCtx(), Record_ID, trxName);
 		return null;
 	}
 
@@ -103,7 +107,8 @@ public class DMSModelFactory implements IModelFactory
 			return new MDMSVersion(Env.getCtx(), rs, trxName);
 		else if (tableName.equals(MDMSPermission.Table_Name))
 			return new MDMSPermission(Env.getCtx(), rs, trxName);
-
+		else if (tableName.equals(MDMSContentTypeFilter.Table_Name))
+			return new MDMSContentTypeFilter(Env.getCtx(), rs, trxName);
 		return null;
 	}
 }

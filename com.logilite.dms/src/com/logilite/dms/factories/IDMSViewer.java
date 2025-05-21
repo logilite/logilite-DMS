@@ -9,7 +9,6 @@ import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
 
 import com.logilite.dms.DMS;
-import com.logilite.dms.model.ContentDetail;
 import com.logilite.dms.model.I_DMS_Association;
 import com.logilite.dms.model.I_DMS_Version;
 
@@ -28,8 +27,8 @@ public interface IDMSViewer
 
 	public void setSelection(Component component);
 
-	public void setAttributesInRow(Component component, ContentDetail contentDetail);
+	public void setAttributesInRow(Component component, I_DMS_Version version, I_DMS_Association association);
 
-	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage);
+	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight, boolean isFirstPage);
 
 }

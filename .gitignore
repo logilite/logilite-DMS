@@ -1,1 +1,15 @@
-com.logilite.dms.fileuploader/bin/
+com.logilite.dms.fileuploader/target/
+com.logilite.dms.contentdirdeduplication/target/
+com.logilite.dms.dmscleanuponrecorddelete/target/
+com.logilite.dms.p2/target/
+com.logilite.dms.querybuildelastic/target/
+com.logilite.dms.querybuildsolr/target/
+com.logilite.dms.querybuildsql/target/
+com.logilite.dms.storageprovider/target/
+com.logilite.dms.test/target/
+com.logilite.dms.tika/target/
+com.logilite.dms.uuid/target/
+com.logilite.dms/target/
+com.logilite.dms-feature/target/
+com.logilite.dmslib/target/
+com.logilite.dmstheme/target/

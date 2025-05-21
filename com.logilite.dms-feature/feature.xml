@@ -2,7 +2,7 @@
 <feature
       id="com.logilite.dms.feature"
       label="dms-feature"
-      version="11.0.0.qualifier"
+      version="11.1.0.qualifier"
       provider-name="LOGILITE">
 
    <description url="http://www.example.com/description">
@@ -18,11 +18,11 @@
    </license>
 
    <requires>
-      <import plugin="org.adempiere.plugin.utils" version="9.0.0" match="greaterOrEqual"/>
-      <import plugin="org.adempiere.base" version="9.0.0" match="greaterOrEqual"/>
-      <import plugin="org.adempiere.ui.zk" version="9.0.0" match="greaterOrEqual"/>
-      <import plugin="org.adempiere.ui" version="9.0.0" match="greaterOrEqual"/>
-      <import plugin="com.logilite.search" version="9.0.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.plugin.utils" version="11.0.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.base" version="11.0.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.ui.zk" version="11.0.0" match="greaterOrEqual"/>
+      <import plugin="org.adempiere.ui" version="11.0.0" match="greaterOrEqual"/>
+      <import plugin="com.logilite.search" version="11.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi" version="3.16.300" match="greaterOrEqual"/>
       <import plugin="org.eclipse.osgi.services" version="3.10.100" match="greaterOrEqual"/>
       <import plugin="zhtml" version="9.6.0" match="greaterOrEqual"/>
@@ -82,6 +82,14 @@
          version="0.0.0"
          unpack="false"/>
 
+
+   <plugin
+         id="com.logilite.dms.querybuildsql"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
    <plugin
          id="com.logilite.search"
          download-size="0"
@@ -98,6 +106,13 @@
 
    <plugin
          id="com.logilite.search.solrlib"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+    <plugin
+         id="com.logilite.dms.querybuildsolr"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -125,18 +140,33 @@
          unpack="false"/>
 
    <plugin
-         id="com.logilite.dms.querybuildsolr"
+         id="com.logilite.dms.fileuploader"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="com.logilite.dms.fileuploader"
+         id="com.logilite.dms.test"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+
+   <plugin
+         id="com.logilite.dms.dmscleanuponrecorddelete"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.logilite.dms.contentdirdeduplication"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 <!--
    <plugin
          id="com.logilite.esignature.topaz"

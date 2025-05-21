@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -34,11 +35,16 @@ public class DefaultContentTypeAccessFiltered implements IContentTypeAccess
 	@Override
 	public HashMap<I_DMS_Version, I_DMS_Association> getFilteredContentList(HashMap<I_DMS_Version, I_DMS_Association> contentMap) throws DBException
 	{
+		HashMap<I_DMS_Version, I_DMS_Association> contentsMapFiltered = new LinkedHashMap<I_DMS_Version, I_DMS_Association>();
+		/*
+		 * in a case when getFilteredContentList invoked with null content map
+		 * then no need to check Content Type wise DMS content access
+		 */
+		if (contentMap == null || contentMap.size() <= 0)
+			return contentsMapFiltered;
+		
 		String whereClause = getDynamicWhereClause(contentMap);
 		List<Integer> contentIDList = getAccessedContentsRoleWise(Env.getAD_Role_ID(Env.getCtx()), whereClause);
-
-		//
-		HashMap<I_DMS_Version, I_DMS_Association> contentsMapFiltered = new HashMap<I_DMS_Version, I_DMS_Association>();
 
 		Iterator<Entry<I_DMS_Version, I_DMS_Association>> it = contentMap.entrySet().iterator();
 		while (it.hasNext())

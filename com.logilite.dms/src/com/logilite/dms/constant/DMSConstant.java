@@ -67,17 +67,21 @@ public final class DMSConstant
 	public static final String				COMP_ATTRIBUTE_ISALLPERMISSION			= "ATTR_ISALLPERMISSION";
 	public static final String				COMP_ATTRIBUTE_DMS_VERSION_REF			= "ATTR_DMS_VERSION_REF";
 
-	//
+	// Sorting attributes
+	public static final String				DESC_SORT_SYMBOL						= "^";
+
 	public static final String				ATTRIB_NAME								= "ATTR_NAME";
 	public static final String				ATTRIB_SIZE								= "ATTR_SIZE";
 	public static final String				ATTRIB_LINK								= "ATTR_LINK";
 	public static final String				ATTRIB_CREATED							= "ATTR_CREATED";
 	public static final String				ATTRIB_UPDATED							= "ATTR_UPDATED";
-	public static final String				ATTRIB_FIELDTYPE						= "ATTR_FIELDTYPE";
+	public static final String				ATTRIB_FILETYPE							= "ATTR_FILETYPE";
 	public static final String				ATTRIB_MODIFIEDBY						= "ATTR_MODIFIEDBY";
 	public static final String				ATTRIB_CONTENT_TYPE						= "ATTR_CONTENT_TYPE";
 
 	public static final String				ATTRIB_PAGING_MOVE_TO_FIRST_PAGE		= "PagingMoveToFirstPage";
+	//
+	public static final String				PREFIX_SEARCH_ATTRIB_ASI				= "ASI_";
 
 	// View thumbnail toggle action
 	public static final String				ICON_VIEW_LIST							= "ICON_VIEW_LIST";
@@ -95,6 +99,8 @@ public final class DMSConstant
 	public static final String				REG_EXP_PERIOD							= ".";
 	public static final String				REG_EXP_UNDERSCORE_LIKE_STR				= "__%";
 	public static final String				REG_EXP_UNDERSCORE_STR					= "_";
+	public static final String				REG_EXP_UNDERSCORE_COPY					= "_copy";
+	public static final String				REG_EXP_UNDERSCORE_COPY_UNDERSCORE		= "_copy_";
 
 	// Pattern
 	public static final Pattern				PATTERN_WINDOWS_DIRNAME_ISVALID			= Pattern.compile(REG_EXP_WINDOWS_DIRNAME_VALIDATE);
@@ -158,6 +164,8 @@ public final class DMSConstant
 	public static final String				DMS_ASSOCIATION_ID						= "DMS_Association_ID";
 	public static final String				VERSION_SEQ_NO							= "Version_Seq_No";
 	public static final String				FILE_CONTENT							= "File_Content";
+	public static final String				DMS_CONTENTTYPE_ID						= "DMS_ContentType_id";
+	public static final String				M_ATTRIBUTESETINSTANCE_ID				= "M_AttributeSetInstance_ID";
 
 	// Msg translate
 	public static final String				MSG_NAME								= Msg.translate(Env.getCtx(), "Name");
@@ -230,6 +238,14 @@ public final class DMSConstant
 	public static final String				DOCUMENT_VIEW_DELETED_ONLY_VALUE		= "DO";
 	public static final String				DOCUMENT_VIEW_NON_DELETED				= "Non-Deleted";
 	public static final String				DOCUMENT_VIEW_NON_DELETED_VALUE			= "ND";
+
+	// Table Attribute = TableSpecificContentTypeFilter
+	// Its value list items
+	public static final String				ATTR_SET_TSCTF_INCLUDE					= "IN";
+	public static final String				ATTR_SET_TSCTF_INCLUDE_TABLE_ONLY		= "IO";
+	public static final String				ATTR_SET_TSCTF_EXCLUDE					= "EX";
+	public static final String				ATTR_SET_TSCTF_EXCLUDE_TABLE_ONLY		= "EO";
+	public static final String				ATTR_SET_TSCTF_EMPTY					= "MT";
 
 	/*
 	 * Date Format
@@ -307,11 +323,13 @@ public final class DMSConstant
 																						+ " WHERE c.DMS_Content_ID = ? 																										";
 
 	public static final String				SQL_GET_MATCHING_CONTENT_BY_NAME		= "SELECT Name  FROM DMS_Content c																											"
-																						+ " WHERE c.AD_Client_ID=? AND (c.Name  LIKE ? OR c.Name  LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?))	";
+																						+ " WHERE c.AD_Client_ID=? AND (c.Name  LIKE ? OR c.Name  LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?))	"
+																						+ " ORDER BY 1 ";
 
 	public static final String				SQL_GET_MATCHING_CONTENT_BY_VALUE		= "SELECT v.Value FROM DMS_Content c																										"
 																						+ " JOIN DMS_Version v  ON (v.DMS_Content_ID = c.DMS_Content_ID) 																		"
-																						+ " WHERE v.AD_Client_ID=? AND (v.Value LIKE ? OR v.Value LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?)) ";
+																						+ " WHERE c.AD_Client_ID = ? AND (v.Value LIKE ? OR v.Value LIKE ?) AND ((c.ParentURL=? AND True=?) OR (c.ParentURL IS NULL AND False=?)) "
+																						+ " ORDER BY 1 ";
 
 	public static final String				SQL_GET_CONTENT_TYPE					= "SELECT at.Value FROM DMS_Content c 																										"
 																						+ "	INNER JOIN DMS_Association 		a	ON a.DMS_Content_ID = c.DMS_Content_ID 															"
@@ -341,36 +359,27 @@ public final class DMSConstant
 																						+ " WHERE DMS_Content_Related_ID = ? AND DMS_AssociationType_ID = ? OR DMS_Content_ID = ? AND DMS_AssociationType_ID != ?"
 																						+ " ORDER BY DMS_Association_ID													";
 
-	public static final String				SQL_GET_CONTENT_DIR_LEVEL_WISE			= " WITH ContentAssociation AS ( 																										"
-																						+ " 	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, a.DMS_AssociationType_ID, c.DMS_ContentType_ID	"
-																						+ "				, c.Created																											"
-//																						+ " 			, c.ContentBasetype, a.AD_Table_ID, a.Record_ID 																	"
-																						+ " 	FROM 	DMS_Association a 																									"
-																						+ " 	JOIN 	DMS_Content c 			ON ( c.DMS_Content_ID = a.DMS_Content_ID #IsActive# ) 										"
-																						+ " 	WHERE 	c.AD_Client_ID = ? AND NVL(a.DMS_Content_Related_ID, 0) = ? 														"
-																						+ " ), 																																"
-																						+ " VersionList AS ( 																												"
-																						+ " 	SELECT 	vr.DMS_Content_ID, a.DMS_Content_Related_ID, MAX(vr.SeqNo) AS SeqNo													"
-//																						+ "				, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0) AS AD_Table_ID, NVL(a.Record_ID, 0) AS Record_ID					"
-																						+ " 	FROM 	DMS_Association a 																									"
-																						+ "		JOIN 	ContentAssociation ca 	ON ( ca.DMS_Content_ID = a.DMS_Content_Related_ID OR ca.DMS_Content_Related_ID = a.DMS_Content_Related_ID ) "
-																						+ "		JOIN 	DMS_Version vr 			ON ( vr.DMS_Content_ID = ca.DMS_Content_ID AND vr.IsActive='Y' )							"
-																						+ " 	WHERE 	a.AD_Client_ID=? AND NVL(a.DMS_Content_Related_ID, 0) = ? AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001, 1000002, 1000003)	"
-																						+ " 	GROUP BY vr.DMS_Content_ID, a.DMS_Content_Related_ID																		"
-//																						+ "				, a.DMS_AssociationType_ID, NVL(a.AD_Table_ID, 0), NVL(a.Record_ID, 0) 												"
-																						+ " ) 																																"
-																						+ " SELECT  DISTINCT																												"
-																						+ "			NVL(a.DMS_Content_ID, 			c.DMS_Content_ID) 			AS DMS_Content_ID, 											"
-																						+ " 		NVL(a.DMS_Content_Related_ID, 	c.DMS_Content_Related_ID) 	AS DMS_Content_Related_ID,									"
-																						+ " 		NVL(a.DMS_Association_ID, 		c.DMS_Association_ID) 		AS DMS_Association_ID, 										"
-																						+ " 		NVL(a.DMS_AssociationType_ID, 	c.DMS_AssociationType_ID)	AS DMS_AssociationType_ID, 									"
-																						+ " 		vrs.DMS_Version_ID, vrs.SeqNo,  c.DMS_ContentType_ID, c.Created															"
-																						+ " FROM 		ContentAssociation c 																								"
-																						+ " LEFT JOIN 	VersionList v		ON (v.DMS_Content_ID = c.DMS_Content_ID) 														"
-																						+ " LEFT JOIN 	DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID = c.DMS_Content_Related_ID "
-																						+ "										AND NVL(a.DMS_AssociationType_ID, 0) = NVL(c.DMS_AssociationType_ID, 0))					"
-																						+ " LEFT JOIN 	DMS_Version vrs 	ON (vrs.DMS_Content_ID = c.DMS_Content_ID AND vrs.SeqNo = NVL(v.SeqNo, 0))  					"
-																						+ " WHERE 		NVL(c.DMS_Content_Related_ID, 0) = ? 																				";
+	public static final String				SQL_GET_CONTENT_DIR_LEVEL_WISE			= "SELECT 	a.DMS_Content_ID,														"
+																						+ "     a.DMS_Association_ID,													"
+																						+ "		NVL(a.DMS_Content_Related_ID, 0) AS DMS_Content_Related_ID,				"
+																						+ "		NVL(a.DMS_AssociationType_ID, 0) AS DMS_AssociationType_ID,				"
+																						+ "		v.DMS_Version_ID,														"
+																						+ "		Name,																	"
+																						+ "		DMS_ContentType_ID,														"
+																						+ "		DMS_MimeType_ID,														"
+																						+ "		c.Created,																"
+																						+ "		v.Updated																"
+																						+ "	FROM DMS_Association a														"
+																						+ " JOIN DMS_Content c ON ( c.DMS_Content_ID = a.DMS_Content_ID )				"
+																						+ " JOIN LATERAL ( 	SELECT DISTINCT ON (V.DMS_CONTENT_ID)						"
+																						+ "					v.DMS_Version_ID, v.Updated 								"
+																						+ "    				FROM DMS_Version v 											"
+																						+ "    				WHERE v.DMS_Content_ID = c.DMS_Content_ID 					"
+																						+ "    				ORDER BY v.DMS_Content_ID, v.SeqNO DESC 					"
+																						+ " 			) v ON TRUE			  											"
+																						+ " WHERE c.AD_Client_ID = ? #IsActive#	 										"
+																						+ "		AND NVL(a.DMS_Content_Related_ID, 0) = ? 								"
+																						+ " 	AND NVL(a.DMS_AssociationType_ID, 0) IN (0, 1000001, 1000002, 1000003)	";
 
 	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_ALL		= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace("#IsActive#", "");
 
@@ -379,6 +388,40 @@ public final class DMSConstant
 
 	public static String					SQL_GET_CONTENT_DIR_LEVEL_WISE_INACTIVE	= SQL_GET_CONTENT_DIR_LEVEL_WISE.replace(	"#IsActive#",
 																																"AND c.IsActive='N' AND a.IsActive='N'");
+
+	public final static String				SQL_GET_CONTENT_TREE_HIERARCHY			= " WITH RECURSIVE SupplyTree AS																							"
+																						+ " (		SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, c.ContentBaseType, 1 AS LEVEL,	"
+																						+ "					a.DMS_AssociationType_ID, ''||c.name AS Path														"
+																						+ "			FROM DMS_Content c																							"
+																						+ "        	INNER JOIN DMS_Association a ON (a.DMS_Content_ID = c.DMS_Content_ID) 										"
+																						+ "        	WHERE NVL(ParentURL, '') LIKE ?																				"
+																						+ "               	AND c.AD_Client_ID = ?																				"
+																						+ "					AND	NVL(a.Record_ID, 0) = ?																			"
+																						+ "					AND NVL(a.AD_Table_ID, 0) = ?																		"
+																						+ " 	UNION ALL																										"
+																						+ "        	SELECT 	c.DMS_Content_ID, a.DMS_Content_Related_ID, a.DMS_Association_ID, c.ContentBaseType, LEVEL + 1, 	"
+																						+ "					a.DMS_AssociationType_ID, st.Path || '/' || c.name AS Path		 									"
+																						+ " 		FROM  DMS_Association a																						"
+																						+ "        	INNER JOIN SupplyTree st ON (st.DMS_Content_ID = a.DMS_Content_Related_ID 									"
+																						+ "										AND CASE WHEN st.ContentBaseType='DIR' AND st.DMS_AssociationType_ID = 1000003	"
+																						+ "											THEN FALSE ELSE TRUE END)													"
+																						+ "        	INNER JOIN DMS_Content c ON (c.DMS_Content_ID = a.DMS_Content_ID) )											"
+																						+ " SELECT s.* 																											"
+																						+ " FROM SupplyTree AS s 																								"
+																						+ " ORDER BY Level DESC, DMS_AssociationType_ID, Path;																	";
+
+	public static final String				SQL_GET_CT_ACCESS						= "  (	DMS_ContentType.DMS_ContentType_ID 	   IN (	SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Access 		"
+																						+ "												WHERE AD_Role_ID=@AD_Role_ID@ ) 									"
+																						+ " OR  																											"
+																						+ "	DMS_ContentType.DMS_ContentType_ID NOT IN (	SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Access) )	"
+																						+ " AND DMS_ContentType.AD_Client_ID IN (@#AD_Client_ID@, 0) 														";
+
+	public static final String				SQL_GET_CT_WITH_EMPTY_FILTER_CLAUSE		= " DMS_ContentType.DMS_ContentType_ID IN ( 							"
+																						+ " SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Filter 	"
+																						+ "	WHERE FilterClause IS NULL ) 									";
+
+	public static final String				SQL_GET_CT_WITHOUT_FILTER_RECORDS		= " (DMS_ContentType.DMS_ContentType_ID NOT IN ( 						"
+																						+ " SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Filter) ) ";
 
 	/**
 	 * Improve Performance of Content ID search
@@ -438,4 +481,29 @@ public final class DMSConstant
 																			+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N') 		"
 																			+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
 
+	// Retrieve the Mounting Association ID for Record.
+	public static final String	SQL_GET_RECORD_MOUNTING_ASSOCIATION		= " SELECT a.DMS_Association_ID 	FROM DMS_content c							"
+																			+ " INNER JOIN DMS_association a ON (a.DMS_Content_ID = c.DMS_Content_ID) 	"
+																			+ " WHERE c.AD_Client_ID = ? 												"
+																			+ "		AND NVL(ParentURL,'') LIKE ?										"
+																			+ "		AND	NVL(a.Record_ID, 0) = ? 										"
+																			+ "		AND NVL(a.AD_Table_ID, 0) = ? 										"
+																			+ "		AND c.IsMounting = 'Y' 												";
+
+	// Attribute Set Instance ID Filter from value and name pair
+	public static final String	SQL_GET_ATTRI_SET_INSTANCE_LIST			= "(SELECT M_AttributeSetInstance_ID FROM crosstab ( 														"
+																			+ "	  	'SELECT ai.M_AttributeSetInstance_ID, a.Name AS Name,     										"
+																			+ "			COALESCE(CAST(ValueNumber AS TEXT), CAST(ValueInt AS TEXT), CAST(ValueDate AS TEXT), CAST(ValueTimestamp AS TEXT), Value) AS Value"
+																			+ " 	FROM M_AttributeInstance ai INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID)	"
+																			+ " 	ORDER BY  1, 2 ' 																				"
+																			+ "	) AS ct( M_AttributeSetInstance_ID numeric 															";
+
+	// Get Content Type wise Attribute Name List
+	public static final String	SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID, Name FROM M_Attribute 														"
+																			+ "	WHERE M_Attribute_ID IN 																		"
+																			+ "		(	SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance 								"
+																			+ "    		WHERE M_AttributeSetInstance_ID IN ( 													"
+																			+ "        			SELECT M_AttributeSetInstance_ID FROM DMS_Content WHERE DMS_ContentType_ID = ? )"
+																			+ "     )	 																						"
+																			+ "	ORDER BY Name 																					";
 }

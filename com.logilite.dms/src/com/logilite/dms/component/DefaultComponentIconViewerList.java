@@ -21,6 +21,7 @@ import org.adempiere.webui.component.Columns;
 import org.adempiere.webui.component.Label;
 import org.adempiere.webui.component.Row;
 import org.adempiere.webui.component.Rows;
+import org.compiere.model.MUser;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Hbox;
@@ -28,8 +29,10 @@ import org.zkoss.zul.Image;
 
 import com.logilite.dms.DMS_ZK_Util;
 import com.logilite.dms.constant.DMSConstant;
-import com.logilite.dms.model.ContentDetail;
+import com.logilite.dms.model.I_DMS_Association;
 import com.logilite.dms.model.I_DMS_Version;
+import com.logilite.dms.model.MDMSAssociationType;
+import com.logilite.dms.model.MDMSContent;
 
 /**
  * Default DMS List Viewer Component
@@ -51,7 +54,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, DMSConstant.ATTRIB_SIZE, "7%", "Left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_CREATED, DMSConstant.ATTRIB_CREATED, "13%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATED, DMSConstant.ATTRIB_UPDATED, "13%", "center"));
-		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, DMSConstant.ATTRIB_FIELDTYPE, "10%", "left"));
+		columns.appendChild(createColumn(DMSConstant.MSG_FILE_TYPE, DMSConstant.ATTRIB_FILETYPE, "10%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_UPDATEDBY, DMSConstant.ATTRIB_MODIFIEDBY, "10%", "center"));
 		columns.appendChild(createColumn(DMSConstant.MSG_LINK, DMSConstant.ATTRIB_LINK, "5%", "center"));
 
@@ -64,10 +67,8 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	} // setNoComponentExistsMsg
 
 	@Override
-	public void createComponent(Rows rows, ContentDetail contentDetail, int compWidth, int compHeight, boolean isFirstPage)
+	public void createComponent(Rows rows, I_DMS_Version version, I_DMS_Association association, int compWidth, int compHeight, boolean isFirstPage)
 	{
-		I_DMS_Version version = contentDetail.getVersion();
-
 		row = rows.newRow();
 		row.setSclass("SB-ROW");
 
@@ -81,14 +82,19 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		thumbImg.setStyle("width: 100%; max-width: 30px; max-height: 30px;");
 		thumbImg.setSclass("SB-THUMBIMAGE");
 
-		Label lblName = new Label(contentDetail.getName());
-		Label lblCType = new Label(contentDetail.getContentTypeName());
-		Label lblSize = new Label(contentDetail.getSize());
-		Label lblCreated = new Label(DMSConstant.SDF.format(new Date(contentDetail.getCreated().getTime())));
-		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(contentDetail.getUpdated().getTime())));
-		Label lblFileType = new Label(contentDetail.getFileType());
-		Label lblModifiedBy = new Label(contentDetail.getModifiedByName());
-		Component linkIcon = getLinkIconComponent(contentDetail);
+		MDMSContent dmsContent = (MDMSContent) version.getDMS_Content();
+		Label lblName = new Label(getRenderContentName(version));
+		Label lblCType = new Label(dmsContent.getDMS_ContentType_ID() > 0 ? dmsContent.getDMS_ContentType().getName() : "");
+		Label lblSize = new Label(MDMSContent.CONTENTBASETYPE_Directory.equals(dmsContent.getContentBaseType()) ? DMSConstant.MSG_FILE_FOLDER
+																												: version.getDMS_FileSize());
+		Label lblCreated = new Label(DMSConstant.SDF.format(new Date(dmsContent.getCreated().getTime())));
+		Label lblUpdated = new Label(DMSConstant.SDF.format(new Date(version.getUpdated().getTime())));
+		Label lblFileType = new Label(MDMSContent.CONTENTBASETYPE_Directory.equals(dmsContent.getContentBaseType()) ? DMSConstant.MSG_FILE_FOLDER
+																													: version	.getDMS_Content()
+																																.getDMS_MimeType()
+																																.getName());
+		Label lblModifiedBy = new Label(MUser.getNameOfUser(version.getUpdatedBy()));
+		Component linkIcon = getLinkIconComponent(MDMSAssociationType.isLink(association));
 
 		Hbox hbox = new Hbox();
 		hbox.appendChild(thumbImg);
@@ -106,7 +112,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		row.setClass(isContentActive ? "SB-Active-Content" : "SB-InActive-Content");
 
 		//
-		setAttributesInRow(row, contentDetail);
+		setAttributesInRow(row, version, association);
 
 		// Listener for component selection
 		row.addEventListener(Events.ON_CLICK, this);
@@ -116,7 +122,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 			row.addEventListener(eventsList[i], listener);
 
 		// set tooltip text
-		row.setTooltiptext(contentDetail.getTooltipText());
+		row.setTooltiptext(getTooltipText(version, association));
 	} // createComponent
 
 	@Override

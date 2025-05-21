@@ -60,6 +60,11 @@ public class ContentDetail
 	{
 		return name;
 	}
+	
+	public String getNameUpperCase()
+	{
+		return name.toUpperCase();
+	}
 
 	public I_DMS_Version getVersion()
 	{

@@ -17,12 +17,10 @@ import org.adempiere.exceptions.AdempiereException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MAttributeSetInstance;
-import org.compiere.model.MTable;
 import org.compiere.model.PO;
 import org.compiere.model.Query;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
-import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
 
@@ -112,23 +110,14 @@ public class RelationalUUIDUtils
 							actualName = newFileNameWithVersion + DMSConstant.REG_EXP_LIKE_STR + extention;
 						}
 						// check if file exists on actual location or not
-						File newFile = storageProvider.getFile(content.getParentURL() + DMSConstant.FILE_SEPARATOR + actualName);
-						if (newFile != null)
-						{
-							actualName = getActualContentName(ruuCM, storageProvider, contentType, content, actualName.substring(0, actualName.lastIndexOf("."))
-																											+ "_1", extention, type, operationType);
-						}
 						break;
 					}
 					case MDMSAssociationType.TYPE_PARENT:
 					{
-						List<String> matchingFileNames = Utils.getMatchingActualNames(	ruuCM.getPathByName(content), fileName,
+						List<String> matchingFileNames = Utils.getMatchingActualNames(	ruuCM.getPathByValue(content), fileName,
 																						DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR, extention);
-						if (matchingFileNames.size() == 0)
-						{
-							actualName = fileName + extention;
-						}
-						else
+						actualName = fileName + extention;
+						if (matchingFileNames.size() > 0 && matchingFileNames.contains(actualName))
 						{
 							Object[] matchingFileNamesArray = matchingFileNames.toArray();
 							int seq = 0;
@@ -148,16 +137,7 @@ public class RelationalUUIDUtils
 								if (found)
 									break;
 							}
-							actualName = fileName + "_" + seq + extention;
-						}
-
-						File newFile = storageProvider.getFile(Util.isEmpty(ruuCM.getPathByName(content), true) ? DMSConstant.FILE_SEPARATOR + actualName
-																												: ruuCM.getPathByName(content)
-																													+ DMSConstant.FILE_SEPARATOR + actualName);
-						if (newFile != null)
-						{
-							actualName = getActualContentName(	ruuCM, storageProvider, contentType, content,
-																actualName.substring(0, actualName.lastIndexOf(".")) + "_1", extention, type, operationType);
+							actualName = fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq + extention;
 						}
 						break;
 					}
@@ -165,8 +145,7 @@ public class RelationalUUIDUtils
 			}
 			else if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_COPY))
 			{
-				actualName = fileName;
-				// No need to handle
+				return UtilsUUID.getCopyName(content, ruuCM, DMSConstant.CONTENT_DIR.equals(contentType), actualName, fileName, extention);
 			}
 			else if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_RENAME))
 			{
@@ -175,13 +154,10 @@ public class RelationalUUIDUtils
 					case MDMSAssociationType.TYPE_VERSIONPARENT:
 					case MDMSAssociationType.TYPE_PARENT:
 					{
-						List<String> matchingFileNames = Utils.getMatchingActualNames(	ruuCM.getPathByName(content), fileName,
+						List<String> matchingFileNames = Utils.getMatchingActualNames(	content.getParentURL(), fileName,
 																						DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR, extention);
-						if (matchingFileNames.size() == 0)
-						{
-							actualName = fileName + extention;
-						}
-						else
+						actualName = fileName + extention;
+						if (matchingFileNames.contains(actualName) && matchingFileNames.size() > 0)
 						{
 							Object[] matchingFileNamesArray = matchingFileNames.toArray();
 							int seq = 0;
@@ -201,7 +177,7 @@ public class RelationalUUIDUtils
 								if (found)
 									break;
 							}
-							actualName = fileName + "_" + seq + extention;
+							actualName = fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq + extention;
 						}
 						break;
 					}
@@ -213,13 +189,10 @@ public class RelationalUUIDUtils
 			if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_CREATE))
 			{
 				int seq = 0;
-				List<String> matchingFileNames = Utils.getMatchingActualNames(	ruuCM.getPathByName(content), fileName, DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR,
+				List<String> matchingFileNames = Utils.getMatchingActualNames(	ruuCM.getPathByValue(content), fileName, DMSConstant.REG_EXP_UNDERSCORE_LIKE_STR,
 																				"");
-				if (matchingFileNames.size() == 0)
-				{
-					actualName = fileName;
-				}
-				else
+				actualName = fileName;
+				if (matchingFileNames.contains(actualName) && matchingFileNames.size() > 0)
 				{
 					Object[] matchingFileNamesArray = matchingFileNames.toArray();
 					boolean found = true;
@@ -238,62 +211,38 @@ public class RelationalUUIDUtils
 						if (found)
 							break;
 					}
-				}
-				File rootFolder = new File(storageProvider.getBaseDirectory(ruuCM.getPathByValue(content)));
-				String dirPath = rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + (seq > 0 ? (fileName + "_" + seq) : fileName);
-				File newDir = new File(dirPath);
-				if (newDir.exists())
-				{
-					actualName = getActualContentName(	ruuCM, storageProvider, DMSConstant.CONTENT_DIR, content, fileName + "_" + ++seq, "", "",
-														DMSConstant.OPERATION_CREATE);
-				}
-				else
-				{
-					actualName = (seq > 0 ? (fileName + "_" + seq) : fileName);
+					actualName = fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq + extention;
 				}
 			}
-
 			else if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_COPY))
 			{
-				actualName = fileName;
-				// No need to handle
+				return UtilsUUID.getCopyName(content, ruuCM, DMSConstant.CONTENT_DIR.equals(contentType), actualName, fileName, extention);
 			}
-			if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_RENAME))
+			else if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_RENAME))
 			{
-				int DMS_Content_ID = UUIDContentManager.checkExistsDir(content.getParentURL(), fileName);
-				if (DMS_Content_ID > 0)
+				List<String> matchingFileNames = Utils.getMatchingActualNames(content.getParentURL(), fileName, DMSConstant.REG_EXP_LIKE_STR, "");
+				actualName = fileName;
+				if (matchingFileNames.contains(fileName) && matchingFileNames.size() > 0)
 				{
-					List<String> matchingFileNames = Utils.getMatchingActualNames(content.getParentURL(), fileName, "%", "");
-					if (matchingFileNames.size() == 0)
+					Object[] matchingFileNamesArray = matchingFileNames.toArray();
+					int seq = 0;
+					boolean found = true;
+					while (true)
 					{
-						actualName = fileName;
-					}
-					else
-					{
-						Object[] matchingFileNamesArray = matchingFileNames.toArray();
-						int seq = 0;
-						boolean found = true;
-						while (true)
+						found = true;
+						seq++;
+						for (Object matchingFileName : matchingFileNamesArray)
 						{
-							found = true;
-							seq++;
-							for (Object matchingFileName : matchingFileNamesArray)
+							if (((String) matchingFileName).equalsIgnoreCase(fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq))
 							{
-								if (((String) matchingFileName).equalsIgnoreCase(fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq))
-								{
-									found = false;
-									break;
-								}
-							}
-							if (found)
+								found = false;
 								break;
+							}
 						}
-						actualName = fileName + "_" + seq;
+						if (found)
+							break;
 					}
-				}
-				else
-				{
-					actualName = fileName;
+					actualName = fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq;
 				}
 			}
 		}
@@ -314,48 +263,22 @@ public class RelationalUUIDUtils
 		try
 		{
 			MDMSVersion parentVersion = (MDMSVersion) MDMSVersion.getLatestVersion(parentContent);
-			String baseURL = dms.getPathFromContentManager(parentVersion);
 			File rootFolder = new File(dms.getBaseDirPath(parentVersion));
 			if (!rootFolder.exists())
 				rootFolder.mkdirs();
-			String dirName = dirContentName;
-			int DMS_Content_ID = UUIDContentManager.checkExistsFileDir(baseURL, dirContentName);
-			String dirPath = rootFolder.getPath() + DMSConstant.FILE_SEPARATOR + dirContentName;
-			if (DMS_Content_ID > 0)
-			{
-				MDMSContent content = (MDMSContent) MTable.get(Env.getCtx(), MDMSContent.Table_Name).getPO(DMS_Content_ID, null);
-				String existingDir = dms.getContentManager().getPathByName(content);
-				if (existingDir.equalsIgnoreCase(dirPath) && errorIfDirExists)
-				{
-					File newDir = new File(dirPath);
-					if (!newDir.exists())
-					{
-						throw new AdempiereException(Msg.getMsg(Env.getCtx(),
-																"Directory already exists. \n (Either same file name content exist in inActive mode)"));
-					}
-				}
-				else if (errorIfDirExists)
-				{
-					throw new AdempiereException(Msg.getMsg(Env.getCtx(),
-															"Directory already exists. \n (Either same file name content exist in inActive mode)"));
-				}
-			}
-			else
-			{
-				dirName = dms.getContentManager().getContentName(	dms.getFileStorageProvider(), DMSConstant.CONTENT_DIR, parentContent, dirContentName, "", "",
-																	DMSConstant.OPERATION_CREATE);
-			}
+			dirContentName = dms.getContentManager().getContentName(dms.getFileStorageProvider(), DMSConstant.CONTENT_DIR, parentContent, dirContentName, "",
+																	"", DMSConstant.OPERATION_CREATE);
 
 			// Get directory content ID
 			List<Object> params = new ArrayList<Object>();
 			params.add(Env.getAD_Client_ID(Env.getCtx()));
 			params.add(AD_Table_ID);
 			params.add(Record_ID);
-			params.add(dirName);
+			params.add(dirContentName);
 
 			String sql = "SELECT dc.DMS_Content_ID FROM DMS_Content dc "
-							+ "INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
-							+ "WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND NVL(da.Record_ID, 0) = ? AND dc.Name = ? ";
+							+ " INNER JOIN DMS_Association da ON (dc.DMS_Content_ID = da.DMS_Content_ID) "
+							+ " WHERE dc.IsActive = 'Y' AND dc.ContentBaseType = 'DIR' AND da.AD_Client_ID = ? AND NVL(da.AD_Table_ID, 0) = ? AND NVL(da.Record_ID, 0) = ? AND dc.Name = ? ";
 
 			if (parentContent == null)
 				sql += "AND dc.ParentURL IS NULL";
@@ -400,16 +323,17 @@ public class RelationalUUIDUtils
 		return parentContent;
 	} // createDirectory
 
+	// UnUsed
 	public static String getCopyDirContentName(MDMSContent content, String dirName, String contentPath)
 	{
 		String actualName = dirName;
 		int DMS_Conent_ID = UUIDContentManager.checkExistsFileDir(contentPath, dirName);
 		if (DMS_Conent_ID > 0)
 		{
-			List<String> dirNames = Utils.getMatchingDirContentNames(contentPath, dirName + " - copy");
+			List<String> dirNames = Utils.getMatchingDirContentNames(contentPath, dirName + DMSConstant.REG_EXP_UNDERSCORE_COPY);
 			if (dirNames.size() == 0)
 			{
-				actualName = actualName + " - copy";
+				actualName = actualName + DMSConstant.REG_EXP_UNDERSCORE_COPY;
 			}
 			else
 			{
@@ -420,12 +344,12 @@ public class RelationalUUIDUtils
 					match = true;
 					if (count == 0)
 					{
-						actualName = actualName + " - copy";
+						actualName = actualName + DMSConstant.REG_EXP_UNDERSCORE_COPY;
 						count++;
 					}
 					else
 					{
-						actualName = dirName + " - copy (" + count + ")";
+						actualName = dirName + DMSConstant.REG_EXP_UNDERSCORE_COPY_UNDERSCORE + count;
 						count++;
 					}
 					for (Object matchingFileName : dirNames)
@@ -446,6 +370,7 @@ public class RelationalUUIDUtils
 		return actualName;
 	} // getCopyDirContentName
 
+	// UnUsed
 	public static String getCopyFileContentName(String ParentURL, String origName, String newName)
 	{
 		String name = newName;
@@ -453,8 +378,8 @@ public class RelationalUUIDUtils
 		dms_content_id = UUIDContentManager.checkExistsFileDir(ParentURL, name);
 		if (dms_content_id > 0)
 		{
-			if (!name.contains(" - copy"))
-				name = FilenameUtils.getBaseName(name) + " - copy" + "." + FilenameUtils.getExtension(name);
+			if (!name.contains(DMSConstant.REG_EXP_UNDERSCORE_COPY))
+				name = FilenameUtils.getBaseName(name) + DMSConstant.REG_EXP_UNDERSCORE_COPY + DMSConstant.REG_EXP_PERIOD + FilenameUtils.getExtension(name);
 			else
 			{
 				String fileNameWOExt = FilenameUtils.getBaseName(name);
@@ -466,13 +391,14 @@ public class RelationalUUIDUtils
 				}
 				String ext = FilenameUtils.getExtension(name);
 				String baseName = FilenameUtils.getBaseName(origName);
-				if (baseName.contains(" - copy"))
+				if (baseName.contains(DMSConstant.REG_EXP_UNDERSCORE_COPY))
 				{
 					baseName = baseName.split(" \\(")[0];
-					name = baseName + " (" + ++count + ")" + "." + ext;
+					name = baseName + " (" + ++count + ")" + DMSConstant.REG_EXP_PERIOD + ext;
 				}
 				else
-					name = baseName + " - copy" + " (" + ++count + ")" + "." + ext;
+					name = baseName + DMSConstant.REG_EXP_UNDERSCORE_COPY_UNDERSCORE + " (" + ++count + ")"
+							+ DMSConstant.REG_EXP_PERIOD + ext;
 			}
 			return getCopyFileContentName(ParentURL, origName, name);
 		}
@@ -514,7 +440,8 @@ public class RelationalUUIDUtils
 	 * @param renamedURL                        - Renamed URL
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if
+	 *                                          true
 	 */
 	public static void pasteCopyDirContent(	DMS dms, MDMSContent copiedContent, MDMSContent destPasteContent, String baseURL, String renamedURL, int tableID,
 											int recordID, boolean isCreatePermissionForPasteContent)
@@ -577,7 +504,8 @@ public class RelationalUUIDUtils
 	 * @param destContent                       - Destination Content
 	 * @param tableID                           - AD_Table_ID
 	 * @param recordID                          - Record_ID
-	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if true
+	 * @param isCreatePermissionForPasteContent - create permission for paste content from parent if
+	 *                                          true
 	 */
 	public static void pasteCopyFileContent(DMS dms, MDMSContent copiedContent, MDMSContent destContent, int tableID, int recordID,
 											boolean isCreatePermissionForPasteContent)
@@ -659,13 +587,10 @@ public class RelationalUUIDUtils
 					if (!isContentSaved)
 					{
 						String renamedURL = dms.getPathFromContentManager(destContent);
-						String associationType = MDMSContent.getContentAssociationType(copiedContent.getDMS_Content_ID());
 
 						String name = "";
-						if (associationType.equals(MDMSAssociationType.TYPE_PARENT))
-							name = getCopyFileContentName(dms.getPathFromContentManager(newVersion), copiedContent.getName(), copiedContent.getName());
-						else
-							name = newDMSContent.getName();
+						name = dms.getActualFileOrDirName(	DMSConstant.CONTENT_FILE, destContent, copiedContent.getName(),
+															FilenameUtils.getExtension(copiedContent.getName()), "", DMSConstant.OPERATION_COPY);
 
 						newDMSContent.setParentURL(renamedURL);
 						newDMSContent.setName(name);
@@ -676,7 +601,8 @@ public class RelationalUUIDUtils
 						isContentSaved = true;
 					}
 
-					//if it's false then thumbnail will not be created/used otherwise it will be created/used 
+					// if it's false then thumbnail will not be created/used otherwise it will be
+					// created/used
 					if (dms.isAllowThumbnailContentCreation())
 					{
 						IThumbnailGenerator thumbnailGenerator = DMSFactoryUtils.getThumbnailGenerator(dms, newDMSContent.getDMS_MimeType().getMimeType());
@@ -777,10 +703,11 @@ public class RelationalUUIDUtils
 	 * @param recordID
 	 * @param isDocExplorerWindow
 	 */
-	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID, boolean isDocExplorerWindow)
+	public static void renameFolder(MDMSContent content, String baseURL, String renamedURL, int tableID, int recordID, boolean isDocExplorerWindow,
+									String fieldName)
 	{
 		HashMap<I_DMS_Version, I_DMS_Association> map = DMSSearchUtils.getDMSContentsWithAssociation(	content, content.getAD_Client_ID(),
-																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE);
+																										DMSConstant.DOCUMENT_VIEW_ALL_VALUE, null);
 
 		for (Entry<I_DMS_Version, I_DMS_Association> mapEntry : map.entrySet())
 		{
@@ -796,7 +723,8 @@ public class RelationalUUIDUtils
 				String parentURL = dmsContent.getParentURL() == null ? "" : dmsContent.getParentURL();
 				if (parentURL.startsWith(baseURL))
 					dmsContent.setParentURL(Utils.replacePath(baseURL, renamedURL, parentURL));
-				renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
+				//
+				renameFolder(dmsContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow, fieldName);
 
 				MDMSAssociation associationDir = MDMSAssociation.getParentAssociationFromContent(dmsContent.getDMS_Content_ID(), false, null);
 				associationDir.updateTableRecordRef(tableID, recordID);

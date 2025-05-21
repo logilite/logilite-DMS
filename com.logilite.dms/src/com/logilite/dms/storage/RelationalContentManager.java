@@ -370,7 +370,7 @@ public class RelationalContentManager implements IContentManager
 			{
 				actualFileName = dms.getActualFileOrDirName(DMSConstant.CONTENT_FILE, parentContent, fileName, format, MDMSAssociationType.TYPE_PARENT,
 															DMSConstant.OPERATION_CREATE);
-				fileName = fileName + format;
+				fileName = actualFileName;
 			}
 			else
 			{
@@ -490,7 +490,6 @@ public class RelationalContentManager implements IContentManager
 		if (copiedContent.getContentBaseType().equals(MDMSContent.CONTENTBASETYPE_Directory))
 		{
 			// check name exists
-			String newName = RelationUtils.getCopyDirContentName(destContent, copiedContent.getName(), dms.getContentManager().getPathByName(destContent));
 			String newActualName = dms.getActualFileOrDirName(	DMSConstant.CONTENT_DIR, destContent, copiedContent.getName(), "", "",
 																DMSConstant.OPERATION_COPY);
 
@@ -520,7 +519,7 @@ public class RelationalContentManager implements IContentManager
 
 			// Note: Must save association first other wise creating issue of wrong info in solr
 			// indexing entry
-			newDMSContent.setName(newName);
+			newDMSContent.setName(newActualName);
 			newDMSContent.saveEx();
 
 			// Create Folder
@@ -536,7 +535,7 @@ public class RelationalContentManager implements IContentManager
 
 			//
 			String baseURL = dms.getPathFromContentManager(copiedContent);
-			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + oldVersion.getValue();
+			String renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + newVersion.getValue();
 
 			RelationUtils.pasteCopyDirContent(dms, copiedContent, newDMSContent, baseURL, renamedURL, tableID, recordID, isCreatePermissionForPasteContent);
 
@@ -601,7 +600,7 @@ public class RelationalContentManager implements IContentManager
 
 			renamedURL = dms.getPathFromContentManager(destContent) + DMSConstant.FILE_SEPARATOR + cutContent.getName();
 
-			RelationUtils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow);
+			RelationUtils.renameFolder(cutContent, baseURL, renamedURL, tableID, recordID, isDocExplorerWindow, null);
 			dirPath.renameTo(newFile);
 
 			MDMSAssociation association = dms.getParentAssociationFromContent(cutContent.getDMS_Content_ID());
@@ -684,8 +683,8 @@ public class RelationalContentManager implements IContentManager
 				// Set navigation of destcontent true if permission is already created for the cut
 				// content owner
 				// but navigation flag is not true in the destcontent
-				newPermission.setIsNavigation(MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType()) && !(newPermission.isRead()
-																																	&& newPermission.isWrite()));
+				newPermission.setIsNavigation(	MDMSContent.CONTENTBASETYPE_Directory.equals(destContent.getContentBaseType())
+												&& !(newPermission.isRead() && newPermission.isWrite()));
 				newPermission.saveEx();
 			}
 		}
@@ -703,77 +702,94 @@ public class RelationalContentManager implements IContentManager
 	@Override
 	public void renameContent(DMS dms, String fileName, MDMSContent content)
 	{
-		int DMS_Content_ID = checkExistsFileDir(content.getParentURL(), fileName);
-		if (DMS_Content_ID > 0)
+		// check if parent or not
+		String associationType = MDMSContent.getContentAssociationType(content.getDMS_Content_ID());
+		if (associationType.equalsIgnoreCase(MDMSAssociationType.TYPE_RECORD))
 		{
-			throw new AdempiereException("File with same name Exists");
+			List<MDMSContent> dmsContentList = content.getVersionRelatedContentList();
+			for (MDMSContent dc : dmsContentList)
+			{
+				associationType = MDMSContent.getContentAssociationType(dc.getDMS_Content_ID());
+				String actualFileName = "";
+				MDMSVersion dmsVersion = (MDMSVersion) MDMSVersion.getLatestVersion(dc);
+				if (associationType.equalsIgnoreCase(MDMSAssociationType.TYPE_RECORD))
+				{
+					String count = dmsVersion.getValue().substring(dmsVersion.getValue().lastIndexOf("(") + 1, dmsVersion.getValue().lastIndexOf(")"));
+					actualFileName = dms.getActualFileOrDirName(DMSConstant.CONTENT_FILE, content, FilenameUtils.getBaseName(fileName) + "(" + count + ")",
+																Utils.getFileExtension(fileName), MDMSAssociationType.TYPE_RECORD,
+																DMSConstant.OPERATION_RENAME);
+				}
+				else
+				{
+					actualFileName = dms.getActualFileOrDirName(DMSConstant.CONTENT_FILE, content, FilenameUtils.getBaseName(fileName),
+																Utils.getFileExtension(fileName), MDMSAssociationType.TYPE_VERSIONPARENT,
+																DMSConstant.OPERATION_RENAME);
+				}
+
+				String newFileName = dms.getBaseDirPath(dc);
+				newFileName = newFileName.substring(0, newFileName.lastIndexOf(DMSConstant.FILE_SEPARATOR));
+				if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
+					newFileName = newFileName + actualFileName;
+				else
+					newFileName = newFileName + DMSConstant.FILE_SEPARATOR + actualFileName;
+
+				if (!new File(dms.getBaseDirPath(dc)).renameTo(new File(newFileName)))
+					throw new AdempiereException("Invalid File Name.");
+
+				dc.setName(fileName);
+				dc.save();
+
+				dmsVersion.setValue(actualFileName);
+				dmsVersion.save();
+			}
 		}
 		else
 		{
-			// check if parent or not
-			String associationType = MDMSContent.getContentAssociationType(content.getDMS_Content_ID());
-			if (associationType.equalsIgnoreCase(MDMSAssociationType.TYPE_RECORD))
+			String contentType = MDMSContent.CONTENTBASETYPE_Content.equals(content.getContentBaseType())	? DMSConstant.CONTENT_FILE
+																											: DMSConstant.CONTENT_DIR;
+			String actualName = dms.getActualFileOrDirName(	contentType, content, FilenameUtils.getBaseName(fileName),
+															Utils.getFileExtension(content.getName()), MDMSAssociationType.TYPE_PARENT,
+															DMSConstant.OPERATION_RENAME);
+
+			String fileOldName = FilenameUtils.getBaseName(content.getName());
+
+			content.setName(actualName);
+			content.save();
+
+			// Change all file based on version
+			List<MDMSVersion> dmsVersions = MDMSVersion.getVersionHistory(content);
+			fileName = FilenameUtils.getBaseName(actualName);
+			for (MDMSVersion dmsVersion : dmsVersions)
 			{
-				List<MDMSContent> dmsContentList = content.getVersionRelatedContentList();
-				for (MDMSContent dc : dmsContentList)
+				if (dmsVersion.getSeqNo() == 0 && !dmsVersion.getValue().contains(fileOldName))
 				{
-					associationType = MDMSContent.getContentAssociationType(dc.getDMS_Content_ID());
-					String actualFileName = "";
-					MDMSVersion dmsVersion = (MDMSVersion) MDMSVersion.getLatestVersion(dc);
-					if (associationType.equalsIgnoreCase(MDMSAssociationType.TYPE_RECORD))
-					{
-						String count = dmsVersion.getValue().substring(dmsVersion.getValue().lastIndexOf("(") + 1, dmsVersion.getValue().lastIndexOf(")"));
-						actualFileName = dms.getActualFileOrDirName(DMSConstant.CONTENT_FILE, content, FilenameUtils.getBaseName(fileName) + "(" + count + ")",
-																	Utils.getFileExtension(fileName), MDMSAssociationType.TYPE_RECORD,
-																	DMSConstant.OPERATION_RENAME);
-					}
-					else
-					{
-						actualFileName = dms.getActualFileOrDirName(DMSConstant.CONTENT_FILE, content, FilenameUtils.getBaseName(fileName),
-																	Utils.getFileExtension(fileName), MDMSAssociationType.TYPE_VERSIONPARENT,
-																	DMSConstant.OPERATION_RENAME);
-					}
-
-					String newFileName = dms.getBaseDirPath(dc);
-					newFileName = newFileName.substring(0, newFileName.lastIndexOf(DMSConstant.FILE_SEPARATOR));
-					if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
-						newFileName = newFileName + actualFileName;
-					else
-						newFileName = newFileName + DMSConstant.FILE_SEPARATOR + actualFileName;
-
-					if (!new File(dms.getBaseDirPath(dc)).renameTo(new File(newFileName)))
-						throw new AdempiereException("Invalid File Name.");
-
-					dc.setName(fileName);
-					dc.save();
-
-					dmsVersion.setValue(actualFileName);
-					dmsVersion.save();
+					fileOldName = FilenameUtils.getBaseName(dmsVersion.getValue());
+				}
+				File oldFile = new File(dms.getBaseDirPath(content));
+				oldFile = new File(oldFile.getParent() + DMSConstant.FILE_SEPARATOR + dmsVersion.getValue());
+				if (oldFile.renameTo(new File(Utils.getUpdatedFilePath(oldFile.getAbsolutePath(), fileOldName, fileName))))
+				{
+					dmsVersion.setValue(dmsVersion.getValue().replace(fileOldName, fileName));
+					dmsVersion.saveEx();
+				}
+				else
+				{
+					log.severe("Invalid File Name (" + fileName + "," + dmsVersion.getValue() + ")");
 				}
 			}
+			String fileOldPath = content.getParentURL();
+			String fileNewPath = content.getParentURL();
+			if (Util.isEmpty(fileOldPath, true))
+				fileOldPath = DMSConstant.FILE_SEPARATOR + fileOldName;
 			else
-			{
-				String actualName = dms.getActualFileOrDirName(	DMSConstant.CONTENT_FILE, content, FilenameUtils.getBaseName(fileName),
-																Utils.getFileExtension(fileName), MDMSAssociationType.TYPE_PARENT,
-																DMSConstant.OPERATION_RENAME);
+				fileOldPath += DMSConstant.FILE_SEPARATOR + fileOldName;
+			if (Util.isEmpty(fileNewPath, true))
+				fileNewPath = DMSConstant.FILE_SEPARATOR + actualName;
+			else
+				fileNewPath += DMSConstant.FILE_SEPARATOR + actualName;
 
-				String newFileName = dms.getBaseDirPath(content);
-				newFileName = newFileName.substring(0, newFileName.lastIndexOf(DMSConstant.FILE_SEPARATOR));
-				if (newFileName.charAt(newFileName.length() - 1) == DMSConstant.FILE_SEPARATOR.charAt(0))
-					newFileName = newFileName + actualName;
-				else
-					newFileName = newFileName + DMSConstant.FILE_SEPARATOR + actualName;
-
-				if (!new File(dms.getBaseDirPath(content)).renameTo(new File(newFileName)))
-					throw new AdempiereException("Invalid File Name.");
-
-				content.setName(fileName);
-				content.save();
-
-				MDMSVersion dmsVersion = (MDMSVersion) MDMSVersion.getLatestVersion(content);
-				dmsVersion.setValue(actualName);
-				dmsVersion.saveEx();
-			}
+			// Re-Name sub Content Parent URL (File path)
+			RelationUtils.renameSubContentParentURL(content, fileOldPath, fileNewPath, false);
 		}
 	} // renameContent
 

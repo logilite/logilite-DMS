@@ -25,6 +25,7 @@ import com.logilite.dms.model.MDMSContent;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.util.DMSFactoryUtils;
 import com.logilite.dms.util.DMSSearchUtils;
+import com.logilite.dms.util.Utils;
 import com.logilite.search.factory.IIndexSearcher;
 import com.logilite.search.factory.ServiceUtils;
 
@@ -48,7 +49,7 @@ public class ResetIndexingProcess extends SvrProcess
 																	+ " WHERE v.DMS_Content_ID IN (SELECT c.DMS_Content_ID FROM DMS_Content c WHERE c.ContentBaseType='CNT' AND c.AD_Client_ID=? ";
 
 	//
-	private IIndexSearcher		indexSeracher					= null;
+	private IIndexSearcher		indexSearcher					= null;
 	private IIndexQueryBuilder	indexQueryBuilder				= null;
 
 	private Timestamp			p_createdFrom;
@@ -79,14 +80,6 @@ public class ResetIndexingProcess extends SvrProcess
 			}
 		}
 
-		indexSeracher = ServiceUtils.getIndexSearcher(getAD_Client_ID());
-		if (indexSeracher == null)
-			throw new AdempiereException("Indexing server is not configured.");
-
-		indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(getAD_Client_ID());
-		if (indexSeracher == null)
-			throw new AdempiereException("Indexing query builder artifact not started/deployed.");
-
 		//
 		isAllReIndex = "A".equals(p_isIndexed);
 	}
@@ -94,6 +87,20 @@ public class ResetIndexingProcess extends SvrProcess
 	@Override
 	protected String doIt() throws Exception
 	{
+		indexSearcher = ServiceUtils.getIndexSearcher(getAD_Client_ID());
+		if (indexSearcher == null)
+			throw new AdempiereException("Indexing server is not configured.");
+
+		//
+		if (ServiceUtils.isSQLIndexSearcher(indexSearcher))
+			return "No index server found or running. Currently using default SQL search, so data indexing is not required";
+
+		//
+		indexQueryBuilder = DMSFactoryUtils.getIndexQueryBuilder(indexSearcher);
+		if (indexQueryBuilder == null)
+			throw new AdempiereException("Indexing query builder artifact not started/deployed.");
+
+		//
 		int cntSuccess = 0;
 		int cntFailed = 0;
 
@@ -133,7 +140,7 @@ public class ResetIndexingProcess extends SvrProcess
 		// Delete all the index from indexing server
 		if (isAllReIndex)
 		{
-			indexSeracher.deleteIndexByQuery(indexQueryBuilder.buildSearchQueryFromMap(params));
+			indexSearcher.deleteIndexByQuery(indexQueryBuilder.buildSearchQueryFromMap(params));
 
 			int no = DB.executeUpdate(SQL_UPDATE_CONTENT_INDEX_FALSE + whereCreatedRange + " )", getAD_Client_ID(), null);
 			log.log(Level.INFO, "DMS content indexed marked as false for, count: " + no);
@@ -154,7 +161,7 @@ public class ResetIndexingProcess extends SvrProcess
 			{
 				if (!isAllReIndex)
 				{
-					indexSeracher.deleteIndexByField(DMSConstant.DMS_CONTENT_ID, "" + content.getDMS_Content_ID());
+					indexSearcher.deleteIndexByField(DMSConstant.DMS_CONTENT_ID, "" + content.getDMS_Content_ID());
 				}
 
 				for (MDMSVersion version : versionList)
@@ -183,7 +190,7 @@ public class ResetIndexingProcess extends SvrProcess
 					// Update the value of IsIndexed flag in dmsContent
 					if (!isAllReIndex && version.isIndexed())
 					{
-						DB.executeUpdate("UPDATE DMS_Version 	SET IsIndexed='N'	WHERE DMS_Version_ID=? ", version.getDMS_Version_ID(), null);
+						Utils.updateVersionIndex(version.getDMS_Version_ID(), "N", null);
 					}
 				}
 			}

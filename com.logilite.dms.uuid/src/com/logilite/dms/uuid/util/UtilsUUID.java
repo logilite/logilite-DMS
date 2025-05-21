@@ -8,14 +8,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MTable;
 import org.compiere.util.Env;
 
+import com.logilite.dms.constant.DMSConstant;
+import com.logilite.dms.factories.IContentManager;
+import com.logilite.dms.model.I_DMS_Content;
 import com.logilite.dms.model.MDMSVersion;
 import com.logilite.dms.util.Utils;
 
@@ -79,4 +84,55 @@ public class UtilsUUID
 		});
 		zos.close();
 	} // zipFolder
+
+	/**
+	 * Get copy file name for Directory or File based on Content Type
+	 * @param content
+	 * @param ruuCM
+	 * @param contentType
+	 * @param actualName
+	 * @param fileName
+	 * @param extention
+	 */
+	public static String getCopyName(I_DMS_Content content, IContentManager ruuCM, boolean isDir, String actualName, String fileName, String extention)
+	{
+		String name = FilenameUtils.getBaseName(fileName);
+		List<String> matchingFileNames;
+		if (isDir)
+			matchingFileNames = Utils.getActualDirNameForCopiedDirName(ruuCM.getPathByValue(content), name);
+		else
+			matchingFileNames = Utils.getExtistingFileNamesFromCopiedFileName(ruuCM.getPathByValue(content), name, extention);
+		actualName = name;
+		if (!isDir)
+			actualName += "." + extention;
+		if (!fileName.contains(DMSConstant.REG_EXP_UNDERSCORE_COPY) && matchingFileNames.size() == 1)
+		{
+			actualName = name + DMSConstant.REG_EXP_UNDERSCORE_COPY;
+			if (!isDir)
+				actualName += DMSConstant.REG_EXP_PERIOD + extention;
+		}
+		else if (matchingFileNames.size() > 1)
+		{
+			Object[] fileArray = matchingFileNames.toArray();
+			int seq = 0;
+			boolean match = false;
+			while (!match)
+			{
+				match = true;
+				seq++;
+				actualName = name + DMSConstant.REG_EXP_UNDERSCORE_COPY_UNDERSCORE + seq;
+				if (!isDir)
+					actualName += DMSConstant.REG_EXP_PERIOD + extention;
+				for (Object f : fileArray)
+				{
+					if (((String) f).equalsIgnoreCase(actualName))
+					{
+						match = false;
+						break;
+					}
+				}
+			}
+		}
+		return actualName;
+	} // getCopyName
 }

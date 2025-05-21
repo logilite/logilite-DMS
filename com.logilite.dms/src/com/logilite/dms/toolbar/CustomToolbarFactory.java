@@ -17,6 +17,7 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.ClientInfo;
+import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.action.IAction;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
@@ -25,8 +26,10 @@ import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.session.SessionManager;
+import org.adempiere.webui.theme.ThemeManager;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
+import org.compiere.util.Util;
 import org.zkoss.zk.ui.Desktop;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -39,11 +42,11 @@ import com.logilite.dms.form.WDMSPanel;
 public class CustomToolbarFactory implements IAction
 {
 
-	private static CLogger			log			= CLogger.getCLogger(CustomToolbarFactory.class);
+	protected static CLogger			log			= CLogger.getCLogger(CustomToolbarFactory.class);
 
-	private AbstractADWindowContent	winContent	= null;
-	private WDMSPanel				dmsPanel	= null;
-	private Window					dmsWindow	= null;
+	protected AbstractADWindowContent	winContent	= null;
+	protected WDMSPanel					dmsPanel	= null;
+	protected Window					dmsWindow	= null;
 
 	public CustomToolbarFactory()
 	{
@@ -124,6 +127,20 @@ public class CustomToolbarFactory implements IAction
 		SessionManager.getAppDesktop().showWindow(dmsWindow);
 	} // execute
 
+	@Override
+	public void decorate(Toolbarbutton btn)
+	{
+		if (Util.isEmpty(btn.getTooltiptext()))
+			btn.setTooltiptext(btn.getLabel());
+
+		if (ThemeManager.isUseFontIconForImage())
+		{
+			btn.setIconSclass("z-icon-file");
+			LayoutUtils.addSclass("font-icon-toolbar-button", btn);
+		}
+	} // decorate
+
+	@Override
 	public void updateToolbarCustomBtn(Toolbarbutton toolbarButton, IADTabpanel tabPanel, boolean changed, boolean readOnly)
 	{
 
