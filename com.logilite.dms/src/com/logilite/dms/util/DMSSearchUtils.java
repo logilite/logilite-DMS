@@ -83,8 +83,8 @@ public class DMSSearchUtils
 	 * @param  content
 	 * @param  AD_Client_ID
 	 * @param  documentView
-	 * @param sortFieldName 
-	 * @return              map of DMS content and association
+	 * @param  sortFieldName
+	 * @return               map of DMS content and association
 	 */
 	public static HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(	I_DMS_Content content, int AD_Client_ID, String documentView,
 																							String sortFieldName)
@@ -571,11 +571,11 @@ public class DMSSearchUtils
 			trxName = ((PO) parentContent).get_TrxName();
 		}
 
-		StringBuffer sql = new StringBuffer(DMSConstant.optimizeContentSQL(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE, contentID));
+		StringBuffer sql = new StringBuffer(DMSConstant.SQL_GET_CONTENT_DIR_LEVEL_WISE_ACTIVE);
 		if (contentTypeID > 0)
-			sql.append(" AND c.DMS_ContentType_ID = ").append(contentTypeID);
+			sql.append(" AND c.DMS_ContentType_ID = ? ");
 		if (associationTypeID > 0)
-			sql.append(" AND c.DMS_AssociationType_ID = ").append(associationTypeID);
+			sql.append(" AND c.DMS_AssociationType_ID = ? ");
 
 		sql.append(" ORDER BY c.Created DESC ");
 
@@ -589,9 +589,10 @@ public class DMSSearchUtils
 			pstmt = DB.prepareStatement(sql.toString(), trxName);
 			pstmt.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
 			pstmt.setInt(i++, contentID);
-			pstmt.setInt(i++, Env.getAD_Client_ID(Env.getCtx()));
-			pstmt.setInt(i++, contentID);
-			pstmt.setInt(i++, contentID);
+			if (contentTypeID > 0)
+				pstmt.setInt(i++, contentTypeID);
+			if (associationTypeID > 0)
+				pstmt.setInt(i++, associationTypeID);
 
 			rs = pstmt.executeQuery();
 			while (rs.next())
