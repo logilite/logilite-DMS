@@ -423,87 +423,63 @@ public final class DMSConstant
 	public static final String				SQL_GET_CT_WITHOUT_FILTER_RECORDS		= " (DMS_ContentType.DMS_ContentType_ID NOT IN ( 						"
 																						+ " SELECT DISTINCT DMS_ContentType_ID FROM DMS_ContentType_Filter) ) ";
 
-	/**
-	 * Improve Performance of Content ID search
-	 * If Content ID is more than zero replace Coalesce of a.DMS_Content_Related_ID of Filter
-	 * 
-	 * @param  sql       - SQL related of Content Directory level wise
-	 * @param  contentID - Content ID
-	 * @return           optimize Content SQL
-	 */
-	public static String optimizeContentSQL(String sql, int contentID)
-	{
-		if (contentID > 0)
-		{
-			/*
-			 * Replace below condition for performance improvement
-			 * FROM: NVL(c.DMS_Content_Related_ID, 0) = ?
-			 * TO : c.DMS_Content_Related_ID = ?
-			 */
-			sql = sql.replaceAll("NVL\\(a\\.DMS_Content_Related_ID, 0\\) = \\?", "a.DMS_Content_Related_ID = ?");
-			sql = sql.replaceAll("NVL\\(c\\.DMS_Content_Related_ID, 0\\) = \\?", "c.DMS_Content_Related_ID = ?");
-		}
-
-		return sql;
-	}
-
 	// Restrict copy paste while parent directory copy paste into itself or it's child directory.
-	public static String		SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY	= " WITH RECURSIVE ContentHierarchy AS 												"
-																			+ " (	SELECT DMS_Content_ID,DMS_Content_Related_ID FROM DMS_Association 		"
-																			+ "		WHERE  AD_Client_ID = ? AND DMS_Content_ID = ? 							"
-																			+ "	 UNION																		"
-																			+ "		SELECT a.DMS_Content_ID, a.DMS_Content_Related_ID FROM DMS_Association a"
-																			+ " 	JOIN ContentHierarchy h ON (h.DMS_Content_Related_ID = a.DMS_Content_ID)"
-																			+ " ) SELECT DMS_Content_ID FROM ContentHierarchy WHERE DMS_Content_ID = ? 		";
+	public static String					SQL_CHECK_HIERARCHY_CONTENT_RECURSIVELY	= " WITH RECURSIVE ContentHierarchy AS 												"
+																						+ " (	SELECT DMS_Content_ID,DMS_Content_Related_ID FROM DMS_Association 		"
+																						+ "		WHERE  AD_Client_ID = ? AND DMS_Content_ID = ? 							"
+																						+ "	 UNION																		"
+																						+ "		SELECT a.DMS_Content_ID, a.DMS_Content_Related_ID FROM DMS_Association a"
+																						+ " 	JOIN ContentHierarchy h ON (h.DMS_Content_Related_ID = a.DMS_Content_ID)"
+																						+ " ) SELECT DMS_Content_ID FROM ContentHierarchy WHERE DMS_Content_ID = ? 		";
 
 	/*
 	 * Access & Permission
 	 */
 
 	// Content Type wise access
-	public static final String	SQL_GET_CONTENT_ON_CONTENTTYPE_ACCESS	= "SELECT c.DMS_Content_ID FROM DMS_Content c 																		"
-																			+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
-																			+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) 			";
+	public static final String				SQL_GET_CONTENT_ON_CONTENTTYPE_ACCESS	= "SELECT c.DMS_Content_ID FROM DMS_Content c 																		"
+																						+ " LEFT JOIN DMS_ContentType_Access ca ON (c.DMS_ContentType_ID = ca.DMS_ContentType_ID AND ca.IsActive = 'Y') "
+																						+ " WHERE (ca.DMS_ContentType_ID IS NULL OR (ca.DMS_ContentType_ID IS NOT NULL AND ca.AD_Role_ID = ?)) 			";
 
-	public static final String	SQL_GET_TOOLBAR_BUTTON_ID				= "SELECT AD_ToolbarButton_ID FROM AD_ToolBarButton WHERE AD_Client_ID IN (0, ?) AND Name = ?	";
+	public static final String				SQL_GET_TOOLBAR_BUTTON_ID				= "SELECT AD_ToolbarButton_ID FROM AD_ToolBarButton WHERE AD_Client_ID IN (0, ?) AND Name = ?	";
 
 	// Count the permission entries per content wise
-	public static final String	SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ? AND IsActive = 'Y' 				";
+	public static final String				SQL_COUNT_PERMISSION_ENTRIES			= "SELECT COUNT(1) FROM DMS_Permission WHERE DMS_Content_ID = ? AND IsActive = 'Y' 				";
 
 	// User permission wise access
-	public static final String	SQL_GET_PERMISSION_ID_FROM_CONTENT		= "SELECT DMS_Permission_ID FROM DMS_Permission 	WHERE DMS_Content_ID = ? AND IsActive = 'Y'			"
-																			+ "	AND ( 	COALESCE(AD_Role_ID, 0) = ? OR COALESCE(AD_User_ID, 0) = ? OR IsAllPermission = 'Y' )	"
-																			+ "	ORDER BY IsAllPermission DESC, IsNavigation, COALESCE(AD_Role_ID, 0), COALESCE(AD_User_ID, 0)	";
+	public static final String				SQL_GET_PERMISSION_ID_FROM_CONTENT		= "SELECT DMS_Permission_ID FROM DMS_Permission 	WHERE DMS_Content_ID = ? AND IsActive = 'Y'			"
+																						+ "	AND ( 	COALESCE(AD_Role_ID, 0) = ? OR COALESCE(AD_User_ID, 0) = ? OR IsAllPermission = 'Y' )	"
+																						+ "	ORDER BY IsAllPermission DESC, IsNavigation, COALESCE(AD_Role_ID, 0), COALESCE(AD_User_ID, 0)	";
 	// Parent content ID from child content and non mounting
-	public static final String	SQL_GET_PARENT_CONTENT_ID_NON_MOUNTING	= "SELECT a.DMS_Content_Related_ID 		FROM DMS_Content c																"
-																			+ " INNER JOIN DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID IS NOT NULL"
-																			+ "								 			AND COALESCE(a.DMS_AssociationType_ID, 0) IN (0, 1000001))				"
-																			+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N') 		"
-																			+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
+	public static final String				SQL_GET_PARENT_CONTENT_ID_NON_MOUNTING	= "SELECT a.DMS_Content_Related_ID 		FROM DMS_Content c																"
+																						+ " INNER JOIN DMS_Association a 	ON (a.DMS_Content_ID = c.DMS_Content_ID AND a.DMS_Content_Related_ID IS NOT NULL"
+																						+ "								 			AND COALESCE(a.DMS_AssociationType_ID, 0) IN (0, 1000001))				"
+																						+ " INNER JOIN DMS_Content p 		ON (p.DMS_Content_ID = a.DMS_Content_Related_ID AND p.IsMounting = 'N') 		"
+																						+ " WHERE c.IsMounting = 'N' AND c.DMS_Content_ID = ? 																";
 
 	// Retrieve the Mounting Association ID for Record.
-	public static final String	SQL_GET_RECORD_MOUNTING_ASSOCIATION		= " SELECT a.DMS_Association_ID 	FROM DMS_content c							"
-																			+ " INNER JOIN DMS_association a ON (a.DMS_Content_ID = c.DMS_Content_ID) 	"
-																			+ " WHERE c.AD_Client_ID = ? 												"
-																			+ "		AND NVL(ParentURL,'') LIKE ?										"
-																			+ "		AND	NVL(a.Record_ID, 0) = ? 										"
-																			+ "		AND NVL(a.AD_Table_ID, 0) = ? 										"
-																			+ "		AND c.IsMounting = 'Y' 												";
+	public static final String				SQL_GET_RECORD_MOUNTING_ASSOCIATION		= " SELECT a.DMS_Association_ID 	FROM DMS_content c							"
+																						+ " INNER JOIN DMS_association a ON (a.DMS_Content_ID = c.DMS_Content_ID) 	"
+																						+ " WHERE c.AD_Client_ID = ? 												"
+																						+ "		AND NVL(ParentURL,'') LIKE ?										"
+																						+ "		AND	NVL(a.Record_ID, 0) = ? 										"
+																						+ "		AND NVL(a.AD_Table_ID, 0) = ? 										"
+																						+ "		AND c.IsMounting = 'Y' 												";
 
 	// Attribute Set Instance ID Filter from value and name pair
-	public static final String	SQL_GET_ATTRI_SET_INSTANCE_LIST			= "(SELECT M_AttributeSetInstance_ID FROM crosstab ( 														"
-																			+ "	  	'SELECT ai.M_AttributeSetInstance_ID, a.Name AS Name,     										"
-																			+ "			COALESCE(CAST(ValueNumber AS TEXT), CAST(ValueInt AS TEXT), CAST(ValueDate AS TEXT), CAST(ValueTimestamp AS TEXT), Value) AS Value"
-																			+ " 	FROM M_AttributeInstance ai INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID)	"
-																			+ " 	ORDER BY  1, 2 ' 																				"
-																			+ "	) AS ct( M_AttributeSetInstance_ID numeric 															";
+	public static final String				SQL_GET_ATTRI_SET_INSTANCE_LIST			= "(SELECT M_AttributeSetInstance_ID FROM crosstab ( 														"
+																						+ "	  	'SELECT ai.M_AttributeSetInstance_ID, a.Name AS Name,     										"
+																						+ "			COALESCE(CAST(ValueNumber AS TEXT), CAST(ValueInt AS TEXT), CAST(ValueDate AS TEXT), CAST(ValueTimestamp AS TEXT), Value) AS Value"
+																						+ " 	FROM M_AttributeInstance ai INNER JOIN M_Attribute a ON (ai.M_Attribute_ID = a.M_Attribute_ID)	"
+																						+ " 	ORDER BY  1, 2 ' 																				"
+																						+ "	) AS ct( M_AttributeSetInstance_ID numeric 															";
 
 	// Get Content Type wise Attribute Name List
-	public static final String	SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID, Name FROM M_Attribute 														"
-																			+ "	WHERE M_Attribute_ID IN 																		"
-																			+ "		(	SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance 								"
-																			+ "    		WHERE M_AttributeSetInstance_ID IN ( 													"
-																			+ "        			SELECT M_AttributeSetInstance_ID FROM DMS_Content WHERE DMS_ContentType_ID = ? )"
-																			+ "     )	 																						"
-																			+ "	ORDER BY Name 																					";
+	public static final String				SQL_GET_ATTRIBUTE_CONTENTTYPE_LIST		= "SELECT M_Attribute_ID, Name FROM M_Attribute 														"
+																						+ "	WHERE M_Attribute_ID IN 																		"
+																						+ "		(	SELECT DISTINCT M_Attribute_ID FROM M_AttributeInstance 								"
+																						+ "    		WHERE M_AttributeSetInstance_ID IN ( 													"
+																						+ "        			SELECT M_AttributeSetInstance_ID FROM DMS_Content WHERE DMS_ContentType_ID = ? )"
+																						+ "     )	 																						"
+																						+ "	ORDER BY Name 																					";
 }
