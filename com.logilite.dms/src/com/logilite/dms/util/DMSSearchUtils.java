@@ -194,6 +194,9 @@ public class DMSSearchUtils
 	private static HashMap<I_DMS_Version, I_DMS_Association> searchUtility(	String query, DMS dms, MDMSContent content, int tableID, int recordID,
 																			String documentView)
 	{
+		// Checks if the configured index server is running; if not, enables SQL-based search
+		dms.checkIndexSearcher();
+		//
 		ArrayList<String> qList = dms.getIndexQueryBuilder().addCommonCriteria(query, dms.AD_Client_ID, content, tableID, recordID, documentView);
 
 		// Data searched from Indexing server
