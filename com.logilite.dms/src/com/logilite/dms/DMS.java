@@ -376,7 +376,9 @@ public class DMS
 
 	public HashSet<Integer> searchIndex(String query)
 	{
+		// Checks if the configured index server is running; if not, enables SQL-based search
 		checkIndexSearcher();
+		//
 		return indexSearcher.searchIndex(query, DMSConstant.DMS_CONTENT_ID);
 	} // searchIndex
 
@@ -411,6 +413,9 @@ public class DMS
 	public HashMap<I_DMS_Version, I_DMS_Association> renderSearchedContent(	HashMap<String, List<Object>> queryParamas, MDMSContent content, int tableID,
 																			int recordID, String documentView)
 	{
+		// Checks if the configured index server is running; if not, enables SQL-based search
+		checkIndexSearcher();
+		//
 		return DMSSearchUtils.renderSearchedContent(this, queryParamas, content, validTableID(tableID), validRecordID(recordID), documentView);
 	} // renderSearchedContent
 
@@ -510,7 +515,8 @@ public class DMS
 																									: DMSConstant.DOCUMENT_VIEW_ALL_VALUE), null);
 	} // getDMSContentsWithAssociation
 
-	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(I_DMS_Content content, int AD_Client_ID, String documentView, String sortFieldName)
+	public HashMap<I_DMS_Version, I_DMS_Association> getDMSContentsWithAssociation(	I_DMS_Content content, int AD_Client_ID, String documentView,
+																					String sortFieldName)
 	{
 		return DMSSearchUtils.getDMSContentsWithAssociation(content, AD_Client_ID, documentView, sortFieldName);
 	} // getDMSContentsWithAssociation
