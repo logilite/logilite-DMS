@@ -216,40 +216,40 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 		return query.toString();
 	}
 
-	private String commonSearch(int ad_client_ID, MDMSContent content, int tableID, int recordID, String documentView)
+	private String commonSearch(int clientID, MDMSContent content, int tableID, int recordID, String documentView)
 	{
 		StringBuffer query = new StringBuffer();
-		query.append(" ").append(DMSConstant.AD_CLIENT_ID + " = " + ad_client_ID);
+		query.append(" AD_Client_ID = ").append(clientID);
+		query.append(" AND ContentBaseType = 'CNT' ");
 
-		//
-		StringBuffer hirachicalContent = new StringBuffer("");
 		if (content != null && content.getDMS_Content_ID() > 0)
 		{
 			MDMSAssociation association = MDMSAssociation.getParentAssociationFromContent(content.getDMS_Content_ID(), false, null);
-			if (content.isMounting() && association.getRecord_ID() <= 0)
+			if (content.isMounting())
 			{
-				if (association.getAD_Table_ID() > 0)
+				if (association.getAD_Table_ID() > 0 && association.getRecord_ID() <= 0)
+					tableID = association.getAD_Table_ID();
+				else if (association.getAD_Table_ID() > 0 && association.getRecord_ID() > 0)
 				{
-					hirachicalContent.append(" AND ").append(DMSConstant.AD_TABLE_ID + " = ").append(association.getAD_Table_ID());
+					tableID = association.getAD_Table_ID();
+					recordID = association.getRecord_ID();
 				}
 			}
 			else
 			{
-				hirachicalContent.append(" AND ").append(DMSConstant.DMS_CONTENT_ID).append(" IN (");
-				DMSSearchUtils.getHierarchicalContent(hirachicalContent, content.getDMS_Content_ID(), ad_client_ID, tableID, recordID, ", ");
-				hirachicalContent.append(content.getDMS_Content_ID()).append(") ");
+				StringBuffer hierarchicalContent = new StringBuffer("");
+				DMSSearchUtils.getHierarchicalContent(hierarchicalContent, content.getDMS_Content_ID(), clientID, tableID, recordID, ", ");
+				hierarchicalContent.append(content.getDMS_Content_ID());
+				query.append(" AND ").append(DMSConstant.DMS_CONTENT_ID).append(" IN ( ").append(hierarchicalContent).append(" )");
 			}
-
-			//
-			query.append("  ").append(hirachicalContent.toString());
 		}
 
 		if (DMSConstant.DOCUMENT_VIEW_DELETED_ONLY_VALUE.equalsIgnoreCase(documentView))
-			query.append(" AND IsActive = 'N'");
+			query.append(" AND IsActive = 'N' ");
 		else if (DMSConstant.DOCUMENT_VIEW_NON_DELETED_VALUE.equalsIgnoreCase(documentView))
-			query.append(" AND IsActive = 'Y'");
+			query.append(" AND IsActive = 'Y' ");
 
-		String existQuery = " AND EXISTS (SELECT DMS_Content_ID FROM DMS_Association WHERE ";
+		String existQuery = " AND DMS_Content_ID IN ( SELECT DMS_Content_ID FROM DMS_Association WHERE ";
 		if (tableID > 0 && recordID > 0)
 			query.append(existQuery).append(" AD_Table_ID = " + tableID + " AND Record_ID = " + recordID + " ) ");
 		else if (tableID > 0)
@@ -258,6 +258,6 @@ public class SQLQueryBuilder implements IIndexQueryBuilder
 			query.append(existQuery).append(" Record_ID = " + recordID + " ) ");
 
 		return query.toString();
-	}
+	} // commonSearch
 
 }

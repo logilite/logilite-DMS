@@ -1362,6 +1362,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			String documentView = cobDocumentView.getSelectedItem().getValue();
 			if (isSearch)
 			{
+				// Checks if the configured index server is running; if not, enables SQL-based
+				// search
+				dms.checkIndexSearcher();
+				//
 				String genericSearch = txtGlobalSearch.getValue();
 				if (!Util.isEmpty(genericSearch))
 				{
