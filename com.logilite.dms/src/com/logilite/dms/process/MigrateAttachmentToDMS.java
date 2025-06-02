@@ -160,18 +160,37 @@ public class MigrateAttachmentToDMS extends SvrProcess
 
 			for (MAttachment attachment : attachments)
 			{
-				MTable table = MTable.get(getCtx(), attachment.getAD_Table_ID());
+				int tableID = attachment.getAD_Table_ID();
+				int recordID = attachment.getRecord_ID();
+				int attachmentID = attachment.getAD_Attachment_ID();
 
-				dms.initMountingStrategy(table.getTableName());
-				dms.initiateMountingContent(table.getTableName(), attachment.getRecord_ID(), attachment.getAD_Table_ID());
-				MDMSContent mountingParent = dms.getRootMountingContent(table.getAD_Table_ID(), attachment.getRecord_ID());
+				MTable table = MTable.get(getCtx(), tableID);
+				String tableName = table.getTableName();
+
+				// Check physical record present, if not then delete the orphan attachment
+				int count = DB.getSQLValue(null, "SELECT COUNT(1) FROM " + tableName + " WHERE " + tableName + "_ID = " + recordID);
+				if (count <= 0)
+				{
+					addLog("Orphan attachment found: Attachment_ID = " + attachmentID + ", Table = " + tableName + ", Record_ID = " + recordID);
+					count = DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Attachment_ID = ?", attachmentID, get_TrxName());
+					if (count > 0)
+					{
+						log.log(Level.WARNING, "Orphan attachment deleted...");
+					}
+					continue;
+				}
+
+				//
+				dms.initMountingStrategy(tableName);
+				dms.initiateMountingContent(tableName, recordID, tableID);
+				MDMSContent mountingParent = dms.getRootMountingContent(tableID, recordID);
 
 				MAttachmentEntry[] attachmentEntries = attachment.getEntries();
 				int cntFailed = 0;
 				for (MAttachmentEntry entry : attachmentEntries)
 				{
-					statusUpdate(	"[" + countProcessing + " out of " + countTotal + " ] Move attachment of " + table.getTableName() + " for Record ID #"
-									+ attachment.getRecord_ID() + " : " + entry.getName());
+					statusUpdate(	"[" + countProcessing + " out of " + countTotal + " ] Move attachment of " + tableName + " for Record ID #"
+									+ recordID + " : " + entry.getName());
 
 					File renamedFile = null;
 					String fileName = entry.getFile().getName();
@@ -190,7 +209,7 @@ public class MigrateAttachmentToDMS extends SvrProcess
 
 						entry.getFile().renameTo(renamedFile);
 
-						int contentID = dms.addFile(mountingParent, renamedFile, attachment.getAD_Table_ID(), attachment.getRecord_ID());
+						int contentID = dms.addFile(mountingParent, renamedFile, tableID, recordID);
 						if (contentID > 0)
 							cntMigrated++;
 					}
@@ -202,12 +221,11 @@ public class MigrateAttachmentToDMS extends SvrProcess
 							{
 								String newFilename = FilenameUtils.getBaseName(fileName)	+ "_" + ((int) (Math.random() * 90) + 10)
 														+ Utils.getFileExtension(fileName);
-								int contentID = dms.addFile(mountingParent, renamedFile, newFilename,
-															null, 0, 0, attachment.getAD_Table_ID(), attachment.getRecord_ID());
+								int contentID = dms.addFile(mountingParent, renamedFile, newFilename, null, 0, 0, tableID, recordID);
 								if (contentID > 0)
 								{
 									cntMigrated++;
-									String msg = table.getTableName()	+ ", Record ID = " + attachment.getRecord_ID()
+									String msg = tableName	+ ", Record ID = " + recordID
 													+ ", DMS same name document already exists, So renamed from '" + fileName + "' to '" + newFilename + "'";
 									addLog(msg);
 									log.log(Level.WARNING, msg);
