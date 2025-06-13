@@ -120,8 +120,8 @@ public class RelationUtils
 					}
 					case MDMSAssociationType.TYPE_PARENT:
 					{
-						List<String> matchingFileNames = Utils.getMatchingActualValue(	rcm.getPathByName(content), fileName,
-																						DMSConstant.REG_EXP_LIKE_STR, extention);
+						List<String> matchingFileNames = Utils.getMatchingActualValue(	rcm.getPathByName(content), fileName, DMSConstant.REG_EXP_LIKE_STR,
+																						extention);
 						actualName = getFileNameCheck(	rcm, storageProvider, contentType, content, fileName, extention, type, operationType, matchingFileNames,
 														actualName);
 					}
@@ -143,10 +143,10 @@ public class RelationUtils
 				else
 				{
 					Object[] fileArrays = matchingFileNames.toArray();
-					int seq = (fileName.matches(".*_copy_(\\d+).*"))	? Integer.parseInt(fileName.substring(	fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
+					long seq = (fileName.matches(".*_copy_(\\d+).*"))	? Long.parseLong(fileName.substring(fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
 																											+ 1,
 																											fileName.lastIndexOf(DMSConstant.REG_EXP_PERIOD)))
-																	: 0;
+																		: 0;
 					fileName = seq == 0 ? FilenameUtils.getBaseName(fileName)
 										: (String) fileName.subSequence(0, fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_COPY_UNDERSCORE));
 					boolean found = false;
@@ -160,8 +160,7 @@ public class RelationUtils
 							seq++;
 							actualName = getActualContentName(	rcm, storageProvider, contentType, content,
 																fileName	+ DMSConstant.REG_EXP_UNDERSCORE_COPY_UNDERSCORE + seq + DMSConstant.REG_EXP_PERIOD
-																											+ extention, extention, type,
-																operationType);
+																											+ extention, extention, type, operationType);
 							found = true;
 						}
 						if (found)
@@ -176,9 +175,9 @@ public class RelationUtils
 																											+ DMSConstant.FILE_SEPARATOR + actualName);
 				if (newFile != null)
 				{
-					int seq = (fileName.matches(".*_copy_(\\d+).*"))	? Integer.parseInt(fileName.substring(	fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
-																												+ 1,
-																												fileName.lastIndexOf(DMSConstant.REG_EXP_PERIOD)))
+					long seq = (fileName.matches(".*_copy_(\\d+).*"))	? Long.parseLong(fileName.substring(fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
+																											+ 1,
+																											fileName.lastIndexOf(DMSConstant.REG_EXP_PERIOD)))
 																		: 0;
 					String newFileName = actualName.substring(0, actualName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR) + 1)	+ ++seq
 											+ DMSConstant.REG_EXP_PERIOD + extention;
@@ -194,7 +193,6 @@ public class RelationUtils
 					{
 						List<String> matchingFileNames = Utils.getMatchingActualValue(	content.getParentURL(), fileName,
 																						DMSConstant.REG_EXP_LIKE_STR, extention);
-
 						actualName = getFileNameCheck(	rcm, storageProvider, contentType, content, fileName, extention, type, operationType, matchingFileNames,
 														actualName);
 					}
@@ -205,8 +203,7 @@ public class RelationUtils
 		{
 			if (operationType.equalsIgnoreCase(DMSConstant.OPERATION_CREATE))
 			{
-				List<String> matchingFileNames = Utils.getMatchingActualValue(	rcm.getPathByName(content), fileName, DMSConstant.REG_EXP_LIKE_STR,
-																				"");
+				List<String> matchingFileNames = Utils.getMatchingActualValue(rcm.getPathByName(content), fileName, DMSConstant.REG_EXP_LIKE_STR, "");
 				actualName = getDirNameCheck(	rcm, storageProvider, contentType, content, fileName, extention, type, operationType, matchingFileNames,
 												actualName);
 			}
@@ -221,11 +218,9 @@ public class RelationUtils
 				else if (fileNames.size() > 1)
 				{
 					Object[] fileArrays = fileNames.toArray();
-					int seq = 0;
-					seq = (fileName.matches(".*_copy_(\\d+).*"))	? Integer.parseInt(fileName.substring(	fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
-																											+ 1,
-																											fileName.length() - 1))
-																	: 0;
+					long seq = 0;
+					seq = (fileName.matches(".*_copy_(\\d+).*")) ? Long.parseLong(fileName.substring(	fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
+																										+ 1, fileName.length() - 1)) : 0;
 					fileName = seq == 0 ? FilenameUtils.getBaseName(fileName)
 										: (String) fileName.subSequence(0, fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_COPY_UNDERSCORE));
 					boolean found = false;
@@ -253,10 +248,8 @@ public class RelationUtils
 																											+ DMSConstant.FILE_SEPARATOR + actualName);
 				if (newFile != null && newFile.exists())
 				{
-					int seq = (fileName.matches(".*_copy_(\\d+)*")) ? Integer.parseInt(fileName.substring(	fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
-																											+ 1,
-																											fileName.length()))
-																	: 0;
+					long seq = (fileName.matches(".*_copy_(\\d+)*")) ? Long.parseLong(fileName.substring(	fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
+																											+ 1, fileName.length())) : 0;
 
 					String newFileName = actualName.substring(0, actualName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR) + 1) + ++seq;
 					actualName = getActualContentName(rcm, storageProvider, contentType, content, newFileName, extention, type, operationType);
@@ -280,10 +273,9 @@ public class RelationUtils
 		if (matchingFileNames.contains(fileName + extention) && matchingFileNames.size() > 0)
 		{
 			Object[] matchingFileNamesArray = matchingFileNames.toArray();
-			int seq = 0;
-			seq = (fileName.matches("\\b\\w+_\\d+\\b")) ? Integer.parseInt(fileName.substring(	fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
-																								+ 1,
-																								fileName.length())) : 0;
+			long seq = 0;
+			seq = (fileName.matches("\\b\\w+_\\d+\\b")) ? Long.parseLong(fileName.substring(fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
+																							+ 1, fileName.length())) : 0;
 			fileName = seq == 0 ? fileName : (String) fileName.subSequence(0, fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR));
 			boolean found = false;
 			if (seq == 0)
@@ -294,8 +286,7 @@ public class RelationUtils
 				{
 					seq++;
 					actualName = getActualContentName(	rcm, storageProvider, contentType, content,
-														fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq, extention, type,
-														operationType);
+														fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq, extention, type, operationType);
 					found = true;
 				}
 				if (found)
@@ -323,8 +314,7 @@ public class RelationUtils
 			String newFileName = actualName.substring(0, actualName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR))
 									+ DMSConstant.REG_EXP_UNDERSCORE_STR
 									+ Utils.upgradeVersionNo(actualName.substring(0, actualName.lastIndexOf(".")), type);
-			actualName = getActualContentName(	rcm, storageProvider, contentType, content,
-												newFileName, extention, type, operationType);
+			actualName = getActualContentName(rcm, storageProvider, contentType, content, newFileName, extention, type, operationType);
 		}
 		return actualName;
 	} // getFileNameCheck
@@ -333,13 +323,13 @@ public class RelationUtils
 											String fileName, String extention, String type, String operationType, List<String> matchingFileNames,
 											String actualName)
 	{
-		int seq;
+		long seq;
 		actualName = fileName;
 		if (matchingFileNames.contains(fileName) && !matchingFileNames.isEmpty())
 		{
-			seq = (fileName.matches("\\b\\w+_\\d+\\b")) ? Integer.parseInt(fileName.substring(	fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
-																								+ 1,
-																								fileName.length())) : 0;
+			seq = (fileName.matches("\\b\\w+_\\d+\\b")) ? Long.parseLong(fileName.substring(fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR)
+																							+ 1,
+																							fileName.length())) : 0;
 			fileName = seq == 0 ? fileName : (String) fileName.subSequence(0, fileName.lastIndexOf(DMSConstant.REG_EXP_UNDERSCORE_STR));
 			boolean found = false;
 			if (seq == 0)
@@ -351,8 +341,7 @@ public class RelationUtils
 				{
 					seq++;
 					actualName = getActualContentName(	rcm, storageProvider, contentType, content,
-														fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq, extention, type,
-														operationType);
+														fileName + DMSConstant.REG_EXP_UNDERSCORE_STR + seq, extention, type, operationType);
 					found = true;
 				}
 				if (found)
@@ -454,7 +443,8 @@ public class RelationUtils
 			if (contentID <= 0)
 			{
 				dirContentName = dirName;
-				contentID = MDMSContent.create(	dirContentName, MDMSContent.CONTENTBASETYPE_Directory, dms.getPathFromContentManager(parentVersion), false,
+				contentID = MDMSContent.create(	dirContentName,
+												MDMSContent.CONTENTBASETYPE_Directory, dms.getPathFromContentManager(parentVersion), false,
 												trxName);
 				if (isCreateAssociation)
 					MDMSAssociation.create(	contentID, (parentContent != null) ? parentContent.getDMS_Content_ID() : 0, Record_ID, AD_Table_ID,
