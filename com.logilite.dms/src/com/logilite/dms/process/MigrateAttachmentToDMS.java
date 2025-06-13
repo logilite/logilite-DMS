@@ -1,36 +1,30 @@
 package com.logilite.dms.process;
 
 import java.io.File;
-import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 
-import org.adempiere.util.Callback;
-import org.adempiere.webui.window.FDialog;
 import org.apache.commons.io.FilenameUtils;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MTable;
-import org.compiere.model.Query;
 import org.compiere.process.ProcessInfoParameter;
 import org.compiere.process.SvrProcess;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 
 import com.logilite.dms.DMS;
 import com.logilite.dms.constant.DMSConstant;
 import com.logilite.dms.exception.DMSContentExistException;
 import com.logilite.dms.exception.DMSException;
-import com.logilite.dms.model.I_DMS_Association;
-import com.logilite.dms.model.I_DMS_Content;
-import com.logilite.dms.model.MDMSAssociation;
 import com.logilite.dms.model.MDMSContent;
-import com.logilite.dms.model.MDMSVersion;
-import com.logilite.dms.util.DMSSearchUtils;
 import com.logilite.dms.util.Utils;
 import com.logilite.search.exception.IndexException;
 
@@ -42,10 +36,11 @@ import com.logilite.search.exception.IndexException;
 public class MigrateAttachmentToDMS extends SvrProcess
 {
 
-	private Boolean		p_isDeleteOrigAttch	= false;
+	private Boolean		p_isDeleteOrigAttch						= false;
+	private Boolean		p_isDeletePreviouslyMigratedAttachments	= false;
 
-	private int			p_tableID			= 0;
-	private int			p_batchSize			= 1;
+	private int			p_tableID								= 0;
+	private int			p_TrxTimeOut							= 60 * 120;	// 120 minutes;
 
 	private Timestamp	p_createdFrom;
 	private Timestamp	p_createdTo;
@@ -72,12 +67,15 @@ public class MigrateAttachmentToDMS extends SvrProcess
 				p_createdFrom = para[i].getParameterAsTimestamp();
 				p_createdTo = para[i].getParameter_ToAsTimestamp();
 			}
-			else if ("BatchSize".equals(name))
+			else if (("IsDeletePreviouslyMigratedAttachments").equals(name))
 			{
-				p_batchSize = para[i].getParameterAsInt();
+				p_isDeletePreviouslyMigratedAttachments = para[i].getParameterAsBoolean();
+			}
+			else if (name.equals("TrxTimeOut"))
+			{
+				p_TrxTimeOut = para[i].getParameterAsInt();
 			}
 		}
-
 	}
 
 	@Override
@@ -95,12 +93,12 @@ public class MigrateAttachmentToDMS extends SvrProcess
 		 * 523 = AD_PrintTableFormat
 		 * 50008=AD_Package_Imp_Proc
 		 */
-		boolean hasProcessedAttachments = false;
 		ArrayList<Integer> unIndexedContentList = new ArrayList<Integer>();
 
 		//
-		String whereClause = " AD_Table_ID NOT IN(284, 285, 376, 454, 489, 523, 50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y'";
+		String whereClause = " AD_Table_ID NOT IN(284, 285, 376, 454, 489, 523, 50008) AND BinaryData IS NOT NULL AND isMigratedToDMS <> 'Y' AND AD_Client_ID = ?";
 		List<Object> paramList = new ArrayList<>();
+		paramList.add(Env.getAD_Client_ID(getCtx()));
 
 		// Table Specific Filter
 		if (p_tableID > 0)
@@ -133,36 +131,31 @@ public class MigrateAttachmentToDMS extends SvrProcess
 
 		int countTotal = DB.getSQLValue(get_TrxName(), "SELECT COUNT(1) FROM (" + sql + " ) AS Data ", paramList.toArray());
 
-		sql += " FETCH FIRST " + p_batchSize + " ROWS ONLY ";
+		//
+		int cntOrphanAtt = 0;
+		int cntProcessing = 0;
+		int cntEmptyAttEntries = 0;
 
 		//
-		int countProcessing = 0;
-		DMS dms = new DMS(getAD_Client_ID());
+		Trx trx = Trx.get(get_TrxName(), false);
+		trx.setTimeout(p_TrxTimeOut);
 
-		//
-		while (countTotal >= countProcessing)
+		try
 		{
+			DMS dms = new DMS(getAD_Client_ID());
+
+			//
 			int[] attachmentIDs = DB.getIDsEx(get_TrxName(), sql, paramList.toArray());
-			if (attachmentIDs.length == 0)
-				break;
 
-			String filterIDs = Util.convertArrayToStringForDB(Arrays.stream(attachmentIDs).boxed().toArray(Integer[]::new));
-			if (!Util.isEmpty(filterIDs, true))
+			Instant progressStart = Instant.now();
+
+			for (int attachmentID : attachmentIDs)
 			{
-				filterIDs = filterIDs.replaceAll("[\\{\\}]", "");
-			}
+				Instant startTime = Instant.now();
+				MAttachment attachment = (MAttachment) MTable.get(getCtx(), MAttachment.Table_Name).getPO(attachmentID, get_TrxName());
 
-			List<MAttachment> attachments = new Query(getCtx(), MAttachment.Table_Name, "AD_Attachment_ID IN (" + filterIDs + ")", get_TrxName())
-																																					.setClient_ID()
-																																					.list();
-
-			hasProcessedAttachments = true;
-
-			for (MAttachment attachment : attachments)
-			{
 				int tableID = attachment.getAD_Table_ID();
 				int recordID = attachment.getRecord_ID();
-				int attachmentID = attachment.getAD_Attachment_ID();
 
 				MTable table = MTable.get(getCtx(), tableID);
 				String tableName = table.getTableName();
@@ -177,6 +170,28 @@ public class MigrateAttachmentToDMS extends SvrProcess
 					{
 						log.log(Level.WARNING, "Orphan attachment deleted...");
 					}
+					cntOrphanAtt++;
+					continue;
+				}
+
+				// Skip attachment if entries not found
+				MAttachmentEntry[] attachmentEntries;
+				try
+				{
+					attachmentEntries = attachment.getEntries();
+				}
+				catch (Exception e)
+				{
+					String msg = "Empty attachment record deleted because no attachment entries are found"
+									+ " [Attachment_ID=" + attachment.get_ID()
+									+ ", Table=" + tableName
+									+ ", Record_ID=" + recordID + "]";
+					count = DB.executeUpdate("DELETE FROM AD_Attachment WHERE AD_Attachment_ID = ?", attachmentID, get_TrxName());
+					if (count > 0)
+					{
+						addLog(msg);
+						cntEmptyAttEntries++;
+					}
 					continue;
 				}
 
@@ -185,15 +200,19 @@ public class MigrateAttachmentToDMS extends SvrProcess
 				dms.initiateMountingContent(tableName, recordID, tableID);
 				MDMSContent mountingParent = dms.getRootMountingContent(tableID, recordID);
 
-				MAttachmentEntry[] attachmentEntries = attachment.getEntries();
+				// Status Progress Message
+				String progressMsg = "[ " + cntProcessing + " out of " + countTotal + " ]";
+				if (Duration.between(progressStart, Instant.now()).toMinutes() % 2 == 0)
+				{
+					saveProgress(recordID, Timestamp.valueOf(LocalDate.now().atStartOfDay()), null, progressMsg);
+				}
+				statusUpdate(progressMsg + " Move attachment of " + tableName + " for Record ID #" + recordID);
+
 				int cntFailed = 0;
 				for (MAttachmentEntry entry : attachmentEntries)
 				{
-					statusUpdate(	"[" + countProcessing + " out of " + countTotal + " ] Move attachment of " + tableName + " for Record ID #"
-									+ recordID + " : " + entry.getName());
-
 					File renamedFile = null;
-					String fileName = entry.getFile().getName();
+					String fileName = entry.getName();
 					try
 					{
 						// Remove special characters in filename as
@@ -205,9 +224,19 @@ public class MigrateAttachmentToDMS extends SvrProcess
 							fileName = "_.def";
 						}
 
-						renamedFile = new File(entry.getFile().getParent(), fileName);
+						if (fileName.length() > DMSConstant.MAX_FILENAME_LENGTH)
+						{
+							int lastDotIndex = fileName.lastIndexOf('.');
 
-						entry.getFile().renameTo(renamedFile);
+							if (lastDotIndex > 0 && lastDotIndex < fileName.length() - 1)
+							{
+								String nameWithoutExtension = fileName.substring(0, lastDotIndex);
+								String extension = fileName.substring(lastDotIndex);
+								int allowedNameLength = DMSConstant.MAX_FILENAME_LENGTH - extension.length();
+								fileName = nameWithoutExtension.substring(0, Math.min(nameWithoutExtension.length(), allowedNameLength)) + extension;
+							}
+						}
+						renamedFile = entry.getFile(fileName);
 
 						int contentID = dms.addFile(mountingParent, renamedFile, tableID, recordID);
 						if (contentID > 0)
@@ -245,6 +274,11 @@ public class MigrateAttachmentToDMS extends SvrProcess
 							log.log(Level.WARNING, e.getException().getLocalizedMessage());
 						}
 					}
+					finally
+					{
+						if (renamedFile != null)
+							renamedFile.delete();
+					}
 				}
 
 				// if entry failed to sync with DMS then no require to mark as migrated, Give a try
@@ -265,73 +299,33 @@ public class MigrateAttachmentToDMS extends SvrProcess
 				// so we do not revert changes when process fails in middle of migration.
 				commitEx();
 
-				countProcessing++;
+				long durationSeconds = Duration.between(startTime, Instant.now()).toSeconds();
+
+				log.log(Level.INFO, "Completed processing attachment  " + attachmentID + " for table '" + tableName +
+									"', record ID " + recordID + " in " + durationSeconds + " seconds.");
+				cntProcessing++;
 			}
 		}
+		catch (Exception e)
+		{
+			log.log(Level.SEVERE, "Migration failed. Rolling back.", e);
+			trx.rollback();
+		}
+
 		addLog(cntMigrated + " Attachment(s) Moved to DMS");
 		addLog(cntDeleted + " Attachment(s) Deleted from DB");
 		addLog(unIndexedContentList.size() + " Pending index content creation");
+		addLog(cntOrphanAtt + " orphan or invalid attachment(s) deleted.");
+		addLog(cntEmptyAttEntries + " Pending index content creation");
 
 		//
-		if (p_isDeleteOrigAttch || !hasProcessedAttachments)
+		if (p_isDeletePreviouslyMigratedAttachments)
 		{
-			processUI.ask("Do you want to delete previously migrated attachments if exist?", new Callback<Boolean>() {
-
-				@Override
-				public void onCallback(Boolean result)
-				{
-					if (result)
-					{
-						int cntMigAtt = DB.executeUpdate("DELETE FROM AD_Attachment WHERE isMigratedToDMS = 'Y'", null);
-						FDialog.info(0, null, cntMigAtt + " record(s) attachments were deleted as previously migrated from DB.");
-					}
-				}
-			});
+			int cntMigAtt = DB.executeUpdate("DELETE FROM AD_Attachment WHERE isMigratedToDMS = 'Y'", null);
+			addLog(cntMigAtt + " record(s) attachments were deleted as previously migrated from DB.");
 		}
-
 		//
-		if (unIndexedContentList.size() > 0)
-		{
-			processUI.ask("Do you want to try again for pending content index creation?", new Callback<Boolean>() {
-
-				@Override
-				public void onCallback(Boolean result)
-				{
-					if (result)
-					{
-						// fetch non-indexed content and its association reference for re-indexing
-						String sql = "SELECT v.DMS_Content_ID, a.DMS_Association_ID "
-										+ " FROM DMS_Version v "
-										+ " INNER JOIN DMS_Association a ON ((a.DMS_Content_Related_ID = v.DMS_Content_ID OR a.DMS_Content_ID = v.DMS_Content_ID) "
-										+ " 								AND COALESCE(DMS_AssociationType_ID, 0) IN (0, 1000001)) "
-										+ " WHERE v.DMS_Content_ID IN (" + unIndexedContentList.toString().replaceAll("\\[|\\]", "") + ") AND IsIndexed = 'N'";
-
-						List<List<Object>> latestVersion = DB.getSQLArrayObjectsEx(null, sql);
-						if (latestVersion != null && latestVersion.size() > 0)
-						{
-							int cnt = 0;
-							for (int i = 0; i < latestVersion.size(); i++)
-							{
-								List<Object> contentData = (List<Object>) latestVersion.get(i);
-								I_DMS_Content content = new MDMSContent(Env.getCtx(), ((BigDecimal) contentData.get(0)).intValue(), null);
-								I_DMS_Association associationLink = new MDMSAssociation(getCtx(), ((BigDecimal) contentData.get(1)).intValue(), null);
-
-								try
-								{
-									DMSSearchUtils.doIndexingInServer(content, associationLink, MDMSVersion.getLatestVersion(content, false), null, null);
-									cnt++;
-								}
-								catch (Exception e)
-								{}
-							}
-							FDialog.info(0, null, cnt + " Index created out of " + latestVersion.size());
-						}
-					}
-				}
-			});
-		}
 
 		return "Process Completed.";
 	}
-
 }
