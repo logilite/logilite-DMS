@@ -578,7 +578,7 @@ public class DMSSearchUtils
 		if (contentTypeID > 0)
 			sql.append(" AND c.DMS_ContentType_ID = ? ");
 		if (associationTypeID > 0)
-			sql.append(" AND c.DMS_AssociationType_ID = ? ");
+			sql.append(" AND a.DMS_AssociationType_ID = ? ");
 
 		sql.append(" ORDER BY c.Created DESC ");
 
