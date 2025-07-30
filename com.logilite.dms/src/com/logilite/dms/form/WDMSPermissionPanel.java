@@ -71,6 +71,10 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 
 	private static CLogger		log					= CLogger.getCLogger(WDMSPermissionPanel.class);
 
+	// SQL to get DMS_Permission fields
+	public static final String	SQL_GET_FIELD_OF_TAB		= "SELECT * FROM AD_Field_V  WHERE AD_Tab_ID = ? AND IsDisplayed = 'Y' ORDER BY SeqNo";
+	public static final String	SQL_GET_FIELD_OF_TAB_TRX	= "SELECT * FROM AD_Field_VT WHERE AD_Tab_ID = ? AND IsDisplayed = 'Y'  AND AD_Language = ? ORDER BY SeqNo";
+
 	// DMS Content Window ID reference
 	private static int			AD_Window_ID		= 0;
 	// DMS content window having Permission tab
@@ -166,8 +170,17 @@ public class WDMSPermissionPanel extends Window implements EventListener<Event>,
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement(DMSConstant.SQL_GET_FIELD_OF_TAB, null);
-			pstmt.setInt(1, AD_Tab_ID);
+			if (Env.isBaseLanguage(Env.getCtx(), "AD_Tab"))
+			{
+				pstmt = DB.prepareStatement(SQL_GET_FIELD_OF_TAB, null);
+				pstmt.setInt(1, AD_Tab_ID);
+			}
+			else
+			{
+				pstmt = DB.prepareStatement(SQL_GET_FIELD_OF_TAB_TRX, null);
+				pstmt.setInt(1, AD_Tab_ID);
+				pstmt.setString(2, Env.getAD_Language(Env.getCtx()));
+			}
 
 			rs = pstmt.executeQuery();
 			while (rs.next())
