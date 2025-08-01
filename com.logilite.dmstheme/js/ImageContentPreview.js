@@ -7,19 +7,32 @@ function onPenAndZoom(parentID, src) {
 
 	var imagePanel = document.getElementById(parentID);
 	imagePanel.parentNode.insertBefore(canvas, imagePanel);
-	
+
 	canvas.width = imagePanel.parentNode.getBoundingClientRect().width;
 	canvas.height = imagePanel.parentNode.getBoundingClientRect().height;
- 	
- 	canvas.style.width ='100%';
-  	canvas.style.height='100%';
-	
+
+	canvas.style.width = '100%';
+	canvas.style.height = '100%';
+
 	var ctx = canvas.getContext('2d');
 	trackTransforms(ctx);
-	
+
+	var imageComp = new Image();
 	imageComp.src = 'data:image/png;base64,' + src;
+
 	imageComp.onload = function() {
-		ctx.drawImage(imageComp, 0, 0);
+		const imgWidth = imageComp.width;
+		const imgHeight = imageComp.height;
+		const canvasWidth = canvas.width;
+		const canvasHeight = canvas.height;
+
+		const scale = Math.min(canvasWidth / imgWidth, canvasHeight / imgHeight);
+		const dx = (canvasWidth - imgWidth * scale) / 2;
+		const dy = (canvasHeight - imgHeight * scale) / 2;
+
+		ctx.setTransform(scale, 0, 0, scale, dx, dy);
+
+		ctx.drawImage(imageComp, 0, 0); // draw scaled image
 	};
 
 	function redraw() {
@@ -37,7 +50,7 @@ function onPenAndZoom(parentID, src) {
 	var dragStart, dragged;
 
 	canvas.addEventListener('mousedown', function(evt) {
-		document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
+		document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = document.body.style.msUserSelect = 'none';
 		lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
 		lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
 		dragStart = ctx.transformedPoint(lastX, lastY);

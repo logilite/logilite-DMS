@@ -350,8 +350,6 @@ public final class DMSConstant
 
 	public static final String				SQL_CONTENT_FROM_ASI					= "SELECT DMS_Content_ID FROM DMS_Content WHERE M_AttributeSetInstance_ID = ? 		";
 
-	public static final String				SQL_GET_FIELD_OF_TAB					= "SELECT * FROM AD_Field_VT WHERE AD_Tab_ID = ? AND IsDisplayed = 'Y' ORDER BY SeqNo";
-
 	public static final String				SQL_GET_RELATED_CONTENT					= "SELECT c.DMS_Content_ID, a.DMS_Association_ID FROM DMS_Content c											"
 																						+ " INNER JOIN DMS_Association a ON c.DMS_Content_ID = a.DMS_Content_ID AND a.IsActive = c.IsActive 	"
 																						+ " WHERE a.DMS_Content_Related_ID = ? AND c.IsActive=?  												";
