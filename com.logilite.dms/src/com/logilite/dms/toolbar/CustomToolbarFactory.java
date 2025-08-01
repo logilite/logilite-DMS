@@ -21,7 +21,6 @@ import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.action.IAction;
 import org.adempiere.webui.adwindow.ADWindow;
 import org.adempiere.webui.adwindow.AbstractADWindowContent;
-import org.adempiere.webui.adwindow.IADTabpanel;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.component.Window;
 import org.adempiere.webui.event.DialogEvents;
@@ -139,12 +138,6 @@ public class CustomToolbarFactory implements IAction
 			LayoutUtils.addSclass("font-icon-toolbar-button", btn);
 		}
 	} // decorate
-
-	@Override
-	public void updateToolbarCustomBtn(Toolbarbutton toolbarButton, IADTabpanel tabPanel, boolean changed, boolean readOnly)
-	{
-
-	}
 
 	@Override
 	public String getIconSclass()

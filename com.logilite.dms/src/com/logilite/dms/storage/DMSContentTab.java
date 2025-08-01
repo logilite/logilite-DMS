@@ -427,4 +427,10 @@ public class DMSContentTab extends Panel implements IADTabpanel, DataStatusListe
 		}
 	} // enableDisableToolbarButton
 
+	@Override
+	public void onAfterFind()
+	{
+		
+	}
+
 }
