@@ -795,7 +795,6 @@ public class Utils
 			return defaultWhereClause;
 		}
 
-		// TODO: Refactor with Latest core change
 		MTableAttribute tableAttrib = new Query(Env.getCtx(), MTableAttribute.Table_Name, "Record_ID = ?", null)
 																												.setParameters(tableID)
 																												.firstOnly();
