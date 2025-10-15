@@ -180,13 +180,15 @@ public class WUploadContent extends AbstractUploadContent
 		// Load ASI Panel if ContentType value pre-filled from the context
 		loadASIPanel();
 
-		btnFileUpload.setUpload("multiple=true," + DMS_ZK_Util.getUploadSetting());
+		btnFileUpload.setUpload("multiple = true," + DMS_ZK_Util.getUploadSetting());
 		btnFileUpload.addEventListener(Events.ON_UPLOAD, this);
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
 		addEventListener(Events.ON_UPLOAD, this);
 
 		AEnv.showCenterScreen(this);
+		this.setWidgetOverride("_id_uploadButtonId", "'" + btnFileUpload.getUuid() + "'");
+		this.setWidgetOverride("_id_isFileDragDropArea", "true");
 	} // init
 
 	@Override

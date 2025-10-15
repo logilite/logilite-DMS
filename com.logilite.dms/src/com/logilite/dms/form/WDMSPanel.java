@@ -28,8 +28,6 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.logging.Level;
 
-import javax.servlet.http.HttpSession;
-
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.util.Callback;
 import org.adempiere.webui.ClientInfo;
@@ -89,7 +87,6 @@ import org.compiere.util.Msg;
 import org.compiere.util.Util;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Components;
-import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.WrongValueException;
 import org.zkoss.zk.ui.event.Event;
 import org.zkoss.zk.ui.event.EventListener;
@@ -904,13 +901,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 
 			//
 			renderViewer();
-
-			// After rendering, register drag and drop event
-			if (btnToggleView.getAttribute(ATTRIBUTE_TOGGLE).equals(DMSConstant.ICON_VIEW_LARGE))
-			{
-				callDragAndDropAction();
-			}
-
 		}
 		// Event for any area of panel user doing right click then show context
 		// related paste or else...
@@ -1245,10 +1235,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			renderViewer();
 		}
-		else if (DMSConstant.EVENT_ON_LOAD_DRAGNDROP.equals(event.getName()))
-		{
-			callDragAndDropAction();
-		}
 
 		if (!(Events.ON_CLICK.equals(event.getName()) && event.getTarget() == this))
 		{
@@ -1262,6 +1248,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		else if (event.getName().equals(Events.ON_CANCEL))
 		{
 			onCancel();
+		}
+		if(DMSConstant.EVENT_ON_LOAD_DRAGNDROP.equals(event.getName()))
+		{
+			// Upload Event Handle
+			btnUploadContent.addEventListener(Events.ON_UPLOAD, this);
+			btnUploadContent.setUpload("multiple=true," + DMS_ZK_Util.getUploadSetting());
+			this.setWidgetOverride("_id_uploadButtonId", "'" + btnUploadContent.getUuid() + "'");
+			this.setWidgetOverride("_id_isFileDragDropArea", "true");
 		}
 
 	} // onEvent
@@ -2417,23 +2411,4 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	{
 		return btnSelectedContent;
 	}
-
-	public void callDragAndDropAction()
-	{
-		int maxUploadSize = 0;
-		int size = MSysConfig.getIntValue(MSysConfig.ZK_MAX_UPLOAD_SIZE, 0);
-		if (size > 0)
-			maxUploadSize += size;
-
-		// TODO Need to check in DMS as Tab
-		if (this.getPage() != null)
-		{
-			String desktopID = this.getPage().getDesktop().getId();
-			String sessionID = ((HttpSession) Executions.getCurrent().getSession().getNativeSession()).getId();
-			Clients.evalJavaScript(	"idempiere.dropToAttachFiles('" + this.getUuid() + "','"
-									+ grid.getUuid() + "','" + desktopID + "','"
-									+ uploadProgressMtr.getUuid() + "','" + lblUploadSize.getUuid() + "','"
-									+ maxUploadSize + "','" + sessionID + "');");
-		}
-	} // callDragAndDropAction
 }
