@@ -35,7 +35,8 @@ public class DefaultContentEditorFactory implements IContentEditorFactory
 	@Override
 	public IContentEditor get(String mimeType)
 	{
-		if (listMimeType.contains(mimeType))
+		// PDF and video mime type viewer
+		if (listMimeType.contains(mimeType) || mimeType.startsWith("video/"))
 		{
 			return new PDFContentEditor();
 		}
