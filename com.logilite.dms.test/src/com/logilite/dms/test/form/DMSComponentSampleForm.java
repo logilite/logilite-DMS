@@ -99,8 +99,10 @@ public class DMSComponentSampleForm extends ADForm
 		galleryBox.setTableID(114);
 		galleryBox.setRecordID(100);
 		galleryBox.setWindowNo(getWindowNo());
-		galleryBox.addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
 		galleryBox.renderViewer();
+
+		//
+		addEventListener(DMSConstant.EVENT_ON_UPLOAD_COMPLETE, this);
 
 		rows.newRow().appendCellChild(galleryBox, 4);
 
@@ -166,9 +168,9 @@ public class DMSComponentSampleForm extends ADForm
 
 		String sql_For_Get_Contents = "SELECT 114 AS AD_Table_ID, u.AD_User_ID AS Record_ID, c.DMS_Content_ID "
 										+ " FROM AD_User u "
-										+ " INNER JOIN DMS_Content c ON (c.DMS_Content_ID IN (SELECT DISTINCT DMS_Content_ID FROM DMS_Association a 		"
+										+ " INNER JOIN DMS_Content c ON (c.DMS_Content_ID IN (SELECT DISTINCT DMS_Content_ID FROM DMS_Association a 	"
 										+ "													WHERE (a.AD_Table_ID = 114 AND a.Record_ID = u.AD_User_ID)) "
-										+ "								AND c.ContentBaseType ='CNT' AND c.IsMounting ='N') "
+										+ "								AND c.ContentBaseType = 'CNT' AND c.IsMounting = 'N' AND c.IsActive = 'Y' 	  ) "
 										+ " WHERE AD_User_ID IN (100) ";
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;

@@ -268,8 +268,8 @@ public final class DMSConstant
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_NORMAL	= "margin: 5px; background: #e2e2e2; border: 4px double #ffffff !important; border-radius: 5px;";
 	public static final String				CSS_CONTENT_COMP_VIEWER_LARGE_SELECTED	= "margin: 5px; background: #abcdff; border: 4px double #3363ad !important; border-radius: 5px;";
 
-	public static final String				CSS_CONTENT_COMP_VIEWER_GALLERY_NORMAL	= "margin: 2px; background: #e2e2e2; border: 2px double #ffffff !important; border-radius: 5px;";
-	public static final String				CSS_CONTENT_COMP_VIEWER_GALLRY_SELECTED	= "margin: 2px; background: #abcdff; border: 2px double #3363ad !important; border-radius: 5px;";
+	public static final String				CSS_CONTENT_COMP_VIEWER_GALLERY_NORMAL	= "padding: 2px; border: 1px solid #c7e8ff;";
+	public static final String				CSS_CONTENT_COMP_VIEWER_GALLRY_SELECTED	= "padding: 2px; background: #abcdff; border: 3px double #3363ad !important; border-radius: 5px;";
 
 	public static final String				CSS_CONTENT_COMP_VIEWER_LIST_NORMAL		= "border-top: 1px solid #ffffff; border-bottom: 0px double #ffffff;";
 	public static final String				CSS_CONTENT_COMP_VIEWER_LIST_SELECTED	= "border-top: 1px solid #3363ad; border-bottom: 1px double #3363ad;";
@@ -278,7 +278,7 @@ public final class DMSConstant
 
 	public static final String				CSS_CONTENT_VIEWER_LARGE_SEL_INACTIVE	= "margin: 5px; background: #abcdff; border: red solid;";
 	public static final String				CSS_CONTENT_VIEWER_LIST_SEL_INACTIVE	= "border-top: 1px solid red; border-bottom: 1px double red;";
-	public static final String				CSS_CONTENT_VIEWER_GALLERY_SEL_INACTIVE	= "margin: 2px; background: #abcdff; border: red solid;";
+	public static final String				CSS_CONTENT_VIEWER_GALLERY_SEL_INACTIVE	= "background: #abcdff; border: red solid;";
 
 	/*
 	 * Queries

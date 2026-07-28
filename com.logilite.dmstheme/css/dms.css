@@ -94,7 +94,7 @@
 }
 
 .SB-Grid .z-grid-body {
-	height: calc( 100% - 65px );
+	height: calc( 100% - 30px );
 }
 
 .SB-InActive-Content .z-tab-text , .SB-InActive-Content table tr td span, .SB-InActive-Content td span {
@@ -129,7 +129,51 @@
 	bottom:35px;
 }
 
+.SB-ROW {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	height: 100%;
+	width: 100%;
+	overflow: hidden;
+	padding: 2px;
+/* 	padding-bottom: 2rem; */
+}
+
+.SB-GalleryCell {
+	margin: 2px;
+}
+
+.SB-THUMBIMAGE {
+	background: #e2e2e2;
+	border: 1px double #c7e8ff !important;
+	border-radius: 5px;
+}
+
 .SB-SelectionChkbx {
 	position: absolute;
 	left: 4px;
+}
+
+.SB_Board_Card {
+	height: 100%;
+}
+
+div:has(> .SB-Grid.HasPaging) {
+	height: calc( 100% - 45px );
+}
+
+div:has(> .SB-Grid) {
+	height: 100%;
+}
+
+.SB-Grid {
+	width: 100%;
+	height: 100%;
+	position: relative;
+	overflow: auto;
+}
+
+.SB-Attribute {
+	display: inline-grid;
 }

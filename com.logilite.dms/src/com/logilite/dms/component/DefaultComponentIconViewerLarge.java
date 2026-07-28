@@ -56,7 +56,6 @@ public class DefaultComponentIconViewerLarge extends AbstractComponentIconViewer
 		{
 			row = rows.newRow();
 			row.setSclass("SB-ROW");
-			row.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION + " width: 100%; overflow: hidden; padding: 2px; padding-bottom: 2rem;");
 		}
 
 		// Content Label

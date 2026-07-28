@@ -48,7 +48,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 	{
 		Columns columns = new Columns();
 		columns.setSizable(true);
-		columns.appendChild(createColumnCheckBoxAllSelect("3%"));
+		columns.appendChild(createColumnCheckBoxAllSelect("30px"));
 		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_NAME, DMSConstant.ATTRIB_NAME, "30%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_CONTENT_TYPE, DMSConstant.ATTRIB_CONTENT_TYPE, "10%", "left"));
 		columns.appendChild(createColumn(DMSConstant.MSG_SIZE, DMSConstant.ATTRIB_SIZE, "7%", "Left"));
@@ -172,6 +172,7 @@ public class DefaultComponentIconViewerList extends AbstractComponentIconViewer
 		//
 		Column column = new Column();
 		column.appendChild(checkBoxAll);
+		column.setWidth(size);
 		return column;
 	} // createColumnCheckBoxAllSelect
 }

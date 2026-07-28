@@ -35,7 +35,7 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Div;
-import org.zkoss.zul.Hbox;
+import org.zkoss.zul.Hlayout;
 
 import com.logilite.dms.DMS;
 import com.logilite.dms.constant.DMSConstant;
@@ -55,7 +55,7 @@ import com.logilite.dms.util.DMSSearchUtils;
  * @author Sachin Bhimani @ Logilite Technologies
  * @author Parth Ambani @ Logilite Technologies
  */
-public class DMSGalleryBox extends Hbox implements EventListener<Event>
+public class DMSGalleryBox extends Hlayout implements EventListener<Event>
 {
 	private static final long				serialVersionUID	= -6126859364277605068L;
 

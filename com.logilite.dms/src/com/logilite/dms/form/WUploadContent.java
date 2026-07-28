@@ -63,7 +63,16 @@ public class WUploadContent extends AbstractUploadContent
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 8146814718717680556L;
+	private static final long	serialVersionUID	= 8146814718717680556L;
+
+	/**
+	 * Guard flag - prevents the upload widget from being re-initialized / re-triggered
+	 * while a previous upload cycle (client _initUploader / server processUploadMedia)
+	 * is still in flight. This avoids the ZK Upload_._onchange -> _start -> _initUploader
+	 * race that throws "Cannot read properties of null" when the widget is re-entered
+	 * before the prior async module load (_zk.$import/afterLoad) has completed.
+	 */
+	private boolean				uploadInProgress	= false;
 
 	/**
 	 * Constructor
@@ -180,7 +189,7 @@ public class WUploadContent extends AbstractUploadContent
 		// Load ASI Panel if ContentType value pre-filled from the context
 		loadASIPanel();
 
-		btnFileUpload.setUpload("multiple = true," + DMS_ZK_Util.getUploadSetting());
+		btnFileUpload.setUpload("multiple=" + !isVersion + "," + DMS_ZK_Util.getUploadSetting());
 		btnFileUpload.addEventListener(Events.ON_UPLOAD, this);
 		btnClose.addEventListener(Events.ON_CLICK, this);
 		btnOk.addEventListener(Events.ON_CLICK, this);
@@ -196,8 +205,32 @@ public class WUploadContent extends AbstractUploadContent
 	{
 		if (e instanceof UploadEvent)
 		{
+			// Ignore re-entrant upload events fired while a previous upload cycle is still being
+			// processed (guards against the client-side _onchange -> _start -> _initUploader race
+			// in ZK's Upload_ widget).
+			if (uploadInProgress)
+				return;
+
 			UploadEvent ue = (UploadEvent) e;
-			processUploadMedia(ue.getMedias());
+			uploadInProgress = true;
+			try
+			{
+				processUploadMedia(ue.getMedias());
+			}
+			finally
+			{
+				// For version mode, keep the button disabled once a file is staged - only one file
+				// is ever allowed, so there is nothing further to upload. For normal mode, release
+				// the guard so additional files can be added.
+				if (isVersion)
+				{
+					btnFileUpload.setEnabled(mapUploadInfo.isEmpty());
+				}
+				else
+				{
+					uploadInProgress = false;
+				}
+			}
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_OK) || Events.ON_OK.equals(e.getName()))
 		{
@@ -227,6 +260,11 @@ public class WUploadContent extends AbstractUploadContent
 			{
 				setBtnLabelFileUpload();
 			}
+
+			// Canceling a staged row in version mode frees up the single upload slot again, so
+			// release the re-entrancy guard.
+			if (isVersion)
+				uploadInProgress = false;
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_CANCEL))
 		{
@@ -249,6 +287,11 @@ public class WUploadContent extends AbstractUploadContent
 		{
 			for (Media media : medias)
 			{
+				// Enforce single file for versioning even if more than one media somehow arrives in
+				// a single event - don't stage extras.
+				if (isVersion && mapUploadInfo.size() >= 1)
+					break;
+
 				String name = FilenameUtils.getBaseName(media.getName());
 
 				//
@@ -266,7 +309,14 @@ public class WUploadContent extends AbstractUploadContent
 				btnCancel.setAttribute(ATTRIB_ROW_NO, rowCount);
 				btnCancel.addEventListener(Events.ON_CLICK, this);
 
-				rows.insertBefore(row, contentTypeRow);
+				// contentTypeRow is hidden in version mode, so don't anchor the new row's
+				// insertBefore reference to an invisible component - append instead to keep the
+				// client-side row tree consistent with what's actually rendered.
+				if (isVersion)
+					rows.appendChild(row);
+				else
+					rows.insertBefore(row, contentTypeRow);
+
 				row.getLastCell().setWidth("10px");
 
 				Object[] value = new Object[] { row, new AMedia(media.getName(), null, null, media.getByteData()), txtName, txtDesc };
@@ -384,6 +434,8 @@ public class WUploadContent extends AbstractUploadContent
 					tmpFile.delete();
 			}
 		}
+
 		this.detach();
 	} // saveUploadedDocument
+
 }

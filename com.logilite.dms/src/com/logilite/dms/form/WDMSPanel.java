@@ -96,7 +96,7 @@ import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.East;
-import org.zkoss.zul.Hbox;
+import org.zkoss.zul.Hlayout;
 import org.zkoss.zul.Menuitem;
 import org.zkoss.zul.Paging;
 import org.zkoss.zul.Progressmeter;
@@ -104,6 +104,7 @@ import org.zkoss.zul.South;
 import org.zkoss.zul.Space;
 import org.zkoss.zul.Splitter;
 import org.zkoss.zul.Timebox;
+import org.zkoss.zul.Vlayout;
 import org.zkoss.zul.impl.XulElement;
 
 import com.logilite.dms.DMS;
@@ -138,10 +139,10 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	private static int					TOOLBAR_BTN_ID_UPLOAD	= 0;
 
 	/* SysConfig USE_ESC_FOR_TAB_CLOSING */
-	private boolean					isUseEscForTabClosing	= MSysConfig.getBooleanValue(	MSysConfig.USE_ESC_FOR_TAB_CLOSING, false,
-																							Env.getAD_Client_ID(Env.getCtx()));
+	private boolean						isUseEscForTabClosing	= MSysConfig.getBooleanValue(	MSysConfig.USE_ESC_FOR_TAB_CLOSING, false,
+																								Env.getAD_Client_ID(Env.getCtx()));
 
-	private String					currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
+	private String						currThumbViewerAction	= DMSConstant.ICON_VIEW_LARGE;
 
 	private Tabbox						tabBox					= new Tabbox();
 	private Tabs						tabs					= new Tabs();
@@ -456,6 +457,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 	/**
 	 * initialize components
 	 */
+	@SuppressWarnings("deprecation")
 	private void initForm()
 	{
 		// Load DMS CSS file content and attach as style tag in Head tab
@@ -478,7 +480,6 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		grid.setSclass("SB-Grid");
 		grid.addEventListener(Events.ON_DOUBLE_CLICK, this);
 		grid.addEventListener(Events.ON_RIGHT_CLICK, this); // For_Canvas_Context_Menu
-		grid.setStyle("width: 100%; height: calc( 100% - 45px); position: relative; overflow: auto;");
 		grid.addEventListener(Events.ON_UPLOAD, this);
 
 		// View Result Tab
@@ -512,13 +513,14 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		DMS_ZK_Util.setButtonData(btnUploadContent, "UploadFile", DMSConstant.MSG_UPLOAD_CONTENT, this);
 
 		row = rowsBtn.newRow();
-		Hbox hbox = new Hbox();
+		Hlayout hbox = new Hlayout();
 		hbox.appendChild(btnCreateDir);
 		hbox.appendChild(btnUploadContent);
 		DMS_ZK_Util.createCellUnderRow(row, 0, 3, hbox);
 
 		//
 		Grid searchGridView = GridFactory.newGridLayout();
+		searchGridView.setClass("SB-Search");
 		searchGridView.setVflex(true);
 		searchGridView.setStyle("max-height: 100%; width: 100%; height: calc( 100% - 90px); position: relative; overflow: auto;");
 
@@ -674,7 +676,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		btnToggleView.setAttribute(ATTRIBUTE_TOGGLE, currThumbViewerAction);
 		btnToggleView.setStyle("float: left; padding: 5px 7px; margin: 0px 0px 5px 0px !important; height: 45px; width: 45px;");
 
-		hbox = new Hbox();
+		hbox = new Hlayout();
 		hbox.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION);
 		hbox.appendChild(btnSearch);
 		hbox.appendChild(btnClear);
@@ -686,13 +688,17 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		cell.setAlign("right");
 
 		/*
-		 * Main Layout View
+		 * Main Board Layout View
 		 */
-		Cell cell_layout = new Cell();
-		cell_layout.appendChild(btnToggleView);
-		cell_layout.appendChild(gridBreadCrumb);
+		Hlayout topRow = new Hlayout();
+		topRow.setSclass("SB-Top-Row");
+		topRow.appendChild(btnToggleView);
+		topRow.appendChild(gridBreadCrumb);
+
+		Vlayout cell_layout = new Vlayout();
+		cell_layout.setClass("SB_Board_Card");
+		cell_layout.appendChild(topRow);
 		cell_layout.appendChild(grid);
-		cell_layout.setHeight("100%");
 
 		gridBreadCrumb.setClass("dms-breadcrumb");
 		gridBreadCrumb.setStyle("font-family: Roboto,sans-serif; height: 45px; "
@@ -704,7 +710,8 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		Splitter splitter = new Splitter();
 		splitter.setCollapse("after");
 
-		Cell cell_attribute = new Cell();
+		Hlayout cell_attribute = new Hlayout();
+		cell_attribute.setClass("SB-Attribute");
 		cell_attribute.setHeight("100%");
 		cell_attribute.appendChild(btnGrid);
 		cell_attribute.appendChild(searchGridView);
@@ -732,9 +739,9 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		}
 		else
 		{
-			cell_layout.setWidth("70%");
+			cell_layout.setWidth("100%");
 
-			Hbox boxViewSeparator = new Hbox();
+			Hlayout boxViewSeparator = new Hlayout();
 			boxViewSeparator.setWidth("100%");
 			ZKUpdateUtil.setHeight(boxViewSeparator, "100%");
 			boxViewSeparator.appendChild(cell_attribute);
@@ -837,7 +844,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 			if (isWindowAccess)
 				createDirectory();
 		}
-		else if (event.getTarget().equals(btnUploadContent) || event instanceof UploadEvent)
+		else if (event.getTarget().equals(btnUploadContent) && event instanceof UploadEvent)
 		{
 			if (btnUploadContent.isEnabled())
 			{
@@ -1249,7 +1256,7 @@ public class WDMSPanel extends Panel implements EventListener<Event>, ValueChang
 		{
 			onCancel();
 		}
-		if(DMSConstant.EVENT_ON_LOAD_DRAGNDROP.equals(event.getName()))
+		if (DMSConstant.EVENT_ON_LOAD_DRAGNDROP.equals(event.getName()))
 		{
 			// Upload Event Handle
 			btnUploadContent.addEventListener(Events.ON_UPLOAD, this);

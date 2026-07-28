@@ -131,6 +131,7 @@ public abstract class AbstractComponentIconViewer implements IDMSViewer, EventLi
 			if (isPagingMoveToFirstPage)
 				paging.setActivePage(0);
 
+			grid.addSclass("HasPaging");
 			grid.getParent().appendChild(paging);
 		}
 

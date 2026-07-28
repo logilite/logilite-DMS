@@ -20,7 +20,7 @@ import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Cell;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Image;
-import org.zkoss.zul.Vbox;
+import org.zkoss.zul.Vlayout;
 
 import com.logilite.dms.DMS_ZK_Util;
 import com.logilite.dms.constant.DMSConstant;
@@ -66,8 +66,9 @@ public class DefaultComponentIconViewerGallery extends AbstractComponentIconView
 		if (row == null || isFirstPage)
 		{
 			row = rows.newRow();
-			row.setSclass("SB-ROW");
-			row.setStyle(DMSConstant.CSS_FLEX_ROW_DIRECTION + " width: 100%; overflow: hidden; padding: 2px;");
+			row.setZclass("SB-GalleryBox");
+			//
+			rows.setStyle("display: block; height: 100%;");
 		}
 
 		// Content Thumbnail
@@ -78,15 +79,15 @@ public class DefaultComponentIconViewerGallery extends AbstractComponentIconView
 		thumbImg.setHeight(compHeight + "px;");
 		thumbImg.setWidth(compWidth + "px;");
 
-		Vbox vbox = new Vbox();
+		Vlayout vbox = new Vlayout();
 		vbox.appendChild(thumbImg);
-		vbox.setAlign("center");
 		vbox.setStyle("position: relative; width: 100%; height: 100%; max-width:" + compWidth + "px; max-height: " + compHeight + "px;");
 
 		Cell cell = new Cell();
 		cell.appendChild(vbox);
 		cell.setWidth(compWidth + "px");
 		cell.setHeight(compHeight + "px");
+		cell.setZclass("SB-GalleryCell");
 		cell.setStyle(DMSConstant.CSS_CONTENT_COMP_VIEWER_GALLERY_NORMAL);
 		row.appendChild(cell);
 
