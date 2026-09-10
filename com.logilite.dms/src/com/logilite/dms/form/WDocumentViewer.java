@@ -53,7 +53,6 @@ public class WDocumentViewer extends Window
 	private WDMSAttributePanel	attributePanel		= null;
 	private Component			component			= null;
 
-
 	private int					tableID				= 0;
 	private int					recordID			= 0;
 	private int					windowNo			= 0;
@@ -72,7 +71,6 @@ public class WDocumentViewer extends Window
 		this.windowNo = windowNo;
 		this.tabNo = tabNo;
 		this.component = component;
-
 	}
 
 	public WDMSAttributePanel getAttributePanel()

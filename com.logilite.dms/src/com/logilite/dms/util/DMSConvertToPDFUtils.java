@@ -19,33 +19,24 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.StringReader;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 import org.adempiere.exceptions.AdempiereException;
-import org.apache.poi.hwpf.HWPFDocument;
-import org.apache.poi.hwpf.extractor.WordExtractor;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.w3c.tidy.Tidy;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.tool.xml.XMLWorkerHelper;
 import com.logilite.dms.model.MDMSMimeType;
 import com.logilite.dms.pdfpreview.ConvertXlsToPdf;
 import com.logilite.dms.pdfpreview.ConvertXlsxToPdf;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.html.simpleparser.HTMLWorker;
-import com.lowagie.text.pdf.PdfWriter;
-
-import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
-import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
 
 /**
  * Util for document convert to PDF format
@@ -66,32 +57,39 @@ public class DMSConvertToPDFUtils
 	 * @throws DocumentException
 	 * @throws com.itextpdf.text.DocumentException
 	 */
-	public static File convertDocToPDF(File documentToPreview, MDMSMimeType mimeType)	throws IOException, FileNotFoundException, DocumentException,
-																						com.itextpdf.text.DocumentException
+	public static File convertDocToPDF(File documentToPreview, MDMSMimeType mimeType) throws IOException, FileNotFoundException, DocumentException
 	{
 		if (mimeType.getMimeType().equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
 		{
-			XWPFDocument document = new XWPFDocument(new FileInputStream(documentToPreview));
-			File newDocPDF = File.createTempFile("DMSExport", "DocxToPDF");
-			OutputStream pdfFile = new FileOutputStream(newDocPDF);
-			PdfOptions options = PdfOptions.create();
-			PdfConverter.getInstance().convert(document, pdfFile, options);
-			return newDocPDF;
+			return null;
+			// TODO Need to implement DOCX to PDF conversion
+			// try (InputStream inputStream = new FileInputStream(documentToPreview);
+			// XWPFDocument document = new XWPFDocument(inputStream))
+			// {
+			// File newDocPDF = File.createTempFile("DMSExport", "DocxToPDF");
+			// try (OutputStream pdfFile = new FileOutputStream(newDocPDF))
+			// {
+			// PdfConverter.getInstance().convert(document, pdfFile, null);
+			// }
+			//
+			// return newDocPDF;
+			// }
 		}
 		else if (mimeType.getMimeType().equals("application/msword"))
 		{
-			HWPFDocument doc = new HWPFDocument(new FileInputStream(documentToPreview));
-			@SuppressWarnings("resource")
-			WordExtractor we = new WordExtractor(doc);
-			File newDocPDF = File.createTempFile("DMSExport", "DocToPDF");
-			OutputStream pdfFile = new FileOutputStream(newDocPDF);
-			String k = we.getText();
-			Document document = new Document();
-			PdfWriter.getInstance(document, pdfFile);
-			document.open();
-			document.add(new Paragraph(k));
-			document.close();
-			return newDocPDF;
+			return null;
+			// HWPFDocument doc = new HWPFDocument(new FileInputStream(documentToPreview));
+			// @SuppressWarnings("resource")
+			// WordExtractor we = new WordExtractor(doc);
+			// File newDocPDF = File.createTempFile("DMSExport", "DocToPDF");
+			// OutputStream pdfFile = new FileOutputStream(newDocPDF);
+			// String k = we.getText();
+			// Document document = new Document();
+			// PdfWriter.getInstance(document, pdfFile);
+			// document.open();
+			// document.add(new Paragraph(k));
+			// document.close();
+			// return newDocPDF;
 		}
 		else if (mimeType.getMimeType().equals("application/vnd.ms-excel")
 					|| mimeType.getMimeType().equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
@@ -129,15 +127,14 @@ public class DMSConvertToPDFUtils
 		String html = test.getHTML();
 
 		File newXlsToPdf = File.createTempFile("DMSExport", "XlsToPDF");
-
 		Document document = new Document(PageSize.A4, 20, 20, 20, 20);
-		PdfWriter.getInstance(document, new FileOutputStream(newXlsToPdf));
+
+		PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(newXlsToPdf));
 		document.open();
 		document.addCreationDate();
-
-		HTMLWorker htmlWorker = new HTMLWorker(document);
-		htmlWorker.parse(new StringReader(html));
+		XMLWorkerHelper.getInstance().parseXHtml(writer, document, new StringReader(html));
 		document.close();
+		in.close();
 
 		return newXlsToPdf;
 	} // convertXlsToPDF
@@ -152,7 +149,7 @@ public class DMSConvertToPDFUtils
 	 * @throws com.itextpdf.text.DocumentException
 	 * @throws com.itextpdf.text.DocumentException
 	 */
-	public static File convertXlsxToPdf(File xlsxDocument) throws IOException, FileNotFoundException, com.itextpdf.text.DocumentException
+	public static File convertXlsxToPdf(File xlsxDocument) throws IOException, FileNotFoundException, DocumentException
 	{
 		File newXlsxToHTML = File.createTempFile("DMSExport", "XlsxToHTML");
 		try
@@ -178,10 +175,10 @@ public class DMSConvertToPDFUtils
 
 			// Convert xhtml to pdf
 			File newXhtmlToPdf = File.createTempFile("DMSExport", "XHtmlToPdf");
-			com.itextpdf.text.Document document = new com.itextpdf.text.Document();
+			Document document = new Document();
 			Rectangle size = new Rectangle(pdfWidth, pdfheight);
 			document.setPageSize(size);
-			com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(document, new FileOutputStream(newXhtmlToPdf));
+			PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(newXhtmlToPdf));
 			document.open();
 
 			XMLWorkerHelper.getInstance().parseXHtml(writer, document, new FileInputStream(newHtmlToXhtml));

@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.component.Panel;
 import org.compiere.model.I_AD_StorageProvider;
+import org.compiere.model.MImage;
 import org.compiere.util.CLogger;
 import org.compiere.util.Util;
 import org.zkoss.util.media.AMedia;
@@ -26,6 +27,7 @@ import org.zkoss.zul.Iframe;
 
 import com.logilite.dms.factories.IContentEditor;
 import com.logilite.dms.model.I_DMS_Content;
+import com.logilite.dms.model.MDMSMimeType;
 
 public class PDFContentEditor extends Panel implements IContentEditor
 {
@@ -71,7 +73,13 @@ public class PDFContentEditor extends Panel implements IContentEditor
 		{
 			String fileName = content.getName();
 			String format = content.getDMS_MimeType().getFileExtension();
-			if (!Util.isEmpty(format, true) && !fileName.endsWith(format))
+			if (file == null || !file.exists())
+			{
+				MImage image = MDMSMimeType.getThumbnail(content.getDMS_MimeType_ID());
+				if (image.getData() != null)
+					media = new AMedia(null, null, null, image.getData());
+			}
+			else if (!Util.isEmpty(format, true) && !fileName.endsWith(format))
 			{
 				media = new AMedia(fileName.concat(format), null, null, file, null);
 			}
@@ -79,7 +87,6 @@ public class PDFContentEditor extends Panel implements IContentEditor
 			{
 				media = new AMedia(file, null, null);
 			}
-
 		}
 		catch (FileNotFoundException e)
 		{

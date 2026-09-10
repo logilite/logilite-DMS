@@ -24,6 +24,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.poi.hwpf.converter.HtmlDocumentFacade;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -238,7 +239,6 @@ public class ConvertXlsxToPdf
 		table.appendChild(tr);
 	}
 
-	@SuppressWarnings( { "deprecation" })
 	private void processCell(Element tr, XSSFCell cell, String sID, int pos_col, int pos_row)
 	{
 		int cols = 1;
@@ -286,11 +286,11 @@ public class ConvertXlsxToPdf
 		}
 		else
 		{
-			if (CellType.BLANK.equals(cell.getCellTypeEnum()))
+			if (CellType.BLANK.equals(cell.getCellType()))
 			{
 				value = "\u00a0";
 			}
-			else if (CellType.NUMERIC.equals(cell.getCellTypeEnum()))
+			else if (CellType.NUMERIC.equals(cell.getCellType()))
 			{
 				if (DateUtil.isCellDateFormatted(cell))
 				{
@@ -303,13 +303,13 @@ public class ConvertXlsxToPdf
 					value = cell.getNumericCellValue();
 				}
 			}
-			else if (CellType.BOOLEAN.equals(cell.getCellTypeEnum()))
+			else if (CellType.BOOLEAN.equals(cell.getCellType()))
 			{
 				value = cell.getBooleanCellValue();
 			}
-			else if (CellType.FORMULA.equals(cell.getCellTypeEnum()))
+			else if (CellType.FORMULA.equals(cell.getCellType()))
 			{
-				if (CellType.ERROR.equals(cell.getCellTypeEnum()))
+				if (CellType.ERROR.equals(cell.getCellType()))
 				{
 					value = cell.getCellFormula();
 				}
@@ -370,28 +370,28 @@ public class ConvertXlsxToPdf
 				}
 			}
 		}
-		if (HorizontalAlignment.CENTER.equals(style.getAlignmentEnum()))
+		if (HorizontalAlignment.CENTER.equals(style.getAlignment()))
 			sb.append("text-align:").append("center;");
 
-		if (HorizontalAlignment.RIGHT.equals(style.getAlignmentEnum()))
+		if (HorizontalAlignment.RIGHT.equals(style.getAlignment()))
 			sb.append("text-align:").append("right;");
 
-//		if (style.getBorderBottom() != BorderStyle.NONE)
-//		{
-//			sb.append("border-bottom:solid; ").append(style.getBorderBottom()).append("px;");
-//		}
-//		if (style.getBorderLeft() != BorderStyle.NONE)
-//		{
-//			sb.append("border-left:solid; ").append(style.getBorderLeft()).append("px;");
-//		}
-//		if (style.getBorderTop() != BorderStyle.NONE)
-//		{
-//			sb.append("border-top:solid; ").append(style.getBorderTop()).append("px;");
-//		}
-//		if (style.getBorderRight() != BorderStyle.NONE)
-//		{
-//			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
-//		}
+		if (style.getBorderBottom() != BorderStyle.NONE)
+		{
+			sb.append("border-bottom:solid; ").append(style.getBorderBottom()).append("px;");
+		}
+		if (style.getBorderLeft() != BorderStyle.NONE)
+		{
+			sb.append("border-left:solid; ").append(style.getBorderLeft()).append("px;");
+		}
+		if (style.getBorderTop() != BorderStyle.NONE)
+		{
+			sb.append("border-top:solid; ").append(style.getBorderTop()).append("px;");
+		}
+		if (style.getBorderRight() != BorderStyle.NONE)
+		{
+			sb.append("border-right:solid; ").append(style.getBorderRight()).append("px;");
+		}
 
 		if (style.getFillBackgroundXSSFColor() != null)
 		{
